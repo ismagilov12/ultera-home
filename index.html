@@ -586,19 +586,6 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .modal-close:hover{background:var(--ink);color:#fff;transform:rotate(90deg)}
 .modal-img{background:var(--bg-alt);height:100%;overflow:hidden;position:relative;aspect-ratio:4/5}
 .modal-img img{width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-drag:none}
-/* title overlay on photo */
-.modal-title-overlay{
-  position:absolute;top:14px;left:16px;right:60px;z-index:3;pointer-events:none;
-}
-.modal-brand-ov{
-  font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;
-  color:var(--ink-60);text-transform:uppercase;margin-bottom:3px;
-}
-.modal-title-ov{
-  font-size:20px;font-weight:900;line-height:1.05;letter-spacing:-.015em;
-  text-transform:uppercase;color:var(--ink);margin:0;
-  text-shadow:0 1px 0 rgba(255,255,255,.4);
-}
 .ms-swatches-top{margin-top:2px;margin-bottom:16px}
 
 /* season picker */
@@ -611,7 +598,8 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 }
 .season-btn:hover{border-color:var(--ink-40)}
 .season-btn.active{border-color:var(--ink);box-shadow:0 0 0 2px var(--mint)}
-.season-ic{font-size:18px;flex-shrink:0;line-height:1}
+.season-ic{flex-shrink:0;line-height:1;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink)}
+.season-ic svg{width:22px;height:22px}
 .season-txt{display:flex;flex-direction:column;line-height:1.15;min-width:0}
 .season-txt b{font-size:12.5px;font-weight:700;color:var(--ink);letter-spacing:-.005em}
 .season-txt span{font-family:var(--font-mono);font-size:9.5px;color:var(--ink-60);letter-spacing:.04em;margin-top:2px}
@@ -664,15 +652,9 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .modal-strip{display:none}
   .modal-dots{display:flex}
   .modal-body{grid-row:2/3;grid-column:1/2;padding:18px 20px 28px;overflow:visible;max-height:none}
-  /* title on photo on mobile — hide duplicate in body */
-  .modal-body .modal-brand,.modal-body .modal-title{display:none}
-  .modal-title-overlay{top:72px;left:20px;right:20px}
-  .modal-title-ov{font-size:26px;line-height:.96}
   .video-btn{top:14px;left:14px;font-size:10px;padding:6px 12px 6px 6px}
 }
 @media (min-width:761px){
-  /* on desktop — overlay hidden, body shows title as before */
-  .modal-title-overlay{display:none}
   .ms-swatches-top{margin-bottom:22px}
 }
 
@@ -1147,7 +1129,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v27 · modal-overhead</div>
+<div class="build-tag">v28 · name-under + svg-icons</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -1570,10 +1552,6 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <span class="play"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7L7 5Z" fill="currentColor"/></svg></span>
         <span class="lbl">VIDEO</span>
       </button>
-      <div class="modal-title-overlay">
-        <div class="modal-brand-ov" id="m_fam_ov"></div>
-        <h2 class="modal-title-ov" id="m_title_ov"></h2>
-      </div>
       <img id="m_img" src="" alt="">
       <div class="modal-dots" id="m_dots" aria-hidden="true"></div>
     </div>
@@ -1594,11 +1572,21 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <div class="ms-label">Версія · <b id="m_season_name">Літо</b></div>
         <div class="mod-seasons" id="m_seasons">
           <button class="season-btn active" data-season="summer" onclick="pickSeason(this,'summer','Літо')">
-            <span class="season-ic">☀️</span>
+            <span class="season-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+              </svg>
+            </span>
             <span class="season-txt"><b>Літо</b><span>дихаюча сітка · від +12°</span></span>
           </button>
-          <button class="season-btn" data-season="spring" onclick="pickSeason(this,'spring','Весна')">
-            <span class="season-ic">🌸</span>
+          <button class="season-btn" data-season="spring" onclick="pickSeason(this,'spring','Весна / Осінь')">
+            <span class="season-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 10.5a4.5 4.5 0 1 0-9 0 3.5 3.5 0 0 0-4 3.5 3.5 3.5 0 0 0 3.5 3.5H17a3 3 0 0 0 1-5.83V10.5z"/>
+                <path d="M8 21l1-2M12 21l1-2M16 21l1-2"/>
+              </svg>
+            </span>
             <span class="season-txt"><b>Весна / Осінь</b><span>Cordura · до +18°</span></span>
           </button>
         </div>
@@ -2035,12 +2023,8 @@ function openModal(uid){
   // SHAPE тепер відкриває модалку як інші товари
   const row = findFamily(p.family);
   currentColor = p.uid;
-  const famTxt = p.family + (p.mark ? ' · ' + p.mark : '');
-  const titleTxt = p.title.replace('ULTERA - ','').replace('ULTERA ','');
-  document.getElementById('m_fam').textContent = famTxt;
-  document.getElementById('m_title').textContent = titleTxt;
-  const famOv = document.getElementById('m_fam_ov'); if(famOv) famOv.textContent = famTxt;
-  const tiOv  = document.getElementById('m_title_ov'); if(tiOv) tiOv.textContent = titleTxt;
+  document.getElementById('m_fam').textContent = p.family + (p.mark ? ' · ' + p.mark : '');
+  document.getElementById('m_title').textContent = p.title.replace('ULTERA - ','').replace('ULTERA ','');
   document.getElementById('m_sku').textContent = 'SKU · ' + p.uid.slice(-10).toUpperCase();
   document.getElementById('m_img').src = p.photo;
   document.getElementById('m_color_name').textContent = p.color_name;
@@ -2432,3 +2416,4 @@ renderGrid();
 </script>
 </body>
 </html>
+                                                                                                                                                                                                                                                                                                                                          
