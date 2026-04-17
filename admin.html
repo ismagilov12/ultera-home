@@ -194,21 +194,16 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 <div id="auth" class="auth-wrap">
   <div class="auth-box">
     <h1><b>ULTERA</b> admin</h1>
-    <p id="auth-sub">Введіть email — прийде 6-значний код.</p>
+    <p id="auth-sub">Логін + пароль.</p>
     <div class="mail">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-      <input id="email" type="email" placeholder="you@example.com" autocomplete="email">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <input id="email" type="text" placeholder="admin@ultera.local" autocomplete="username" value="admin@ultera.local">
     </div>
-    <button id="login-btn" class="btn-primary">Надіслати код</button>
-
-    <div id="otp-step" style="display:none;margin-top:16px">
-      <div class="mail" style="letter-spacing:.15em;font-family:var(--font-mono)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <input id="otp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" style="letter-spacing:.3em;font-family:inherit">
-      </div>
-      <button id="verify-btn" class="btn-primary">Увійти</button>
-      <button id="back-btn" style="width:100%;padding:10px;background:none;color:var(--ink-60);font-size:12px;margin-top:6px">← Інший email</button>
+    <div class="mail">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <input id="password" type="password" placeholder="Пароль" autocomplete="current-password">
     </div>
+    <button id="login-btn" class="btn-primary">Увійти</button>
 
     <div id="auth-msg" class="auth-msg"></div>
     <div id="sdk-status" style="margin-top:14px;padding:8px 12px;border-radius:6px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;background:#f5f5f0;color:var(--ink-60);border:1px solid var(--line)">
@@ -490,79 +485,43 @@ async function startApp(user){
   await Promise.all([loadProducts(), loadSettings(), loadAdmins()]);
 }
 
-/* ==================== AUTH (OTP code) ==================== */
-let PENDING_EMAIL = '';
-
-document.getElementById('login-btn').onclick = async ()=>{
+/* ==================== AUTH (password) ==================== */
+async function doLogin(){
   const email = document.getElementById('email').value.trim();
-  if (!email) return;
-  const btn = document.getElementById('login-btn'); btn.disabled=true; btn.textContent='Надсилаю…';
+  const password = document.getElementById('password').value;
+  if (!email || !password){
+    const msg = document.getElementById('auth-msg');
+    msg.className='auth-msg show err'; msg.textContent='Введіть логін і пароль';
+    return;
+  }
+  const btn = document.getElementById('login-btn'); btn.disabled=true; btn.textContent='Входжу…';
   const msg = document.getElementById('auth-msg');
   msg.className='auth-msg';
 
   try {
     if (!SB){
       msg.className='auth-msg show err';
-      msg.textContent='Supabase SDK ще не завантажився. Спробуйте за 2–3с або оновіть сторінку.';
-      btn.disabled=false; btn.textContent='Надіслати код';
+      msg.textContent='SDK ще не готовий. Зачекайте і спробуйте ще раз.';
+      btn.disabled=false; btn.textContent='Увійти';
       return;
     }
-    const { error } = await SB.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: true }
-    });
+    const { data, error } = await SB.auth.signInWithPassword({ email, password });
     if (error){
-      msg.className='auth-msg show err'; msg.textContent='Помилка: '+error.message;
-      btn.disabled=false; btn.textContent='Надіслати код';
+      msg.className='auth-msg show err'; msg.textContent='Невірний логін/пароль: '+error.message;
+      btn.disabled=false; btn.textContent='Увійти';
     } else {
-      PENDING_EMAIL = email;
-      msg.className='auth-msg show ok'; msg.textContent='✓ Код надіслано на ' + email + '. Перевірте пошту (включно з «Спам»).';
-      btn.textContent='✓ Надіслано';
-      document.getElementById('otp-step').style.display='block';
-      setTimeout(()=>document.getElementById('otp').focus(), 100);
+      msg.className='auth-msg show ok'; msg.textContent='✓ Вхід успішний, завантажую…';
     }
   } catch(e){
     msg.className='auth-msg show err';
     msg.textContent='Виняток: '+(e.message||e);
-    btn.disabled=false; btn.textContent='Надіслати код';
-  }
-};
-
-document.getElementById('verify-btn').onclick = async ()=>{
-  const token = document.getElementById('otp').value.trim();
-  if (!token || token.length !== 6){
-    const msg = document.getElementById('auth-msg');
-    msg.className='auth-msg show err'; msg.textContent='Введіть 6-значний код з пошти';
-    return;
-  }
-  const btn = document.getElementById('verify-btn'); btn.disabled=true; btn.textContent='Перевіряю…';
-  const msg = document.getElementById('auth-msg');
-  const { error } = await SB.auth.verifyOtp({
-    email: PENDING_EMAIL,
-    token,
-    type: 'email'
-  });
-  if (error){
-    msg.className='auth-msg show err'; msg.textContent='Невірний код: ' + error.message;
     btn.disabled=false; btn.textContent='Увійти';
-  } else {
-    msg.className='auth-msg show ok'; msg.textContent='✓ Вхід успішний, завантажую…';
   }
-};
+}
 
-document.getElementById('otp').addEventListener('keypress', e=>{
-  if (e.key === 'Enter') document.getElementById('verify-btn').click();
-});
-
-document.getElementById('back-btn').onclick = ()=>{
-  PENDING_EMAIL = '';
-  document.getElementById('otp-step').style.display='none';
-  document.getElementById('login-btn').disabled=false;
-  document.getElementById('login-btn').textContent='Надіслати код';
-  document.getElementById('auth-msg').className='auth-msg';
-  document.getElementById('email').focus();
-};
-
+document.getElementById('login-btn').onclick = doLogin;
+document.getElementById('password').addEventListener('keypress', e=>{ if (e.key === 'Enter') doLogin(); });
+document.getElementById('email').addEventListener('keypress', e=>{ if (e.key === 'Enter') doLogin(); });
 document.getElementById('logout-btn').onclick = ()=>SB.auth.signOut();
 
 /* ==================== NAV ==================== */
@@ -752,4 +711,47 @@ document.getElementById('ed-save').onclick = async ()=>{
 
 document.getElementById('ed-delete').onclick = async ()=>{
   if (!confirm('Видалити товар?')) return;
-  const { error } = awai
+  const { error } = await SB.from('ulhome_products').delete().eq('id', EDITING.id);
+  if (error){ toast(error.message,'err'); return; }
+  toast('Видалено');
+  closeEditor(); await loadProducts();
+};
+
+async function delProduct(p){
+  if (!confirm('Видалити "'+p.title+'"?')) return;
+  const { error } = await SB.from('ulhome_products').delete().eq('id', p.id);
+  if (error){ toast(error.message,'err'); return; }
+  toast('Видалено'); await loadProducts();
+}
+
+/* ==================== SETTINGS ==================== */
+async function loadSettings(){
+  const { data, error } = await SB.from('ulhome_settings').select('*');
+  if (error){ return; }
+  SETTINGS = {}; (data||[]).forEach(r => SETTINGS[r.key] = r.value);
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const v = SETTINGS[el.dataset.key];
+    if (el.type === 'checkbox') el.checked = v === true;
+    else if (v !== undefined && v !== null) el.value = typeof v === 'string' ? v : JSON.stringify(v);
+  });
+}
+
+document.getElementById('set-save').onclick = async ()=>{
+  const btn = document.getElementById('set-save'); btn.disabled=true; btn.textContent='Зберігаю…';
+  const rows = [];
+  document.querySelectorAll('[data-key]').forEach(el=>{
+    const key = el.dataset.key;
+    let val;
+    if (el.type === 'checkbox') val = el.checked;
+    else if (el.type === 'number') val = parseFloat(el.value)||0;
+    else val = el.value;
+    rows.push({ key, value: val });
+  });
+  const { error } = await SB.from('ulhome_settings').upsert(rows);
+  if (error) toast(error.message,'err'); else toast('Збережено ✓');
+  btn.disabled=false; btn.textContent='Зберегти';
+};
+
+/* ==================== ADMINS ==================== */
+async function loadAdmins(){
+  const { data, error } = await SB.from('ulhome_admins').select('*').order('crea
