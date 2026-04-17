@@ -359,17 +359,18 @@ input,textarea,select{font:inherit;color:inherit}
 @media (max-width:900px){
   .feat-card{grid-template-columns:1fr;min-height:auto}
   .feat-left{order:2;padding:22px}
-  .feat-right{order:1;min-height:340px;padding:0;aspect-ratio:4/3}
+  .feat-right{order:1;min-height:0;padding:0;aspect-ratio:4/5;width:100%}
   .feat-title{font-size:clamp(36px,10vw,56px)}
   .feat-specs{grid-template-columns:1fr}
   .feat-colors-tr{top:12px;right:12px;padding:6px 8px}
   .feat-colors-tr .sw{width:22px;height:22px}
-  .feat-photo img{width:145%;height:145%}
-  .feat-card[data-fam="SHAPE"] .feat-photo img{width:100%;height:100%}
+  .feat-photo{padding:0}
+  .feat-photo img{width:112%;height:112%;object-fit:cover;object-position:center}
+  .feat-card[data-fam="SHAPE"] .feat-photo img{width:100%;height:100%;object-fit:cover}
 }
 @media (max-width:540px){
-  .feat-right{min-height:280px}
-  .feat-photo img{width:135%;height:135%}
+  .feat-right{min-height:0;aspect-ratio:4/5}
+  .feat-photo img{width:108%;height:108%;object-fit:cover}
 }
 
 /* Product cards grid */
@@ -594,10 +595,12 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .modal-body{grid-row:1/3;grid-column:2/3}
 
 @media (max-width:760px){
-  .modal-strip{grid-column:1/2;grid-row:2/3}
-  .modal-img{grid-row:1/2}
-  .modal-body{grid-row:3/4;grid-column:1/2}
-  .modal-strip button{width:70px;height:70px}
+  .modal{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
+  .modal-img{grid-row:1/2;grid-column:1/2;aspect-ratio:4/5;height:auto;width:100%}
+  .modal-img img{object-fit:cover}
+  .modal-strip{grid-column:1/2;grid-row:2/3;overflow-x:auto;padding:10px 10px 12px}
+  .modal-body{grid-row:3/4;grid-column:1/2;padding:22px 20px 28px}
+  .modal-strip button{width:76px;height:94px;aspect-ratio:4/5;border-radius:8px}
   .video-btn{top:10px;left:10px;font-size:10px;padding:6px 12px 6px 6px}
 }
 
@@ -976,11 +979,11 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   padding:4px 4px 4px 22px;border-radius:999px;
   background:var(--mint);color:#0a0a0a;font-weight:700;font-size:13px;
   letter-spacing:.06em;text-transform:uppercase;
-  transition:all .25s cubic-bezier(.2,.8,.2,1);white-space:nowrap;text-decoration:none;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1);white-space:nowrap;text-decoration:none;
+  /* "утоплена" у фон: темний inset зверху + світлий знизу, без outer glow */
   box-shadow:
-    0 10px 24px -10px rgba(173,210,125,.6),
-    inset 0 1px 0 rgba(255,255,255,.5),
-    inset 0 -1px 0 rgba(0,0,0,.08);
+    inset 0 2px 3px rgba(0,0,0,.25),
+    inset 0 -1px 2px rgba(255,255,255,.35);
   position:relative;
 }
 
@@ -993,7 +996,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 }
 .ace-dot:hover{background:rgba(255,255,255,.55)}
 .ace-dot.active{background:var(--mint);width:40px}
-.ace-cta:hover{transform:translateY(-2px);box-shadow:0 14px 30px -10px rgba(173,210,125,.7),inset 0 1px 0 rgba(255,255,255,.5),inset 0 -1px 0 rgba(0,0,0,.08)}
+.ace-cta:hover{transform:translateY(-1px);box-shadow:inset 0 2px 3px rgba(0,0,0,.25),inset 0 -1px 2px rgba(255,255,255,.35)}
 .ace-cta .ace-cta-arrow{
   width:32px;height:32px;border-radius:50%;
   /* "утоплена" в зелений фон — темний колодязь з inset тінями */
@@ -2274,4 +2277,4 @@ renderGrid();
 </script>
 </body>
 </html>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
