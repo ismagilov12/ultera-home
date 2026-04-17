@@ -8,14 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script type="module">
-  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-  window.__SB = createClient(
-    'https://fsihlzzjewhxpogvjapu.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU'
-  );
-  window.dispatchEvent(new Event('sb:ready'));
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root{
   --ink:#0a0a0a;--ink-60:#5a5a58;--ink-40:#9a9a98;
@@ -191,7 +184,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 </head>
 <body>
 
-<div id="auth" class="auth-wrap" style="display:none">
+<div id="auth" class="auth-wrap">
   <div class="auth-box">
     <h1><b>ULTERA</b> admin</h1>
     <p id="auth-sub">Введіть email — прийде 6-значний код.</p>
@@ -437,13 +430,26 @@ let ED_MEDIA = [];
 
 function toast(msg, type){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(type==='err'?' err':''); setTimeout(()=>t.classList.remove('show'), 3000); }
 
-window.addEventListener('sb:ready', async ()=>{
-  SB = window.__SB;
+(async function(){
+  // Wait for supabase UMD to load (up to 8s)
+  for (let i=0; i<80; i++){
+    if (window.supabase && window.supabase.createClient) break;
+    await new Promise(r=>setTimeout(r, 100));
+  }
+  if (!window.supabase || !window.supabase.createClient){
+    document.getElementById('auth-msg').className='auth-msg show err';
+    document.getElementById('auth-msg').textContent='Supabase SDK не завантажився (мережа?). Перевірте підключення та оновіть сторінку.';
+    return;
+  }
+  SB = window.supabase.createClient(
+    'https://fsihlzzjewhxpogvjapu.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU'
+  );
   const { data:{session} } = await SB.auth.getSession();
   if (session) startApp(session.user);
   else showAuth();
   SB.auth.onAuthStateChange((evt, sess)=>{ if (sess) startApp(sess.user); else showAuth(); });
-});
+})();
 
 function showAuth(){ document.getElementById('auth').style.display='flex'; document.getElementById('app').style.display='none'; }
 
@@ -751,13 +757,4 @@ document.getElementById('set-save').onclick = async ()=>{
   btn.disabled=false; btn.textContent='Зберегти';
 };
 
-/* ==================== ADMINS ==================== */
-async function loadAdmins(){
-  const { data, error } = await SB.from('ulhome_admins').select('*').order('created_at');
-  if (error){ document.getElementById('admin-list').innerHTML='<div class="empty">Немає прав: '+error.message+'</div>'; return; }
-  ADMINS = data || [];
-  renderAdmins();
-}
-
-function renderAdmins(){
-  const box = document.getElementById('ad
+/* ====
