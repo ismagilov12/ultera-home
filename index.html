@@ -943,17 +943,31 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   min-height:min(780px,96vh);display:flex;flex-direction:column;
   padding:0;margin:-72px 0 18px;
 }
-.ace-bg{position:absolute;inset:0;z-index:0;background:#0a0a0a;overflow:hidden}
-.ace-slide{position:absolute;inset:0;opacity:0;transition:opacity 1.1s cubic-bezier(.4,0,.2,1);will-change:opacity}
+.ace-bg{position:absolute;inset:0;z-index:0;background:#0a0a0a;overflow:hidden;contain:paint}
+.ace-slide{position:absolute;inset:0;opacity:0;transition:opacity 1s cubic-bezier(.4,0,.2,1)}
 .ace-slide.active{opacity:1}
 .ace-slide picture,.ace-slide img{width:100%;height:100%;display:block}
 .ace-slide img{
   object-fit:cover;object-position:center 50%;
-  animation:aceZoom 14s ease-in-out infinite alternate;
+  transform:translateZ(0);
 }
+/* Анімація zoom лише на активному слайді, щоб не навантажувати 5 паралельних анімацій */
+.ace-slide.active img{animation:aceZoom 14s ease-in-out infinite alternate}
 @keyframes aceZoom{
-  0%  {transform:scale(1.00)}
-  100%{transform:scale(1.06)}
+  0%  {transform:scale(1.00) translateZ(0)}
+  100%{transform:scale(1.05) translateZ(0)}
+}
+@media (max-width:760px){
+  /* На мобільному прибираємо zoom-анімацію взагалі — вона найбільше jank'ає */
+  .ace-slide.active img{animation:none}
+  .ace-slide{transition:opacity .7s ease}
+  /* На мобільному знижуємо вагу backdrop-filter (дуже жере scroll) */
+  .ace-bottom-panel{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+  .modal-overlay{backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+  .video-btn{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(14,14,14,.75)}
+  .modal-dots{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(14,14,14,.6)}
+  /* content-visibility: skip offscreen для швидшого скролу */
+  .coll,.surv,.tech-sec,.classics,.khark,.faq-sec,.ig-sec{content-visibility:auto;contain-intrinsic-size:auto 600px}
 }
 .ace-bg::after{
   content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
@@ -1133,7 +1147,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v30 · pc-no-overlay</div>
+<div class="build-tag">v31 · scroll-perf</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -1175,31 +1189,31 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
     <div class="ace-slide active" data-idx="1">
       <picture>
         <source media="(max-width:760px)" srcset="banners/home-mob-1.jpg">
-        <img src="banners/home-pc-1.jpg" alt="ULTERA — кадр 1">
+        <img src="banners/home-pc-1.jpg" alt="ULTERA — кадр 1" decoding="async" fetchpriority="high">
       </picture>
     </div>
     <div class="ace-slide" data-idx="2">
       <picture>
         <source media="(max-width:760px)" srcset="banners/home-mob-2.jpg">
-        <img src="banners/home-pc-2.jpg" alt="ULTERA — кадр 2">
+        <img src="banners/home-pc-2.jpg" alt="ULTERA — кадр 2" loading="lazy" decoding="async">
       </picture>
     </div>
     <div class="ace-slide" data-idx="3">
       <picture>
         <source media="(max-width:760px)" srcset="banners/home-mob-3.jpg">
-        <img src="banners/home-pc-3.jpg" alt="ULTERA — кадр 3">
+        <img src="banners/home-pc-3.jpg" alt="ULTERA — кадр 3" loading="lazy" decoding="async">
       </picture>
     </div>
     <div class="ace-slide" data-idx="4">
       <picture>
         <source media="(max-width:760px)" srcset="banners/home-mob-4.jpg">
-        <img src="banners/home-pc-4.jpg" alt="ULTERA — кадр 4">
+        <img src="banners/home-pc-4.jpg" alt="ULTERA — кадр 4" loading="lazy" decoding="async">
       </picture>
     </div>
     <div class="ace-slide" data-idx="5">
       <picture>
         <source media="(max-width:760px)" srcset="banners/home-mob-5.jpg">
-        <img src="banners/home-pc-5.jpg" alt="ULTERA — кадр 5">
+        <img src="banners/home-pc-5.jpg" alt="ULTERA — кадр 5" loading="lazy" decoding="async">
       </picture>
     </div>
   </div>
@@ -2420,4 +2434,3 @@ renderGrid();
 </script>
 </body>
 </html>
-                                                                                           
