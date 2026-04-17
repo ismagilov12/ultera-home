@@ -382,7 +382,10 @@ input,textarea,select{font:inherit;color:inherit}
   .feat-colors-tr .sw{width:22px;height:22px}
   .feat-photo{padding:0}
   .feat-photo img{width:112%;height:112%;object-fit:cover;object-position:center}
-  .feat-card[data-fam="SHAPE"] .feat-photo img{width:100%;height:100%;object-fit:cover}
+  /* SHAPE — PNG-вирізки з прозорим фоном, показуємо цілком без crop */
+  .feat-card[data-fam="SHAPE"] .feat-right{aspect-ratio:4/5;background:linear-gradient(135deg,#f6f5f0 0%,#ecebe5 100%)}
+  .feat-card[data-fam="SHAPE"] .feat-photo{padding:8% 10% 12%}
+  .feat-card[data-fam="SHAPE"] .feat-photo img{width:100%;height:100%;object-fit:contain;object-position:center}
   .feat-overlay{top:16px;left:18px;max-width:62%}
   .feat-overlay-title{font-size:clamp(38px,11vw,56px)}
   .feat-overlay-tag{font-size:10px}
@@ -390,6 +393,8 @@ input,textarea,select{font:inherit;color:inherit}
 @media (max-width:540px){
   .feat-right{min-height:0;aspect-ratio:4/5}
   .feat-photo img{width:108%;height:108%;object-fit:cover}
+  .feat-card[data-fam="SHAPE"] .feat-photo{padding:6% 8% 10%}
+  .feat-card[data-fam="SHAPE"] .feat-photo img{width:100%;height:100%;object-fit:contain}
   .feat-overlay{top:14px;left:16px}
   .feat-overlay-title{font-size:clamp(34px,11.5vw,48px)}
 }
@@ -857,6 +862,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .hero-title{font-size:clamp(46px,13vw,78px) !important;line-height:.9}
   .hero-meta-row .lbl{width:auto}
   .hdr-r .lang,.hdr-r .ic[title="Пошук"]{display:none}
+  .hdr-in{padding-left:16px;padding-right:16px}
   .cart-pill{padding:7px 12px;font-size:11px}
   .top-tape{font-size:10px}
   .hero{padding:20px 0 44px}
