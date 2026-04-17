@@ -211,6 +211,9 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
     </div>
 
     <div id="auth-msg" class="auth-msg"></div>
+    <div id="sdk-status" style="margin-top:14px;padding:8px 12px;border-radius:6px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;background:#f5f5f0;color:var(--ink-60);border:1px solid var(--line)">
+      ⏳ Завантажую Supabase SDK...
+    </div>
   </div>
 </div>
 
@@ -437,31 +440,36 @@ let ED_MEDIA = [];
 
 function toast(msg, type){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(type==='err'?' err':''); setTimeout(()=>t.classList.remove('show'), 3000); }
 
+const STATUS = document.getElementById('sdk-status');
+function setStatus(html, color){
+  STATUS.innerHTML = html;
+  STATUS.style.color = color || 'var(--ink-60)';
+  STATUS.style.background = color === 'var(--err)' ? '#ffe0e0' : (color === 'green' ? '#e5f4d3' : '#f5f5f0');
+}
+
 (async function(){
+  setStatus('⏳ Чекаю Supabase SDK (15с)...');
   // Wait for supabase UMD to load (up to 15s)
   for (let i=0; i<150; i++){
     if (window.supabase && window.supabase.createClient) break;
     await new Promise(r=>setTimeout(r, 100));
   }
   if (!window.supabase || !window.supabase.createClient){
-    const msg = document.getElementById('auth-msg');
-    msg.className='auth-msg show err';
-    msg.textContent='Supabase SDK не завантажився'+(window.__sbLoadErr?' ('+window.__sbLoadErr+')':'. Перевірте мережу та оновіть сторінку.');
+    setStatus('✗ SDK не завантажився'+(window.__sbLoadErr?' ('+window.__sbLoadErr+')':'')+'. CDN блокується?', 'var(--err)');
     return;
   }
+  setStatus('✓ SDK завантажений, ініціалізую...', 'green');
   try {
     SB = window.supabase.createClient(
       'https://fsihlzzjewhxpogvjapu.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU'
     );
+    setStatus('✓ Готово до входу', 'green');
     const { data:{session} } = await SB.auth.getSession();
     if (session) startApp(session.user);
-    // else auth form already visible
     SB.auth.onAuthStateChange((evt, sess)=>{ if (sess) startApp(sess.user); else showAuth(); });
   } catch(e){
-    const msg = document.getElementById('auth-msg');
-    msg.className='auth-msg show err';
-    msg.textContent='Init error: '+(e.message||e);
+    setStatus('✗ Init error: '+(e.message||e), 'var(--err)');
   }
 })();
 
@@ -744,17 +752,4 @@ document.getElementById('ed-save').onclick = async ()=>{
 
 document.getElementById('ed-delete').onclick = async ()=>{
   if (!confirm('Видалити товар?')) return;
-  const { error } = await SB.from('ulhome_products').delete().eq('id', EDITING.id);
-  if (error){ toast(error.message,'err'); return; }
-  toast('Видалено');
-  closeEditor(); await loadProducts();
-};
-
-async function delProduct(p){
-  if (!confirm('Видалити "'+p.title+'"?')) return;
-  const { error } = await SB.from('ulhome_products').delete().eq('id', p.id);
-  if (error){ toast(error.message,'err'); return; }
-  toast('Видалено'); await loadProducts();
-}
-
-/* ==================== SETTINGS =================
+  const { error } = awai
