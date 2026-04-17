@@ -194,12 +194,22 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 <div id="auth" class="auth-wrap" style="display:none">
   <div class="auth-box">
     <h1><b>ULTERA</b> admin</h1>
-    <p id="auth-sub">Увійдіть за email — на пошту прийде лінк входу.</p>
+    <p id="auth-sub">Введіть email — прийде 6-значний код.</p>
     <div class="mail">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       <input id="email" type="email" placeholder="you@example.com" autocomplete="email">
     </div>
-    <button id="login-btn" class="btn-primary">Надіслати лінк</button>
+    <button id="login-btn" class="btn-primary">Надіслати код</button>
+
+    <div id="otp-step" style="display:none;margin-top:16px">
+      <div class="mail" style="letter-spacing:.15em;font-family:var(--font-mono)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input id="otp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" style="letter-spacing:.3em;font-family:inherit">
+      </div>
+      <button id="verify-btn" class="btn-primary">Увійти</button>
+      <button id="back-btn" style="width:100%;padding:10px;background:none;color:var(--ink-60);font-size:12px;margin-top:6px">← Інший email</button>
+    </div>
+
     <div id="auth-msg" class="auth-msg"></div>
   </div>
 </div>
@@ -452,21 +462,65 @@ async function startApp(user){
   await Promise.all([loadProducts(), loadSettings(), loadAdmins()]);
 }
 
-/* ==================== AUTH ==================== */
+/* ==================== AUTH (OTP code) ==================== */
+let PENDING_EMAIL = '';
+
 document.getElementById('login-btn').onclick = async ()=>{
   const email = document.getElementById('email').value.trim();
   if (!email) return;
   const btn = document.getElementById('login-btn'); btn.disabled=true; btn.textContent='Надсилаю…';
   const msg = document.getElementById('auth-msg');
-  const { error } = await SB.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.href } });
+  const { error } = await SB.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true }
+  });
   if (error){
     msg.className='auth-msg show err'; msg.textContent=error.message;
-    btn.disabled=false; btn.textContent='Надіслати лінк';
+    btn.disabled=false; btn.textContent='Надіслати код';
   } else {
-    msg.className='auth-msg show ok'; msg.textContent='✓ Перевірте пошту — надіслано magic-link для входу.';
+    PENDING_EMAIL = email;
+    msg.className='auth-msg show ok'; msg.textContent='✓ Код надіслано на ' + email + '. Перевірте пошту (включно з папкою «Спам»).';
     btn.textContent='✓ Надіслано';
+    document.getElementById('otp-step').style.display='block';
+    setTimeout(()=>document.getElementById('otp').focus(), 100);
   }
 };
+
+document.getElementById('verify-btn').onclick = async ()=>{
+  const token = document.getElementById('otp').value.trim();
+  if (!token || token.length !== 6){
+    const msg = document.getElementById('auth-msg');
+    msg.className='auth-msg show err'; msg.textContent='Введіть 6-значний код з пошти';
+    return;
+  }
+  const btn = document.getElementById('verify-btn'); btn.disabled=true; btn.textContent='Перевіряю…';
+  const msg = document.getElementById('auth-msg');
+  const { error } = await SB.auth.verifyOtp({
+    email: PENDING_EMAIL,
+    token,
+    type: 'email'
+  });
+  if (error){
+    msg.className='auth-msg show err'; msg.textContent='Невірний код: ' + error.message;
+    btn.disabled=false; btn.textContent='Увійти';
+  } else {
+    msg.className='auth-msg show ok'; msg.textContent='✓ Вхід успішний, завантажую…';
+  }
+};
+
+document.getElementById('otp').addEventListener('keypress', e=>{
+  if (e.key === 'Enter') document.getElementById('verify-btn').click();
+});
+
+document.getElementById('back-btn').onclick = ()=>{
+  PENDING_EMAIL = '';
+  document.getElementById('otp-step').style.display='none';
+  document.getElementById('login-btn').disabled=false;
+  document.getElementById('login-btn').textContent='Надіслати код';
+  document.getElementById('auth-msg').className='auth-msg';
+  document.getElementById('email').focus();
+};
+
 document.getElementById('logout-btn').onclick = ()=>SB.auth.signOut();
 
 /* ==================== NAV ==================== */
@@ -706,50 +760,4 @@ async function loadAdmins(){
 }
 
 function renderAdmins(){
-  const box = document.getElementById('admin-list');
-  box.innerHTML = ADMINS.map(a=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)">
-    <div><b>${escapeHtml(a.email)}</b><div style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-60);margin-top:2px">${new Date(a.created_at).toLocaleString('uk-UA')}</div></div>
-    ${a.email !== USER.email ? `<button class="btn ghost" onclick="delAdmin('${escapeHtml(a.email)}')">✕</button>` : '<span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-60)">ви</span>'}
-  </div>`).join('');
-}
-
-document.getElementById('admin-add').onclick = async ()=>{
-  const email = prompt('Email нового адміна:'); if (!email) return;
-  const { error } = await SB.from('ulhome_admins').insert({ email: email.trim().toLowerCase() });
-  if (error) toast(error.message,'err'); else { toast('Додано'); await loadAdmins(); }
-};
-async function delAdmin(email){
-  if (!confirm('Видалити адміна '+email+'?')) return;
-  const { error } = await SB.from('ulhome_admins').delete().eq('email', email);
-  if (error) toast(error.message,'err'); else { toast('Видалено'); await loadAdmins(); }
-}
-
-/* ==================== ORDERS ==================== */
-async function loadOrders(){
-  const { data, error } = await SB.from('ulhome_orders').select('*').order('created_at',{ascending:false});
-  const tbl = document.getElementById('ord-table');
-  const head = tbl.querySelector('.head');
-  tbl.innerHTML = ''; tbl.appendChild(head);
-  if (error){ tbl.innerHTML += '<div class="empty">'+error.message+'</div>'; return; }
-  if (!data || !data.length){ tbl.innerHTML += '<div class="empty">Замовлень ще немає</div>'; return; }
-  data.forEach(o=>{
-    const row = document.createElement('div');
-    row.className='ord-row';
-    row.innerHTML = `
-      <div class="num">#${o.number}</div>
-      <div>${escapeHtml(o.customer_name||'—')}</div>
-      <div>${escapeHtml(o.customer_phone||'—')}</div>
-      <div>${new Date(o.created_at).toLocaleString('uk-UA')}</div>
-      <div>${fmtPrice(o.total)}</div>
-      <div><span class="ord-status ${o.status}">${o.status}</span></div>
-    `;
-    tbl.appendChild(row);
-  });
-}
-
-// Load orders when switching to that page
-document.querySelector('[data-page="orders"]').addEventListener('click', loadOrders);
-</script>
-
-</body>
-</html>
+  const box = document.getElementById('ad
