@@ -580,9 +580,12 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .modal-close:hover{background:var(--ink);color:#fff;transform:rotate(90deg)}
 .modal-img{background:var(--bg-alt);height:100%;overflow:hidden;position:relative;aspect-ratio:4/5}
 .modal-img img{width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-drag:none}
-.modal-dots{display:none;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);gap:6px;z-index:4;padding:5px 10px;background:rgba(14,14,14,.35);backdrop-filter:blur(6px);border-radius:999px}
+.modal-dots{display:none;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);gap:6px;z-index:4;padding:5px 10px;background:rgba(14,14,14,.45);backdrop-filter:blur(6px);border-radius:999px;align-items:center}
 .modal-dots button{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.45);border:0;padding:0;cursor:pointer;transition:all .2s}
 .modal-dots button.active{background:#fff;width:18px;border-radius:4px}
+.modal-dots.as-counter{padding:4px 12px}
+.modal-dots .m-counter{font-family:var(--font-mono);font-size:11px;color:#fff;letter-spacing:.08em}
+.modal-dots .m-counter b{font-weight:700}
 .modal-gallery{position:absolute;bottom:14px;left:14px;display:flex;gap:6px}
 .modal-gallery button{
   width:48px;height:48px;border-radius:8px;overflow:hidden;background:#fff;
@@ -844,7 +847,6 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .hero-prev{min-width:95px;flex-shrink:0;aspect-ratio:4/5}
   .hero-prev-count{align-self:center;margin-top:0;min-width:60px;flex-shrink:0}
   .coll-head,.tech-head,.classics-head,.faq-in,.khark-in,.surv-wrap{grid-template-columns:1fr;gap:28px}
-  .feat-card{aspect-ratio:3/2.3}
   .grid{grid-template-columns:repeat(2,1fr);gap:8px}
   .tech-grid{grid-template-columns:repeat(3,1fr)}
   .foot-top{grid-template-columns:1fr 1fr;gap:30px}
@@ -868,9 +870,11 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .coll-toolbar{flex-direction:column;gap:12px;align-items:stretch}
   .coll-chips{width:100%;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;padding-bottom:2px;justify-content:flex-start}
   .coll-chips::-webkit-scrollbar{display:none}
-  .feat-card{aspect-ratio:4/5;margin-bottom:10px}
+  .feat-card{margin-bottom:10px}
+  /* hide duplicate title/tagline on mobile — they're shown in overlay */
+  .feat-left .feat-tagline,
+  .feat-left .feat-title{display:none}
   .feat-bottom{flex-direction:column;align-items:flex-start;gap:14px}
-  .feat-title{font-size:44px}
   .tech-sec,.classics,.khark,.surv,.faq-sec{padding:48px 0}
   .tech-grid{grid-template-columns:repeat(2,1fr)}
   .tech-card{min-height:140px;padding:16px 14px}
@@ -887,8 +891,8 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .modal{grid-template-columns:1fr;max-height:94vh;border-radius:18px 18px 0 0;animation:sheetIn .35s cubic-bezier(.2,.8,.2,1)}
   @keyframes sheetIn{from{transform:translateY(100%)}to{transform:translateY(0)}}
   .modal::before{content:"";position:sticky;top:0;display:block;width:44px;height:4px;margin:10px auto -6px;background:var(--line);border-radius:999px;z-index:3}
-  .modal-img{aspect-ratio:4/3;height:auto;max-height:44vh}
-  .modal-body{padding:22px 20px 40px;max-height:60vh}
+  .modal-img{aspect-ratio:4/5;height:auto;max-height:none}
+  .modal-body{padding:22px 20px 40px;max-height:none}
   .modal-title{font-size:22px}
   .mod-sizes{grid-template-columns:repeat(3,1fr)}
   .sh-sizes{grid-template-columns:repeat(5,1fr)}
@@ -2013,12 +2017,18 @@ function openModal(uid){
       `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${src}" loading="lazy"></button>`
     ).join('');
   }
-  // dots for mobile
+  // dots for mobile — over 8 photos show a compact counter instead
   const dots = document.getElementById('m_dots');
   if(dots){
-    dots.innerHTML = photos.map((_,i)=>
-      `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})" aria-label="Фото ${i+1}"></button>`
-    ).join('');
+    if (photos.length > 8){
+      dots.classList.add('as-counter');
+      dots.innerHTML = `<span class="m-counter"><b id="m_counter_cur">1</b> / ${photos.length}</span>`;
+    } else {
+      dots.classList.remove('as-counter');
+      dots.innerHTML = photos.map((_,i)=>
+        `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})" aria-label="Фото ${i+1}"></button>`
+      ).join('');
+    }
   }
   if (photos[0]) document.getElementById('m_img').src = photos[0];
 
@@ -2046,6 +2056,7 @@ function setModalPhoto(i){
   // update strip + dots active state
   document.querySelectorAll('.modal-strip button').forEach((b,ii)=>b.classList.toggle('active', ii===idx));
   document.querySelectorAll('#m_dots button').forEach((d,ii)=>d.classList.toggle('active', ii===idx));
+  const cnt = document.getElementById('m_counter_cur'); if(cnt) cnt.textContent = String(idx+1);
 }
 // legacy fn kept for safety (no longer referenced from rendered HTML)
 function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = src; }
