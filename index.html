@@ -291,6 +291,22 @@ input,textarea,select{font:inherit;color:inherit}
   pointer-events:none;
 }
 .feat-photo-stack{position:relative;width:100%;height:100%}
+
+/* overlay text over photo — family name on top */
+.feat-overlay{
+  position:absolute;z-index:4;top:clamp(14px,2.4vw,22px);left:clamp(16px,2.4vw,24px);
+  pointer-events:none;max-width:70%;
+}
+.feat-overlay-tag{
+  font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-60);margin-bottom:4px;
+}
+.feat-overlay-title{
+  font-size:clamp(40px,5.5vw,72px);font-weight:900;line-height:.9;letter-spacing:-.03em;
+  text-transform:uppercase;color:var(--ink);margin:0;
+  text-shadow:0 1px 0 rgba(255,255,255,.4);
+}
+.feat-overlay-title sup{font-size:.28em;vertical-align:super;font-weight:600;color:var(--warm-grey);margin-left:2px}
 .feat-photo{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   padding:0;opacity:0;transform:scale(.94);
@@ -367,10 +383,15 @@ input,textarea,select{font:inherit;color:inherit}
   .feat-photo{padding:0}
   .feat-photo img{width:112%;height:112%;object-fit:cover;object-position:center}
   .feat-card[data-fam="SHAPE"] .feat-photo img{width:100%;height:100%;object-fit:cover}
+  .feat-overlay{top:16px;left:18px;max-width:62%}
+  .feat-overlay-title{font-size:clamp(38px,11vw,56px)}
+  .feat-overlay-tag{font-size:10px}
 }
 @media (max-width:540px){
   .feat-right{min-height:0;aspect-ratio:4/5}
   .feat-photo img{width:108%;height:108%;object-fit:cover}
+  .feat-overlay{top:14px;left:16px}
+  .feat-overlay-title{font-size:clamp(34px,11.5vw,48px)}
 }
 
 /* Product cards grid */
@@ -1713,6 +1734,10 @@ function renderFeatured(){
         </div>
       </div>
       <div class="feat-right" onclick="${handler}">
+        <div class="feat-overlay">
+          <div class="feat-overlay-tag">${meta.tag}</div>
+          <h3 class="feat-overlay-title">${fam}<sup>\u2122</sup></h3>
+        </div>
         <div class="feat-colors-tr" onclick="event.stopPropagation()">${swatchHtml}</div>
         <div class="feat-photo-stack">${photosHtml}</div>
       </div>
@@ -2269,12 +2294,4 @@ renderGrid();
   const REEL  = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>';
   igGrid.innerHTML = TILES.map(t => `<a class="ig-tile" href="https://www.instagram.com/${HANDLE}/" target="_blank" rel="noopener">
     <img src="${t.img}" alt="" loading="lazy">
-    ${t.type === 'reel' ? '<div class="reel-badge">' + REEL + '</div>' : ''}
-    <div class="overlay"><span>' + HEART + '${t.likes}</span><span>' + CHAT + '${t.comments}</span></div>
-  </a>`).join('');
-})();
-
-</script>
-</body>
-</html>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+    ${t.type === 're
