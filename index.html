@@ -2294,4 +2294,11 @@ renderGrid();
   const REEL  = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>';
   igGrid.innerHTML = TILES.map(t => `<a class="ig-tile" href="https://www.instagram.com/${HANDLE}/" target="_blank" rel="noopener">
     <img src="${t.img}" alt="" loading="lazy">
-    ${t.type === 're
+    ${t.type === 'reel' ? '<div class="reel-badge">' + REEL + '</div>' : ''}
+    <div class="overlay"><span>' + HEART + '${t.likes}</span><span>' + CHAT + '${t.comments}</span></div>
+  </a>`).join('');
+})();
+
+</script>
+</body>
+</html>
