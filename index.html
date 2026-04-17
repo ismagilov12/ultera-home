@@ -934,20 +934,10 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;
 }
 .ace-bottom-panel{
-  background:
-    linear-gradient(135deg, rgba(10,10,10,.82) 0%, rgba(20,20,22,.5) 55%, rgba(173,210,125,.09) 100%);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:22px;
-  padding:18px 22px 18px;max-width:560px;
-  display:flex;flex-direction:column;gap:14px;
-  box-shadow:0 24px 60px -24px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
-  position:relative;overflow:hidden;
-}
-.ace-bottom-panel::before{
-  content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
-  background:radial-gradient(60% 80% at 100% 0%, rgba(173,210,125,.18), transparent 60%);
-  mix-blend-mode:screen;opacity:.9;
+  background:transparent;
+  padding:0;max-width:560px;
+  display:flex;flex-direction:column;gap:12px;
+  position:relative;
 }
 
 /* chips row (inline benefits) */
@@ -1175,26 +1165,11 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <span class="ace-chip"><i class="ace-dot-m"></i>Гарантія 1 рік</span>
         <span class="ace-chip"><i class="ace-dot-m"></i>Повернення без питань</span>
       </div>
-      <div class="ace-hook">
-        <div class="ace-hook-title">Знайди свою пару.</div>
-        <div class="ace-hook-sub">Преміум матеріали, ручна робота в Харкові з 2019. Доставка по всій Україні.</div>
-      </div>
       <div class="ace-cta-row">
         <a class="ace-cta" href="#collection">
           Обрати пару
           <span class="ace-cta-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
         </a>
-        <div class="ace-proof">
-          <div class="ace-avatars" aria-hidden="true">
-            <span class="ace-av"></span>
-            <span class="ace-av"></span>
-            <span class="ace-av"></span>
-          </div>
-          <div class="ace-proof-text">
-            <b>4 800+</b>
-            <span>задоволених власників</span>
-          </div>
-        </div>
       </div>
     </div>
     <div class="ace-dots" id="aceDots" aria-label="Слайди головної">
@@ -1648,7 +1623,7 @@ function renderFeatured(){
     'SHAPE':     { serial:'SHAPE-BF', badge:'EXTERNAL \u2197', tag:'ANATOMIC \u00b7 BAREFOOT',
                    sub:'Анатомічні тапочки з італійської замші. Barefoot-форма, 10 кольорів.',
                    specs:[['SOLE','PU anatomic'],['UPPER','Italian suede'],['COLORS','10'],['SEASON','S/S 26']],
-                   handler:`window.open('https://ultera-shape-landing.vercel.app/','_blank','noopener')` },
+                   handler:null },
     'Hunk':      { serial:'HUNK-01', badge:'CLASSIC', tag:'ORIGINAL \u00b7 PROVEN',
                    sub:'Перша генерація Hunk — флагман, з якого почалась ULTERA. 1000+ пар у носінні.',
                    specs:[['SOLE','EVA'],['UPPER','Nappa + Mesh'],['MADE','1000+ pairs'],['WARRANTY','1 year']],
@@ -1728,7 +1703,7 @@ function renderFeatured(){
         </div>
         <div class="feat-bottom">
           <button class="feat-discover" onclick="event.stopPropagation();${handler}">
-            ${fam === 'SHAPE' ? 'Open site' : 'Discover'}
+            Discover
             <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </button>
           <div class="feat-price">${priceOld}<span class="cur">${priceText}</span></div>
@@ -1810,10 +1785,7 @@ function renderGrid(){
 /* ————— FILTER ————— */
 document.getElementById('chips').addEventListener('click', e=>{
   const b = e.target.closest('.coll-chip'); if(!b) return;
-  if(b.dataset.fam === 'SHAPE'){
-    window.open('https://ultera-shape-landing.vercel.app/','_blank','noopener');
-    return;
-  }
+  // SHAPE тепер фільтрується як інші — без зовнішнього редіректа
   document.querySelectorAll('.coll-chip').forEach(c=>c.classList.remove('active'));
   b.classList.add('active');
   const f = b.dataset.fam;
@@ -1958,7 +1930,7 @@ function renderHeroSide(i){
 function openModal(uid){
   const p = findProduct(uid);
   if(!p) return;
-  if(p.family === 'SHAPE'){ window.open('https://ultera-shape-landing.vercel.app/','_blank','noopener'); return; }
+  // SHAPE тепер відкриває модалку як інші товари
   const row = findFamily(p.family);
   currentColor = p.uid;
   document.getElementById('m_fam').textContent = p.family + (p.mark ? ' · ' + p.mark : '');
@@ -2302,3 +2274,4 @@ renderGrid();
 </script>
 </body>
 </html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
