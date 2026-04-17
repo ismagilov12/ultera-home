@@ -241,7 +241,7 @@ input,textarea,select{font:inherit;color:inherit}
 /* ==================== COLLECTION SECTION ==================== */
 .coll{padding:80px 0 40px}
 .coll-head{display:grid;grid-template-columns:1.6fr 1fr;gap:60px;margin-bottom:40px;align-items:end;overflow:hidden}
-.coll-title{font-size:clamp(48px,8vw,120px);font-weight:900;line-height:.86;letter-spacing:-.04em;text-transform:uppercase;overflow-wrap:break-word;hyphens:auto;max-width:100%;word-break:break-word}
+.coll-title{font-size:clamp(38px,6vw,88px);font-weight:900;line-height:.86;letter-spacing:-.04em;text-transform:uppercase;overflow-wrap:normal;hyphens:none;max-width:100%;word-break:keep-all}
 .coll-title .slash{color:var(--warm-grey);font-weight:400;margin:0 .1em}
 .coll-title .acc{color:transparent;-webkit-text-stroke:1.5px var(--ink);text-stroke:1.5px var(--ink);font-style:normal}
 .coll-meta{display:flex;flex-direction:column;gap:8px;padding-bottom:8px}
@@ -293,10 +293,14 @@ input,textarea,select{font:inherit;color:inherit}
 }
 .feat-photo-stack{position:relative;width:100%;height:100%}
 
-/* overlay text over photo — family name on top */
+/* overlay text over photo — family name on top (mobile only; on desktop it's duplicate of feat-left title) */
 .feat-overlay{
+  display:none;
   position:absolute;z-index:4;top:clamp(14px,2.4vw,22px);left:clamp(16px,2.4vw,24px);
   pointer-events:none;max-width:70%;
+}
+@media (max-width:900px){
+  .feat-overlay{display:block}
 }
 .feat-overlay-tag{
   font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
@@ -1116,20 +1120,20 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
     <span>[ ULTERA™ S/S 26 ]</span>
     <span>BATCH #0427</span>
     <span>KHARKIV · UA</span>
-    <span><em>FREE DELIVERY</em> FROM 2 PAIRS</span>
+    <span><em>БЕЗКОШТОВНА ДОСТАВКА</em> FROM 2 PAIRS</span>
     <span>WARRANTY 1Y</span>
     <span>HANDCRAFTED</span>
     <span>[ ULTERA™ S/S 26 ]</span>
     <span>BATCH #0427</span>
     <span>KHARKIV · UA</span>
-    <span><em>FREE DELIVERY</em> FROM 2 PAIRS</span>
+    <span><em>БЕЗКОШТОВНА ДОСТАВКА</em> FROM 2 PAIRS</span>
     <span>WARRANTY 1Y</span>
     <span>HANDCRAFTED</span>
   </div>
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v28 · name-under + svg-icons</div>
+<div class="build-tag">v30 · pc-no-overlay</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -1153,11 +1157,11 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </header>
 
 <div class="mobile-menu" id="mobileMenu">
-  <a href="#collection" onclick="closeMenu()">Collection</a>
+  <a href="#collection" onclick="closeMenu()">Колекція</a>
   <a href="#" data-filter="Hunk3" onclick="closeMenu()">Hunk3</a>
   <a href="#" data-filter="Aganta" onclick="closeMenu()">Aganta</a>
   <a href="https://ultera-shape-landing.vercel.app/" target="_blank" rel="noopener">SHAPE ↗</a>
-  <a href="#story" onclick="closeMenu()">Story</a>
+  <a href="#story" onclick="closeMenu()">Історія</a>
   <a href="#faq" onclick="closeMenu()">FAQ</a>
   <div class="mm-meta">
     <span>UA · EN</span>
@@ -1251,7 +1255,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
       <h1 class="hero-title" id="heroTitle">Hunk <em>03</em><span class="trade">™</span></h1>
       <div class="hero-meta">
         <div class="hero-meta-row">
-          <div class="lbl">SIZE</div>
+          <div class="lbl">РОЗМІР</div>
           <div class="opts">
             <button class="opt" data-sz="40">40</button>
             <button class="opt active" data-sz="41">41</button>
@@ -1262,7 +1266,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
           </div>
         </div>
         <div class="hero-meta-row">
-          <div class="lbl">COLOUR</div>
+          <div class="lbl">КОЛІР</div>
           <div class="opts" id="heroColours">
             <button class="opt colour active" data-color="allBlack"><span class="sw" style="background:#0a0a0a"></span>BLACK</button>
             <button class="opt colour" data-color="Wine"><span class="sw" style="background:#5b1422"></span>WINE</button>
@@ -1277,7 +1281,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
           <svg viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></svg>
         </button>
         <div class="cta-meta">
-          <div class="label" id="heroCtaLabel">Discover collection</div>
+          <div class="label" id="heroCtaLabel">Переглянути колекцію</div>
           <div class="price" id="heroPrice"><s>4 190 ₴</s>від 3 790 ₴</div>
         </div>
       </div>
@@ -1332,10 +1336,10 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 <!-- MARQUEE -->
 <div class="marquee">
   <div class="run">
-    <span>NAPPA ITALY</span><span>CORDURA 1000D</span><span>BOUNCE EVA</span>
-    <span>REFLECTIVE LACES</span><span>HANDCRAFTED KHARKIV</span><span>1Y WARRANTY</span>
-    <span>NAPPA ITALY</span><span>CORDURA 1000D</span><span>BOUNCE EVA</span>
-    <span>REFLECTIVE LACES</span><span>HANDCRAFTED KHARKIV</span><span>1Y WARRANTY</span>
+    <span>NAPPA ITALY</span><span>ДИХАЮЧА СІТКА</span><span>BOUNCE EVA</span>
+    <span>REFLECTIVE LACES</span><span>РУЧНА РОБОТА · ХАРКІВ</span><span>1Y WARRANTY</span>
+    <span>NAPPA ITALY</span><span>ДИХАЮЧА СІТКА</span><span>BOUNCE EVA</span>
+    <span>REFLECTIVE LACES</span><span>РУЧНА РОБОТА · ХАРКІВ</span><span>1Y WARRANTY</span>
   </div>
 </div>
 
@@ -1343,14 +1347,14 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 <section class="coll" id="collection">
   <div class="wide">
     <div class="coll-head reveal">
-      <h1 class="coll-title">New<span class="slash">/</span><br><em class="acc">Collection</em></h1>
+      <h1 class="coll-title">Нова<span class="slash">/</span><br><em class="acc">Колекція</em></h1>
       <div class="coll-meta">
-        <div class="tag em">NEW COLLECTION</div>
+        <div class="tag em">НОВА КОЛЕКЦІЯ</div>
         <div class="tag">SERIES_01</div>
         <div class="tag">SS26 PUFFERS</div>
         <div class="desc">
-          <strong>Handcrafted sneakers</strong> with Italian Nappa leather, breathable mesh and Cordura shell.
-          New Bounce EVA sole — reactive cushioning, built to last.
+          <strong>Ручна робота з Харкова.</strong> Італійська шкіра Nappa, дихаюча сітка —
+          основа кожної пари. Нова підошва Bounce EVA — активна амортизація, служить роками.
         </div>
       </div>
     </div>
@@ -1358,7 +1362,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
     <div class="coll-toolbar">
       <div class="count"><b id="countNum">27</b> <span id="countLbl">моделей</span> · <span>8 сімей</span></div>
       <div class="coll-chips" id="chips">
-        <button class="coll-chip active" data-fam="all">All</button>
+        <button class="coll-chip active" data-fam="all">Усі</button>
         <button class="coll-chip" data-fam="Hunk3">Hunk3</button>
         <button class="coll-chip" data-fam="Aganta">Aganta</button>
         <button class="coll-chip" data-fam="SHAPE">SHAPE ↗</button>
@@ -1369,7 +1373,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <button class="coll-chip" data-fam="Spider">Spider</button>
       </div>
       <button class="filter-btn" onclick="toast('Фільтри скоро')">
-        FILTERS
+        ФІЛЬТРИ
         <svg viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
       </button>
     </div>
@@ -1384,19 +1388,19 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 <section class="surv" id="story">
   <div class="wide surv-wrap reveal">
     <div class="surv-img">
-      <div class="surv-img-chip mono">MADE BY HAND · <b>Kharkiv, UA</b></div>
+      <div class="surv-img-chip mono">РУЧНА РОБОТА · <b>Харків, UA</b></div>
       <img src="banners/work-wide.jpg" alt="ULTERA workshop">
     </div>
     <div class="surv-content">
-      <div class="surv-eyebrow">[ ABOUT THE KIT ]</div>
+      <div class="surv-eyebrow">[ ПРО НАБІР ]</div>
       <h2 class="surv-title">Ultera<br><em>Antagonist</em><br>Survival Kit.</h2>
       <p class="surv-para">Ми не просто шиємо кросівки. Ми робимо <strong>technical survival kit</strong> для міста — взуття, що захищає стопу від асфальту, волокна від дощу, силует — від сірості.</p>
       <p class="surv-para">Третя генерація Hunk з підошвою Bounce. Активна амортизація, яка повертає енергію кроку. Легше Hunk2 на 18%, стійкіша на знос.</p>
       <div class="surv-specs">
-        <div class="surv-spec"><span class="k">BATCH</span><span class="v">#0427</span></div>
-        <div class="surv-spec"><span class="k">WEIGHT</span><span class="v">480 g</span></div>
-        <div class="surv-spec"><span class="k">LEAD TIME</span><span class="v">4—10 DAYS</span></div>
-        <div class="surv-spec"><span class="k">ORIGIN</span><span class="v">KHARKIV, UA</span></div>
+        <div class="surv-spec"><span class="k">ПАРТІЯ</span><span class="v">#0427</span></div>
+        <div class="surv-spec"><span class="k">ВАГА</span><span class="v">480 g</span></div>
+        <div class="surv-spec"><span class="k">ТЕРМІН</span><span class="v">4—10 DAYS</span></div>
+        <div class="surv-spec"><span class="k">КРАЇНА</span><span class="v">KHARKIV, UA</span></div>
       </div>
       <a class="surv-cta" href="#collection">
         Discover Hunk3
@@ -1410,7 +1414,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 <section class="classics" style="display:none">
   <div class="wide">
     <div class="classics-head reveal">
-      <h2>Core<br><em>Classics.</em></h2>
+      <h2>Класика<br><em>Classics.</em></h2>
       <div class="classics-meta mono">
         <p>[ PROVEN ] [ BUILD ] [ DAILY-DRIVER ]</p>
         <p>Моделі, які збирали тисячу разів і вдосконалили до деталі.<br>Випробувані часом — Hunk, Hunk2, Lite, Spider, BRFT.</p>
@@ -1429,10 +1433,10 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
       <p><strong>ULTERA</strong> — український бренд з Харкова. Починали з одного Hunk у 2021-му. За 3 роки виготовили 1000+ пар, які служать своїм власникам по 2–4 роки щоденного носіння.</p>
       <p>Ручна робота, контроль кожного шва, чесні матеріали. Все, що ми продаємо — носимо самі.</p>
       <div class="khark-stats">
-        <div class="khark-stat"><div class="n">1000+</div><div class="l">Pairs made</div></div>
-        <div class="khark-stat"><div class="n">27</div><div class="l">Models</div></div>
-        <div class="khark-stat"><div class="n">12</div><div class="l">QC steps</div></div>
-        <div class="khark-stat"><div class="n">1y</div><div class="l">Warranty</div></div>
+        <div class="khark-stat"><div class="n">1000+</div><div class="l">Пар виготовлено</div></div>
+        <div class="khark-stat"><div class="n">27</div><div class="l">Моделі</div></div>
+        <div class="khark-stat"><div class="n">12</div><div class="l">Кроків контролю</div></div>
+        <div class="khark-stat"><div class="n">1y</div><div class="l">Гарантія</div></div>
       </div>
     </div>
     <div class="khark-img">
@@ -1450,14 +1454,14 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
     <div class="ig-head reveal">
       <div class="ig-head-left">
         <div class="eyebrow">Instagram</div>
-        <h2>Follow<br><em>@ultera.in.ua</em></h2>
+        <h2>Підписатися<br><em>@ultera.in.ua</em></h2>
         <div class="handle mono">• Latest moments from the workshop</div>
       </div>
       <div class="ig-head-right">
         <div class="ig-stats">
-          <div class="ig-stat"><div class="n">12.4k</div><div class="l">Followers</div></div>
-          <div class="ig-stat"><div class="n">480</div><div class="l">Posts</div></div>
-          <div class="ig-stat"><div class="n">★ 4.9</div><div class="l">Rating</div></div>
+          <div class="ig-stat"><div class="n">12.4k</div><div class="l">Підписники</div></div>
+          <div class="ig-stat"><div class="n">480</div><div class="l">Пости</div></div>
+          <div class="ig-stat"><div class="n">★ 4.9</div><div class="l">Рейтинг</div></div>
         </div>
         <a class="ig-follow" href="https://www.instagram.com/ultera.in.ua/" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24"><path d="M12 2c2.7 0 3 0 4.1.1 1 0 1.7.2 2.3.5.6.3 1.1.6 1.6 1.1.5.5.8 1 1.1 1.6.3.6.4 1.3.5 2.3 0 1.1.1 1.4.1 4.1s0 3-.1 4.1c0 1-.2 1.7-.5 2.3-.3.6-.6 1.1-1.1 1.6-.5.5-1 .8-1.6 1.1-.6.3-1.3.4-2.3.5-1.1.1-1.4.1-4.1.1s-3 0-4.1-.1c-1 0-1.7-.2-2.3-.5-.6-.3-1.1-.6-1.6-1.1-.5-.5-.8-1-1.1-1.6-.3-.6-.4-1.3-.5-2.3C2.1 15 2.1 14.7 2.1 12s0-3 .1-4.1c0-1 .2-1.7.5-2.3.3-.6.6-1.1 1.1-1.6.5-.5 1-.8 1.6-1.1.6-.3 1.3-.4 2.3-.5C9 2 9.3 2 12 2zm0 3.4a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm0 2.1a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8zm4.7-2.4a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
@@ -1509,23 +1513,23 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         </div>
       </div>
       <div class="foot-col">
-        <h4>Shop</h4>
-        <a href="#collection">All models</a>
+        <h4>Каталог</h4>
+        <a href="#collection">Усі моделі</a>
         <a href="#" data-filter="Hunk3">Hunk3</a>
         <a href="#" data-filter="Aganta">Aganta</a>
         <a href="https://ultera-shape-landing.vercel.app/" target="_blank" rel="noopener">SHAPE ↗</a>
         <a href="#" data-filter="Hunk BRFT">BRFT</a>
       </div>
       <div class="foot-col">
-        <h4>Support</h4>
-        <a href="#">Size guide</a>
-        <a href="#">Shipping</a>
-        <a href="#">Returns</a>
-        <a href="#">Care</a>
+        <h4>Підтримка</h4>
+        <a href="#">Таблиця розмірів</a>
+        <a href="#">Доставка</a>
+        <a href="#">Повернення</a>
+        <a href="#">Догляд</a>
         <a href="#faq">FAQ</a>
       </div>
       <div class="foot-col">
-        <h4>Contact</h4>
+        <h4>Контакти</h4>
         <a href="tel:+380">+38 (0xx) xxx-xx-xx</a>
         <a href="mailto:hello@ultera.in.ua">hello@ultera.in.ua</a>
         <a href="#">Instagram</a>
@@ -1534,7 +1538,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
     </div>
     <div class="foot-tape">
       <span>[ ULTERA™ 2026 ] · BATCH #0427 · KHARKIV, UA</span>
-      <span>HANDCRAFTED · 1Y WARRANTY</span>
+      <span>РУЧНА РОБОТА · ГАРАНТІЯ 1 РІК</span>
     </div>
     <div class="foot-bottom">
       <span>© 2026 ULTERA. All rights reserved.</span>
@@ -1550,7 +1554,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
     <div class="modal-img" id="m_img_wrap">
       <button class="video-btn" id="mVideoBtn" onclick="toast('Video — coming soon')">
         <span class="play"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7L7 5Z" fill="currentColor"/></svg></span>
-        <span class="lbl">VIDEO</span>
+        <span class="lbl">ВІДЕО</span>
       </button>
       <img id="m_img" src="" alt="">
       <div class="modal-dots" id="m_dots" aria-hidden="true"></div>
@@ -1562,7 +1566,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
       <div class="modal-sku" id="m_sku"></div>
 
       <div class="ms ms-swatches-top">
-        <div class="ms-label">Color · <b id="m_color_name"></b></div>
+        <div class="ms-label">Колір · <b id="m_color_name"></b></div>
         <div class="mod-swatches" id="m_swatches"></div>
       </div>
 
@@ -1593,7 +1597,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
       </div>
 
       <div class="ms">
-        <div class="ms-label">Size · <span>EU / CM</span></div>
+        <div class="ms-label">Розмір · <span>ЄС / СМ</span></div>
         <div class="mod-sizes" id="m_sizes"></div>
         <button class="size-helper-btn" id="shOpen" onclick="toggleSizeHelper()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -1602,7 +1606,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 
         <div class="size-helper" id="shBox">
           <div class="sh-head">
-            <h4>Size helper</h4>
+            <h4>Підбір розміру</h4>
             <button class="sh-close" onclick="toggleSizeHelper()">✕</button>
           </div>
           <div class="sh-progress">
@@ -1629,20 +1633,20 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
           <div class="sh-panel" id="shStep3">
             <div class="sh-label">Повнота стопи</div>
             <div class="sh-width">
-              <button onclick="shPickWidth(this,'narrow')"><span class="ic">👣</span>Narrow</button>
-              <button class="selected" onclick="shPickWidth(this,'normal')"><span class="ic">👟</span>Regular</button>
-              <button onclick="shPickWidth(this,'wide')"><span class="ic">🦶</span>Wide</button>
+              <button onclick="shPickWidth(this,'narrow')"><span class="ic">👣</span>Вузьке</button>
+              <button class="selected" onclick="shPickWidth(this,'normal')"><span class="ic">👟</span>Середнє</button>
+              <button onclick="shPickWidth(this,'wide')"><span class="ic">🦶</span>Широке</button>
             </div>
           </div>
           <div class="sh-panel" id="shResult">
             <div class="sh-result">
-              <div class="r-label">Your size</div>
+              <div class="r-label">Ваш розмір</div>
               <div class="r-size" id="shResultSize">42</div>
               <div class="r-conf" id="shResultConf">✓ 99% match</div>
               <div class="r-note" id="shResultNote"></div>
               <div class="r-cta">
                 <button class="apply" onclick="shApply()">Apply <span id="shResultCta">42</span></button>
-                <button class="reset" onclick="shReset()">Recalc</button>
+                <button class="reset" onclick="shReset()">Перерахувати</button>
               </div>
             </div>
           </div>
@@ -1650,15 +1654,15 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
       </div>
 
       <div class="modal-cta">
-        <button class="btn primary" onclick="addToCart()">Add to cart</button>
+        <button class="btn primary" onclick="addToCart()">В кошик</button>
         <button class="btn ghost" onclick="toast('Додано в обране ♥')">♡ Wishlist</button>
       </div>
 
       <div class="modal-specs">
-        <div><span>Upper</span>Nappa + Cordura / Mesh</div>
-        <div><span>Sole</span>Bounce EVA</div>
-        <div><span>Origin</span>Kharkiv, UA</div>
-        <div><span>Lead time</span>4—10 days</div>
+        <div><span>Верх</span>Nappa + дихаюча сітка</div>
+        <div><span>Підошва</span>Bounce EVA</div>
+        <div><span>Країна</span>Харків, UA</div>
+        <div><span>Термін</span>4—10 днів</div>
       </div>
       <div class="modal-desc" id="m_desc"></div>
     </div>
@@ -2416,4 +2420,4 @@ renderGrid();
 </script>
 </body>
 </html>
-                                                                                                                                                                                                                                                                                                                                          
+                                                                                           
