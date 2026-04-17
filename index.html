@@ -578,8 +578,11 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   font-size:16px;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:all .25s;
 }
 .modal-close:hover{background:var(--ink);color:#fff;transform:rotate(90deg)}
-.modal-img{background:var(--bg-alt);height:100%;overflow:hidden;position:relative}
-.modal-img img{width:100%;height:100%;object-fit:cover}
+.modal-img{background:var(--bg-alt);height:100%;overflow:hidden;position:relative;aspect-ratio:4/5}
+.modal-img img{width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-drag:none}
+.modal-dots{display:none;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);gap:6px;z-index:4;padding:5px 10px;background:rgba(14,14,14,.35);backdrop-filter:blur(6px);border-radius:999px}
+.modal-dots button{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.45);border:0;padding:0;cursor:pointer;transition:all .2s}
+.modal-dots button.active{background:#fff;width:18px;border-radius:4px}
 .modal-gallery{position:absolute;bottom:14px;left:14px;display:flex;gap:6px}
 .modal-gallery button{
   width:48px;height:48px;border-radius:8px;overflow:hidden;background:#fff;
@@ -616,12 +619,12 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .modal-body{grid-row:1/3;grid-column:2/3}
 
 @media (max-width:760px){
-  .modal{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
-  .modal-img{grid-row:1/2;grid-column:1/2;aspect-ratio:4/5;height:auto;width:100%}
-  .modal-img img{object-fit:cover}
-  .modal-strip{grid-column:1/2;grid-row:2/3;overflow-x:auto;padding:10px 10px 12px}
-  .modal-body{grid-row:3/4;grid-column:1/2;padding:22px 20px 28px}
-  .modal-strip button{width:76px;height:94px;aspect-ratio:4/5;border-radius:8px}
+  .modal{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .modal-img{grid-row:1/2;grid-column:1/2;aspect-ratio:4/5;height:auto;width:100%;touch-action:pan-y}
+  .modal-img img{object-fit:cover;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+  .modal-strip{display:none}
+  .modal-dots{display:flex}
+  .modal-body{grid-row:2/3;grid-column:1/2;padding:22px 20px 28px}
   .video-btn{top:10px;left:10px;font-size:10px;padding:6px 12px 6px 6px}
 }
 
@@ -1511,12 +1514,13 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-img">
+    <div class="modal-img" id="m_img_wrap">
       <button class="video-btn" id="mVideoBtn" onclick="toast('Video — coming soon')">
         <span class="play"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7L7 5Z" fill="currentColor"/></svg></span>
         <span class="lbl">VIDEO</span>
       </button>
       <img id="m_img" src="" alt="">
+      <div class="modal-dots" id="m_dots" aria-hidden="true"></div>
     </div>
     <div class="modal-strip" id="m_gallery"></div>
     <div class="modal-body">
@@ -1996,16 +2000,27 @@ function openModal(uid){
 
   // photo strip below main image — все фото текущего товара из CSV
   const gal = document.getElementById('m_gallery');
+  const photosArr = (EXTRA_PHOTOS && EXTRA_PHOTOS[uid] && EXTRA_PHOTOS[uid].length)
+    ? EXTRA_PHOTOS[uid]
+    : variants.map(v=>v.photo);
+  // unique photos
+  const photos = [...new Set(photosArr)];
+  window.__modalPhotos = photos;
+  window.__modalPhotoIdx = 0;
+
   if(gal){
-    const photos = (EXTRA_PHOTOS && EXTRA_PHOTOS[uid] && EXTRA_PHOTOS[uid].length)
-      ? EXTRA_PHOTOS[uid]
-      : variants.map(v=>v.photo);
     gal.innerHTML = photos.map((src,i)=>
-      `<button class="${i===0?'active':''}" onclick="swapMainImage(this,'${src}','${uid}')"><img src="${src}" loading="lazy"></button>`
+      `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${src}" loading="lazy"></button>`
     ).join('');
-    // make sure the main photo matches the first thumb
-    if (photos[0]) document.getElementById('m_img').src = photos[0];
   }
+  // dots for mobile
+  const dots = document.getElementById('m_dots');
+  if(dots){
+    dots.innerHTML = photos.map((_,i)=>
+      `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})" aria-label="Фото ${i+1}"></button>`
+    ).join('');
+  }
+  if (photos[0]) document.getElementById('m_img').src = photos[0];
 
   document.getElementById('m_desc').innerHTML = (p.text||'').replace(/<div[^>]*>/g,'').replace(/<\/div>/g,'');
 
@@ -2020,11 +2035,38 @@ function closeModal(){
   document.body.style.overflow = '';
 }
 
-function swapMainImage(btn, src, uid){
-  document.getElementById('m_img').src = src;
-  document.querySelectorAll('.modal-strip button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
+function setModalPhoto(i){
+  const photos = window.__modalPhotos || [];
+  if(!photos.length) return;
+  const n = photos.length;
+  const idx = ((i % n) + n) % n;
+  window.__modalPhotoIdx = idx;
+  const img = document.getElementById('m_img');
+  img.src = photos[idx];
+  // update strip + dots active state
+  document.querySelectorAll('.modal-strip button').forEach((b,ii)=>b.classList.toggle('active', ii===idx));
+  document.querySelectorAll('#m_dots button').forEach((d,ii)=>d.classList.toggle('active', ii===idx));
 }
+// legacy fn kept for safety (no longer referenced from rendered HTML)
+function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = src; }
+
+/* ————— Swipe nav on modal image (mobile) ————— */
+(function(){
+  const wrap = document.getElementById('m_img_wrap');
+  if(!wrap) return;
+  let sx=0, sy=0, dragging=false;
+  wrap.addEventListener('touchstart', e=>{
+    sx=e.touches[0].clientX; sy=e.touches[0].clientY; dragging=true;
+  }, {passive:true});
+  wrap.addEventListener('touchend', e=>{
+    if(!dragging) return; dragging=false;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    if(Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)){
+      setModalPhoto((window.__modalPhotoIdx||0) + (dx < 0 ? 1 : -1));
+    }
+  });
+})();
 
 function addToCart(){
   const sel = document.querySelector('#m_sizes .size-btn.selected');
