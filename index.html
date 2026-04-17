@@ -586,6 +586,36 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .modal-close:hover{background:var(--ink);color:#fff;transform:rotate(90deg)}
 .modal-img{background:var(--bg-alt);height:100%;overflow:hidden;position:relative;aspect-ratio:4/5}
 .modal-img img{width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-drag:none}
+/* title overlay on photo */
+.modal-title-overlay{
+  position:absolute;top:14px;left:16px;right:60px;z-index:3;pointer-events:none;
+}
+.modal-brand-ov{
+  font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;
+  color:var(--ink-60);text-transform:uppercase;margin-bottom:3px;
+}
+.modal-title-ov{
+  font-size:20px;font-weight:900;line-height:1.05;letter-spacing:-.015em;
+  text-transform:uppercase;color:var(--ink);margin:0;
+  text-shadow:0 1px 0 rgba(255,255,255,.4);
+}
+.ms-swatches-top{margin-top:2px;margin-bottom:16px}
+
+/* season picker */
+.mod-seasons{display:flex;gap:8px;flex-wrap:wrap}
+.season-btn{
+  flex:1;min-width:0;display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:12px;background:#fff;
+  border:1.5px solid var(--line);cursor:pointer;transition:all .2s;
+  text-align:left;
+}
+.season-btn:hover{border-color:var(--ink-40)}
+.season-btn.active{border-color:var(--ink);box-shadow:0 0 0 2px var(--mint)}
+.season-ic{font-size:18px;flex-shrink:0;line-height:1}
+.season-txt{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.season-txt b{font-size:12.5px;font-weight:700;color:var(--ink);letter-spacing:-.005em}
+.season-txt span{font-family:var(--font-mono);font-size:9.5px;color:var(--ink-60);letter-spacing:.04em;margin-top:2px}
+
 .modal-dots{display:none;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);gap:6px;z-index:4;padding:5px 10px;background:rgba(14,14,14,.45);backdrop-filter:blur(6px);border-radius:999px;align-items:center}
 .modal-dots button{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.45);border:0;padding:0;cursor:pointer;transition:all .2s}
 .modal-dots button.active{background:#fff;width:18px;border-radius:4px}
@@ -633,8 +663,17 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .modal-img img{object-fit:cover;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
   .modal-strip{display:none}
   .modal-dots{display:flex}
-  .modal-body{grid-row:2/3;grid-column:1/2;padding:22px 20px 28px;overflow:visible;max-height:none}
-  .video-btn{top:10px;left:10px;font-size:10px;padding:6px 12px 6px 6px}
+  .modal-body{grid-row:2/3;grid-column:1/2;padding:18px 20px 28px;overflow:visible;max-height:none}
+  /* title on photo on mobile — hide duplicate in body */
+  .modal-body .modal-brand,.modal-body .modal-title{display:none}
+  .modal-title-overlay{top:72px;left:20px;right:20px}
+  .modal-title-ov{font-size:26px;line-height:.96}
+  .video-btn{top:14px;left:14px;font-size:10px;padding:6px 12px 6px 6px}
+}
+@media (min-width:761px){
+  /* on desktop — overlay hidden, body shows title as before */
+  .modal-title-overlay{display:none}
+  .ms-swatches-top{margin-bottom:22px}
 }
 
 .modal-body{padding:36px 34px 40px;overflow-y:auto;max-height:92vh}
@@ -1108,7 +1147,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v25 · shape-fix</div>
+<div class="build-tag">v26 · modal-overhead</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -1531,6 +1570,10 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <span class="play"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7L7 5Z" fill="currentColor"/></svg></span>
         <span class="lbl">VIDEO</span>
       </button>
+      <div class="modal-title-overlay">
+        <div class="modal-brand-ov" id="m_fam_ov"></div>
+        <h2 class="modal-title-ov" id="m_title_ov"></h2>
+      </div>
       <img id="m_img" src="" alt="">
       <div class="modal-dots" id="m_dots" aria-hidden="true"></div>
     </div>
@@ -1539,11 +1582,26 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
       <div class="modal-brand" id="m_fam"></div>
       <h2 class="modal-title" id="m_title"></h2>
       <div class="modal-sku" id="m_sku"></div>
+
+      <div class="ms ms-swatches-top">
+        <div class="ms-label">Color · <b id="m_color_name"></b></div>
+        <div class="mod-swatches" id="m_swatches"></div>
+      </div>
+
       <div class="modal-price" id="m_price"></div>
 
       <div class="ms">
-        <div class="ms-label">Color · <b id="m_color_name"></b></div>
-        <div class="mod-swatches" id="m_swatches"></div>
+        <div class="ms-label">Версія · <b id="m_season_name">Літо</b></div>
+        <div class="mod-seasons" id="m_seasons">
+          <button class="season-btn active" data-season="summer" onclick="pickSeason(this,'summer','Літо')">
+            <span class="season-ic">☀️</span>
+            <span class="season-txt"><b>Літо</b><span>дихаюча сітка · від +12°</span></span>
+          </button>
+          <button class="season-btn" data-season="spring" onclick="pickSeason(this,'spring','Весна')">
+            <span class="season-ic">🌸</span>
+            <span class="season-txt"><b>Весна / Осінь</b><span>Cordura · до +18°</span></span>
+          </button>
+        </div>
       </div>
 
       <div class="ms">
@@ -1977,8 +2035,12 @@ function openModal(uid){
   // SHAPE тепер відкриває модалку як інші товари
   const row = findFamily(p.family);
   currentColor = p.uid;
-  document.getElementById('m_fam').textContent = p.family + (p.mark ? ' · ' + p.mark : '');
-  document.getElementById('m_title').textContent = p.title.replace('ULTERA - ','').replace('ULTERA ','');
+  const famTxt = p.family + (p.mark ? ' · ' + p.mark : '');
+  const titleTxt = p.title.replace('ULTERA - ','').replace('ULTERA ','');
+  document.getElementById('m_fam').textContent = famTxt;
+  document.getElementById('m_title').textContent = titleTxt;
+  const famOv = document.getElementById('m_fam_ov'); if(famOv) famOv.textContent = famTxt;
+  const tiOv  = document.getElementById('m_title_ov'); if(tiOv) tiOv.textContent = titleTxt;
   document.getElementById('m_sku').textContent = 'SKU · ' + p.uid.slice(-10).toUpperCase();
   document.getElementById('m_img').src = p.photo;
   document.getElementById('m_color_name').textContent = p.color_name;
@@ -2051,6 +2113,13 @@ function openModal(uid){
 function closeModal(){
   document.getElementById('modal').classList.remove('open');
   document.body.style.overflow = '';
+}
+
+function pickSeason(btn, id, label){
+  document.querySelectorAll('.season-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const n = document.getElementById('m_season_name'); if(n) n.textContent = label;
+  window.__modalSeason = id;
 }
 
 function setModalPhoto(i){
