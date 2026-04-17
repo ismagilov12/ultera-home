@@ -8,14 +8,23 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onerror="window.__sbLoadErr='jsdelivr'"></script>
-<script>window.addEventListener('load', ()=>{ if(!window.supabase){
-  // fallback to unpkg if jsdelivr blocked
-  const s=document.createElement('script');
-  s.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-  s.onerror=()=>{window.__sbLoadErr=(window.__sbLoadErr||'')+';unpkg'};
-  document.head.appendChild(s);
-}});</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" onerror="window.__sbLoadErr='jsdelivr'"></script>
+<script>window.addEventListener('DOMContentLoaded', ()=>{
+  // If primary CDN didn't set window.supabase, try fallbacks
+  if (window.supabase) return;
+  const fallbacks = [
+    'https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js',
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js'
+  ];
+  (function next(i){
+    if (i >= fallbacks.length || window.supabase) return;
+    const s = document.createElement('script');
+    s.src = fallbacks[i];
+    s.onload = ()=>{ if (!window.supabase) next(i+1); };
+    s.onerror = ()=>{ window.__sbLoadErr = (window.__sbLoadErr||'')+';'+fallbacks[i].split('//')[1].split('/')[0]; next(i+1); };
+    document.head.appendChild(s);
+  })(0);
+});</script>
 <style>
 :root{
   --ink:#0a0a0a;--ink-60:#5a5a58;--ink-40:#9a9a98;
@@ -746,12 +755,3 @@ document.getElementById('set-save').onclick = async ()=>{
     else if (el.type === 'number') val = parseFloat(el.value)||0;
     else val = el.value;
     rows.push({ key, value: val });
-  });
-  const { error } = await SB.from('ulhome_settings').upsert(rows);
-  if (error) toast(error.message,'err'); else toast('Збережено ✓');
-  btn.disabled=false; btn.textContent='Зберегти';
-};
-
-/* ==================== ADMINS ==================== */
-async function loadAdmins(){
-  const { data, error } = await SB.from('ulhome_admins').select('*').order('crea
