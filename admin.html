@@ -8,7 +8,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onerror="window.__sbLoadErr='jsdelivr'"></script>
+<script>window.addEventListener('load', ()=>{ if(!window.supabase){
+  // fallback to unpkg if jsdelivr blocked
+  const s=document.createElement('script');
+  s.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+  s.onerror=()=>{window.__sbLoadErr=(window.__sbLoadErr||'')+';unpkg'};
+  document.head.appendChild(s);
+}});</script>
 <style>
 :root{
   --ink:#0a0a0a;--ink-60:#5a5a58;--ink-40:#9a9a98;
@@ -431,24 +438,31 @@ let ED_MEDIA = [];
 function toast(msg, type){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(type==='err'?' err':''); setTimeout(()=>t.classList.remove('show'), 3000); }
 
 (async function(){
-  // Wait for supabase UMD to load (up to 8s)
-  for (let i=0; i<80; i++){
+  // Wait for supabase UMD to load (up to 15s)
+  for (let i=0; i<150; i++){
     if (window.supabase && window.supabase.createClient) break;
     await new Promise(r=>setTimeout(r, 100));
   }
   if (!window.supabase || !window.supabase.createClient){
-    document.getElementById('auth-msg').className='auth-msg show err';
-    document.getElementById('auth-msg').textContent='Supabase SDK не завантажився (мережа?). Перевірте підключення та оновіть сторінку.';
+    const msg = document.getElementById('auth-msg');
+    msg.className='auth-msg show err';
+    msg.textContent='Supabase SDK не завантажився'+(window.__sbLoadErr?' ('+window.__sbLoadErr+')':'. Перевірте мережу та оновіть сторінку.');
     return;
   }
-  SB = window.supabase.createClient(
-    'https://fsihlzzjewhxpogvjapu.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU'
-  );
-  const { data:{session} } = await SB.auth.getSession();
-  if (session) startApp(session.user);
-  else showAuth();
-  SB.auth.onAuthStateChange((evt, sess)=>{ if (sess) startApp(sess.user); else showAuth(); });
+  try {
+    SB = window.supabase.createClient(
+      'https://fsihlzzjewhxpogvjapu.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU'
+    );
+    const { data:{session} } = await SB.auth.getSession();
+    if (session) startApp(session.user);
+    // else auth form already visible
+    SB.auth.onAuthStateChange((evt, sess)=>{ if (sess) startApp(sess.user); else showAuth(); });
+  } catch(e){
+    const msg = document.getElementById('auth-msg');
+    msg.className='auth-msg show err';
+    msg.textContent='Init error: '+(e.message||e);
+  }
 })();
 
 function showAuth(){ document.getElementById('auth').style.display='flex'; document.getElementById('app').style.display='none'; }
@@ -476,19 +490,33 @@ document.getElementById('login-btn').onclick = async ()=>{
   if (!email) return;
   const btn = document.getElementById('login-btn'); btn.disabled=true; btn.textContent='Надсилаю…';
   const msg = document.getElementById('auth-msg');
-  const { error } = await SB.auth.signInWithOtp({
-    email,
-    options: { shouldCreateUser: true }
-  });
-  if (error){
-    msg.className='auth-msg show err'; msg.textContent=error.message;
+  msg.className='auth-msg';
+
+  try {
+    if (!SB){
+      msg.className='auth-msg show err';
+      msg.textContent='Supabase SDK ще не завантажився. Спробуйте за 2–3с або оновіть сторінку.';
+      btn.disabled=false; btn.textContent='Надіслати код';
+      return;
+    }
+    const { error } = await SB.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true }
+    });
+    if (error){
+      msg.className='auth-msg show err'; msg.textContent='Помилка: '+error.message;
+      btn.disabled=false; btn.textContent='Надіслати код';
+    } else {
+      PENDING_EMAIL = email;
+      msg.className='auth-msg show ok'; msg.textContent='✓ Код надіслано на ' + email + '. Перевірте пошту (включно з «Спам»).';
+      btn.textContent='✓ Надіслано';
+      document.getElementById('otp-step').style.display='block';
+      setTimeout(()=>document.getElementById('otp').focus(), 100);
+    }
+  } catch(e){
+    msg.className='auth-msg show err';
+    msg.textContent='Виняток: '+(e.message||e);
     btn.disabled=false; btn.textContent='Надіслати код';
-  } else {
-    PENDING_EMAIL = email;
-    msg.className='auth-msg show ok'; msg.textContent='✓ Код надіслано на ' + email + '. Перевірте пошту (включно з папкою «Спам»).';
-    btn.textContent='✓ Надіслано';
-    document.getElementById('otp-step').style.display='block';
-    setTimeout(()=>document.getElementById('otp').focus(), 100);
   }
 };
 
@@ -729,32 +757,4 @@ async function delProduct(p){
   toast('Видалено'); await loadProducts();
 }
 
-/* ==================== SETTINGS ==================== */
-async function loadSettings(){
-  const { data, error } = await SB.from('ulhome_settings').select('*');
-  if (error){ return; }
-  SETTINGS = {}; (data||[]).forEach(r => SETTINGS[r.key] = r.value);
-  document.querySelectorAll('[data-key]').forEach(el => {
-    const v = SETTINGS[el.dataset.key];
-    if (el.type === 'checkbox') el.checked = v === true;
-    else if (v !== undefined && v !== null) el.value = typeof v === 'string' ? v : JSON.stringify(v);
-  });
-}
-
-document.getElementById('set-save').onclick = async ()=>{
-  const btn = document.getElementById('set-save'); btn.disabled=true; btn.textContent='Зберігаю…';
-  const rows = [];
-  document.querySelectorAll('[data-key]').forEach(el=>{
-    const key = el.dataset.key;
-    let val;
-    if (el.type === 'checkbox') val = el.checked;
-    else if (el.type === 'number') val = parseFloat(el.value)||0;
-    else val = el.value;
-    rows.push({ key, value: val });
-  });
-  const { error } = await SB.from('ulhome_settings').upsert(rows);
-  if (error) toast(error.message,'err'); else toast('Збережено ✓');
-  btn.disabled=false; btn.textContent='Зберегти';
-};
-
-/* ====
+/* ==================== SETTINGS =================
