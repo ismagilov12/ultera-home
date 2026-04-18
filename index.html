@@ -824,7 +824,12 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 }
 .ig-follow:hover{background:var(--warm-grey)}
 .ig-follow svg{width:14px;height:14px;fill:currentColor}
-.ig-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.ig-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:210px;gap:12px}
+.ig-tile{grid-column:span 1;grid-row:span 1}
+.ig-tile:nth-child(1){grid-column:span 2;grid-row:span 2}
+/* Показуємо тільки 5 тайлів (1 великий + 4 малих) */
+.ig-tile:nth-child(n+6){display:none}
+@media (min-width:1200px){ .ig-grid{grid-auto-rows:240px} }
 .ig-tile{
   position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;
   background:var(--bg-alt);cursor:pointer;
@@ -839,6 +844,13 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   opacity:0;transition:opacity .3s;backdrop-filter:blur(2px);
 }
 .ig-tile:hover .overlay{opacity:1}
+.ig-tile::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 0 rgba(200,255,0,.6);transition:box-shadow .35s;border-radius:inherit}
+.ig-tile:hover::after{box-shadow:inset 0 0 0 3px rgba(200,255,0,.55)}
+.ig-tile .tile-gradient{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.55) 100%);opacity:.8;z-index:1}
+.ig-tile .tile-corner{position:absolute;top:8px;left:8px;z-index:2;font:800 9px ui-monospace,monospace;color:#fff;letter-spacing:.12em;background:rgba(0,0,0,.5);padding:4px 7px;border-radius:4px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);opacity:0;transform:translateY(-4px);transition:all .3s .05s}
+.ig-tile:nth-child(1) .tile-corner{opacity:1;transform:translateY(0)}
+.ig-tile .tile-meta{position:absolute;bottom:8px;left:10px;right:10px;z-index:2;color:#fff;font-size:10.5px;font-weight:600;opacity:0;transform:translateY(4px);transition:all .3s;display:flex;justify-content:space-between;gap:8px;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.ig-tile:hover .tile-meta{opacity:1;transform:translateY(0)}
 .ig-tile .overlay span{display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px}
 .ig-tile .overlay svg{width:18px;height:18px;fill:#fff}
 .ig-tile .reel-badge{
@@ -847,25 +859,30 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;
 }
 .ig-tile .reel-badge svg{width:13px;height:13px;fill:#fff}
-.ig-cta{margin-top:32px;text-align:center}
+.ig-cta{margin-top:40px;padding:16px 0 8px;text-align:center;position:relative;z-index:2}
 .ig-cta a{
   display:inline-flex;align-items:center;gap:10px;
-  padding:14px 28px;border:1px solid var(--ink);border-radius:999px;
-  font-family:var(--font-mono);font-size:11px;font-weight:700;
-  letter-spacing:.1em;text-transform:uppercase;transition:all .2s;
+  padding:16px 34px;background:var(--ink);color:#fff;border:2px solid var(--ink);border-radius:999px;
+  font-family:var(--font-mono);font-size:12px;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;transition:all .2s;
+  box-shadow:0 4px 14px rgba(0,0,0,.12);text-decoration:none
 }
-.ig-cta a:hover{background:var(--ink);color:#fff}
-.ig-cta a svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
+.ig-cta a:hover{background:#c8ff00;color:#0a0a0a;border-color:#c8ff00;transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.ig-cta a svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2}
 
 @media (max-width:900px){
-  .ig-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+  .ig-grid{grid-template-columns:repeat(2,1fr);grid-auto-rows:150px;gap:8px}
+  .ig-tile:nth-child(1){grid-column:span 2;grid-row:span 2}
+  .ig-tile:nth-child(n+6){display:none}
   .ig-head{flex-direction:column;align-items:flex-start}
   .ig-head-right{align-items:flex-start}
   .ig-stats{gap:20px}
   .ig-stat{text-align:left}
 }
 @media (max-width:540px){
-  .ig-grid{grid-template-columns:repeat(2,1fr)}
+  .ig-grid{grid-template-columns:repeat(2,1fr);grid-auto-rows:140px}
+  .ig-tile:nth-child(1){grid-column:span 2;grid-row:span 1}
+  .ig-tile:nth-child(n+6){display:none}
 }
 
 /* ==================== MOBILE ==================== */
@@ -1176,6 +1193,98 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   box-shadow:0 2px 12px rgba(233,179,131,.25)}
 .feat-card[data-fam="Hunk3 Suede"] .feat-bracket{background:linear-gradient(90deg,#e9b383,#d49560);color:#1a0a05;border:0}
+
+/* ==================== CART DRAWER ==================== */
+.cart-drawer{position:fixed;inset:0;z-index:100;pointer-events:none;opacity:0;transition:opacity .3s}
+.cart-drawer.open{pointer-events:auto;opacity:1}
+.cd-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.cd-panel{position:absolute;right:0;top:0;bottom:0;width:440px;max-width:100vw;background:#fafafa;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1);box-shadow:-12px 0 40px rgba(0,0,0,.15)}
+.cart-drawer.open .cd-panel{transform:translateX(0)}
+.cd-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #e8e8e4}
+.cd-head h3{font-size:18px;font-weight:800;margin:0}
+.cd-head h3 span{color:#888;font-weight:500;margin-left:4px}
+.cd-close{width:36px;height:36px;border-radius:999px;border:0;background:#f0f0ec;font-size:18px;cursor:pointer}
+.cd-close:hover{background:#e0e0dc}
+.cd-body{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+
+.cd-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 30px;text-align:center;gap:8px}
+.cd-empty-ic{font-size:48px;opacity:.4}
+.cd-empty-t{font-size:17px;font-weight:700}
+.cd-empty-s{color:#888;font-size:13px;margin-bottom:12px}
+.cd-empty-btn{padding:12px 22px;background:#111;color:#fff;border:0;border-radius:999px;font-weight:700;cursor:pointer}
+
+.cd-list-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.cd-list{flex:1;overflow-y:auto;padding:14px 18px;-webkit-overflow-scrolling:touch}
+.cd-item{display:grid;grid-template-columns:64px 1fr auto;gap:12px;padding:12px 0;border-bottom:1px solid #eee;align-items:center}
+.cd-item:last-child{border-bottom:0}
+.cd-item img{width:64px;height:64px;object-fit:cover;border-radius:8px;background:#eee}
+.cd-item-t{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cd-item-meta{color:#777;font-size:11px;margin-top:3px}
+.cd-item-qty{display:flex;align-items:center;gap:6px;margin-top:6px}
+.cd-item-qty button{width:22px;height:22px;border:1px solid #ccc;background:#fff;border-radius:6px;cursor:pointer;font-size:14px;line-height:1}
+.cd-item-qty b{font-weight:700;min-width:18px;text-align:center}
+.cd-item-price{font-weight:800;font-size:14px;white-space:nowrap}
+.cd-item-rm{background:none;border:0;color:#c44;font-size:16px;cursor:pointer;margin-top:4px}
+
+.cd-foot{padding:16px 20px 20px;border-top:1px solid #e8e8e4;background:#fff}
+.cd-sum{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.cd-sum b{font-size:22px;font-weight:900}
+.cd-cta{width:100%;padding:16px;background:#111;color:#fff;border:0;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.cd-cta:hover{transform:translateY(-1px)}
+.cd-cta svg{width:18px;height:18px}
+.cd-bene{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:14px;color:#666;font-size:11px;justify-content:center}
+
+.cd-wizard{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.cd-progress{padding:18px 22px 10px;position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+.cd-step{display:flex;flex-direction:column;align-items:center;gap:4px;color:#999;font-size:11px;font-weight:600;letter-spacing:.04em}
+.cd-step i{width:26px;height:26px;border-radius:999px;background:#eee;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;transition:all .3s;font-style:normal}
+.cd-step.active i{background:#111;color:#fff}
+.cd-step.done i{background:#8fd37a;color:#fff}
+.cd-step.active span{color:#111}
+.cd-progress-bar{position:absolute;bottom:6px;left:22px;right:22px;height:2px;background:#eee;border-radius:2px;overflow:hidden}
+.cd-progress-bar i{display:block;width:33%;height:100%;background:#111;transition:width .35s}
+
+.cd-pane{flex:1;overflow-y:auto;padding:16px 22px 20px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.cd-field{display:flex;flex-direction:column;gap:6px;position:relative}
+.cd-field > span{font-size:11px;color:#666;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.cd-field input{padding:13px 14px;border:1.5px solid #e0e0dc;border-radius:10px;font-size:14px;font-family:inherit;background:#fff}
+.cd-field input:focus{outline:none;border-color:#111}
+.cd-field input:disabled{background:#f5f5f3;color:#999;cursor:not-allowed}
+
+.cd-suggest{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e0e0dc;border-radius:10px;margin-top:2px;max-height:220px;overflow-y:auto;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.08);display:none}
+.cd-suggest.open{display:block}
+.cd-suggest button{width:100%;padding:11px 14px;border:0;background:transparent;text-align:left;font-size:13px;cursor:pointer;border-bottom:1px solid #f0f0ec}
+.cd-suggest button:last-child{border-bottom:0}
+.cd-suggest button:hover{background:#f6f6f3}
+.cd-suggest-empty{padding:14px;color:#999;font-size:12px;text-align:center}
+
+.cd-err{color:#c44;font-size:12px;min-height:16px}
+.cd-radio{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1.5px solid #e0e0dc;border-radius:10px;cursor:pointer}
+.cd-radio:has(input:checked){border-color:#111;background:#fafafa}
+.cd-radio input{margin-top:3px;width:18px;height:18px;accent-color:#111}
+.cd-radio b{display:block;font-size:14px;font-weight:700}
+.cd-radio span{display:block;color:#777;font-size:12px;margin-top:3px}
+.cd-summary{background:#f6f6f3;border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.6;color:#444}
+.cd-summary b{color:#111}
+
+.cd-row{display:flex;gap:10px;margin-top:auto}
+.cd-back{flex:0 0 38%;padding:14px;background:#f0f0ec;border:0;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer}
+.cd-next{flex:1;padding:14px;background:#111;color:#fff;border:0;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer}
+.cd-next:hover{transform:translateY(-1px)}
+.cd-next.submit{background:#8fd37a;color:#0a0a0a}
+
+.cd-success{text-align:center;align-items:center;justify-content:flex-start;padding:40px 22px;gap:6px}
+.cd-success-ic{width:72px;height:72px;border-radius:999px;background:#8fd37a;color:#fff;font-size:34px;display:flex;align-items:center;justify-content:center;font-weight:900;margin:0 0 12px;flex:0 0 auto}
+.cd-success h4{font-size:22px;font-weight:800;margin:0}
+.cd-success p{font-size:13.5px;color:#555;margin:2px 0;line-height:1.5}
+.cd-success p b{font-family:ui-monospace,monospace;font-size:15px;color:#111;letter-spacing:.04em}
+.cd-success .cd-next{flex:0 0 auto;width:auto;min-width:180px;max-width:260px;margin:28px auto 0;padding:14px 36px}
+
+@media (max-width:760px){
+  .cd-panel{width:100%;max-width:none}
+  .cd-head,.cd-pane{padding-left:18px;padding-right:18px}
+  .cd-item img{width:54px;height:54px}
+}
 </style>
 </head>
 <body>
@@ -1199,7 +1308,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v43b · redeploy 17:00</div>
+<div class="build-tag">v46 · keycrm-api</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -1614,6 +1723,69 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   </div>
 </footer>
 
+
+<!-- CART DRAWER -->
+<div class="cart-drawer" id="cartDrawer" aria-hidden="true">
+  <div class="cd-backdrop" onclick="closeCart()"></div>
+  <aside class="cd-panel" role="dialog" aria-labelledby="cdTitle">
+    <header class="cd-head">
+      <h3 id="cdTitle">Кошик <span id="cdCount">(0)</span></h3>
+      <button class="cd-close" onclick="closeCart()" aria-label="Закрити">✕</button>
+    </header>
+    <div class="cd-body">
+      <div class="cd-empty" id="cdEmpty">
+        <div class="cd-empty-ic">🛒</div>
+        <div class="cd-empty-t">Кошик порожній</div>
+        <div class="cd-empty-s">Обери пару з колекції</div>
+        <button class="cd-empty-btn" onclick="closeCart()">До колекції</button>
+      </div>
+      <div class="cd-list-wrap" id="cdListWrap" style="display:none">
+        <div class="cd-list" id="cdList"></div>
+        <div class="cd-foot">
+          <div class="cd-sum"><span>Сума</span><b id="cdSum">0 ₴</b></div>
+          <button class="cd-cta" onclick="startCheckout()">Замовити в 1 клік
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="cd-bene"><span>✓ Безкоштовний обмін</span><span>✓ Новою Поштою</span><span>✓ Оплата частинами</span></div>
+        </div>
+      </div>
+      <div class="cd-wizard" id="cdWizard" style="display:none">
+        <div class="cd-progress">
+          <div class="cd-step" data-step="1"><i>1</i><span>Контакти</span></div>
+          <div class="cd-step" data-step="2"><i>2</i><span>Доставка</span></div>
+          <div class="cd-step" data-step="3"><i>3</i><span>Оплата</span></div>
+          <div class="cd-progress-bar"><i id="cdProgressBar"></i></div>
+        </div>
+        <div class="cd-pane" data-pane="1">
+          <label class="cd-field"><span>Ваше прізвище та ім'я</span><input type="text" id="wFio" placeholder="Шевченко Тарас" autocomplete="name"></label>
+          <label class="cd-field"><span>Номер телефону</span><input type="tel" id="wPhone" placeholder="+380 __ ___ __ __" autocomplete="tel" maxlength="19"></label>
+          <div class="cd-err" id="wErr1"></div>
+          <button class="cd-next" onclick="wizardNext(1)">Далі →</button>
+        </div>
+        <div class="cd-pane" data-pane="2" style="display:none">
+          <label class="cd-field"><span>Місто (Нова Пошта)</span><input type="text" id="wCity" placeholder="Почни вводити…" autocomplete="off"><div class="cd-suggest" id="wCitySug"></div></label>
+          <label class="cd-field"><span>Відділення або поштомат</span><input type="text" id="wWh" placeholder="Обери спочатку місто" autocomplete="off" disabled><div class="cd-suggest" id="wWhSug"></div></label>
+          <div class="cd-err" id="wErr2"></div>
+          <div class="cd-row"><button class="cd-back" onclick="wizardBack(2)">← Назад</button><button class="cd-next" onclick="wizardNext(2)">Далі →</button></div>
+        </div>
+        <div class="cd-pane" data-pane="3" style="display:none">
+          <label class="cd-radio"><input type="radio" name="pm" value="card" checked><div><b>Оплата карткою</b><span>Доступна оплата частинами моно/а-банк</span></div></label>
+          <label class="cd-radio"><input type="radio" name="pm" value="np"><div><b>Оплата на пошті (наложений платіж)</b><span>Мінімальна передоплата 500 ₴</span></div></label>
+          <div class="cd-summary" id="wSummary"></div>
+          <div class="cd-err" id="wErr3"></div>
+          <div class="cd-row"><button class="cd-back" onclick="wizardBack(3)">← Назад</button><button class="cd-next submit" onclick="wizardSubmit()">Підтвердити замовлення</button></div>
+        </div>
+        <div class="cd-pane cd-success" data-pane="done" style="display:none">
+          <div class="cd-success-ic">✓</div>
+          <h4>Замовлення прийнято</h4>
+          <p>№ <b id="wOrderNum">—</b></p>
+          <p>Ми звʼяжемось з тобою протягом 30 хв для підтвердження.</p>
+          <button class="cd-next" onclick="closeCart()">Готово</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
 <!-- MODAL -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
@@ -1753,7 +1925,26 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 <script>
 const DATA = JSON.parse(document.getElementById('DATA').textContent);
 const EXTRA_PHOTOS = JSON.parse(document.getElementById('EXTRA').textContent);
-let CART = 0;
+/* ————— CART STATE ————— */
+const CART = {
+  items: JSON.parse(localStorage.getItem('ultera_cart')||'[]'),
+  wizard: JSON.parse(localStorage.getItem('ultera_wiz')||'{}'),
+  save(){ localStorage.setItem('ultera_cart', JSON.stringify(this.items)); },
+  saveWiz(){ localStorage.setItem('ultera_wiz', JSON.stringify(this.wizard)); },
+  count(){ return this.items.reduce((s,it)=>s+(it.qty||1),0); },
+  total(){ return this.items.reduce((s,it)=>s+(parseFloat(it.price)||0)*(it.qty||1),0); },
+  add(item){
+    const key = item.uid+'|'+(item.size||'');
+    const ex = this.items.find(x=>x.uid+'|'+(x.size||'')===key);
+    if(ex){ ex.qty = (ex.qty||1) + 1; } else { this.items.push({...item, qty:1}); }
+    this.save();
+  },
+  setQty(i, q){ if(!this.items[i]) return; if(q<=0){ this.items.splice(i,1); } else { this.items[i].qty = q; } this.save(); },
+  remove(i){ this.items.splice(i,1); this.save(); },
+  clear(){ this.items=[]; this.save(); }
+};
+function updateCartBadge(){ document.getElementById('cartCount').textContent = CART.count(); }
+updateCartBadge();
 let currentColor = 'allBlack';
 
 function priceNum(p){return Math.round(parseFloat(p||0)).toLocaleString('uk-UA')}
@@ -2266,11 +2457,272 @@ function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = sr
 function addToCart(){
   const sel = document.querySelector('#m_sizes .size-btn.selected');
   if(!sel){ toast('Оберіть розмір'); return; }
-  CART++;
-  document.getElementById('cartCount').textContent = CART;
-  toast('Додано в кошик · розмір ' + sel.dataset.sz);
+  const uid = currentColor;
+  const p = findProduct(uid);
+  if(!p){ toast('Помилка товару'); return; }
+  const item = {
+    uid: p.uid,
+    title: p.title.replace('ULTERA - ','').replace('ULTERA ',''),
+    photo: p.photo,
+    color_name: p.color_name || '',
+    size: sel.dataset.sz,
+    price: p.price,
+    family: p.family
+  };
+  CART.add(item);
+  updateCartBadge();
+  toast('Додано · розмір ' + sel.dataset.sz);
   closeModal();
+  setTimeout(openCart, 300);
 }
+
+/* ————— CART DRAWER + WIZARD ————— */
+document.getElementById('cartBtn').addEventListener('click', openCart);
+
+function openCart(){
+  renderCart();
+  const d = document.getElementById('cartDrawer');
+  d.classList.add('open');
+  d.setAttribute('aria-hidden','false');
+  document.body.style.overflow = 'hidden';
+}
+function closeCart(){
+  const d = document.getElementById('cartDrawer');
+  d.classList.remove('open');
+  d.setAttribute('aria-hidden','true');
+  document.body.style.overflow = '';
+  setTimeout(()=>{
+    document.getElementById('cdWizard').style.display = 'none';
+    document.getElementById('cdListWrap').style.display = '';
+    document.querySelectorAll('.cd-pane').forEach(p=>{ p.style.display = (p.dataset.pane==='1')?'':'none'; });
+    showStep(1);
+  }, 400);
+}
+
+function renderCart(){
+  document.getElementById('cdCount').textContent = '(' + CART.count() + ')';
+  const empty = document.getElementById('cdEmpty');
+  const wrap  = document.getElementById('cdListWrap');
+  const wiz   = document.getElementById('cdWizard');
+  if(CART.items.length === 0){
+    empty.style.display = ''; wrap.style.display = 'none'; wiz.style.display = 'none'; return;
+  }
+  empty.style.display = 'none'; wrap.style.display = '';
+  const list = document.getElementById('cdList');
+  list.innerHTML = CART.items.map((it,i)=>
+    '<div class="cd-item">' +
+      '<img src="'+it.photo+'" alt="">' +
+      '<div class="cd-item-info">' +
+        '<div class="cd-item-t">'+it.title+'</div>' +
+        '<div class="cd-item-meta">'+(it.color_name||'')+' · розмір '+(it.size||'—')+'</div>' +
+        '<div class="cd-item-qty"><button onclick="cartQty('+i+',-1)">−</button><b>'+(it.qty||1)+'</b><button onclick="cartQty('+i+',1)">+</button></div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="cd-item-price">'+Math.round(parseFloat(it.price)||0).toLocaleString('uk-UA')+' ₴</div>' +
+        '<button class="cd-item-rm" onclick="cartRm('+i+')" aria-label="Видалити">✕</button>' +
+      '</div>' +
+    '</div>'
+  ).join('');
+  document.getElementById('cdSum').textContent = Math.round(CART.total()).toLocaleString('uk-UA') + ' ₴';
+}
+function cartQty(i, d){ CART.setQty(i, (CART.items[i]?.qty||1) + d); updateCartBadge(); renderCart(); }
+function cartRm(i){ CART.remove(i); updateCartBadge(); renderCart(); }
+
+function phoneMask(raw){
+  let d = raw.replace(/\D/g, '');
+  if(d.startsWith('38')) d = d.slice(2);
+  if(d.startsWith('0'))  d = d.slice(1);
+  d = d.slice(0, 9);
+  let out = '+380';
+  if(d.length > 0) out += ' ' + d.slice(0,2);
+  if(d.length > 2) out += ' ' + d.slice(2,5);
+  if(d.length > 5) out += ' ' + d.slice(5,7);
+  if(d.length > 7) out += ' ' + d.slice(7,9);
+  return out;
+}
+function isPhoneValid(v){ return /^\+380\s?\d{2}\s?\d{3}\s?\d{2}\s?\d{2}$/.test(v); }
+function isFioValid(v){ return v.trim().split(/\s+/).length >= 2 && v.trim().length >= 4; }
+
+const NP_API = 'https://api.novaposhta.ua/v2.0/json/';
+const NP_KEY = '';
+async function npFetch(method, props){
+  const body = { apiKey: NP_KEY, modelName: 'AddressGeneral', calledMethod: method, methodProperties: props };
+  const r = await fetch(NP_API, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+  const d = await r.json();
+  if(!d.success) throw new Error((d.errors||['NP']).join(';'));
+  return d.data || [];
+}
+async function npCities(q){
+  if(q.length < 2) return [];
+  try{
+    const r = await npFetch('searchSettlements', {CityName:q, Limit:8});
+    return (r[0]?.Addresses || []).map(a => ({ ref: a.DeliveryCity || a.Ref, title: (a.Present||a.MainDescription) + (a.Area ? ', ' + a.Area + ' обл.' : '') }));
+  }catch(e){ return null; }
+}
+async function npWarehouses(cityRef, q){
+  try{
+    const body = { apiKey: NP_KEY, modelName:'AddressGeneral', calledMethod:'getWarehouses', methodProperties:{ CityRef: cityRef, FindByString: q || '', Limit: 50 } };
+    const r = await fetch(NP_API, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    const d = await r.json();
+    if(!d.success) throw new Error('NP');
+    return (d.data || []).map(w => ({ ref: w.Ref, title: w.Description }));
+  }catch(e){ return null; }
+}
+function debounce(fn, ms){ let t; return function(...a){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,a), ms); }; }
+
+function startCheckout(){
+  if(CART.items.length === 0) return;
+  document.getElementById('cdListWrap').style.display = 'none';
+  document.getElementById('cdWizard').style.display = '';
+  const w = CART.wizard || {};
+  if(w.fio)   document.getElementById('wFio').value = w.fio;
+  if(w.phone) document.getElementById('wPhone').value = w.phone;
+  if(w.city)  document.getElementById('wCity').value = w.city;
+  if(w.wh){   document.getElementById('wWh').value = w.wh; document.getElementById('wWh').disabled = false; }
+  if(w.pm){   const r = document.querySelector('input[name="pm"][value="'+w.pm+'"]'); if(r) r.checked = true; }
+  showStep(w.step || 1);
+}
+function showStep(n){
+  for(let i=1;i<=3;i++){
+    const pane = document.querySelector('.cd-pane[data-pane="'+i+'"]');
+    if(pane) pane.style.display = (i===n) ? '' : 'none';
+    const step = document.querySelector('.cd-step[data-step="'+i+'"]');
+    if(step){ step.classList.toggle('active', i===n); step.classList.toggle('done', i<n); }
+  }
+  const done = document.querySelector('.cd-pane[data-pane="done"]'); if(done) done.style.display = 'none';
+  const bar = document.getElementById('cdProgressBar'); if(bar) bar.style.width = (n*33.33) + '%';
+  CART.wizard = {...CART.wizard, step:n}; CART.saveWiz();
+}
+function wizardBack(from){ showStep(from - 1); }
+
+async function wizardNext(from){
+  const errEl = document.getElementById('wErr' + from);
+  errEl.textContent = '';
+  if(from === 1){
+    const fio = document.getElementById('wFio').value.trim();
+    const phone = document.getElementById('wPhone').value.trim();
+    if(!isFioValid(fio)){ errEl.textContent = 'Вкажи прізвище та імʼя'; return; }
+    if(!isPhoneValid(phone)){ errEl.textContent = 'Телефон у форматі +380 __ ___ __ __'; return; }
+    CART.wizard = {...CART.wizard, fio, phone}; CART.saveWiz();
+    showStep(2);
+  } else if(from === 2){
+    const city = document.getElementById('wCity').value.trim();
+    const wh   = document.getElementById('wWh').value.trim();
+    if(!city || !CART.wizard.cityRef){ errEl.textContent = 'Обери місто зі списку'; return; }
+    if(!wh   || !CART.wizard.whRef){   errEl.textContent = 'Обери відділення зі списку'; return; }
+    CART.wizard = {...CART.wizard, city, wh}; CART.saveWiz();
+    renderSummary();
+    showStep(3);
+  }
+}
+function renderSummary(){
+  const w = CART.wizard;
+  const itemsLines = CART.items.map(it => it.title + ' · ' + (it.color_name||'') + ' · р.' + it.size + ' × ' + (it.qty||1)).join('<br>');
+  const total = Math.round(CART.total()).toLocaleString('uk-UA');
+  document.getElementById('wSummary').innerHTML = '<b>'+w.fio+'</b> · '+w.phone+'<br>' + w.city+', '+w.wh+'<br><br>' + itemsLines + '<br><br><b>До сплати: '+total+' ₴</b>';
+}
+async function wizardSubmit(){
+  const errEl = document.getElementById('wErr3');
+  errEl.textContent = '';
+  const pmInput = document.querySelector('input[name="pm"]:checked');
+  const pm = pmInput ? pmInput.value : null;
+  if(!pm){ errEl.textContent = 'Обери спосіб оплати'; return; }
+  CART.wizard = {...CART.wizard, pm}; CART.saveWiz();
+  const btn = document.querySelector('.cd-next.submit');
+  btn.disabled = true; btn.textContent = 'Надсилаю...';
+  const orderNum = 'ULT-' + Date.now().toString().slice(-8);
+  const payload = {
+    num: orderNum,
+    ts: new Date().toISOString(),
+    fio: CART.wizard.fio,
+    phone: CART.wizard.phone,
+    city: CART.wizard.city, cityRef: CART.wizard.cityRef,
+    wh: CART.wizard.wh, whRef: CART.wizard.whRef,
+    payment: pm,
+    total: CART.total(),
+    items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family}))
+  };
+  try {
+    const r = await fetch('/api/order', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const result = await r.json().catch(()=>({}));
+    if(!r.ok || result.ok === false){
+      throw new Error(result.error || result.message || ('HTTP ' + r.status));
+    }
+    // success
+    document.querySelectorAll('.cd-pane').forEach(p=>p.style.display='none');
+    document.querySelector('.cd-pane[data-pane="done"]').style.display = '';
+    document.getElementById('wOrderNum').textContent = orderNum;
+    if(result.mock) console.log('Mock order:', result);
+    CART.clear(); CART.wizard = {}; CART.saveWiz();
+    updateCartBadge();
+  } catch(e){
+    console.error('Order error:', e);
+    errEl.textContent = 'Не вдалось надіслати: ' + e.message + '. Зв\'яжись з нами або спробуй ще раз.';
+    btn.disabled = false; btn.textContent = 'Підтвердити замовлення';
+  }
+}
+
+(function(){
+  const phone = document.getElementById('wPhone');
+  if(phone){
+    phone.addEventListener('input', e => { e.target.value = phoneMask(e.target.value); });
+    phone.addEventListener('focus', e => { if(!e.target.value) e.target.value = '+380 '; });
+  }
+  const city = document.getElementById('wCity');
+  const citySug = document.getElementById('wCitySug');
+  const wh = document.getElementById('wWh');
+  const whSug = document.getElementById('wWhSug');
+  if(city){
+    const onCity = debounce(async e => {
+      const q = e.target.value.trim();
+      if(q.length < 2){ citySug.classList.remove('open'); return; }
+      citySug.innerHTML = '<div class="cd-suggest-empty">Шукаю...</div>'; citySug.classList.add('open');
+      const data = await npCities(q);
+      if(data === null){
+        citySug.innerHTML = '<div class="cd-suggest-empty">Не вдалось звʼязатись з Новою Поштою. Введи вручну.</div>';
+      } else if(data.length === 0){
+        citySug.innerHTML = '<div class="cd-suggest-empty">Нічого не знайдено</div>';
+      } else {
+        citySug.innerHTML = data.map(c => '<button type="button" data-ref="'+c.ref+'">'+c.title+'</button>').join('');
+        citySug.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+          city.value = b.textContent;
+          CART.wizard = {...CART.wizard, cityRef: b.dataset.ref, city: b.textContent}; CART.saveWiz();
+          citySug.classList.remove('open');
+          wh.disabled = false; wh.placeholder = 'Назва або № відділення'; wh.focus();
+        }));
+      }
+    }, 280);
+    city.addEventListener('input', onCity);
+    city.addEventListener('blur', ()=>setTimeout(()=>citySug.classList.remove('open'), 180));
+  }
+  if(wh){
+    const onWh = debounce(async e => {
+      if(!CART.wizard.cityRef) return;
+      const q = e.target.value.trim();
+      whSug.innerHTML = '<div class="cd-suggest-empty">Шукаю...</div>'; whSug.classList.add('open');
+      const data = await npWarehouses(CART.wizard.cityRef, q);
+      if(data === null){
+        whSug.innerHTML = '<div class="cd-suggest-empty">NP API недоступний. Введи вручну.</div>';
+      } else if(data.length === 0){
+        whSug.innerHTML = '<div class="cd-suggest-empty">Нічого не знайдено</div>';
+      } else {
+        whSug.innerHTML = data.slice(0,30).map(w => '<button type="button" data-ref="'+w.ref+'">'+w.title+'</button>').join('');
+        whSug.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+          wh.value = b.textContent;
+          CART.wizard = {...CART.wizard, whRef: b.dataset.ref, wh: b.textContent}; CART.saveWiz();
+          whSug.classList.remove('open');
+        }));
+      }
+    }, 280);
+    wh.addEventListener('input', onWh);
+    wh.addEventListener('focus', e => { if(CART.wizard.cityRef) onWh(e); });
+    wh.addEventListener('blur', ()=>setTimeout(()=>whSug.classList.remove('open'), 180));
+  }
+})();
 
 /* ————— TOAST ————— */
 function toast(msg){
@@ -2529,11 +2981,20 @@ renderGrid();
   const HEART = '<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>';
   const CHAT  = '<svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
   const REEL  = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>';
-  igGrid.innerHTML = TILES.map(t => `<a class="ig-tile" href="https://www.instagram.com/${HANDLE}/" target="_blank" rel="noopener">
-    <img src="${t.img}" alt="" loading="lazy">
-    ${t.type === 'reel' ? '<div class="reel-badge">' + REEL + '</div>' : ''}
-    <div class="overlay"><span>' + HEART + '${t.likes}</span><span>' + CHAT + '${t.comments}</span></div>
-  </a>`).join('');
+  igGrid.innerHTML = TILES.map((t,i) => {
+    const labels = ['FEATURED','','','','','','','','','','',''];
+    const lbl = labels[i] || '';
+    const reelHtml = t.type === 'reel' ? `<div class="reel-badge">${REEL}</div>` : '';
+    const lblHtml  = lbl ? `<div class="tile-corner">${lbl}</div>` : '';
+    return `<a class="ig-tile" href="https://www.instagram.com/${HANDLE}/" target="_blank" rel="noopener" aria-label="Instagram пост ${i+1}">
+      <img src="${t.img}" alt="" loading="lazy" decoding="async">
+      <div class="tile-gradient"></div>
+      ${lblHtml}
+      ${reelHtml}
+      <div class="overlay"><span>${HEART}${t.likes}</span><span>${CHAT}${t.comments}</span></div>
+      <div class="tile-meta"><span>@${HANDLE}</span><span>${t.likes} ♥</span></div>
+    </a>`;
+  }).join('');
 })();
 
 </script>
