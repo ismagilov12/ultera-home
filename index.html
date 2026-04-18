@@ -1138,16 +1138,16 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
     <span>ГАРАНТІЯ 1 РІК</span>
     <span>РУЧНА РОБОТА</span>
     <span>[ ULTERA™ S/S 26 ]</span>
-    <span>ПАРТІЯ #0427</span>
-    <span>ХАРКІВ · UA</span>
-    <span><em>БЕЗКОШТОВНА ДОСТАВКА</em> ВІД 2 ПАР</span>
-    <span>ГАРАНТІЯ 1 РІК</span>
-    <span>РУЧНА РОБОТА</span>
+    <span>BATCH #0427</span>
+    <span>KHARKIV · UA</span>
+    <span><em>БЕЗКОШТОВНА ДОСТАВКА</em> FROM 2 PAIRS</span>
+    <span>WARRANTY 1Y</span>
+    <span>HANDCRAFTED</span>
   </div>
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v33 · i18n</div>
+<div class="build-tag">v35 · i18n-full</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -1345,8 +1345,8 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   <div class="run">
     <span>NAPPA · ІТАЛІЯ</span><span>ДИХАЮЧА СІТКА</span><span>BOUNCE EVA</span>
     <span>СВІТЛОВІДБИВАЮЧІ ШНУРКИ</span><span>РУЧНА РОБОТА · ХАРКІВ</span><span>ГАРАНТІЯ 1 РІК</span>
-    <span>NAPPA · ІТАЛІЯ</span><span>ДИХАЮЧА СІТКА</span><span>BOUNCE EVA</span>
-    <span>СВІТЛОВІДБИВАЮЧІ ШНУРКИ</span><span>РУЧНА РОБОТА · ХАРКІВ</span><span>ГАРАНТІЯ 1 РІК</span>
+    <span>NAPPA ITALY</span><span>ДИХАЮЧА СІТКА</span><span>BOUNCE EVA</span>
+    <span>REFLECTIVE LACES</span><span>РУЧНА РОБОТА · ХАРКІВ</span><span>1Y WARRANTY</span>
   </div>
 </div>
 
@@ -1709,37 +1709,37 @@ function renderFeatured(){
 
   // Family meta — tagline, sub, spec rows per family
   const META = {
-    'Hunk3':     { serial:'HUNK3-01', badge:'IN STOCK', tag:'FLAGSHIP \u00b7 BOUNCE TECH',
+    'Hunk3':     { serial:'HUNK3-01', badge:'У НАЯВНОСТІ', tag:'ФЛАГМАН \u00b7 BOUNCE TECH',
                    sub:'Третя генерація флагмана з підошвою Bounce. +32% повернення енергії.',
-                   specs:[['SOLE','Bounce EVA'],['UPPER','Nappa + Cordura'],['WEIGHT','\u221218%'],['WARRANTY','1 year']],
+                   specs:[['ПІДОШВА','Bounce EVA'],['ВЕРХ','Nappa + Cordura'],['ВАГА','\u221218%'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
-    'Aganta':    { serial:'AG-TR-02', badge:'IN STOCK', tag:'NEW \u00b7 MINIMAL',
+    'Aganta':    { serial:'AG-TR-02', badge:'У НАЯВНОСТІ', tag:'НОВЕ \u00b7 МІНІМАЛІЗМ',
                    sub:'Мінімалістичні кросівки нового формату. Шкіра Nappa + ПУ-підошва.',
-                   specs:[['SOLE','ПУ / EVA'],['UPPER','Nappa leather'],['SEASON','S/S 26'],['WARRANTY','1 year']],
+                   specs:[['ПІДОШВА','ПУ / EVA'],['ВЕРХ','Шкіра Nappa'],['СЕЗОН','S/S 26'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
-    'SHAPE':     { serial:'SHAPE-BF', badge:'BAREFOOT', tag:'ANATOMIC \u00b7 BAREFOOT',
+    'SHAPE':     { serial:'SHAPE-BF', badge:'BAREFOOT', tag:'АНАТОМІЧНІ \u00b7 BAREFOOT',
                    sub:'Анатомічні тапочки з італійської замші. Barefoot-форма, 10 кольорів.',
-                   specs:[['SOLE','PU anatomic'],['UPPER','Italian suede'],['COLORS','10'],['SEASON','S/S 26']],
+                   specs:[['ПІДОШВА','PU anatomic'],['ВЕРХ','Італійська замша'],['КОЛЬОРИ','10'],['СЕЗОН','S/S 26']],
                    handler:null },
-    'Hunk':      { serial:'HUNK-01', badge:'CLASSIC', tag:'ORIGINAL \u00b7 PROVEN',
+    'Hunk':      { serial:'HUNK-01', badge:'КЛАСИКА', tag:'ОРИГІНАЛ \u00b7 ПЕРЕВІРЕНО',
                    sub:'Перша генерація Hunk — флагман, з якого почалась ULTERA. 1000+ пар у носінні.',
-                   specs:[['SOLE','EVA'],['UPPER','Nappa + Mesh'],['MADE','1000+ pairs'],['WARRANTY','1 year']],
+                   specs:[['ПІДОШВА','EVA'],['ВЕРХ','Nappa + сітка'],['ВИПУЩЕНО','1000+ пар'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
-    'Hunk2':     { serial:'HUNK2-02', badge:'TOP PICK', tag:'EVOLVED \u00b7 REFINED',
+    'Hunk2':     { serial:'HUNK2-02', badge:'ХІТ', tag:'ВДОСКОНАЛЕНО',
                    sub:'Друга генерація з переробленою колодкою та покращеною амортизацією.',
-                   specs:[['SOLE','EVA v2'],['UPPER','Nappa + Cordura'],['SEASON','S/S 26'],['WARRANTY','1 year']],
+                   specs:[['ПІДОШВА','EVA v2'],['ВЕРХ','Nappa + Cordura'],['СЕЗОН','S/S 26'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
-    'Hunk BRFT': { serial:'BRFT-01', badge:'BAREFOOT', tag:'FLAT \u00b7 GROUNDED',
+    'Hunk BRFT': { serial:'BRFT-01', badge:'BAREFOOT', tag:'ПЛОСКА \u00b7 БОСОНІЖ',
                    sub:'Barefoot-версія Hunk з плоскою устілкою. Відчуття босоніж у місті.',
-                   specs:[['SOLE','Flat EVA'],['UPPER','Nappa + Cordura'],['TYPE','Barefoot'],['WARRANTY','1 year']],
+                   specs:[['ПІДОШВА','Flat EVA'],['ВЕРХ','Nappa + Cordura'],['ТИП','Barefoot'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
-    'Lite':      { serial:'LITE-03', badge:'SALE', tag:'LITE \u00b7 EVERYDAY',
+    'Lite':      { serial:'LITE-03', badge:'ЗНИЖКА', tag:'ЛЕГКІ \u00b7 ЩОДЕННІ',
                    sub:'Легкі шкіряні кеди на кожен день. Мінімум ваги, максимум комфорту.',
-                   specs:[['SOLE','EVA'],['UPPER','Nappa leather'],['WEIGHT','\u221240%'],['WARRANTY','1 year']],
+                   specs:[['ПІДОШВА','EVA'],['ВЕРХ','Шкіра Nappa'],['ВАГА','\u221240%'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
-    'Spider':    { serial:'SPIDER-01', badge:'LIMITED', tag:'REFLECTIVE \u00b7 NIGHT',
+    'Spider':    { serial:'SPIDER-01', badge:'ЛІМІТ', tag:'РЕФЛЕКТИВ \u00b7 НІЧ',
                    sub:'Спайдер-дизайн із рефлективними елементами. Видно у темряві.',
-                   specs:[['SOLE','EVA'],['UPPER','Nappa + 3M'],['FEATURE','Reflective'],['WARRANTY','1 year']],
+                   specs:[['ПІДОШВА','EVA'],['ВЕРХ','Nappa + 3M'],['ОСОБЛИВІСТЬ','Рефлектив'],['ГАРАНТІЯ','1 рік']],
                    handler:null }
   };
 
@@ -1758,8 +1758,8 @@ function renderFeatured(){
 
   el.innerHTML = rows.map((row, idx) => {
     const fam = row.family;
-    const meta = META[fam] || { serial:fam.toUpperCase()+'-0'+idx, badge:'IN STOCK', tag:'ULTERA',
-                                sub:'', specs:[['SOLE','EVA'],['UPPER','Nappa'],['MADE','Kharkiv'],['WARRANTY','1 year']],
+    const meta = META[fam] || { serial:fam.toUpperCase()+'-0'+idx, badge:'У НАЯВНОСТІ', tag:'ULTERA',
+                                sub:'', specs:[['ПІДОШВА','EVA'],['ВЕРХ','Nappa'],['ВИПУЩЕНО','Харків'],['ГАРАНТІЯ','1 рік']],
                                 handler:null };
 
     // Photos for right column
@@ -1800,7 +1800,7 @@ function renderFeatured(){
         </div>
         <div class="feat-bottom">
           <button class="feat-discover" onclick="event.stopPropagation();${handler}">
-            Discover
+            Деталі
             <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </button>
           <div class="feat-price">${priceOld}<span class="cur">${priceText}</span></div>
