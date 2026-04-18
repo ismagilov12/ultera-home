@@ -1167,7 +1167,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v37 · modal-preload</div>
+<div class="build-tag">v38 · modal-fix</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -2181,16 +2181,26 @@ function setModalPhoto(i){
   const idx = ((i % n) + n) % n;
   window.__modalPhotoIdx = idx;
   const img = document.getElementById('m_img');
+  // Запобігти "застряганню" — прибираємо onload/onerror від попереднього і ставимо нові
+  img.onload = null;
+  img.onerror = null;
+  img.setAttribute('fetchpriority','high');
+  img.setAttribute('decoding','async');
   img.src = photos[idx];
   // update strip + dots active state
   document.querySelectorAll('.modal-strip button').forEach((b,ii)=>b.classList.toggle('active', ii===idx));
   document.querySelectorAll('#m_dots button').forEach((d,ii)=>d.classList.toggle('active', ii===idx));
   const cnt = document.getElementById('m_counter_cur'); if(cnt) cnt.textContent = String(idx+1);
+  // preload neighbors ±3 прямо тут (без IIFE-обгортки)
+  [1,-1,2,-2,3,-3].forEach(d=>{
+    const ii = ((idx+d)%n+n)%n;
+    const im = new Image(); im.decoding = 'async'; im.src = photos[ii];
+  });
 }
 // legacy fn kept for safety (no longer referenced from rendered HTML)
 function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = src; }
 
-/* ————— Swipe nav + keyboard + preload on modal image ————— */
+/* ————— Swipe + keyboard nav on modal image ————— */
 (function(){
   const wrap = document.getElementById('m_img_wrap');
   if(!wrap) return;
@@ -2213,16 +2223,6 @@ function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = sr
     if(e.key === 'ArrowLeft')  setModalPhoto((window.__modalPhotoIdx||0)-1);
     if(e.key === 'ArrowRight') setModalPhoto((window.__modalPhotoIdx||0)+1);
   });
-  // preload neighbors when setModalPhoto is called
-  const origSet = window.setModalPhoto;
-  window.setModalPhoto = function(i){
-    origSet(i);
-    const photos = window.__modalPhotos || [];
-    if(!photos.length) return;
-    const n = photos.length;
-    const cur = window.__modalPhotoIdx || 0;
-    [1,-1,2,-2,3,-3].map(d=>((cur+d)%n+n)%n).forEach(ii=>{ const im = new Image(); im.decoding="async"; im.src = photos[ii]; });
-  };
 })();
 
 function addToCart(){
