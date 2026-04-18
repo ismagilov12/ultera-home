@@ -795,4 +795,94 @@ async function loadSettings(){
     SETTINGS = {}; (data||[]).forEach(r => SETTINGS[r.key] = r.value);
     document.querySelectorAll('[data-key]').forEach(el => {
       const v = SETTINGS[el.dataset.key];
-      if (el.type === 'checkbox') el.ch
+      if (el.type === 'checkbox') el.checked = v === true;
+      else if (v \!== undefined && v \!== null) el.value = typeof v === 'string' ? v : JSON.stringify(v);
+    });
+  } catch(e){}
+}
+
+document.getElementById('set-save').onclick = async ()=>{
+  const btn = document.getElementById('set-save'); btn.disabled=true; btn.textContent='Зберігаю…';
+  const rows = [];
+  document.querySelectorAll('[data-key]').forEach(el=>{
+    const key = el.dataset.key;
+    let val;
+    if (el.type === 'checkbox') val = el.checked;
+    else if (el.type === 'number') val = parseFloat(el.value)||0;
+    else val = el.value;
+    rows.push({ key, value: val });
+  });
+  try {
+    await rest('ulhome_settings', {
+      method:'POST',
+      headers:{ Prefer:'resolution=merge-duplicates' },
+      body: JSON.stringify(rows)
+    });
+    toast('Збережено ✓');
+  } catch(e){ toast(e.message,'err'); }
+  btn.disabled=false; btn.textContent='Зберегти';
+};
+
+/* ==================== ADMINS ==================== */
+async function loadAdmins(){
+  try {
+    ADMINS = await rest('ulhome_admins?select=*&order=created_at.asc') || [];
+    renderAdmins();
+  } catch(e){
+    document.getElementById('admin-list').innerHTML='<div class="empty">Немає прав: '+e.message+'</div>';
+  }
+}
+
+function renderAdmins(){
+  const box = document.getElementById('admin-list');
+  box.innerHTML = ADMINS.map(a=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)">
+    <div><b>${escapeHtml(a.email)}</b><div style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-60);margin-top:2px">${new Date(a.created_at).toLocaleString('uk-UA')}</div></div>
+    ${a.email \!== USER.email ? `<button class="btn ghost" onclick="delAdmin('${escapeHtml(a.email)}')">✕</button>` : '<span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-60)">ви</span>'}
+  </div>`).join('');
+}
+
+document.getElementById('admin-add').onclick = async ()=>{
+  const email = prompt('Email нового адміна:'); if (\!email) return;
+  try {
+    await rest('ulhome_admins', { method:'POST', body: JSON.stringify({ email: email.trim().toLowerCase() }) });
+    toast('Додано'); await loadAdmins();
+  } catch(e){ toast(e.message,'err'); }
+};
+async function delAdmin(email){
+  if (\!confirm('Видалити адміна '+email+'?')) return;
+  try {
+    await rest('ulhome_admins?email=eq.'+encodeURIComponent(email), {method:'DELETE'});
+    toast('Видалено'); await loadAdmins();
+  } catch(e){ toast(e.message,'err'); }
+}
+
+/* ==================== ORDERS ==================== */
+async function loadOrders(){
+  const tbl = document.getElementById('ord-table');
+  const head = tbl.querySelector('.head');
+  tbl.innerHTML = ''; tbl.appendChild(head);
+  try {
+    const data = await rest('ulhome_orders?select=*&order=created_at.desc');
+    if (\!data || \!data.length){ tbl.innerHTML += '<div class="empty">Замовлень ще немає</div>'; return; }
+    data.forEach(o=>{
+      const row = document.createElement('div');
+      row.className='ord-row';
+      row.innerHTML = `
+        <div class="num">#${o.number}</div>
+        <div>${escapeHtml(o.customer_name||'—')}</div>
+        <div>${escapeHtml(o.customer_phone||'—')}</div>
+        <div>${new Date(o.created_at).toLocaleString('uk-UA')}</div>
+        <div>${fmtPrice(o.total)}</div>
+        <div><span class="ord-status ${o.status}">${o.status}</span></div>
+      `;
+      tbl.appendChild(row);
+    });
+  } catch(e){ tbl.innerHTML += '<div class="empty">'+e.message+'</div>'; }
+}
+
+// Load orders when switching to that page
+document.querySelector('[data-page="orders"]').addEventListener('click', loadOrders);
+</script>
+
+</body>
+</html>
