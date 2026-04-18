@@ -8,23 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" onerror="window.__sbLoadErr='jsdelivr'"></script>
-<script>window.addEventListener('DOMContentLoaded', ()=>{
-  // If primary CDN didn't set window.supabase, try fallbacks
-  if (window.supabase) return;
-  const fallbacks = [
-    'https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js',
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js'
-  ];
-  (function next(i){
-    if (i >= fallbacks.length || window.supabase) return;
-    const s = document.createElement('script');
-    s.src = fallbacks[i];
-    s.onload = ()=>{ if (!window.supabase) next(i+1); };
-    s.onerror = ()=>{ window.__sbLoadErr = (window.__sbLoadErr||'')+';'+fallbacks[i].split('//')[1].split('/')[0]; next(i+1); };
-    document.head.appendChild(s);
-  })(0);
-});</script>
 <style>
 :root{
   --ink:#0a0a0a;--ink-60:#5a5a58;--ink-40:#9a9a98;
@@ -431,9 +414,13 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 <div id="toast" class="toast"></div>
 
 <script>
-/* ==================== INIT ==================== */
+/* ==================== MINI REST CLIENT (no SDK) ==================== */
+const SB_URL = 'https://fsihlzzjewhxpogvjapu.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU';
 const BUCKET = 'ulhome-media';
-let SB = null;
+const SESSION_KEY = 'ulhome_session';
+
+let SESSION = null;
 let USER = null;
 let PRODUCTS = [];
 let MEDIA_BY_PRODUCT = {};
@@ -451,29 +438,94 @@ function setStatus(html, color){
   STATUS.style.background = color === 'var(--err)' ? '#ffe0e0' : (color === 'green' ? '#e5f4d3' : '#f5f5f0');
 }
 
+function authHeaders(){
+  const h = { apikey: SB_ANON };
+  if (SESSION && SESSION.access_token) h.Authorization = 'Bearer ' + SESSION.access_token;
+  return h;
+}
+
+// Generic REST call to PostgREST
+async function rest(path, opts={}){
+  const r = await fetch(SB_URL + '/rest/v1/' + path, {
+    ...opts,
+    headers: {
+      ...authHeaders(),
+      'Content-Type': 'application/json',
+      ...(opts.headers||{})
+    }
+  });
+  if (!r.ok) throw new Error('REST ' + r.status + ': ' + await r.text());
+  if (r.status === 204) return null;
+  return r.json();
+}
+
+// Auth helpers
+async function authSignIn(email, password){
+  const r = await fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', apikey: SB_ANON },
+    body: JSON.stringify({ email, password })
+  });
+  if (!r.ok) throw new Error((await r.json()).error_description || 'Login failed');
+  return r.json();
+}
+
+async function authRefresh(){
+  if (!SESSION || !SESSION.refresh_token) return null;
+  const r = await fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', apikey: SB_ANON },
+    body: JSON.stringify({ refresh_token: SESSION.refresh_token })
+  });
+  if (!r.ok) return null;
+  return r.json();
+}
+
+async function authSignOut(){
+  if (SESSION && SESSION.access_token){
+    await fetch(SB_URL + '/auth/v1/logout', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + SESSION.access_token, apikey: SB_ANON }
+    }).catch(()=>{});
+  }
+  SESSION = null; USER = null;
+  localStorage.removeItem(SESSION_KEY);
+  showAuth();
+}
+
+// Storage helpers
+async function storageUpload(path, file){
+  const r = await fetch(SB_URL + '/storage/v1/object/' + BUCKET + '/' + path, {
+    method: 'POST',
+    headers: { ...authHeaders(), 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'false' },
+    body: file
+  });
+  if (!r.ok) throw new Error('Upload: ' + r.status + ' ' + await r.text());
+  return SB_URL + '/storage/v1/object/public/' + BUCKET + '/' + path;
+}
+
 (async function(){
-  setStatus('⏳ Чекаю Supabase SDK (15с)...');
-  // Wait for supabase UMD to load (up to 15s)
-  for (let i=0; i<150; i++){
-    if (window.supabase && window.supabase.createClient) break;
-    await new Promise(r=>setTimeout(r, 100));
-  }
-  if (!window.supabase || !window.supabase.createClient){
-    setStatus('✗ SDK не завантажився'+(window.__sbLoadErr?' ('+window.__sbLoadErr+')':'')+'. CDN блокується?', 'var(--err)');
-    return;
-  }
-  setStatus('✓ SDK завантажений, ініціалізую...', 'green');
+  setStatus('⏳ Ініціалізую...');
+  // Try restore session from localStorage
   try {
-    SB = window.supabase.createClient(
-      'https://fsihlzzjewhxpogvjapu.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU'
-    );
-    setStatus('✓ Готово до входу', 'green');
-    const { data:{session} } = await SB.auth.getSession();
-    if (session) startApp(session.user);
-    SB.auth.onAuthStateChange((evt, sess)=>{ if (sess) startApp(sess.user); else showAuth(); });
-  } catch(e){
-    setStatus('✗ Init error: '+(e.message||e), 'var(--err)');
+    const saved = localStorage.getItem(SESSION_KEY);
+    if (saved){
+      SESSION = JSON.parse(saved);
+      // Refresh if near expiry
+      if (SESSION.expires_at && SESSION.expires_at * 1000 < Date.now() + 60000){
+        const fresh = await authRefresh();
+        if (fresh){ SESSION = fresh; localStorage.setItem(SESSION_KEY, JSON.stringify(fresh)); }
+        else { SESSION = null; localStorage.removeItem(SESSION_KEY); }
+      }
+    }
+  } catch(e){ SESSION = null; localStorage.removeItem(SESSION_KEY); }
+
+  if (SESSION && SESSION.user){
+    USER = SESSION.user;
+    startApp(USER);
+  } else {
+    setStatus('✓ Готово', 'green');
+    setTimeout(()=>{ STATUS.style.display='none'; }, 1200);
   }
 })();
 
@@ -484,46 +536,41 @@ async function startApp(user){
   document.getElementById('auth').style.display='none';
   document.getElementById('app').style.display='grid';
   document.getElementById('user-email').textContent = user.email;
-  // Verify is admin
-  const { data: admins } = await SB.from('ulhome_admins').select('email');
-  if (!admins || !admins.length){
-    toast('Ви не адмін. Додайте свій email у таблицю ulhome_admins.', 'err');
-    setTimeout(()=>SB.auth.signOut(), 2000);
-    return;
+  try {
+    const admins = await rest('ulhome_admins?select=email');
+    if (!admins || !admins.length){
+      toast('Ви не адмін. Додайте свій email у таблицю ulhome_admins.', 'err');
+      setTimeout(authSignOut, 2000);
+      return;
+    }
+    await Promise.all([loadProducts(), loadSettings(), loadAdmins()]);
+  } catch(e){
+    toast('Помилка: '+e.message, 'err');
   }
-  await Promise.all([loadProducts(), loadSettings(), loadAdmins()]);
 }
 
-/* ==================== AUTH (password) ==================== */
+/* ==================== AUTH ==================== */
 async function doLogin(){
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
+  const msg = document.getElementById('auth-msg');
   if (!email || !password){
-    const msg = document.getElementById('auth-msg');
     msg.className='auth-msg show err'; msg.textContent='Введіть логін і пароль';
     return;
   }
   const btn = document.getElementById('login-btn'); btn.disabled=true; btn.textContent='Входжу…';
-  const msg = document.getElementById('auth-msg');
   msg.className='auth-msg';
 
   try {
-    if (!SB){
-      msg.className='auth-msg show err';
-      msg.textContent='SDK ще не готовий. Зачекайте і спробуйте ще раз.';
-      btn.disabled=false; btn.textContent='Увійти';
-      return;
-    }
-    const { data, error } = await SB.auth.signInWithPassword({ email, password });
-    if (error){
-      msg.className='auth-msg show err'; msg.textContent='Невірний логін/пароль: '+error.message;
-      btn.disabled=false; btn.textContent='Увійти';
-    } else {
-      msg.className='auth-msg show ok'; msg.textContent='✓ Вхід успішний, завантажую…';
-    }
+    const data = await authSignIn(email, password);
+    SESSION = data;
+    USER = data.user;
+    localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+    msg.className='auth-msg show ok'; msg.textContent='✓ Вхід успішний, завантажую…';
+    startApp(data.user);
   } catch(e){
     msg.className='auth-msg show err';
-    msg.textContent='Виняток: '+(e.message||e);
+    msg.textContent='Помилка: '+(e.message||e);
     btn.disabled=false; btn.textContent='Увійти';
   }
 }
@@ -531,7 +578,7 @@ async function doLogin(){
 document.getElementById('login-btn').onclick = doLogin;
 document.getElementById('password').addEventListener('keypress', e=>{ if (e.key === 'Enter') doLogin(); });
 document.getElementById('email').addEventListener('keypress', e=>{ if (e.key === 'Enter') doLogin(); });
-document.getElementById('logout-btn').onclick = ()=>SB.auth.signOut();
+document.getElementById('logout-btn').onclick = authSignOut;
 
 /* ==================== NAV ==================== */
 document.getElementById('nav').addEventListener('click', e=>{
@@ -545,17 +592,16 @@ document.getElementById('nav').addEventListener('click', e=>{
 
 /* ==================== PRODUCTS ==================== */
 async function loadProducts(){
-  const { data: products, error } = await SB.from('ulhome_products').select('*').order('family').order('sort_order');
-  if (error){ toast('Помилка завантаження: '+error.message, 'err'); return; }
-  PRODUCTS = products || [];
-  const { data: media } = await SB.from('ulhome_product_media').select('*').order('sort_order');
-  MEDIA_BY_PRODUCT = {};
-  (media||[]).forEach(m => { (MEDIA_BY_PRODUCT[m.product_id]=MEDIA_BY_PRODUCT[m.product_id]||[]).push(m); });
-  renderProducts();
-  // populate family list
-  const fams = [...new Set(PRODUCTS.map(p=>p.family))].sort();
-  document.getElementById('prod-family').innerHTML = '<option value="">Всі сімʼї</option>' + fams.map(f=>`<option>${f}</option>`).join('');
-  document.getElementById('fam-list').innerHTML = fams.map(f=>`<option value="${f}">`).join('');
+  try {
+    PRODUCTS = await rest('ulhome_products?select=*&order=family.asc,sort_order.asc') || [];
+    const media = await rest('ulhome_product_media?select=*&order=sort_order.asc') || [];
+    MEDIA_BY_PRODUCT = {};
+    media.forEach(m => { (MEDIA_BY_PRODUCT[m.product_id]=MEDIA_BY_PRODUCT[m.product_id]||[]).push(m); });
+    renderProducts();
+    const fams = [...new Set(PRODUCTS.map(p=>p.family))].sort();
+    document.getElementById('prod-family').innerHTML = '<option value="">Всі сімʼї</option>' + fams.map(f=>`<option>${f}</option>`).join('');
+    document.getElementById('fam-list').innerHTML = fams.map(f=>`<option value="${f}">`).join('');
+  } catch(e){ toast('Помилка завантаження: '+e.message, 'err'); }
 }
 
 function renderProducts(){
@@ -669,12 +715,12 @@ function addVideoUrl(){
 document.getElementById('ed-upload').addEventListener('change', async e=>{
   const files = [...e.target.files]; if (!files.length) return;
   for (const f of files){
-    const ext = (f.name.split('.').pop()||'jpg').toLowerCase();
-    const name = 'p/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.'+ext;
-    const { data, error } = await SB.storage.from(BUCKET).upload(name, f, { cacheControl:'3600', upsert:false });
-    if (error){ toast('Upload: '+error.message, 'err'); continue; }
-    const { data: pub } = SB.storage.from(BUCKET).getPublicUrl(data.path);
-    if (!EDITING.photo){ EDITING.photo = pub.publicUrl; } else { ED_MEDIA.push({ url: pub.publicUrl, type:'photo', sort_order: ED_MEDIA.length }); }
+    try {
+      const ext = (f.name.split('.').pop()||'jpg').toLowerCase();
+      const name = 'p/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.'+ext;
+      const url = await storageUpload(name, f);
+      if (!EDITING.photo){ EDITING.photo = url; } else { ED_MEDIA.push({ url, type:'photo', sort_order: ED_MEDIA.length }); }
+    } catch(err){ toast('Upload: '+err.message, 'err'); }
   }
   e.target.value='';
   renderEdPhotos();
@@ -696,62 +742,57 @@ document.getElementById('ed-save').onclick = async ()=>{
     photo: EDITING.photo || '',
     published: document.getElementById('ed-pub').checked,
   };
-  let row;
-  if (EDITING.id){
-    const { data, error } = await SB.from('ulhome_products').update(payload).eq('id', EDITING.id).select().single();
-    if (error){ toast(error.message,'err'); btn.disabled=false; btn.textContent='Зберегти'; return; }
-    row = data;
-  } else {
-    const { data, error } = await SB.from('ulhome_products').insert(payload).select().single();
-    if (error){ toast(error.message,'err'); btn.disabled=false; btn.textContent='Зберегти'; return; }
-    row = data;
+  try {
+    let row;
+    if (EDITING.id){
+      const data = await rest('ulhome_products?id=eq.'+EDITING.id, {
+        method:'PATCH', headers:{Prefer:'return=representation'}, body: JSON.stringify(payload)
+      });
+      row = data && data[0];
+    } else {
+      const data = await rest('ulhome_products', {
+        method:'POST', headers:{Prefer:'return=representation'}, body: JSON.stringify(payload)
+      });
+      row = data && data[0];
+    }
+    if (!row) throw new Error('No row returned');
+    // Sync media
+    await rest('ulhome_product_media?product_id=eq.'+row.id, {method:'DELETE'});
+    if (ED_MEDIA.length){
+      const rows = ED_MEDIA.map((m,i)=>({ product_id: row.id, url: m.url, type: m.type||'photo', sort_order: i }));
+      await rest('ulhome_product_media', { method:'POST', body: JSON.stringify(rows) });
+    }
+    toast('Збережено ✓');
+    btn.disabled=false; btn.textContent='Зберегти';
+    closeEditor();
+    await loadProducts();
+  } catch(e){
+    toast(e.message,'err');
+    btn.disabled=false; btn.textContent='Зберегти';
   }
-  // Sync media: delete old, insert current
-  await SB.from('ulhome_product_media').delete().eq('product_id', row.id);
-  if (ED_MEDIA.length){
-    const rows = ED_MEDIA.map((m,i)=>({ product_id: row.id, url: m.url, type: m.type||'photo', sort_order: i }));
-    await SB.from('ulhome_product_media').insert(rows);
-  }
-  toast('Збережено ✓');
-  btn.disabled=false; btn.textContent='Зберегти';
-  closeEditor();
-  await loadProducts();
 };
 
 document.getElementById('ed-delete').onclick = async ()=>{
   if (!confirm('Видалити товар?')) return;
-  const { error } = await SB.from('ulhome_products').delete().eq('id', EDITING.id);
-  if (error){ toast(error.message,'err'); return; }
-  toast('Видалено');
-  closeEditor(); await loadProducts();
+  try {
+    await rest('ulhome_products?id=eq.'+EDITING.id, {method:'DELETE'});
+    toast('Видалено'); closeEditor(); await loadProducts();
+  } catch(e){ toast(e.message,'err'); }
 };
 
 async function delProduct(p){
   if (!confirm('Видалити "'+p.title+'"?')) return;
-  const { error } = await SB.from('ulhome_products').delete().eq('id', p.id);
-  if (error){ toast(error.message,'err'); return; }
-  toast('Видалено'); await loadProducts();
+  try {
+    await rest('ulhome_products?id=eq.'+p.id, {method:'DELETE'});
+    toast('Видалено'); await loadProducts();
+  } catch(e){ toast(e.message,'err'); }
 }
 
 /* ==================== SETTINGS ==================== */
 async function loadSettings(){
-  const { data, error } = await SB.from('ulhome_settings').select('*');
-  if (error){ return; }
-  SETTINGS = {}; (data||[]).forEach(r => SETTINGS[r.key] = r.value);
-  document.querySelectorAll('[data-key]').forEach(el => {
-    const v = SETTINGS[el.dataset.key];
-    if (el.type === 'checkbox') el.checked = v === true;
-    else if (v !== undefined && v !== null) el.value = typeof v === 'string' ? v : JSON.stringify(v);
-  });
-}
-
-document.getElementById('set-save').onclick = async ()=>{
-  const btn = document.getElementById('set-save'); btn.disabled=true; btn.textContent='Зберігаю…';
-  const rows = [];
-  document.querySelectorAll('[data-key]').forEach(el=>{
-    const key = el.dataset.key;
-    let val;
-    if (el.type === 'checkbox') val = el.checked;
-    else if (el.type === 'number') val = parseFloat(el.value)||0;
-    else val = el.value;
-    rows.push({ key, value: val });
+  try {
+    const data = await rest('ulhome_settings?select=*');
+    SETTINGS = {}; (data||[]).forEach(r => SETTINGS[r.key] = r.value);
+    document.querySelectorAll('[data-key]').forEach(el => {
+      const v = SETTINGS[el.dataset.key];
+      if (el.type === 'checkbox') el.ch
