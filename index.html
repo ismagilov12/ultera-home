@@ -1144,6 +1144,21 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .m-nav-prev{left:6px}
   .m-nav-next{right:6px}
 }
+
+/* —— mobile gallery enhancements —— */
+.m-zone{position:absolute;top:0;bottom:0;width:40%;z-index:3;border:0;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.m-zone-prev{left:0}
+.m-zone-next{right:0}
+@media (min-width:761px){ .m-zone{display:none} }
+
+.m-counter-pill{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+  z-index:6;pointer-events:none;
+  padding:6px 12px;border-radius:999px;
+  background:rgba(14,14,14,.7);color:#fff;
+  font:700 11px ui-monospace,monospace;letter-spacing:.05em;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  box-shadow:0 2px 8px rgba(0,0,0,.25)}
+@media (min-width:761px){ .m-counter-pill{bottom:16px} }
 </style>
 </head>
 <body>
@@ -1167,7 +1182,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v38 · modal-fix</div>
+<div class="build-tag">v40 · antagonist-merge</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -1428,35 +1443,6 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 
 
 <!-- SURVIVAL / STORY -->
-<section class="surv" id="story">
-  <div class="wide surv-wrap reveal">
-    <div class="surv-img">
-      <div class="surv-img-chip mono">РУЧНА РОБОТА · <b>Харків, UA</b></div>
-      <picture>
-        <source type="image/avif" srcset="banners/work-wide.avif">
-        <source type="image/webp" srcset="banners/work-wide.webp">
-        <img src="banners/work-wide.jpg" alt="ULTERA workshop" loading="lazy" decoding="async">
-      </picture>
-    </div>
-    <div class="surv-content">
-      <div class="surv-eyebrow">[ ПРО НАБІР ]</div>
-      <h2 class="surv-title">Ultera<br><em>Antagonist</em><br>Survival Kit.</h2>
-      <p class="surv-para">Ми не просто шиємо кросівки. Ми робимо <strong>technical survival kit</strong> для міста — взуття, що захищає стопу від асфальту, волокна від дощу, силует — від сірості.</p>
-      <p class="surv-para">Третя генерація Hunk з підошвою Bounce. Активна амортизація, яка повертає енергію кроку. Легше Hunk2 на 18%, стійкіша на знос.</p>
-      <div class="surv-specs">
-        <div class="surv-spec"><span class="k">ПАРТІЯ</span><span class="v">#0427</span></div>
-        <div class="surv-spec"><span class="k">ВАГА</span><span class="v">480 g</span></div>
-        <div class="surv-spec"><span class="k">ТЕРМІН</span><span class="v">4—10 ДНІВ</span></div>
-        <div class="surv-spec"><span class="k">КРАЇНА</span><span class="v">KHARKIV, UA</span></div>
-      </div>
-      <a class="surv-cta" href="#collection">
-        Детальніше про Hunk3
-        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </a>
-    </div>
-  </div>
-</section>
-
 <!-- CLASSICS (hidden — all models promoted to featured) -->
 <section class="classics" style="display:none">
   <div class="wide">
@@ -1472,19 +1458,31 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </section>
 
 <!-- KHARKIV -->
-<section class="khark">
+<section class="khark" id="story">
   <div class="wide khark-in reveal">
     <div class="khark-text">
       <div class="flag"><span class="ua"></span>УКРАЇНА · ХАРКІВ · 2021</div>
       <h2>Зроблено в<br><em>Харкові.</em></h2>
       <p><strong>ULTERA</strong> — український бренд з Харкова. Починали з одного Hunk у 2021-му. За 3 роки виготовили 1000+ пар, які служать своїм власникам по 2–4 роки щоденного носіння.</p>
       <p>Ручна робота, контроль кожного шва, чесні матеріали. Все, що ми продаємо — носимо самі.</p>
+      <p>Ми не просто шиємо кросівки. Ми робимо <strong>technical survival kit</strong> для міста — взуття, що захищає стопу від асфальту, волокна від дощу, силует — від сірості.</p>
+      <p>Третя генерація Hunk з підошвою Bounce. Активна амортизація, яка повертає енергію кроку. Легше Hunk2 на 18%, стійкіша на знос.</p>
+      <div class="surv-specs">
+        <div class="surv-spec"><span class="k">ПАРТІЯ</span><span class="v">#0427</span></div>
+        <div class="surv-spec"><span class="k">ВАГА</span><span class="v">480 g</span></div>
+        <div class="surv-spec"><span class="k">ТЕРМІН</span><span class="v">4—10 ДНІВ</span></div>
+        <div class="surv-spec"><span class="k">КРАЇНА</span><span class="v">KHARKIV, UA</span></div>
+      </div>
       <div class="khark-stats">
         <div class="khark-stat"><div class="n">1000+</div><div class="l">Пар виготовлено</div></div>
         <div class="khark-stat"><div class="n">27</div><div class="l">Моделі</div></div>
         <div class="khark-stat"><div class="n">12</div><div class="l">Кроків контролю</div></div>
         <div class="khark-stat"><div class="n">1y</div><div class="l">Гарантія</div></div>
       </div>
+      <a class="surv-cta" href="#collection">
+        Детальніше про Hunk3
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
     </div>
     <div class="khark-img">
       <picture>
@@ -1607,6 +1605,8 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <span class="play"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7L7 5Z" fill="currentColor"/></svg></span>
         <span class="lbl">ВІДЕО</span>
       </button>
+      <button class="m-zone m-zone-prev" aria-label="Попереднє фото" onclick="setModalPhoto((window.__modalPhotoIdx||0)-1)"></button>
+      <button class="m-zone m-zone-next" aria-label="Наступне фото" onclick="setModalPhoto((window.__modalPhotoIdx||0)+1)"></button>
       <button class="m-nav m-nav-prev" id="m_prev" aria-label="Попереднє фото" onclick="setModalPhoto((window.__modalPhotoIdx||0)-1)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
@@ -1614,6 +1614,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <img id="m_img" src="" alt="">
+      <div class="m-counter-pill" id="m_counter_pill"><b id="m_counter_cur_g">1</b> / <span id="m_counter_tot_g">1</span></div>
       <div class="modal-dots" id="m_dots" aria-hidden="true"></div>
     </div>
     <div class="modal-strip" id="m_gallery"></div>
@@ -2132,6 +2133,13 @@ function openModal(uid){
       `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${src}" loading="eager" decoding="async"></button>`
     ).join('');
   }
+  // counter-pill (завжди видимий)
+  const pillTot = document.getElementById('m_counter_tot_g');
+  const pillCur = document.getElementById('m_counter_cur_g');
+  if(pillTot) pillTot.textContent = String(photos.length);
+  if(pillCur) pillCur.textContent = '1';
+  const pill = document.getElementById('m_counter_pill');
+  if(pill) pill.style.display = photos.length > 1 ? 'block' : 'none';
   // dots for mobile — over 8 photos show a compact counter instead
   const dots = document.getElementById('m_dots');
   if(dots){
@@ -2191,6 +2199,7 @@ function setModalPhoto(i){
   document.querySelectorAll('.modal-strip button').forEach((b,ii)=>b.classList.toggle('active', ii===idx));
   document.querySelectorAll('#m_dots button').forEach((d,ii)=>d.classList.toggle('active', ii===idx));
   const cnt = document.getElementById('m_counter_cur'); if(cnt) cnt.textContent = String(idx+1);
+  const pcur = document.getElementById('m_counter_cur_g'); if(pcur) pcur.textContent = String(idx+1);
   // preload neighbors ±3 прямо тут (без IIFE-обгортки)
   [1,-1,2,-2,3,-3].forEach(d=>{
     const ii = ((idx+d)%n+n)%n;
@@ -2212,6 +2221,8 @@ function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = sr
     if(!dragging) return; dragging=false;
     const dx = e.changedTouches[0].clientX - sx;
     const dy = e.changedTouches[0].clientY - sy;
+    // Якщо маленький рух (tap) — не чіпаємо, дамо нативному onclick на zone спрацювати
+    if(Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
     if(Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)){
       setModalPhoto((window.__modalPhotoIdx||0) + (dx < 0 ? 1 : -1));
     }
