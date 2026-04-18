@@ -1167,7 +1167,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v36 · speed+arrows</div>
+<div class="build-tag">v37 · modal-preload</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -2129,7 +2129,7 @@ function openModal(uid){
 
   if(gal){
     gal.innerHTML = photos.map((src,i)=>
-      `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${src}" loading="lazy"></button>`
+      `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${src}" loading="eager" decoding="async"></button>`
     ).join('');
   }
   // dots for mobile — over 8 photos show a compact counter instead
@@ -2145,7 +2145,14 @@ function openModal(uid){
       ).join('');
     }
   }
-  if (photos[0]) document.getElementById('m_img').src = photos[0];
+  if (photos[0]){
+    const mi = document.getElementById('m_img');
+    mi.src = photos[0];
+    mi.setAttribute('fetchpriority','high');
+    mi.setAttribute('decoding','async');
+  }
+  // preload ALL other photos of this product immediately (Tilda CDN)
+  photos.forEach((src,i)=>{ if(i===0) return; const im = new Image(); im.decoding='async'; im.src = src; });
 
   document.getElementById('m_desc').innerHTML = (p.text||'').replace(/<div[^>]*>/g,'').replace(/<\/div>/g,'');
 
@@ -2214,7 +2221,7 @@ function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = sr
     if(!photos.length) return;
     const n = photos.length;
     const cur = window.__modalPhotoIdx || 0;
-    [(cur+1)%n, (cur-1+n)%n].forEach(ii=>{ new Image().src = photos[ii]; });
+    [1,-1,2,-2,3,-3].map(d=>((cur+d)%n+n)%n).forEach(ii=>{ const im = new Image(); im.decoding="async"; im.src = photos[ii]; });
   };
 })();
 
