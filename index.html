@@ -1182,7 +1182,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v40 · antagonist-merge</div>
+<div class="build-tag">v41 · shape-no-season</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -1630,7 +1630,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 
       <div class="modal-price" id="m_price"></div>
 
-      <div class="ms">
+      <div class="ms" id="m_season_wrap">
         <div class="ms-label">Версія · <b id="m_season_name">Літо</b></div>
         <div class="mod-seasons" id="m_seasons">
           <button class="season-btn active" data-season="summer" onclick="pickSeason(this,'summer','Літо')">
@@ -2166,6 +2166,10 @@ function openModal(uid){
 
   // close size helper on product change
   document.getElementById('shBox').classList.remove('open');
+
+  // SHAPE не має сезонного вибору (всесезонна модель)
+  const sw = document.getElementById('m_season_wrap');
+  if (sw) sw.style.display = (p.family === 'SHAPE') ? 'none' : '';
 
   document.getElementById('modal').classList.add('open');
   document.body.style.overflow = 'hidden';
