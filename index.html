@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link rel="preload" as="image" type="image/avif" href="banners/home-pc-5.avif" media="(min-width:761px)">
+<link rel="preload" as="image" type="image/avif" href="banners/home-mob-5.avif" media="(max-width:760px)">
 <title>ULTERA™ — Handcrafted sneakers · Kharkiv, UA</title>
 <style>.build-tag{position:fixed;bottom:6px;right:8px;z-index:9999;font-family:ui-monospace,monospace;font-size:9px;color:rgba(150,150,150,.6);background:rgba(255,255,255,.5);padding:2px 5px;border-radius:3px;pointer-events:none}</style>
 <meta name="description" content="ULTERA — handcrafted sneakers. Italian Nappa leather. Cordura 1000D. Bounce EVA cushioning. Made in Kharkiv, Ukraine.">
@@ -1124,6 +1126,24 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .ace-headline{font-size:clamp(30px,8.6vw,44px);max-width:none}
   .ace-dots{justify-content:center;padding-bottom:2px}
 }
+
+/* —— modal photo arrows —— */
+.m-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:5;
+  width:44px;height:44px;border-radius:999px;border:0;
+  background:rgba(255,255,255,.85);color:#0a0a0a;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:all .2s;opacity:.92;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.m-nav:hover{opacity:1;background:#fff;transform:translateY(-50%) scale(1.05)}
+.m-nav:active{transform:translateY(-50%) scale(.96)}
+.m-nav svg{width:22px;height:22px}
+.m-nav-prev{left:12px}
+.m-nav-next{right:12px}
+@media (max-width:760px){
+  .m-nav{width:36px;height:36px;opacity:.78}
+  .m-nav-prev{left:6px}
+  .m-nav-next{right:6px}
+}
 </style>
 </head>
 <body>
@@ -1147,7 +1167,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v35 · i18n-full</div>
+<div class="build-tag">v36 · speed+arrows</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -1188,25 +1208,41 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   <div class="ace-bg" id="aceHeroBg">
     <div class="ace-slide active" data-idx="1">
       <picture>
+        <source media="(max-width:760px)" type="image/avif" srcset="banners/home-mob-5.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/home-mob-5.webp">
         <source media="(max-width:760px)" srcset="banners/home-mob-5.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="banners/home-pc-5.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/home-pc-5.webp">
         <img src="banners/home-pc-5.jpg" alt="ULTERA — кадр 1" decoding="async" fetchpriority="high">
       </picture>
     </div>
     <div class="ace-slide" data-idx="2">
       <picture>
+        <source media="(max-width:760px)" type="image/avif" srcset="banners/home-mob-4.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/home-mob-4.webp">
         <source media="(max-width:760px)" srcset="banners/home-mob-4.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="banners/home-pc-4.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/home-pc-4.webp">
         <img src="banners/home-pc-4.jpg" alt="ULTERA — кадр 2" loading="lazy" decoding="async">
       </picture>
     </div>
     <div class="ace-slide" data-idx="3">
       <picture>
+        <source media="(max-width:760px)" type="image/avif" srcset="banners/home-mob-2.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/home-mob-2.webp">
         <source media="(max-width:760px)" srcset="banners/home-mob-2.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="banners/home-pc-2.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/home-pc-2.webp">
         <img src="banners/home-pc-2.jpg" alt="ULTERA — кадр 3" loading="lazy" decoding="async">
       </picture>
     </div>
     <div class="ace-slide" data-idx="4">
       <picture>
+        <source media="(max-width:760px)" type="image/avif" srcset="banners/home-mob-3.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/home-mob-3.webp">
         <source media="(max-width:760px)" srcset="banners/home-mob-3.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="banners/home-pc-3.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/home-pc-3.webp">
         <img src="banners/home-pc-3.jpg" alt="ULTERA — кадр 4" loading="lazy" decoding="async">
       </picture>
     </div>
@@ -1396,7 +1432,11 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   <div class="wide surv-wrap reveal">
     <div class="surv-img">
       <div class="surv-img-chip mono">РУЧНА РОБОТА · <b>Харків, UA</b></div>
-      <img src="banners/work-wide.jpg" alt="ULTERA workshop">
+      <picture>
+        <source type="image/avif" srcset="banners/work-wide.avif">
+        <source type="image/webp" srcset="banners/work-wide.webp">
+        <img src="banners/work-wide.jpg" alt="ULTERA workshop" loading="lazy" decoding="async">
+      </picture>
     </div>
     <div class="surv-content">
       <div class="surv-eyebrow">[ ПРО НАБІР ]</div>
@@ -1448,8 +1488,12 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
     </div>
     <div class="khark-img">
       <picture>
+        <source media="(max-width:760px)" type="image/avif" srcset="banners/work-mobile.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/work-mobile.webp">
         <source media="(max-width:760px)" srcset="banners/work-mobile.jpg">
-        <img src="banners/work-desktop.jpg" alt="ULTERA workshop Kharkiv">
+        <source media="(min-width:761px)" type="image/avif" srcset="banners/work-desktop.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/work-desktop.webp">
+        <img src="banners/work-desktop.jpg" alt="ULTERA workshop Kharkiv" loading="lazy" decoding="async">
       </picture>
     </div>
   </div>
@@ -1562,6 +1606,12 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
       <button class="video-btn" id="mVideoBtn" onclick="toast('Відео — скоро')">
         <span class="play"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7L7 5Z" fill="currentColor"/></svg></span>
         <span class="lbl">ВІДЕО</span>
+      </button>
+      <button class="m-nav m-nav-prev" id="m_prev" aria-label="Попереднє фото" onclick="setModalPhoto((window.__modalPhotoIdx||0)-1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="m-nav m-nav-next" id="m_next" aria-label="Наступне фото" onclick="setModalPhoto((window.__modalPhotoIdx||0)+1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
       <img id="m_img" src="" alt="">
       <div class="modal-dots" id="m_dots" aria-hidden="true"></div>
@@ -2133,7 +2183,7 @@ function setModalPhoto(i){
 // legacy fn kept for safety (no longer referenced from rendered HTML)
 function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = src; }
 
-/* ————— Swipe nav on modal image (mobile) ————— */
+/* ————— Swipe nav + keyboard + preload on modal image ————— */
 (function(){
   const wrap = document.getElementById('m_img_wrap');
   if(!wrap) return;
@@ -2149,6 +2199,23 @@ function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = sr
       setModalPhoto((window.__modalPhotoIdx||0) + (dx < 0 ? 1 : -1));
     }
   });
+  // keyboard arrows when modal is open
+  document.addEventListener('keydown', e=>{
+    const modal = document.getElementById('modal');
+    if(!modal || !modal.classList.contains('open')) return;
+    if(e.key === 'ArrowLeft')  setModalPhoto((window.__modalPhotoIdx||0)-1);
+    if(e.key === 'ArrowRight') setModalPhoto((window.__modalPhotoIdx||0)+1);
+  });
+  // preload neighbors when setModalPhoto is called
+  const origSet = window.setModalPhoto;
+  window.setModalPhoto = function(i){
+    origSet(i);
+    const photos = window.__modalPhotos || [];
+    if(!photos.length) return;
+    const n = photos.length;
+    const cur = window.__modalPhotoIdx || 0;
+    [(cur+1)%n, (cur-1+n)%n].forEach(ii=>{ new Image().src = photos[ii]; });
+  };
 })();
 
 function addToCart(){
