@@ -796,7 +796,7 @@ async function loadSettings(){
     document.querySelectorAll('[data-key]').forEach(el => {
       const v = SETTINGS[el.dataset.key];
       if (el.type === 'checkbox') el.checked = v === true;
-      else if (v \!== undefined && v \!== null) el.value = typeof v === 'string' ? v : JSON.stringify(v);
+      else if (v !== undefined && v !== null) el.value = typeof v === 'string' ? v : JSON.stringify(v);
     });
   } catch(e){}
 }
@@ -837,19 +837,19 @@ function renderAdmins(){
   const box = document.getElementById('admin-list');
   box.innerHTML = ADMINS.map(a=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)">
     <div><b>${escapeHtml(a.email)}</b><div style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-60);margin-top:2px">${new Date(a.created_at).toLocaleString('uk-UA')}</div></div>
-    ${a.email \!== USER.email ? `<button class="btn ghost" onclick="delAdmin('${escapeHtml(a.email)}')">✕</button>` : '<span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-60)">ви</span>'}
+    ${a.email !== USER.email ? `<button class="btn ghost" onclick="delAdmin('${escapeHtml(a.email)}')">✕</button>` : '<span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-60)">ви</span>'}
   </div>`).join('');
 }
 
 document.getElementById('admin-add').onclick = async ()=>{
-  const email = prompt('Email нового адміна:'); if (\!email) return;
+  const email = prompt('Email нового адміна:'); if (!email) return;
   try {
     await rest('ulhome_admins', { method:'POST', body: JSON.stringify({ email: email.trim().toLowerCase() }) });
     toast('Додано'); await loadAdmins();
   } catch(e){ toast(e.message,'err'); }
 };
 async function delAdmin(email){
-  if (\!confirm('Видалити адміна '+email+'?')) return;
+  if (!confirm('Видалити адміна '+email+'?')) return;
   try {
     await rest('ulhome_admins?email=eq.'+encodeURIComponent(email), {method:'DELETE'});
     toast('Видалено'); await loadAdmins();
@@ -863,7 +863,7 @@ async function loadOrders(){
   tbl.innerHTML = ''; tbl.appendChild(head);
   try {
     const data = await rest('ulhome_orders?select=*&order=created_at.desc');
-    if (\!data || \!data.length){ tbl.innerHTML += '<div class="empty">Замовлень ще немає</div>'; return; }
+    if (!data || !data.length){ tbl.innerHTML += '<div class="empty">Замовлень ще немає</div>'; return; }
     data.forEach(o=>{
       const row = document.createElement('div');
       row.className='ord-row';
