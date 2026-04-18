@@ -1182,7 +1182,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v41 · shape-no-season</div>
+<div class="build-tag">v42 · lite-no-season</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -2167,9 +2167,10 @@ function openModal(uid){
   // close size helper on product change
   document.getElementById('shBox').classList.remove('open');
 
-  // SHAPE не має сезонного вибору (всесезонна модель)
+  // Моделі без сезонного вибору (всесезонні / одна версія)
+  const NO_SEASON = ['SHAPE','Lite'];
   const sw = document.getElementById('m_season_wrap');
-  if (sw) sw.style.display = (p.family === 'SHAPE') ? 'none' : '';
+  if (sw) sw.style.display = NO_SEASON.includes(p.family) ? 'none' : '';
 
   document.getElementById('modal').classList.add('open');
   document.body.style.overflow = 'hidden';
