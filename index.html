@@ -585,9 +585,11 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 @keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
 .modal-close{
   position:absolute;top:14px;right:14px;
-  width:40px;height:40px;border-radius:50%;background:#fff;
-  display:flex;align-items:center;justify-content:center;z-index:3;
-  font-size:16px;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:all .25s;
+  width:44px;height:44px;border-radius:50%;background:#fff;
+  border:0;padding:0;cursor:pointer;font-family:inherit;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;z-index:50;
+  font-size:18px;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:all .25s;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
 }
 .modal-close:hover{background:var(--ink);color:#fff;transform:rotate(90deg)}
 .modal-img{grid-row:1/3;grid-column:1/2;position:relative;background:var(--bg-alt);overflow:hidden;min-height:360px;height:100%;display:flex;align-items:center;justify-content:center}
@@ -1293,7 +1295,12 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .cd-next:active{background:#000}
 .cd-next.submit{background:var(--mint);color:var(--ink)}
 .cd-next.submit:hover{background:#c9e8b8;box-shadow:inset 0 0 0 100px rgba(0,0,0,.04)}
-.cd-pane > .cd-next:last-child{margin-top:auto;align-self:stretch}
+.cd-next.submit.big{min-height:64px;max-height:72px;padding:18px 24px;font-size:13px;letter-spacing:.18em;gap:10px;box-shadow:0 10px 28px -8px rgba(155,210,107,.55),0 0 0 1px rgba(40,60,20,.06);position:relative;margin:6px 0 14px}
+.cd-next.submit.big:hover{background:#c9e8b8;box-shadow:0 14px 34px -8px rgba(155,210,107,.65),0 0 0 1px rgba(40,60,20,.1)}
+.cd-next.submit.big:active{transform:translateY(1px);box-shadow:0 6px 16px -6px rgba(155,210,107,.5)}
+.cd-next .cd-arr{width:18px;height:18px;display:inline-block;vertical-align:-3px;margin-left:2px}
+.cd-section.cd-section-sum{margin-top:18px;border-top:1px dashed var(--line);padding-top:18px}
+.cd-pane > .cd-next:last-child{align-self:stretch}
 .cd-row .cd-next{flex:1;margin-top:0}
 
 /* success */
@@ -1924,9 +1931,10 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
           <label class="cd-radio"><input type="radio" name="pm" value="card" checked><div><b>Оплата карткою</b><span>Доступна оплата частинами моно/а-банк</span></div></label>
           <label class="cd-radio"><input type="radio" name="pm" value="np"><div><b>Оплата на пошті (наложений платіж)</b><span>Мінімальна передоплата 500 ₴</span></div></label>
 
-          <div class="cd-summary" id="wSummary"></div>
           <div class="cd-err" id="wErr1"></div>
-          <button class="cd-next submit" onclick="wizardSubmit()">Оформити замовлення</button>
+          <button class="cd-next submit big" onclick="wizardSubmit()">Оформити замовлення<svg class="cd-arr" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="cd-section cd-section-sum"><b>5</b><span>Деталі замовлення</span></div>
+          <div class="cd-summary" id="wSummary"></div>
         </div>
         <div class="cd-pane cd-success" data-pane="done" style="display:none">
           <div class="cd-success-ic">✓</div>
