@@ -1255,7 +1255,11 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .cd-progress-bar{position:absolute;bottom:-1px;left:24px;right:24px;height:2px;background:var(--line);overflow:hidden}
 .cd-progress-bar i{display:block;width:33%;height:100%;background:var(--ink);transition:width .35s}
 
-.cd-pane{flex:1;overflow-y:auto;padding:20px 24px 22px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.cd-pane{flex:1;overflow-y:auto;padding:20px 24px 22px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.cd-section{display:flex;align-items:center;gap:10px;margin:10px 0 2px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.cd-section:first-child{margin-top:0}
+.cd-section b{width:22px;height:22px;border-radius:0;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px;font-weight:800;flex:0 0 auto}
+.cd-section span{font-family:var(--font-mono);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
 .cd-field{display:flex;flex-direction:column;gap:8px;position:relative}
 .cd-field > span{font-family:var(--font-mono);font-size:10px;color:var(--ink-60);letter-spacing:.12em;text-transform:uppercase;font-weight:800}
 .cd-field input{padding:14px 16px;border:1px solid var(--line);border-radius:0;font-size:14px;font-family:var(--font-sans,system-ui);background:#fff;color:var(--ink);transition:border-color .2s}
@@ -1906,30 +1910,24 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         </div>
       </div>
       <div class="cd-wizard" id="cdWizard" style="display:none">
-        <div class="cd-progress">
-          <div class="cd-step" data-step="1"><i>1</i><span>Контакти</span></div>
-          <div class="cd-step" data-step="2"><i>2</i><span>Доставка</span></div>
-          <div class="cd-step" data-step="3"><i>3</i><span>Оплата</span></div>
-          <div class="cd-progress-bar"><i id="cdProgressBar"></i></div>
-        </div>
-        <div class="cd-pane" data-pane="1">
-          <label class="cd-field"><span>Ваше прізвище та ім'я</span><input type="text" id="wFio" placeholder="Шевченко Тарас" autocomplete="name"></label>
-          <label class="cd-field"><span>Номер телефону</span><input type="tel" id="wPhone" placeholder="+380 __ ___ __ __" autocomplete="tel" maxlength="19"></label>
-          <div class="cd-err" id="wErr1"></div>
-          <button class="cd-next" onclick="wizardNext(1)">Далі →</button>
-        </div>
-        <div class="cd-pane" data-pane="2" style="display:none">
-          <label class="cd-field"><span>Місто (Нова Пошта)</span><input type="text" id="wCity" placeholder="Почни вводити…" autocomplete="off"><div class="cd-suggest" id="wCitySug"></div></label>
-          <label class="cd-field"><span>Відділення або поштомат</span><input type="text" id="wWh" placeholder="Обери спочатку місто" autocomplete="off" disabled><div class="cd-suggest" id="wWhSug"></div></label>
-          <div class="cd-err" id="wErr2"></div>
-          <div class="cd-row"><button class="cd-back" onclick="wizardBack(2)">← Назад</button><button class="cd-next" onclick="wizardNext(2)">Далі →</button></div>
-        </div>
-        <div class="cd-pane" data-pane="3" style="display:none">
+        <div class="cd-pane" data-pane="form">
+          <div class="cd-section"><b>1</b><span>Ім'я та прізвище</span></div>
+          <label class="cd-field"><input type="text" id="wFio" placeholder="Шевченко Тарас" autocomplete="name"></label>
+
+          <div class="cd-section"><b>2</b><span>Номер телефону</span></div>
+          <label class="cd-field"><input type="tel" id="wPhone" placeholder="+380 __ ___ __ __" autocomplete="tel" maxlength="19"></label>
+
+          <div class="cd-section"><b>3</b><span>Місто та відділення Нової Пошти</span></div>
+          <label class="cd-field"><input type="text" id="wCity" placeholder="Місто — почни вводити…" autocomplete="off"><div class="cd-suggest" id="wCitySug"></div></label>
+          <label class="cd-field"><input type="text" id="wWh" placeholder="Обери спочатку місто" autocomplete="off" disabled><div class="cd-suggest" id="wWhSug"></div></label>
+
+          <div class="cd-section"><b>4</b><span>Спосіб оплати</span></div>
           <label class="cd-radio"><input type="radio" name="pm" value="card" checked><div><b>Оплата карткою</b><span>Доступна оплата частинами моно/а-банк</span></div></label>
           <label class="cd-radio"><input type="radio" name="pm" value="np"><div><b>Оплата на пошті (наложений платіж)</b><span>Мінімальна передоплата 500 ₴</span></div></label>
+
           <div class="cd-summary" id="wSummary"></div>
-          <div class="cd-err" id="wErr3"></div>
-          <div class="cd-row"><button class="cd-back" onclick="wizardBack(3)">← Назад</button><button class="cd-next submit" onclick="wizardSubmit()">Підтвердити замовлення</button></div>
+          <div class="cd-err" id="wErr1"></div>
+          <button class="cd-next submit" onclick="wizardSubmit()">Оформити замовлення</button>
         </div>
         <div class="cd-pane cd-success" data-pane="done" style="display:none">
           <div class="cd-success-ic">✓</div>
@@ -2838,45 +2836,21 @@ function startCheckout(){
   if(w.city)  document.getElementById('wCity').value = w.city;
   if(w.wh){   document.getElementById('wWh').value = w.wh; document.getElementById('wWh').disabled = false; }
   if(w.pm){   const r = document.querySelector('input[name="pm"][value="'+w.pm+'"]'); if(r) r.checked = true; }
-  showStep(w.step || 1);
+  showStep('form');
+  renderSummary();
 }
 function showStep(n){
-  for(let i=1;i<=3;i++){
-    const pane = document.querySelector('.cd-pane[data-pane="'+i+'"]');
-    if(pane) pane.style.display = (i===n) ? '' : 'none';
-    const step = document.querySelector('.cd-step[data-step="'+i+'"]');
-    if(step){ step.classList.toggle('active', i===n); step.classList.toggle('done', i<n); }
-  }
-  const done = document.querySelector('.cd-pane[data-pane="done"]'); if(done) done.style.display = 'none';
-  const bar = document.getElementById('cdProgressBar'); if(bar) bar.style.width = (n*33.33) + '%';
+  const form = document.querySelector('.cd-pane[data-pane="form"]');
+  const done = document.querySelector('.cd-pane[data-pane="done"]');
+  if(form) form.style.display = (n==='form') ? '' : 'none';
+  if(done) done.style.display = (n==='done') ? '' : 'none';
   CART.wizard = {...CART.wizard, step:n}; CART.saveWiz();
 }
-function wizardBack(from){ showStep(from - 1); }
-
-async function wizardNext(from){
-  const errEl = document.getElementById('wErr' + from);
-  errEl.textContent = '';
-  if(from === 1){
-    const fio = document.getElementById('wFio').value.trim();
-    const phone = document.getElementById('wPhone').value.trim();
-    if(!isFioValid(fio)){ errEl.textContent = 'Вкажи імʼя (хоча б 2 символи)'; return; }
-    if(!isPhoneValid(phone)){ errEl.textContent = 'Некоректний номер (потрібно 9-13 цифр)'; return; }
-    CART.wizard = {...CART.wizard, fio, phone}; CART.saveWiz();
-    // === LEAD CAPTURE — відправляємо в CRM одразу після кроку 1 ===
-    sendLead();
-    showStep(2);
-  } else if(from === 2){
-    const city = document.getElementById('wCity').value.trim();
-    const wh   = document.getElementById('wWh').value.trim();
-    if(!city || !CART.wizard.cityRef){ errEl.textContent = 'Обери місто зі списку'; return; }
-    if(!wh   || !CART.wizard.whRef){   errEl.textContent = 'Обери відділення зі списку'; return; }
-    CART.wizard = {...CART.wizard, city, wh}; CART.saveWiz();
-    renderSummary();
-    showStep(3);
-  }
-}
 function renderSummary(){
-  const w = CART.wizard;
+  const w = CART.wizard || {};
+  const sumEl = document.getElementById('wSummary');
+  if(!sumEl) return;
+  if(!w.fio && !w.phone && !w.city){ sumEl.innerHTML = ''; return; }
   const total = Math.round(CART.total()).toLocaleString('uk-UA');
   const icUser  = '<svg class="s-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg>';
   const icPin   = '<svg class="s-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-7 8-13a8 8 0 0 0-16 0c0 6 8 13 8 13z"/><circle cx="12" cy="9" r="2.5"/></svg>';
@@ -2891,11 +2865,12 @@ function renderSummary(){
       '<div class="s-item-price">' + Math.round(parseFloat(it.price)||0).toLocaleString('uk-UA') + ' ₴</div>' +
     '</div>'
   ).join('');
-  document.getElementById('wSummary').innerHTML =
+  const contactHtml = (w.fio || w.phone) ? ('<div class="s-row">' + icUser + '<div><b>' + (w.fio||'—') + '</b><span>' + (w.phone||'—') + '</span></div></div>') : '';
+  const addrHtml    = (w.city || w.wh)   ? ('<div class="s-row">' + icPin  + '<div><b>' + (w.city||'—') + '</b><span>' + (w.wh||'—') + '</span></div></div>' +
+                                             '<div class="s-row s-eta">' + icTruck + '<div><b>4–10 днів</b><span>Нова Пошта</span></div></div>') : '';
+  sumEl.innerHTML =
     '<div class="s-card">' +
-      '<div class="s-row">' + icUser + '<div><b>' + w.fio + '</b><span>' + w.phone + '</span></div></div>' +
-      '<div class="s-row">' + icPin  + '<div><b>' + w.city + '</b><span>' + w.wh + '</span></div></div>' +
-      '<div class="s-row s-eta">' + icTruck + '<div><b>4–10 днів</b><span>Нова Пошта</span></div></div>' +
+      contactHtml + addrHtml +
       '<div class="s-divider"></div>' +
       itemsHtml +
       '<div class="s-total"><span>Разом</span><b>' + total + ' ₴</b></div>' +
@@ -2932,12 +2907,30 @@ async function sendLead(){
 }
 
 async function wizardSubmit(){
-  const errEl = document.getElementById('wErr3');
+  const errEl = document.getElementById('wErr1');
   errEl.textContent = '';
+
+  // 1. ФІО + 2. Телефон
+  const fio = document.getElementById('wFio').value.trim();
+  const phone = document.getElementById('wPhone').value.trim();
+  if(!isFioValid(fio)){ errEl.textContent = 'Вкажи імʼя (хоча б 2 символи)'; document.getElementById('wFio').focus(); return; }
+  if(!isPhoneValid(phone)){ errEl.textContent = 'Некоректний номер (потрібно 9-13 цифр)'; document.getElementById('wPhone').focus(); return; }
+  CART.wizard = {...CART.wizard, fio, phone}; CART.saveWiz();
+  if(!CART.wizard.leadKeycrmId){ sendLead(); }
+
+  // 3. Місто + відділення
+  const city = document.getElementById('wCity').value.trim();
+  const wh   = document.getElementById('wWh').value.trim();
+  if(!city || !CART.wizard.cityRef){ errEl.textContent = 'Обери місто зі списку'; document.getElementById('wCity').focus(); return; }
+  if(!wh   || !CART.wizard.whRef){   errEl.textContent = 'Обери відділення зі списку'; document.getElementById('wWh').focus(); return; }
+  CART.wizard = {...CART.wizard, city, wh}; CART.saveWiz();
+
+  // 4. Оплата
   const pmInput = document.querySelector('input[name="pm"]:checked');
   const pm = pmInput ? pmInput.value : null;
   if(!pm){ errEl.textContent = 'Обери спосіб оплати'; return; }
   CART.wizard = {...CART.wizard, pm}; CART.saveWiz();
+  renderSummary();
   const btn = document.querySelector('.cd-next.submit');
   btn.disabled = true; btn.textContent = 'Надсилаю...';
   const orderNum = 'ULT-' + Date.now().toString().slice(-8);
@@ -2966,8 +2959,7 @@ async function wizardSubmit(){
       throw new Error(result.error || result.message || ('HTTP ' + r.status));
     }
     // success
-    document.querySelectorAll('.cd-pane').forEach(p=>p.style.display='none');
-    document.querySelector('.cd-pane[data-pane="done"]').style.display = '';
+    showStep('done');
     document.getElementById('wOrderNum').textContent = orderNum;
     if(result.mock) console.log('Mock order:', result);
     CART.clear(); CART.wizard = {}; CART.saveWiz();
@@ -2975,15 +2967,25 @@ async function wizardSubmit(){
   } catch(e){
     console.error('Order error:', e);
     errEl.textContent = 'Не вдалось надіслати: ' + e.message + '. Зв\'яжись з нами або спробуй ще раз.';
-    btn.disabled = false; btn.textContent = 'Підтвердити замовлення';
+    btn.disabled = false; btn.textContent = 'Оформити замовлення';
   }
 }
 
 (function(){
   const phone = document.getElementById('wPhone');
+  const fioEl = document.getElementById('wFio');
   if(phone){
     phone.addEventListener('input', e => { e.target.value = phoneMask(e.target.value); });
     phone.addEventListener('focus', e => { if(!e.target.value) e.target.value = '+380 '; });
+    phone.addEventListener('blur', () => {
+      const fio = (fioEl && fioEl.value.trim()) || '';
+      const ph  = phone.value.trim();
+      if(isFioValid(fio) && isPhoneValid(ph)){
+        CART.wizard = {...CART.wizard, fio, phone: ph}; CART.saveWiz();
+        renderSummary();
+        if(!CART.wizard.leadKeycrmId) sendLead();
+      }
+    });
   }
   const city = document.getElementById('wCity');
   const citySug = document.getElementById('wCitySug');
@@ -3003,9 +3005,11 @@ async function wizardSubmit(){
         citySug.innerHTML = data.map(c => '<button type="button" data-ref="'+c.ref+'">'+c.title+'</button>').join('');
         citySug.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
           city.value = b.textContent;
-          CART.wizard = {...CART.wizard, cityRef: b.dataset.ref, city: b.textContent}; CART.saveWiz();
+          CART.wizard = {...CART.wizard, cityRef: b.dataset.ref, city: b.textContent, whRef: null, wh: null}; CART.saveWiz();
+          wh.value = '';
           citySug.classList.remove('open');
           wh.disabled = false; wh.placeholder = 'Назва або № відділення'; wh.focus();
+          renderSummary();
         }));
       }
     }, 280);
@@ -3028,6 +3032,7 @@ async function wizardSubmit(){
           wh.value = b.textContent;
           CART.wizard = {...CART.wizard, whRef: b.dataset.ref, wh: b.textContent}; CART.saveWiz();
           whSug.classList.remove('open');
+          renderSummary();
         }));
       }
     }, 280);
