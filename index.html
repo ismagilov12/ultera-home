@@ -3,20 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<script>
-/* ULTERA_TPRODUCT_HEAD_REWRITE — rewrite /tproduct/{project}-{uid}-{slug} to "/" before <link preload> parses,
-   so banners/* and favicon.ico resolve from root; stash uid for later auto-openModal. */
-(function(){
-  try {
-    var m = location.pathname.match(/^\/tproduct\/\d+-(\d{12})(?:-|$)/);
-    if (!m) return;
-    window.__AUTO_OPEN_UID = m[1];
-    if (history && history.replaceState) {
-      history.replaceState(null, "", "/");
-    }
-  } catch(e) { /* silent */ }
-})();
-</script>
 <link rel="preload" as="image" type="image/avif" href="banners/home-pc-5.avif" media="(min-width:761px)">
 <link rel="preload" as="image" type="image/avif" href="banners/home-mob-5.avif" media="(max-width:760px)">
 <title>ULTERA™ — Handcrafted sneakers · Kharkiv, UA</title>
@@ -2316,7 +2302,13 @@ function renderFeatured(){
     const serialTxt = meta.serial + '-' + String(photos.length).padStart(2,'0');
     const handler = meta.handler || `openModal('${row.variants[0].uid}')`;
 
-    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}">${__pic(ph.photo, 'alt="' + fam + ' ' + ph.name + '" loading="lazy" decoding="async"')}</div>`).join('');
+    const photosHtml = photos.map((ph,i) => {
+      if (i === 0) {
+        return `<div class="feat-photo active" data-idx="0" data-photo="${ph.photo}" data-alt="${fam} ${ph.name}">${__pic(ph.photo, 'alt="' + fam + ' ' + ph.name + '" decoding="async" fetchpriority="high"')}</div>`;
+      }
+      // defer-render: empty, hydrates on first activation
+      return `<div class="feat-photo" data-idx="${i}" data-photo="${ph.photo}" data-alt="${fam} ${ph.name}"></div>`;
+    }).join('');
     const swatchHtml = photos.map((ph,i) => `<button class="sw${i===0?' active':''}" data-idx="${i}" style="background:${ph.swatch}" aria-label="${ph.name}" title="${ph.name}"></button>`).join('');
 
     return `<div class="feat-card" data-fam="${fam}">
@@ -2356,12 +2348,32 @@ function renderFeatured(){
   document.querySelectorAll('.feat-card').forEach(card => {
     const swatches = card.querySelectorAll('.feat-colors-tr .sw');
     const photos   = card.querySelectorAll('.feat-photo');
+    /* hydrate picture on first activation (mobile bandwidth saver) */
+    const hydrate = el => {
+      if (!el) return;
+      if (el.querySelector('img')) return;
+      const src = el.dataset.photo; const alt = el.dataset.alt || '';
+      if (!src) return;
+      el.innerHTML = window.__pic(src, 'alt="' + alt + '" decoding="async"');
+    };
+    /* kick preload on pointer entering / touching swatch — cache warms before click */
+    const warm = idx => {
+      const p = Array.from(photos).find(x => +x.dataset.idx === idx);
+      if (!p) return;
+      const src = p.dataset.photo;
+      if (src) { const im = new Image(); im.decoding = 'async'; im.src = window.__optUrl(src); }
+    };
     swatches.forEach(sw => {
+      const idx = +sw.dataset.idx;
+      sw.addEventListener('mouseenter', () => warm(idx), { passive: true });
+      sw.addEventListener('touchstart', () => warm(idx), { passive: true });
       sw.addEventListener('click', e => {
         e.stopPropagation();
-        const idx = +sw.dataset.idx;
         swatches.forEach(x => x.classList.remove('active'));
         sw.classList.add('active');
+        /* hydrate the now-active one if empty */
+        const target = Array.from(photos).find(p => +p.dataset.idx === idx);
+        hydrate(target);
         photos.forEach(p => p.classList.toggle('active', +p.dataset.idx === idx));
       });
     });
@@ -2600,7 +2612,7 @@ function openModal(uid){
 
   const variants = row ? row.variants : [p];
   document.getElementById('m_swatches').innerHTML = variants.map(v=>
-    `<button class="swatch ${v.uid===uid?'active':''}" onclick="openModal('${v.uid}')" title="${v.color_name}"><img src="${window.__optUrl(v.photo)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${v.photo}'"></button>`
+    `<button class="swatch ${v.uid===uid?'active':''}" onclick="openModal('${v.uid}')" title="${v.color_name}"><img src="${window.__optUrl(v.photo)}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='${v.photo}'"></img></button>`
   ).join('');
 
   // photo strip below main image — все фото текущего товара из CSV
@@ -2621,7 +2633,7 @@ function openModal(uid){
       gal.innerHTML = '';
     } else {
       gal.innerHTML = photos.map((src,i)=>
-        `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${window.__optUrl(src)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${src}'"></button>`
+        `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${window.__optUrl(src)}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='${src}'"></button>`
       ).join('');
     }
   }
@@ -3517,32 +3529,5 @@ renderGrid();
 })();
 
 </script>
-<script>
-/* ULTERA_TPRODUCT_AUTO_OPEN — open product modal using uid stashed by the head rewrite script */
-(function(){
-  try {
-    var uid = window.__AUTO_OPEN_UID;
-    if (!uid) return;
-    var attempts = 0;
-    function tryOpen(){
-      attempts++;
-      if (typeof window.openModal === "function" && typeof window.findProduct === "function") {
-        var p = window.findProduct(uid);
-        if (p) {
-          window.openModal(uid);
-          return;
-        }
-      }
-      if (attempts < 60) setTimeout(tryOpen, 100);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", tryOpen);
-    } else {
-      tryOpen();
-    }
-  } catch(e) { /* silent */ }
-})();
-</script>
-                                                                                
 </body>
 </html>
