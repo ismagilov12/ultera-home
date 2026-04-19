@@ -2114,6 +2114,74 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 <script>
 const DATA = JSON.parse(document.getElementById('DATA').textContent);
 const EXTRA_PHOTOS = JSON.parse(document.getElementById('EXTRA').textContent);
+/* ————— Static format fallback: use AVIF/WebP siblings of banners/*.jpg when supported ————— */
+window.__imgFmt = 'jpg';
+(function(){
+  function supports(dataUrl){
+    return new Promise(function(res){
+      var i = new Image();
+      i.onload = function(){ res(i.width > 0 && i.height > 0); };
+      i.onerror = function(){ res(false); };
+      i.src = dataUrl;
+    });
+  }
+  var AVIF = 'data:image/avif;base64,AAAAHGZ0eXBtaWYxAAAAAG1pZjFhdmlmbWlhZgAAAPFtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAAImlsb2MAAAAAREAAAQABAAAAAAEVAAEAAAAAAAAAGwAAACNpaW5mAAAAAAABAAAAFWluZmUCAAAAAAEAAGF2MDEAAAAAamlwcnAAAABLaXBjbwAAABNjb2xybmNseAABAA0ABoAAAAAMYXYxQ4EADAAAAAAUaXNwZQAAAAAAAAABAAAAAQAAABBwaXhpAAAAAAEIAAAAF2lwbWEAAAAAAAAAAQABBIECAwQAAAAcbWRhdAoICABoDMgYQBIMAgEFDAQcYQA3Bg==';
+  var WEBP = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==';
+  (async function(){
+    if (await supports(AVIF)) { window.__imgFmt = 'avif'; }
+    else if (await supports(WEBP)) { window.__imgFmt = 'webp'; }
+    try { window.dispatchEvent(new Event('__imgFmtReady')); } catch(_) {}
+  })();
+})();
+
+window.__optUrl = function(url){
+  if (!url || typeof url !== 'string') return url;
+  if (url.indexOf('http') === 0) return url;
+  if (url.indexOf('data:') === 0) return url;
+  var fmt = window.__imgFmt;
+  if (!fmt || fmt === 'jpg') return url;
+  return url.replace(/\.(jpe?g|png)(\?.*)?$/i, '.' + fmt + '$2');
+};
+
+window.__pic = function(url, imgAttrs){
+  /* Returns <picture>...<img> HTML that browser auto-picks AVIF/WebP/JPG. */
+  if (!url || typeof url !== 'string') return '<img src="" ' + (imgAttrs||'') + '>';
+  if (url.indexOf('http') === 0) return '<img src="' + url + '" ' + (imgAttrs||'') + '>';
+  var base = url.replace(/\.(jpe?g|png)(\?.*)?$/i, '');
+  var hasExt = base !== url;
+  if (!hasExt) return '<img src="' + url + '" ' + (imgAttrs||'') + '>';
+  return '<picture>'
+    + '<source type="image/avif" srcset="' + base + '.avif">'
+    + '<source type="image/webp" srcset="' + base + '.webp">'
+    + '<img src="' + url + '" ' + (imgAttrs||'') + '>'
+    + '</picture>';
+};
+
+window.__setImgSrc = function(img, url){
+  /* For <img> elements where we can't use <picture>. Tries AVIF→WebP→JPG on error. */
+  if (!img || !url) return;
+  var fmt = window.__imgFmt;
+  img.onerror = null;
+  if (fmt === 'avif') {
+    img.onerror = function(){
+      img.onerror = function(){
+        img.onerror = null;
+        img.src = url; /* final JPG fallback */
+      };
+      img.src = url.replace(/\.(jpe?g|png)(\?.*)?$/i, '.webp$2');
+    };
+    img.src = url.replace(/\.(jpe?g|png)(\?.*)?$/i, '.avif$2');
+  } else if (fmt === 'webp') {
+    img.onerror = function(){
+      img.onerror = null;
+      img.src = url;
+    };
+    img.src = url.replace(/\.(jpe?g|png)(\?.*)?$/i, '.webp$2');
+  } else {
+    img.src = url;
+  }
+};
+
 /* ————— CART STATE ————— */
 const CART = {
   items: JSON.parse(localStorage.getItem('ultera_cart')||'[]'),
@@ -2234,7 +2302,7 @@ function renderFeatured(){
     const serialTxt = meta.serial + '-' + String(photos.length).padStart(2,'0');
     const handler = meta.handler || `openModal('${row.variants[0].uid}')`;
 
-    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}"><img src="${ph.photo}" alt="${fam} ${ph.name}" loading="lazy"></div>`).join('');
+    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}">${__pic(ph.photo, 'alt="' + fam + ' ' + ph.name + '" loading="lazy" decoding="async"')}</div>`).join('');
     const swatchHtml = photos.map((ph,i) => `<button class="sw${i===0?' active':''}" data-idx="${i}" style="background:${ph.swatch}" aria-label="${ph.name}" title="${ph.name}"></button>`).join('');
 
     return `<div class="feat-card" data-fam="${fam}">
@@ -2298,7 +2366,7 @@ function renderGrid(){
       const oldP = (v.sizes && v.sizes[0] && v.sizes[0].price_old) || '';
       const dots = row.variants.map(x=>`<span class="dot" style="background:${x.swatch}"></span>`).join('');
       const card = `<div class="card" data-fam="${row.family}" onclick="openModal('${v.uid}')">
-        <div class="card-img">${badgeFor(v)}<img src="${v.photo}" alt="${v.title}" loading="lazy">
+        <div class="card-img">${badgeFor(v)}${__pic(v.photo, 'alt="' + v.title + '" loading="lazy" decoding="async"')}
           <div class="card-quick"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
         </div>
         <div class="card-name">${v.title.replace('ULTERA - ','').replace('ULTERA ','')}</div>
@@ -2321,7 +2389,7 @@ function renderGrid(){
       const price = parseFloat(v.price)||0;
       const dots = row.variants.map(x=>`<span class="dot" style="background:${x.swatch}"></span>`).join('');
       mainVariants.push(`<div class="card" data-fam="${row.family}" onclick="openModal('${v.uid}')">
-        <div class="card-img">${badgeFor(v)}<img src="${v.photo}" alt="${v.title}" loading="lazy">
+        <div class="card-img">${badgeFor(v)}${__pic(v.photo, 'alt="' + v.title + '" loading="lazy" decoding="async"')}
           <div class="card-quick"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
         </div>
         <div class="card-name">${v.title.replace('ULTERA - ','').replace('ULTERA ','')}</div>
@@ -2491,7 +2559,7 @@ function openModal(uid){
   document.getElementById('m_fam').textContent = p.family + (p.mark ? ' · ' + p.mark : '');
   document.getElementById('m_title').textContent = p.title.replace('ULTERA - ','').replace('ULTERA ','');
   document.getElementById('m_sku').textContent = 'SKU · ' + p.uid.slice(-10).toUpperCase();
-  document.getElementById('m_img').src = p.photo;
+  window.__setImgSrc(document.getElementById('m_img'), p.photo);
   document.getElementById('m_color_name').textContent = p.color_name;
 
   const price = parseFloat(p.price)||0;
@@ -2518,7 +2586,7 @@ function openModal(uid){
 
   const variants = row ? row.variants : [p];
   document.getElementById('m_swatches').innerHTML = variants.map(v=>
-    `<button class="swatch ${v.uid===uid?'active':''}" onclick="openModal('${v.uid}')" title="${v.color_name}"><img src="${v.photo}"></button>`
+    `<button class="swatch ${v.uid===uid?'active':''}" onclick="openModal('${v.uid}')" title="${v.color_name}"><img src="${window.__optUrl(v.photo)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${v.photo}'"></button>`
   ).join('');
 
   // photo strip below main image — все фото текущего товара из CSV
@@ -2539,7 +2607,7 @@ function openModal(uid){
       gal.innerHTML = '';
     } else {
       gal.innerHTML = photos.map((src,i)=>
-        `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${src}" loading="lazy" decoding="async"></button>`
+        `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${window.__optUrl(src)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${src}'"></button>`
       ).join('');
     }
   }
@@ -2565,15 +2633,15 @@ function openModal(uid){
   }
   if (photos[0]){
     const mi = document.getElementById('m_img');
-    mi.src = photos[0];
     mi.setAttribute('fetchpriority','high');
     mi.setAttribute('decoding','async');
+    window.__setImgSrc(mi, photos[0]);
   }
   // Staged preload — уникає параллельного шторма з 20 фото.
   // 1) чекаємо поки main[0] завантажиться
   // 2) preload сусідів ±1 (для моментального свайпу)
   // 3) через idle preload сусідів ±2 + хвіст
-  const _preload = (url)=>{ if(!url) return; const im = new Image(); im.decoding='async'; im.src = url; };
+  const _preload = (url)=>{ if(!url) return; const im = new Image(); im.decoding='async'; im.src = window.__optUrl(url); };
   const _kickPreload = ()=>{
     _preload(photos[1]);                    // next
     _preload(photos[photos.length-1]);      // prev (wrap)
@@ -2693,7 +2761,7 @@ function setModalPhoto(i){
   img.onerror = null;
   img.setAttribute('fetchpriority','high');
   img.setAttribute('decoding','async');
-  img.src = photos[idx];
+  window.__setImgSrc(img, photos[idx]);
   // update strip + dots active state
   document.querySelectorAll('.modal-strip button').forEach((b,ii)=>b.classList.toggle('active', ii===idx));
   document.querySelectorAll('#m_dots button').forEach((d,ii)=>d.classList.toggle('active', ii===idx));
@@ -2702,11 +2770,11 @@ function setModalPhoto(i){
   // preload neighbors ±2 — меньше паралельних ланцюгів на слабкому мобільному
   [1,-1,2,-2].forEach(d=>{
     const ii = ((idx+d)%n+n)%n;
-    const im = new Image(); im.decoding = 'async'; im.src = photos[ii];
+    const im = new Image(); im.decoding = 'async'; im.src = window.__optUrl(photos[ii]);
   });
 }
 // legacy fn kept for safety (no longer referenced from rendered HTML)
-function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = src; }
+function swapMainImage(btn, src, uid){ window.__setImgSrc(document.getElementById('m_img'), src); }
 
 /* ————— Swipe + keyboard nav on modal image ————— */
 (function(){
@@ -2990,51 +3058,10 @@ async function wizardSubmit(){
     if(!r.ok || result.ok === false){
       throw new Error(result.error || result.message || ('HTTP ' + r.status));
     }
-    if(result.mock) console.log('Mock order:', result);
-    // --- WayForPay payment redirect ---
-    var fioParts = String(CART.wizard.fio||'').trim().split(/\s+/);
-    var clientFirstName = fioParts[0] || '';
-    var clientLastName  = fioParts.slice(1).join(' ') || '';
-    var products = CART.items.map(function(it){
-      return {
-        name: String(it.title||'item'),
-        count: Number(it.qty||1),
-        price: Math.round(parseFloat(it.price)||0)
-      };
-    });
-    var total = Math.round(CART.total());
-    var wfpAmount = (pm === 'np') ? 500 : total;
-    try {
-      var wfpResp = await fetch('/api/wayforpay', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          orderReference: String(orderNum),
-          amount: wfpAmount,
-          products: products,
-          clientFirstName: clientFirstName,
-          clientLastName: clientLastName,
-          clientEmail: '',
-          clientPhone: CART.wizard.phone || ''
-        })
-      });
-      var wfp = await wfpResp.json().catch(function(){ return {}; });
-      if (wfpResp.ok && wfp.ok && wfp.formHtml) {
-        try {
-          localStorage.setItem('ulteraPendingOrder', JSON.stringify({num:orderNum, ts:Date.now()}));
-        } catch(_) {}
-        document.open();
-        document.write(wfp.formHtml);
-        document.close();
-        return;
-      }
-      console.warn('WayForPay returned no formHtml:', wfp);
-    } catch(wfpErr) {
-      console.error('WayForPay request failed:', wfpErr);
-    }
+    // success
     showStep('done');
     document.getElementById('wOrderNum').textContent = orderNum;
-    toast('Замовлення прийнято. Менеджер звʼяжеться для оплати.');
+    if(result.mock) console.log('Mock order:', result);
     CART.clear(); CART.wizard = {}; CART.saveWiz();
     updateCartBadge();
   } catch(e){
@@ -3112,52 +3139,6 @@ async function wizardSubmit(){
     wh.addEventListener('input', onWh);
     wh.addEventListener('focus', e => { if(CART.wizard.cityRef) onWh(e); });
     wh.addEventListener('blur', ()=>setTimeout(()=>whSug.classList.remove('open'), 180));
-  }
-})();
-
-/* ————— WAYFORPAY RETURN ————— */
-(function(){
-  function runPaidCheck(){
-    try {
-      var qs = new URLSearchParams(window.location.search);
-      var paid = qs.get('paid');
-      if (paid === null) return;
-      var order = qs.get('order') || '';
-      if (paid === '1') {
-        try {
-          if (typeof CART !== 'undefined' && CART && typeof CART.clear === 'function') {
-            CART.clear();
-            if (typeof CART.saveWiz === 'function') { CART.wizard = {}; CART.saveWiz(); }
-          }
-        } catch(_) {}
-        try { if (typeof updateCartBadge === 'function') updateCartBadge(); } catch(_) {}
-        try { localStorage.removeItem('ulteraPendingOrder'); } catch(_) {}
-        if (typeof toast === 'function') toast('Оплату прийнято. Замовлення №' + order);
-        try {
-          if (typeof openCart === 'function') {
-            openCart();
-            setTimeout(function(){
-              if (typeof showStep === 'function') showStep('done');
-              var on = document.getElementById('wOrderNum');
-              if (on && order) on.textContent = order;
-            }, 60);
-          }
-        } catch(_) {}
-      } else {
-        if (typeof toast === 'function') toast('Оплата не пройшла. Спробуй ще раз.');
-      }
-      try {
-        var url = new URL(window.location.href);
-        url.searchParams.delete('paid');
-        url.searchParams.delete('order');
-        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + url.hash);
-      } catch(_) {}
-    } catch(e){ console.warn('paid-check err', e); }
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', runPaidCheck);
-  } else {
-    setTimeout(runPaidCheck, 0);
   }
 })();
 
@@ -3434,6 +3415,33 @@ renderGrid();
   }).join('');
 })();
 
+</script>
+<script>
+/* ULTERA_TPRODUCT_AUTO_OPEN — auto-open product modal when URL matches /tproduct/{projectId}-{uid}-{slug} */
+(function(){
+  try {
+    var m = window.location.pathname.match(/^\/tproduct\/\d+-(\d{12})(?:-|$)/);
+    if (m === null) return;
+    var uid = m[1];
+    var attempts = 0;
+    function tryOpen(){
+      attempts++;
+      if (typeof window.openModal === "function" && typeof window.findProduct === "function") {
+        var p = window.findProduct(uid);
+        if (p) {
+          window.openModal(uid);
+          return;
+        }
+      }
+      if (attempts < 60) setTimeout(tryOpen, 100);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", tryOpen);
+    } else {
+      tryOpen();
+    }
+  } catch(e) { /* silent */ }
+})();
 </script>
 </body>
 </html>
