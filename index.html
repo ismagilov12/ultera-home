@@ -3,6 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<script>
+/* ULTERA_TPRODUCT_HEAD_REWRITE — rewrite /tproduct/{project}-{uid}-{slug} to "/" before <link preload> parses,
+   so banners/* and favicon.ico resolve from root; stash uid for later auto-openModal. */
+(function(){
+  try {
+    var m = location.pathname.match(/^\/tproduct\/\d+-(\d{12})(?:-|$)/);
+    if (!m) return;
+    window.__AUTO_OPEN_UID = m[1];
+    if (history && history.replaceState) {
+      history.replaceState(null, "", "/");
+    }
+  } catch(e) { /* silent */ }
+})();
+</script>
 <link rel="preload" as="image" type="image/avif" href="banners/home-pc-5.avif" media="(min-width:761px)">
 <link rel="preload" as="image" type="image/avif" href="banners/home-mob-5.avif" media="(max-width:760px)">
 <title>ULTERA™ — Handcrafted sneakers · Kharkiv, UA</title>
@@ -3503,5 +3517,32 @@ renderGrid();
 })();
 
 </script>
+<script>
+/* ULTERA_TPRODUCT_AUTO_OPEN — open product modal using uid stashed by the head rewrite script */
+(function(){
+  try {
+    var uid = window.__AUTO_OPEN_UID;
+    if (!uid) return;
+    var attempts = 0;
+    function tryOpen(){
+      attempts++;
+      if (typeof window.openModal === "function" && typeof window.findProduct === "function") {
+        var p = window.findProduct(uid);
+        if (p) {
+          window.openModal(uid);
+          return;
+        }
+      }
+      if (attempts < 60) setTimeout(tryOpen, 100);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", tryOpen);
+    } else {
+      tryOpen();
+    }
+  } catch(e) { /* silent */ }
+})();
+</script>
+                                                                                
 </body>
 </html>
