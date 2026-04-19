@@ -2573,7 +2573,7 @@ function openModal(uid){
   // 1) чекаємо поки main[0] завантажиться
   // 2) preload сусідів ±1 (для моментального свайпу)
   // 3) через idle preload сусідів ±2 + хвіст
-  const _preload = (url)=>{ if(\!url) return; const im = new Image(); im.decoding='async'; im.src = url; };
+  const _preload = (url)=>{ if(!url) return; const im = new Image(); im.decoding='async'; im.src = url; };
   const _kickPreload = ()=>{
     _preload(photos[1]);                    // next
     _preload(photos[photos.length-1]);      // prev (wrap)
