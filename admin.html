@@ -444,7 +444,7 @@ function authHeaders(){
   return h;
 }
 
-// Generic REST call to PostgREST
+// Generic REST call to PostgREST — handles empty body (201 Created without representation)
 async function rest(path, opts={}){
   const r = await fetch(SB_URL + '/rest/v1/' + path, {
     ...opts,
@@ -456,7 +456,9 @@ async function rest(path, opts={}){
   });
   if (!r.ok) throw new Error('REST ' + r.status + ': ' + await r.text());
   if (r.status === 204) return null;
-  return r.json();
+  const txt = await r.text();
+  if (!txt) return null;
+  try { return JSON.parse(txt); } catch(e){ return null; }
 }
 
 // Auth helpers
