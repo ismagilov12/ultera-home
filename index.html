@@ -333,7 +333,7 @@ input,textarea,select{font:inherit;color:inherit}
 .feat-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
 .feat-serial{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-60)}
 .feat-serial b{color:var(--ink);font-weight:700}
-.feat-bracket{font-family:var(--font-mono);font-size:10px;color:var(--ink-60);letter-spacing:.1em}
+.feat-bracket{font-family:var(--font-mono);font-size:10px;color:var(--ink-60);letter-spacing:.1em;white-space:nowrap;font-size:9px;letter-spacing:.1em}
 .feat-bracket::before{content:"[ "}
 .feat-bracket::after{content:" ]"}
 .feat-mid{display:flex;flex-direction:column;gap:10px}
@@ -578,7 +578,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .modal-overlay.open{display:flex}
 .modal{
   background:var(--bg);max-width:1100px;width:100%;
-  max-height:92vh;overflow:hidden;border-radius:18px;
+  max-height:min(92vh,860px);overflow:hidden;border-radius:18px;
   display:grid;grid-template-columns:1.2fr 1fr;position:relative;
   animation:modalIn .35s cubic-bezier(.16,1,.3,1);
 }
@@ -590,8 +590,9 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   font-size:16px;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:all .25s;
 }
 .modal-close:hover{background:var(--ink);color:#fff;transform:rotate(90deg)}
-.modal-img{background:var(--bg-alt);height:100%;overflow:hidden;position:relative;aspect-ratio:4/5}
-.modal-img img{width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-drag:none}
+.modal-img{grid-row:1/3;grid-column:1/2;position:relative;background:var(--bg-alt);overflow:hidden;min-height:360px;height:100%;display:flex;align-items:center;justify-content:center}
+.modal-img img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.modal-img:hover img{transform:scale(1.04)}
 .ms-swatches-top{margin-top:2px;margin-bottom:16px}
 
 /* season picker */
@@ -649,7 +650,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .modal-strip button img{width:100%;height:100%;object-fit:cover}
 .modal{grid-template-rows:1fr auto}
 .modal-img{grid-row:1/2}
-.modal-body{grid-row:1/3;grid-column:2/3}
+.modal-body{grid-row:1/3;grid-column:2/3;overflow-y:auto;max-height:min(92vh,860px);padding-bottom:20px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
 
 @media (max-width:760px){
   .modal{grid-template-columns:1fr;grid-template-rows:auto auto;overflow-y:auto;-webkit-overflow-scrolling:touch}
@@ -1197,93 +1198,184 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 /* ==================== CART DRAWER ==================== */
 .cart-drawer{position:fixed;inset:0;z-index:100;pointer-events:none;opacity:0;transition:opacity .3s}
 .cart-drawer.open{pointer-events:auto;opacity:1}
-.cd-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
-.cd-panel{position:absolute;right:0;top:0;bottom:0;width:440px;max-width:100vw;background:#fafafa;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1);box-shadow:-12px 0 40px rgba(0,0,0,.15)}
+.cd-backdrop{position:absolute;inset:0;background:rgba(14,14,14,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.cd-panel{position:absolute;right:0;top:0;bottom:0;width:460px;max-width:100vw;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .38s cubic-bezier(.2,.8,.2,1);box-shadow:-16px 0 50px rgba(0,0,0,.18);font-family:var(--font-sans,system-ui)}
 .cart-drawer.open .cd-panel{transform:translateX(0)}
-.cd-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #e8e8e4}
-.cd-head h3{font-size:18px;font-weight:800;margin:0}
-.cd-head h3 span{color:#888;font-weight:500;margin-left:4px}
-.cd-close{width:36px;height:36px;border-radius:999px;border:0;background:#f0f0ec;font-size:18px;cursor:pointer}
-.cd-close:hover{background:#e0e0dc}
+.cd-head{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:2}
+.cd-head h3{font-family:var(--font-mono);font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin:0;color:var(--ink)}
+.cd-head h3 span{color:var(--ink-40);font-weight:500;margin-left:6px;letter-spacing:.08em}
+.cd-close{width:34px;height:34px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:14px;cursor:pointer;transition:all .2s;color:var(--ink)}
+.cd-close:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
 .cd-body{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
 
-.cd-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 30px;text-align:center;gap:8px}
-.cd-empty-ic{font-size:48px;opacity:.4}
-.cd-empty-t{font-size:17px;font-weight:700}
-.cd-empty-s{color:#888;font-size:13px;margin-bottom:12px}
-.cd-empty-btn{padding:12px 22px;background:#111;color:#fff;border:0;border-radius:999px;font-weight:700;cursor:pointer}
+/* empty */
+.cd-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 30px;text-align:center;gap:10px}
+.cd-empty-ic{font-size:44px;opacity:.35;margin-bottom:10px}
+.cd-empty-t{font-family:var(--font-mono);font-size:14px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.cd-empty-s{color:var(--ink-60);font-size:13px;margin-bottom:18px}
+.cd-empty-btn{padding:14px 32px;background:var(--ink);color:#fff;border:0;border-radius:0;font-family:var(--font-mono);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s}
+.cd-empty-btn:hover{background:var(--warm-grey)}
 
+/* items list */
 .cd-list-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
-.cd-list{flex:1;overflow-y:auto;padding:14px 18px;-webkit-overflow-scrolling:touch}
-.cd-item{display:grid;grid-template-columns:64px 1fr auto;gap:12px;padding:12px 0;border-bottom:1px solid #eee;align-items:center}
+.cd-list{flex:1;overflow-y:auto;padding:8px 24px;-webkit-overflow-scrolling:touch}
+.cd-item{display:grid;grid-template-columns:68px 1fr auto;gap:14px;padding:16px 0;border-bottom:1px solid var(--line);align-items:start}
 .cd-item:last-child{border-bottom:0}
-.cd-item img{width:64px;height:64px;object-fit:cover;border-radius:8px;background:#eee}
-.cd-item-t{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cd-item-meta{color:#777;font-size:11px;margin-top:3px}
-.cd-item-qty{display:flex;align-items:center;gap:6px;margin-top:6px}
-.cd-item-qty button{width:22px;height:22px;border:1px solid #ccc;background:#fff;border-radius:6px;cursor:pointer;font-size:14px;line-height:1}
-.cd-item-qty b{font-weight:700;min-width:18px;text-align:center}
-.cd-item-price{font-weight:800;font-size:14px;white-space:nowrap}
-.cd-item-rm{background:none;border:0;color:#c44;font-size:16px;cursor:pointer;margin-top:4px}
+.cd-item img{width:68px;height:68px;object-fit:cover;background:var(--bg-alt);border-radius:2px}
+.cd-item-t{font-weight:700;font-size:13px;letter-spacing:-.005em;line-height:1.3;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cd-item-meta{color:var(--ink-60);font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
+.cd-item-qty{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:3px 4px;border:1px solid var(--line);border-radius:999px;background:#fff}
+.cd-item-qty button{width:20px;height:20px;border:0;background:transparent;cursor:pointer;font-size:14px;color:var(--ink);line-height:1;padding:0;border-radius:999px;transition:background .15s}
+.cd-item-qty button:hover{background:var(--bg-alt)}
+.cd-item-qty b{font-weight:700;min-width:14px;text-align:center;font-size:12px}
+.cd-item-price{font-family:var(--font-mono);font-weight:800;font-size:13px;white-space:nowrap;letter-spacing:-.01em;text-align:right}
+.cd-item-rm{background:none;border:0;color:var(--ink-40);font-size:14px;cursor:pointer;margin-top:8px;padding:0;transition:color .15s;float:right}
+.cd-item-rm:hover{color:var(--ink)}
 
-.cd-foot{padding:16px 20px 20px;border-top:1px solid #e8e8e4;background:#fff}
-.cd-sum{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
-.cd-sum b{font-size:22px;font-weight:900}
-.cd-cta{width:100%;padding:16px;background:#111;color:#fff;border:0;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
-.cd-cta:hover{transform:translateY(-1px)}
-.cd-cta svg{width:18px;height:18px}
-.cd-bene{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:14px;color:#666;font-size:11px;justify-content:center}
+/* footer */
+.cd-foot{padding:18px 24px 22px;border-top:1px solid var(--line);background:var(--bg-alt)}
+.cd-sum{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-60)}
+.cd-sum b{font-family:var(--font-sans,system-ui);font-size:24px;font-weight:900;letter-spacing:-.02em;color:var(--ink)}
+.cd-cta{width:100%;padding:18px;background:var(--ink);color:#fff;border:0;border-radius:0;font-family:var(--font-mono);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;position:relative;overflow:hidden}
+.cd-cta::before{content:"";position:absolute;inset:0;background:var(--mint);transform:translateX(-101%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.cd-cta:hover::before{transform:translateX(0)}
+.cd-cta > *{position:relative;z-index:1;transition:color .35s}
+.cd-cta:hover > *{color:var(--ink)}
+.cd-cta svg{width:16px;height:16px}
+.cd-bene{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:14px;color:var(--ink-60);font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;justify-content:center;text-transform:uppercase}
 
+/* wizard */
 .cd-wizard{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
-.cd-progress{padding:18px 22px 10px;position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
-.cd-step{display:flex;flex-direction:column;align-items:center;gap:4px;color:#999;font-size:11px;font-weight:600;letter-spacing:.04em}
-.cd-step i{width:26px;height:26px;border-radius:999px;background:#eee;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;transition:all .3s;font-style:normal}
-.cd-step.active i{background:#111;color:#fff}
-.cd-step.done i{background:#8fd37a;color:#fff}
-.cd-step.active span{color:#111}
-.cd-progress-bar{position:absolute;bottom:6px;left:22px;right:22px;height:2px;background:#eee;border-radius:2px;overflow:hidden}
-.cd-progress-bar i{display:block;width:33%;height:100%;background:#111;transition:width .35s}
+.cd-progress{padding:22px 24px 16px;position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;border-bottom:1px solid var(--line)}
+.cd-step{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--ink-40);font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.cd-step i{width:26px;height:26px;border-radius:0;background:var(--bg-alt);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;transition:all .3s;font-style:normal;color:var(--ink-60)}
+.cd-step.active i{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cd-step.done i{background:var(--mint);color:var(--ink);border-color:var(--mint)}
+.cd-step.active span{color:var(--ink)}
+.cd-progress-bar{position:absolute;bottom:-1px;left:24px;right:24px;height:2px;background:var(--line);overflow:hidden}
+.cd-progress-bar i{display:block;width:33%;height:100%;background:var(--ink);transition:width .35s}
 
-.cd-pane{flex:1;overflow-y:auto;padding:16px 22px 20px;display:flex;flex-direction:column;gap:12px;min-height:0}
-.cd-field{display:flex;flex-direction:column;gap:6px;position:relative}
-.cd-field > span{font-size:11px;color:#666;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
-.cd-field input{padding:13px 14px;border:1.5px solid #e0e0dc;border-radius:10px;font-size:14px;font-family:inherit;background:#fff}
-.cd-field input:focus{outline:none;border-color:#111}
-.cd-field input:disabled{background:#f5f5f3;color:#999;cursor:not-allowed}
+.cd-pane{flex:1;overflow-y:auto;padding:20px 24px 22px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.cd-field{display:flex;flex-direction:column;gap:8px;position:relative}
+.cd-field > span{font-family:var(--font-mono);font-size:10px;color:var(--ink-60);letter-spacing:.12em;text-transform:uppercase;font-weight:800}
+.cd-field input{padding:14px 16px;border:1px solid var(--line);border-radius:0;font-size:14px;font-family:var(--font-sans,system-ui);background:#fff;color:var(--ink);transition:border-color .2s}
+.cd-field input:focus{outline:none;border-color:var(--ink)}
+.cd-field input:disabled{background:var(--bg-alt);color:var(--ink-40);cursor:not-allowed}
+.cd-field input::placeholder{color:var(--ink-40)}
 
-.cd-suggest{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e0e0dc;border-radius:10px;margin-top:2px;max-height:220px;overflow-y:auto;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.08);display:none}
+.cd-suggest{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--line);border-top:0;margin-top:-1px;max-height:240px;overflow-y:auto;z-index:5;box-shadow:0 10px 30px rgba(0,0,0,.08);display:none}
 .cd-suggest.open{display:block}
-.cd-suggest button{width:100%;padding:11px 14px;border:0;background:transparent;text-align:left;font-size:13px;cursor:pointer;border-bottom:1px solid #f0f0ec}
+.cd-suggest button{width:100%;padding:11px 16px;border:0;background:transparent;text-align:left;font-size:13px;cursor:pointer;border-bottom:1px solid var(--line);color:var(--ink);font-family:var(--font-sans,system-ui)}
 .cd-suggest button:last-child{border-bottom:0}
-.cd-suggest button:hover{background:#f6f6f3}
-.cd-suggest-empty{padding:14px;color:#999;font-size:12px;text-align:center}
+.cd-suggest button:hover{background:var(--bg-alt)}
+.cd-suggest-empty{padding:14px;color:var(--ink-40);font-size:12px;text-align:center;font-family:var(--font-mono);letter-spacing:.04em}
 
-.cd-err{color:#c44;font-size:12px;min-height:16px}
-.cd-radio{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1.5px solid #e0e0dc;border-radius:10px;cursor:pointer}
-.cd-radio:has(input:checked){border-color:#111;background:#fafafa}
-.cd-radio input{margin-top:3px;width:18px;height:18px;accent-color:#111}
-.cd-radio b{display:block;font-size:14px;font-weight:700}
-.cd-radio span{display:block;color:#777;font-size:12px;margin-top:3px}
-.cd-summary{background:#f6f6f3;border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.6;color:#444}
-.cd-summary b{color:#111}
+.cd-err{color:#c44;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;min-height:14px;text-transform:uppercase}
+.cd-radio{display:flex;align-items:flex-start;gap:12px;padding:16px 18px;border:1px solid var(--line);border-radius:0;cursor:pointer;background:#fff;transition:all .2s}
+.cd-radio:hover{border-color:var(--ink-40)}
+.cd-radio:has(input:checked){border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--bg-alt)}
+.cd-radio input{margin-top:3px;width:16px;height:16px;accent-color:var(--ink)}
+.cd-radio b{display:block;font-size:13px;font-weight:800;color:var(--ink)}
+.cd-radio span{display:block;color:var(--ink-60);font-size:11.5px;margin-top:4px;font-family:var(--font-mono);letter-spacing:.02em}
+
+.cd-summary{background:var(--bg-alt);border-left:3px solid var(--ink);padding:14px 16px;font-size:12.5px;line-height:1.65;color:var(--ink-80);margin-top:4px}
+.cd-summary b{color:var(--ink);font-weight:800}
 
 .cd-row{display:flex;gap:10px;margin-top:auto}
-.cd-back{flex:0 0 38%;padding:14px;background:#f0f0ec;border:0;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer}
-.cd-next{flex:1;padding:14px;background:#111;color:#fff;border:0;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer}
-.cd-next:hover{transform:translateY(-1px)}
-.cd-next.submit{background:#8fd37a;color:#0a0a0a}
+.cd-back{flex:0 0 40%;padding:16px;background:transparent;border:1px solid var(--line);border-radius:0;font-family:var(--font-mono);font-weight:800;font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .2s;color:var(--ink);min-height:52px;max-height:56px;display:flex;align-items:center;justify-content:center}
+.cd-back:hover{background:var(--bg-alt);border-color:var(--ink-40)}
+.cd-next{flex:1 1 auto;flex-basis:auto;flex-grow:0;padding:16px 24px;background:var(--ink);color:#fff;border:0;border-radius:0;font-family:var(--font-mono);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:background .2s,box-shadow .2s;min-height:52px;max-height:56px;line-height:1;display:flex;align-items:center;justify-content:center}
+.cd-next:hover{background:#2a2a2a;box-shadow:inset 0 0 0 100px rgba(255,255,255,.05)}
+.cd-next:active{background:#000}
+.cd-next.submit{background:var(--mint);color:var(--ink)}
+.cd-next.submit:hover{background:#c9e8b8;box-shadow:inset 0 0 0 100px rgba(0,0,0,.04)}
+.cd-pane > .cd-next:last-child{margin-top:auto;align-self:stretch}
+.cd-row .cd-next{flex:1;margin-top:0}
 
-.cd-success{text-align:center;align-items:center;justify-content:flex-start;padding:40px 22px;gap:6px}
-.cd-success-ic{width:72px;height:72px;border-radius:999px;background:#8fd37a;color:#fff;font-size:34px;display:flex;align-items:center;justify-content:center;font-weight:900;margin:0 0 12px;flex:0 0 auto}
-.cd-success h4{font-size:22px;font-weight:800;margin:0}
-.cd-success p{font-size:13.5px;color:#555;margin:2px 0;line-height:1.5}
-.cd-success p b{font-family:ui-monospace,monospace;font-size:15px;color:#111;letter-spacing:.04em}
-.cd-success .cd-next{flex:0 0 auto;width:auto;min-width:180px;max-width:260px;margin:28px auto 0;padding:14px 36px}
+/* success */
+.cd-success{text-align:center;align-items:center;justify-content:flex-start;padding:48px 28px;gap:8px}
+.cd-success-ic{width:72px;height:72px;border-radius:999px;background:var(--mint);color:var(--ink);font-size:34px;display:flex;align-items:center;justify-content:center;font-weight:900;margin:0 0 14px;flex:0 0 auto}
+.cd-success h4{font-family:var(--font-mono);font-size:15px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin:0 0 4px}
+.cd-success p{font-size:13px;color:var(--ink-60);margin:3px 0;line-height:1.55}
+.cd-success p b{font-family:var(--font-mono);font-size:14px;color:var(--ink);letter-spacing:.06em}
+.cd-success .cd-next{flex:0 0 auto;width:auto;min-width:200px;max-width:260px;margin:28px auto 0;padding:16px 38px}
 
 @media (max-width:760px){
   .cd-panel{width:100%;max-width:none}
-  .cd-head,.cd-pane{padding-left:18px;padding-right:18px}
-  .cd-item img{width:54px;height:54px}
+  .cd-head{padding:16px 20px}
+  .cd-pane,.cd-list,.cd-foot{padding-left:20px;padding-right:20px}
+  .cd-item img{width:60px;height:60px}
+  .cd-item{grid-template-columns:60px 1fr auto;gap:12px}
+}
+
+.khark-intro{font-family:var(--font-mono);font-size:13px;letter-spacing:.06em;color:var(--ink);margin-bottom:-4px}
+.khark-accent{border-left:3px solid var(--mint);padding-left:14px;background:rgba(223,246,207,.15);padding:10px 14px;margin:8px 0}
+
+.modal-materials{margin:16px 22px 0;padding:16px 18px;background:var(--bg-alt);border-left:3px solid var(--ink);font-size:13px;line-height:1.7}
+.modal-materials .mm-title{font-family:var(--font-mono);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin-bottom:10px;display:block}
+.modal-materials ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px}
+.modal-materials li{padding-left:18px;position:relative;color:var(--ink-80)}
+.modal-materials li::before{content:"—";position:absolute;left:0;color:var(--warm-grey)}
+.modal-materials li b{color:var(--ink);font-weight:700}
+.modal-desc{padding:14px 22px 0;font-size:13px;line-height:1.65;color:var(--ink-60)}
+
+.cd-summary{padding:0;background:transparent;border-left:0}
+.sum-contact{padding:12px 16px;background:var(--bg-alt);border-left:3px solid var(--ink);font-size:13px;margin-bottom:6px}
+.sum-contact b{color:var(--ink)}
+.sum-shipping{padding:8px 16px;background:var(--bg-alt);font-size:12.5px;color:var(--ink-80);margin-bottom:6px}
+.sum-eta{padding:10px 16px;background:var(--mint);color:var(--ink);font-family:var(--font-mono);font-size:11px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sum-eta span{letter-spacing:.1em;text-transform:uppercase;opacity:.7}
+.sum-eta b{font-weight:800;font-size:12px}
+.sum-items{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.sum-item{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:8px 10px;background:var(--bg-alt);border-radius:0}
+.sum-item img{width:52px;height:52px;object-fit:cover;background:var(--line)}
+.sum-item-t{font-weight:700;font-size:12.5px;color:var(--ink);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sum-item-meta{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-60);letter-spacing:.04em;margin-top:3px;text-transform:uppercase}
+.sum-item-price{font-family:var(--font-mono);font-size:12px;font-weight:800;white-space:nowrap}
+.sum-total{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--ink);color:#fff;font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.sum-total b{font-family:var(--font-sans,system-ui);font-size:19px;font-weight:900;letter-spacing:-.01em}
+
+/* —— Modal details accordion —— */
+.mod-accordion{margin:20px 22px 0;border-top:1px solid var(--line)}
+.mod-acc{border-bottom:1px solid var(--line)}
+.mod-acc > summary{list-style:none;cursor:pointer;padding:16px 2px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--font-mono);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);transition:color .2s}
+.mod-acc > summary::-webkit-details-marker{display:none}
+.mod-acc > summary::marker{display:none}
+.mod-acc > summary:hover{color:var(--warm-grey)}
+.mod-acc-ic{width:16px;height:16px;flex-shrink:0;transition:transform .35s cubic-bezier(.2,.8,.2,1);color:var(--ink-60)}
+.mod-acc[open] > summary .mod-acc-ic{transform:rotate(180deg);color:var(--ink)}
+.mod-acc-body{padding:0 0 18px;animation:accFade .3s ease}
+@keyframes accFade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+/* перевизначаємо modal-specs — без верхньої лінії, компактніше */
+.mod-acc-body .modal-specs{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;margin:0;padding:0;border-top:0}
+.mod-acc-body .modal-specs div{padding:2px 0;font-size:12.5px;color:var(--ink)}
+.mod-acc-body .modal-specs div span{display:block;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-60);letter-spacing:.1em;margin-bottom:4px;text-transform:uppercase;font-weight:800}
+.mod-acc-body .modal-specs div b{font-weight:700;color:var(--ink-80);font-size:13px}
+
+/* materials / desc — прибираємо зовнішні відступи бо в accordion */
+.mod-acc-body .modal-materials{margin:0;padding:0;background:transparent;border-left:0}
+.mod-acc-body .modal-materials .mm-title{display:none}
+.mod-acc-body .modal-materials ul{gap:6px}
+.mod-acc-body .modal-materials li{font-size:13px;padding-left:16px;color:var(--ink-80)}
+.mod-acc-body .modal-materials li b{color:var(--ink)}
+.mod-acc-body .modal-desc{padding:0;font-size:13px;line-height:1.65;color:var(--ink-60)}
+
+/* —— adaptive product image crop —— */
+.modal-img picture{width:100%;height:100%;display:block}
+.modal-img picture img{width:100%;height:100%;object-fit:cover}
+@media (min-width:761px){
+  .modal-img{min-height:500px}
+}
+@media (min-width:1200px){
+  .modal-img{min-height:560px}
+}
+@media (min-width:1600px){
+  .modal-img{min-height:640px}
+}
+@media (max-width:760px){
+  .modal-img{aspect-ratio:1/1;min-height:auto;max-height:60vh}
+  .modal-img img{object-fit:cover}
 }
 </style>
 </head>
@@ -1308,7 +1400,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v46 · keycrm-api</div>
+<div class="build-tag">v52 · responsive-img</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -1322,7 +1414,6 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
     </nav>
     <div class="hdr-r">
       <div class="lang mono"><b>UA</b> · EN</div>
-      <button class="ic" title="Пошук" aria-label="Пошук"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
       <button class="cart-pill" id="cartBtn">
         <span class="dot"></span>КОШИК <span id="cartCount">0</span>
       </button>
@@ -1537,8 +1628,8 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <div class="tag">SERIES_01</div>
         <div class="tag">SS26 PUFFERS</div>
         <div class="desc">
-          <strong>Ручна робота з Харкова.</strong> Італійська шкіра Nappa, дихаюча сітка —
-          основа кожної пари. Нова підошва Bounce EVA — активна амортизація, служить роками.
+          <strong>Легке та зручне взуття для теплої весни і літа.</strong> Дихаюча сітка забезпечує комфорт навіть у +30°C, твоя стопа не перегрівається і не пітніє.
+          Преміальна шкіра Nappa + амортизація Bounce EVA — служать роками.
         </div>
       </div>
     </div>
@@ -1557,10 +1648,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <button class="coll-chip" data-fam="Lite">Lite</button>
         <button class="coll-chip" data-fam="Spider">Spider</button>
       </div>
-      <button class="filter-btn" onclick="toast('Фільтри скоро')">
-        ФІЛЬТРИ
-        <svg viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-      </button>
+
     </div>
 
     <div id="featuredWrap" class="reveal"></div>
@@ -1588,12 +1676,13 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 <section class="khark" id="story">
   <div class="wide khark-in reveal">
     <div class="khark-text">
-      <div class="flag"><span class="ua"></span>УКРАЇНА · ХАРКІВ · 2021</div>
-      <h2>Зроблено в<br><em>Харкові.</em></h2>
-      <p><strong>ULTERA</strong> — український бренд з Харкова. Починали з одного Hunk у 2021-му. За 3 роки виготовили 1000+ пар, які служать своїм власникам по 2–4 роки щоденного носіння.</p>
-      <p>Ручна робота, контроль кожного шва, чесні матеріали. Все, що ми продаємо — носимо самі.</p>
-      <p>Ми не просто шиємо кросівки. Ми робимо <strong>technical survival kit</strong> для міста — взуття, що захищає стопу від асфальту, волокна від дощу, силует — від сірості.</p>
-      <p>Третя генерація Hunk з підошвою Bounce. Активна амортизація, яка повертає енергію кроку. Легше Hunk2 на 18%, стійкіша на знос.</p>
+      <div class="flag"><span class="ua"></span>УКРАЇНА · ХАРКІВ · 2022</div>
+      <h2>Ми виробники<br>технологічного взуття<br><em>ULTERA.</em></h2>
+      <p class="khark-intro"><strong>Мене звуть Юра.</strong></p>
+      <p>Останні 10 років мріяв виробляти взуття. На початку 2022 року ми запустили виробництво в Харкові.</p>
+      <p>Розробили авторський метод виробництва — тому надаємо <strong>гарантію 1 рік</strong>. Наше взуття ультра легке та дуже зручне.</p>
+      <p class="khark-accent"><strong>Технологічне та преміальне</strong> — саме так можна описати наші кроси. Ми підбираємо технологічні матеріали: вологостійкі, легкі, сучасні — і комбінуємо їх з преміальною шкірою <strong>Nappa</strong>.</p>
+      <p>Наше виробництво виробляє взуття <strong>вручну та з любов'ю</strong>.</p>
       <div class="surv-specs">
         <div class="surv-spec"><span class="k">ПАРТІЯ</span><span class="v">#0427</span></div>
         <div class="surv-spec"><span class="k">ВАГА</span><span class="v">480 g</span></div>
@@ -1601,7 +1690,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <div class="surv-spec"><span class="k">КРАЇНА</span><span class="v">KHARKIV, UA</span></div>
       </div>
       <div class="khark-stats">
-        <div class="khark-stat"><div class="n">1000+</div><div class="l">Пар виготовлено</div></div>
+        <div class="khark-stat"><div class="n">10000+</div><div class="l">Пар виготовлено</div></div>
         <div class="khark-stat"><div class="n">27</div><div class="l">Моделі</div></div>
         <div class="khark-stat"><div class="n">12</div><div class="l">Кроків контролю</div></div>
         <div class="khark-stat"><div class="n">1y</div><div class="l">Гарантія</div></div>
@@ -1630,16 +1719,14 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
     <div class="ig-head reveal">
       <div class="ig-head-left">
         <div class="eyebrow">Instagram</div>
-        <h2>Підписатися<br><em>@ultera.in.ua</em></h2>
+        <h2>Підписатися<br><em>@ultera_shoes</em></h2>
         <div class="handle mono">• Останні миті з майстерні</div>
       </div>
       <div class="ig-head-right">
         <div class="ig-stats">
-          <div class="ig-stat"><div class="n">12.4k</div><div class="l">Підписники</div></div>
-          <div class="ig-stat"><div class="n">480</div><div class="l">Пости</div></div>
-          <div class="ig-stat"><div class="n">★ 4.9</div><div class="l">Рейтинг</div></div>
+          <div class="ig-stat"><div class="n">21k+</div><div class="l">Підписники</div></div>
         </div>
-        <a class="ig-follow" href="https://www.instagram.com/ultera.in.ua/" target="_blank" rel="noopener">
+        <a class="ig-follow" href="https://www.instagram.com/ultera_shoes/" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24"><path d="M12 2c2.7 0 3 0 4.1.1 1 0 1.7.2 2.3.5.6.3 1.1.6 1.6 1.1.5.5.8 1 1.1 1.6.3.6.4 1.3.5 2.3 0 1.1.1 1.4.1 4.1s0 3-.1 4.1c0 1-.2 1.7-.5 2.3-.3.6-.6 1.1-1.1 1.6-.5.5-1 .8-1.6 1.1-.6.3-1.3.4-2.3.5-1.1.1-1.4.1-4.1.1s-3 0-4.1-.1c-1 0-1.7-.2-2.3-.5-.6-.3-1.1-.6-1.6-1.1-.5-.5-.8-1-1.1-1.6-.3-.6-.4-1.3-.5-2.3C2.1 15 2.1 14.7 2.1 12s0-3 .1-4.1c0-1 .2-1.7.5-2.3.3-.6.6-1.1 1.1-1.6.5-.5 1-.8 1.6-1.1.6-.3 1.3-.4 2.3-.5C9 2 9.3 2 12 2zm0 3.4a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm0 2.1a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8zm4.7-2.4a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
           Підписатися
         </a>
@@ -1649,7 +1736,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
     <div class="ig-grid reveal-stagger" id="igGrid"></div>
 
     <div class="ig-cta">
-      <a href="https://www.instagram.com/ultera.in.ua/" target="_blank" rel="noopener">
+      <a href="https://www.instagram.com/ultera_shoes/" target="_blank" rel="noopener">
         Дивитись усі пости в Instagram
         <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </a>
@@ -1707,7 +1794,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
       <div class="foot-col">
         <h4>Контакти</h4>
         <a href="tel:+380">+38 (0xx) xxx-xx-xx</a>
-        <a href="mailto:hello@ultera.in.ua">hello@ultera.in.ua</a>
+        <a href="mailto:hello@ultera_shoes">hello@ultera_shoes</a>
         <a href="#">Instagram</a>
         <a href="#">Telegram</a>
       </div>
@@ -1830,16 +1917,16 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
                 <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
               </svg>
             </span>
-            <span class="season-txt"><b>Літо</b><span>дихаюча сітка · від +12°</span></span>
+            <span class="season-txt"><b>Літо</b><span>Дихаюча сітка · від +12°</span></span>
           </button>
-          <button class="season-btn" data-season="spring" onclick="pickSeason(this,'spring','Весна / Осінь')">
+          <button class="season-btn" data-season="spring" onclick="pickSeason(this,'spring','Весна / Осінь · +500₴')">
             <span class="season-ic" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 10.5a4.5 4.5 0 1 0-9 0 3.5 3.5 0 0 0-4 3.5 3.5 3.5 0 0 0 3.5 3.5H17a3 3 0 0 0 1-5.83V10.5z"/>
                 <path d="M8 21l1-2M12 21l1-2M16 21l1-2"/>
               </svg>
             </span>
-            <span class="season-txt"><b>Весна / Осінь</b><span>Cordura · до +18°</span></span>
+            <span class="season-txt"><b>Весна / Осінь · +500 ₴</b><span>Вологостійка · до +18°</span></span>
           </button>
         </div>
       </div>
@@ -1849,7 +1936,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <div class="mod-sizes" id="m_sizes"></div>
         <button class="size-helper-btn" id="shOpen" onclick="toggleSizeHelper()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Size helper
+          Розмірна сітка
         </button>
 
         <div class="size-helper" id="shBox">
@@ -1903,16 +1990,43 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 
       <div class="modal-cta">
         <button class="btn primary" onclick="addToCart()">В кошик</button>
-        <button class="btn ghost" onclick="toast('Додано в обране ♥')">♡ Wishlist</button>
+        <button class="btn ghost" onclick="toast('Додано в обране ♥')">♡ Закладки</button>
       </div>
 
-      <div class="modal-specs">
-        <div><span>Верх</span>Nappa + дихаюча сітка</div>
-        <div><span>Підошва</span>Bounce EVA</div>
-        <div><span>Країна</span>Харків, UA</div>
-        <div><span>Термін</span>4—10 днів</div>
+      <div class="mod-accordion" id="m_details">
+        <details class="mod-acc" open>
+          <summary>
+            <span class="mod-acc-t">Характеристики</span>
+            <svg class="mod-acc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </summary>
+          <div class="mod-acc-body">
+            <div class="modal-specs">
+              <div><span>Верх</span><b id="m_spec_top">Nappa + дихаюча сітка</b></div>
+              <div><span>Підошва</span><b id="m_spec_sole">Bounce EVA</b></div>
+              <div><span>Країна</span><b>Харків, UA</b></div>
+              <div><span>Термін</span><b>4—10 днів</b></div>
+            </div>
+          </div>
+        </details>
+        <details class="mod-acc">
+          <summary>
+            <span class="mod-acc-t">Матеріали</span>
+            <svg class="mod-acc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </summary>
+          <div class="mod-acc-body">
+            <div class="modal-materials" id="m_materials"></div>
+          </div>
+        </details>
+        <details class="mod-acc">
+          <summary>
+            <span class="mod-acc-t">Опис</span>
+            <svg class="mod-acc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </summary>
+          <div class="mod-acc-body">
+            <div class="modal-desc" id="m_desc"></div>
+          </div>
+        </details>
       </div>
-      <div class="modal-desc" id="m_desc"></div>
     </div>
   </div>
 </div>
@@ -1969,17 +2083,17 @@ function renderFeatured(){
 
   // Family meta — tagline, sub, spec rows per family
   const META = {
-    'Hunk3':     { serial:'HUNK3-01', badge:'У НАЯВНОСТІ', tag:'ФЛАГМАН \u00b7 BOUNCE TECH',
+    'Hunk3':     { serial:'HUNK3-01', badge:'ВИРОБНИЦТВО 4-10 ДНІВ', tag:'ФЛАГМАН \u00b7 BOUNCE TECH',
                    sub:'Третя генерація флагмана з підошвою Bounce. +32% повернення енергії.',
-                   specs:[['ПІДОШВА','Bounce EVA'],['ВЕРХ','Nappa + Cordura'],['ВАГА','\u221218%'],['ГАРАНТІЯ','1 рік']],
+                   specs:[['ПІДОШВА','Bounce EVA'],['ВЕРХ','Шкіра Nappa + дихаюча сітка'],['ВАГА','\u221218%'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
     'Hunk3 Suede': { serial:'H3S-LTD', badge:'ЛІМІТ', tag:'ЛІМІТКА \u00b7 ЗАМША + СІТКА',
                    sub:'Лімітована колекція з преміум замші та дихаючої сітки. 4 кольори, обмежений тираж.',
-                   specs:[['ПІДОШВА','Bounce EVA'],['ВЕРХ','Замша + сітка'],['ТИРАЖ','LIMITED'],['ГАРАНТІЯ','1 рік']],
+                   specs:[['ПІДОШВА','Bounce EVA'],['ВЕРХ','Італійська замша + дихаюча сітка'],['ТИРАЖ','LIMITED'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
-    'Aganta':    { serial:'AG-TR-02', badge:'У НАЯВНОСТІ', tag:'НОВЕ \u00b7 МІНІМАЛІЗМ',
+    'Aganta':    { serial:'AG-TR-02', badge:'ВИРОБНИЦТВО 4-10 ДНІВ', tag:'НОВЕ \u00b7 МІНІМАЛІЗМ',
                    sub:'Мінімалістичні кросівки нового формату. Шкіра Nappa + ПУ-підошва.',
-                   specs:[['ПІДОШВА','ПУ / EVA'],['ВЕРХ','Шкіра Nappa'],['СЕЗОН','S/S 26'],['ГАРАНТІЯ','1 рік']],
+                   specs:[['ПІДОШВА','EVA'],['ВЕРХ','Шкіра Nappa + дихаюча сітка'],['СЕЗОН','S/S 26'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
     'SHAPE':     { serial:'SHAPE-BF', badge:'BAREFOOT', tag:'АНАТОМІЧНІ \u00b7 BAREFOOT',
                    sub:'Анатомічні тапочки з італійської замші. Barefoot-форма, 10 кольорів.',
@@ -1987,23 +2101,23 @@ function renderFeatured(){
                    handler:null },
     'Hunk':      { serial:'HUNK-01', badge:'КЛАСИКА', tag:'ОРИГІНАЛ \u00b7 ПЕРЕВІРЕНО',
                    sub:'Перша генерація Hunk — флагман, з якого почалась ULTERA. 1000+ пар у носінні.',
-                   specs:[['ПІДОШВА','EVA'],['ВЕРХ','Nappa + сітка'],['ВИПУЩЕНО','1000+ пар'],['ГАРАНТІЯ','1 рік']],
+                   specs:[['ПІДОШВА','EVA'],['ВЕРХ','Шкіра Nappa + дихаюча сітка'],['ВИПУЩЕНО','1000+ пар'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
     'Hunk2':     { serial:'HUNK2-02', badge:'ХІТ', tag:'ВДОСКОНАЛЕНО',
                    sub:'Друга генерація з переробленою колодкою та покращеною амортизацією.',
-                   specs:[['ПІДОШВА','EVA v2'],['ВЕРХ','Nappa + Cordura'],['СЕЗОН','S/S 26'],['ГАРАНТІЯ','1 рік']],
+                   specs:[['ПІДОШВА','EVA v2'],['ВЕРХ','Шкіра Nappa + дихаюча сітка'],['СЕЗОН','S/S 26'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
     'Hunk BRFT': { serial:'BRFT-01', badge:'BAREFOOT', tag:'ПЛОСКА \u00b7 БОСОНІЖ',
                    sub:'Barefoot-версія Hunk з плоскою устілкою. Відчуття босоніж у місті.',
-                   specs:[['ПІДОШВА','Flat EVA'],['ВЕРХ','Nappa + Cordura'],['ТИП','Barefoot'],['ГАРАНТІЯ','1 рік']],
+                   specs:[['ПІДОШВА','PU anatomic'],['ВЕРХ','Шкіра Nappa + дихаюча сітка'],['ТИП','Barefoot'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
     'Lite':      { serial:'LITE-03', badge:'ЗНИЖКА', tag:'ЛЕГКІ \u00b7 ЩОДЕННІ',
                    sub:'Легкі шкіряні кеди на кожен день. Мінімум ваги, максимум комфорту.',
-                   specs:[['ПІДОШВА','EVA'],['ВЕРХ','Шкіра Nappa'],['ВАГА','\u221240%'],['ГАРАНТІЯ','1 рік']],
+                   specs:[['ПІДОШВА','EVA'],['ВЕРХ','Шкіра Nappa + дихаюча сітка'],['ВАГА','\u221240%'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
     'Spider':    { serial:'SPIDER-01', badge:'ЛІМІТ', tag:'РЕФЛЕКТИВ \u00b7 НІЧ',
                    sub:'Спайдер-дизайн із рефлективними елементами. Видно у темряві.',
-                   specs:[['ПІДОШВА','EVA'],['ВЕРХ','Nappa + 3M'],['ОСОБЛИВІСТЬ','Рефлектив'],['ГАРАНТІЯ','1 рік']],
+                   specs:[['ПІДОШВА','EVA'],['ВЕРХ','Шкіра Nappa + рефлектив'],['ОСОБЛИВІСТЬ','Рефлектив'],['ГАРАНТІЯ','1 рік']],
                    handler:null }
   };
 
@@ -2022,7 +2136,7 @@ function renderFeatured(){
 
   el.innerHTML = rows.map((row, idx) => {
     const fam = row.family;
-    const meta = META[fam] || { serial:fam.toUpperCase()+'-0'+idx, badge:'У НАЯВНОСТІ', tag:'ULTERA',
+    const meta = META[fam] || { serial:fam.toUpperCase()+'-0'+idx, badge:'ВИРОБНИЦТВО 4-10 ДНІВ', tag:'ULTERA',
                                 sub:'', specs:[['ПІДОШВА','EVA'],['ВЕРХ','Nappa'],['ВИПУЩЕНО','Харків'],['ГАРАНТІЯ','1 рік']],
                                 handler:null };
 
@@ -2298,6 +2412,7 @@ function openModal(uid){
   // SHAPE тепер відкриває модалку як інші товари
   const row = findFamily(p.family);
   currentColor = p.uid;
+  window.__modalUid = p.uid;
   document.getElementById('m_fam').textContent = p.family + (p.mark ? ' · ' + p.mark : '');
   document.getElementById('m_title').textContent = p.title.replace('ULTERA - ','').replace('ULTERA ','');
   document.getElementById('m_sku').textContent = 'SKU · ' + p.uid.slice(-10).toUpperCase();
@@ -2375,7 +2490,58 @@ function openModal(uid){
   // preload ALL other photos of this product immediately (Tilda CDN)
   photos.forEach((src,i)=>{ if(i===0) return; const im = new Image(); im.decoding='async'; im.src = src; });
 
-  document.getElementById('m_desc').innerHTML = (p.text||'').replace(/<div[^>]*>/g,'').replace(/<\/div>/g,'');
+  // Матеріали (однакові для всіх моделей, окрім SHAPE)
+  const MATERIALS_DEFAULT = [
+    '<b>Nappa</b> — натуральна шкіра (Італія)',
+    '<b>Cordura 1000D</b> — вологостійка (весняна версія)',
+    '<b>Дихаюча сітка</b> — літня версія',
+    '<b>Підошва EVA Bounce</b> — активна амортизація',
+    '<b>Устілка</b> з боковою підтримкою',
+    '<b>Рефлективні шнурки</b>',
+    '<b>Текстильна підкладка</b>'
+  ];
+  const MATERIALS_SHAPE = [
+    '<b>Італійська замша</b> — преміум матеріал',
+    '<b>Підошва PU anatomic</b> — barefoot-форма',
+    '<b>Анатомічна устілка</b>',
+    '<b>Ручна робота</b> — контроль кожного шва'
+  ];
+  // заповнити характеристики з META для поточної сім'ї
+  try {
+    const familyMeta = {
+      'Hunk3':     {top:'Nappa + дихаюча сітка', sole:'Bounce EVA'},
+      'Hunk3 Suede':{top:'Замша + дихаюча сітка', sole:'Bounce EVA'},
+      'Aganta':    {top:'Шкіра Nappa + дихаюча сітка', sole:'EVA'},
+      'SHAPE':     {top:'Італійська замша', sole:'PU anatomic'},
+      'Hunk':      {top:'Шкіра Nappa + дихаюча сітка', sole:'EVA'},
+      'Hunk2':     {top:'Шкіра Nappa + дихаюча сітка', sole:'EVA v2'},
+      'Hunk BRFT': {top:'Nappa + Cordura', sole:'PU anatomic'},
+      'Lite':      {top:'Шкіра Nappa + дихаюча сітка', sole:'EVA'},
+      'Spider':    {top:'Шкіра Nappa + рефлектив', sole:'EVA'}
+    };
+    const fm = familyMeta[p.family] || {top:'Nappa + дихаюча сітка', sole:'EVA'};
+    const topEl = document.getElementById('m_spec_top'); if(topEl) topEl.textContent = fm.top;
+    const soleEl = document.getElementById('m_spec_sole'); if(soleEl) soleEl.textContent = fm.sole;
+  } catch(e){}
+  const mtEl = document.getElementById('m_materials');
+  if(mtEl){
+    const list = (p.family === 'SHAPE') ? MATERIALS_SHAPE : MATERIALS_DEFAULT;
+    mtEl.innerHTML = '<span class="mm-title">Матеріали</span><ul>' + list.map(x=>'<li>'+x+'</li>').join('') + '</ul>';
+  }
+  // Опис — прибираємо дублювання з матеріалами (рядки з "-"/"•"/буллетами/Nappa/Cordura/шнурки)
+  let desc = (p.text||'').replace(/<div[^>]*>/g,'').replace(/<\/div>/g,'');
+  // приберемо рядки з матеріалами (містять Nappa, Cordura, EVA, підошва, устілка, рефлектив, підкладка, сітка, замш)
+  desc = desc.split(/<br\s*\/?>|\n/).filter(line => {
+    const low = line.toLowerCase();
+    // видаляємо рядки-списки (буллети) і будь-що що містить ключові матеріальні слова
+    if(/^\s*[-•·]\s*/.test(line)) return false;
+    if(/^\s*матеріали/i.test(low)) return false;
+    if(low.includes('nappa') || low.includes('cordura') || low.includes(' eva ') || low.endsWith(' eva')) return false;
+    if(low.includes('рефлектив') || low.includes('устілка') || low.includes('підкладка')) return false;
+    if(low.includes('дихаюча сітка') || low.includes('пінка')) return false;
+    return true;
+  }).join('<br>').replace(/(<br>\s*){2,}/g, '<br><br>').trim();
+  document.getElementById('m_desc').innerHTML = desc;
 
   // close size helper on product change
   document.getElementById('shBox').classList.remove('open');
@@ -2398,6 +2564,21 @@ function pickSeason(btn, id, label){
   btn.classList.add('active');
   const n = document.getElementById('m_season_name'); if(n) n.textContent = label;
   window.__modalSeason = id;
+  // перерахунок ціни (Весна +500 ₴)
+  const uid = window.__modalUid || currentColor;
+  const p = findProduct(uid);
+  if(!p) return;
+  const base = parseFloat(p.price) || 0;
+  const extra = (id === 'spring') ? 500 : 0;
+  const total = base + extra;
+  const oldP = (p.sizes && p.sizes[0] && p.sizes[0].price_old) || '';
+  let priceHtml = '<span class="cur">' + priceNum(total) + ' ₴</span>';
+  if(oldP){
+    priceHtml += '<span class="was">' + priceNum(parseFloat(oldP)+extra) + ' ₴</span>';
+    const pct = Math.round(100-(total/(parseFloat(oldP)+extra))*100);
+    if(pct > 0) priceHtml += '<span class="save">−' + pct + '%</span>';
+  }
+  document.getElementById('m_price').innerHTML = priceHtml;
 }
 
 function setModalPhoto(i){
@@ -2540,8 +2721,15 @@ function phoneMask(raw){
   if(d.length > 7) out += ' ' + d.slice(7,9);
   return out;
 }
-function isPhoneValid(v){ return /^\+380\s?\d{2}\s?\d{3}\s?\d{2}\s?\d{2}$/.test(v); }
-function isFioValid(v){ return v.trim().split(/\s+/).length >= 2 && v.trim().length >= 4; }
+function isPhoneValid(v){
+  // Ліберальна перевірка: мусить бути 9-12 цифр (Україна: 9 після коду країни)
+  const digits = (v || '').replace(/\D/g, '');
+  return digits.length >= 9 && digits.length <= 13;
+}
+function isFioValid(v){
+  // Хоча б 2 символи. Приймаємо будь-який формат (1 слово або кілька)
+  return (v || '').trim().length >= 2;
+}
 
 const NP_API = 'https://api.novaposhta.ua/v2.0/json/';
 const NP_KEY = '';
@@ -2601,9 +2789,11 @@ async function wizardNext(from){
   if(from === 1){
     const fio = document.getElementById('wFio').value.trim();
     const phone = document.getElementById('wPhone').value.trim();
-    if(!isFioValid(fio)){ errEl.textContent = 'Вкажи прізвище та імʼя'; return; }
-    if(!isPhoneValid(phone)){ errEl.textContent = 'Телефон у форматі +380 __ ___ __ __'; return; }
+    if(!isFioValid(fio)){ errEl.textContent = 'Вкажи імʼя (хоча б 2 символи)'; return; }
+    if(!isPhoneValid(phone)){ errEl.textContent = 'Некоректний номер (потрібно 9-13 цифр)'; return; }
     CART.wizard = {...CART.wizard, fio, phone}; CART.saveWiz();
+    // === LEAD CAPTURE — відправляємо в CRM одразу після кроку 1 ===
+    sendLead();
     showStep(2);
   } else if(from === 2){
     const city = document.getElementById('wCity').value.trim();
@@ -2617,10 +2807,54 @@ async function wizardNext(from){
 }
 function renderSummary(){
   const w = CART.wizard;
-  const itemsLines = CART.items.map(it => it.title + ' · ' + (it.color_name||'') + ' · р.' + it.size + ' × ' + (it.qty||1)).join('<br>');
   const total = Math.round(CART.total()).toLocaleString('uk-UA');
-  document.getElementById('wSummary').innerHTML = '<b>'+w.fio+'</b> · '+w.phone+'<br>' + w.city+', '+w.wh+'<br><br>' + itemsLines + '<br><br><b>До сплати: '+total+' ₴</b>';
+  const itemsHtml = CART.items.map(it =>
+    '<div class="sum-item">' +
+      '<img src="' + (it.photo||'') + '" alt="">' +
+      '<div class="sum-item-info">' +
+        '<div class="sum-item-t">' + it.title + '</div>' +
+        '<div class="sum-item-meta">' + (it.color_name||'') + ' · р.' + (it.size||'—') + ' × ' + (it.qty||1) + '</div>' +
+      '</div>' +
+      '<div class="sum-item-price">' + Math.round(parseFloat(it.price)||0).toLocaleString('uk-UA') + ' ₴</div>' +
+    '</div>'
+  ).join('');
+  document.getElementById('wSummary').innerHTML =
+    '<div class="sum-contact"><b>' + w.fio + '</b> · ' + w.phone + '</div>' +
+    '<div class="sum-shipping">' + w.city + ', ' + w.wh + '</div>' +
+    '<div class="sum-eta"><span>ТЕРМІН ДОСТАВКИ</span><b>4–10 днів</b> · Нова Пошта</div>' +
+    '<div class="sum-items">' + itemsHtml + '</div>' +
+    '<div class="sum-total"><span>ДО СПЛАТИ</span><b>' + total + ' ₴</b></div>';
 }
+async function sendLead(){
+  try {
+    const leadNum = CART.wizard.leadNum || ('ULT-LEAD-' + Date.now().toString().slice(-8));
+    CART.wizard = {...CART.wizard, leadNum}; CART.saveWiz();
+    const payload = {
+      num: leadNum,
+      stage: 'lead',
+      ts: new Date().toISOString(),
+      fio: CART.wizard.fio,
+      phone: CART.wizard.phone,
+      total: CART.total(),
+      items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family}))
+    };
+    const r = await fetch('/api/order', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const result = await r.json().catch(()=>({}));
+    if(r.ok && result.keycrm_id){
+      CART.wizard = {...CART.wizard, leadKeycrmId: result.keycrm_id}; CART.saveWiz();
+      console.log('Lead saved in CRM:', result.keycrm_id);
+    } else {
+      console.log('Lead result:', result);
+    }
+  } catch(e){
+    console.warn('Lead send failed (non-blocking):', e.message);
+  }
+}
+
 async function wizardSubmit(){
   const errEl = document.getElementById('wErr3');
   errEl.textContent = '';
@@ -2633,6 +2867,9 @@ async function wizardSubmit(){
   const orderNum = 'ULT-' + Date.now().toString().slice(-8);
   const payload = {
     num: orderNum,
+    stage: 'final',
+    leadNum: CART.wizard.leadNum || null,
+    leadKeycrmId: CART.wizard.leadKeycrmId || null,
     ts: new Date().toISOString(),
     fio: CART.wizard.fio,
     phone: CART.wizard.phone,
@@ -2761,7 +2998,7 @@ function closeMenu(){
 /* ————— FAQ ————— */
 const FAQS = [
   { q:'Що таке підошва Bounce?', a:'Нова формула EVA з реактивними зонами — повертає до 32% енергії кроку назад. Легше Hunk2 на 18%, служить 2–4 роки.' },
-  { q:'Як обрати розмір?', a:'Розміри повномірні. Виміряй стопу від п\u0027ятки до великого пальця. 40=26см, 41=27см і т.д. Або натисни «Size helper» у картці — калькулятор підбере ідеальний розмір.' },
+  { q:'Як обрати розмір?', a:'Розміри повномірні. Виміряй стопу від п\u0027ятки до великого пальця. 40=26см, 41=27см і т.д. Або натисни «Розмірна сітка» у картці — калькулятор підбере ідеальний розмір.' },
   { q:'Весна чи літо — яку версію?', a:'Весняна з Cordura 1000D тримає воду до +18°C. Літня з дихаючою сіткою — від +12°C, без пітніння навіть у +30°C.' },
   { q:'Скільки чекати?', a:'Виготовлення 4–10 робочих днів. Доставка Новою Поштою 1–3 дні по всій Україні.' },
   { q:'Гарантія?', a:'1 рік на шви, матеріали та підошву. Безкоштовний обмін розміру протягом 14 днів.' },
@@ -2950,7 +3187,7 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
       box.scrollIntoView({behavior:'smooth',block:'nearest'});
       if(btn) btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg> Hide helper';
     } else {
-      if(btn) btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Size helper';
+      if(btn) btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Розмірна сітка';
     }
   };
 })();
@@ -2977,7 +3214,7 @@ renderGrid();
   ];
   const igGrid = document.getElementById('igGrid');
   if(!igGrid) return;
-  const HANDLE = 'ultera.in.ua';
+  const HANDLE = 'ultera_shoes';
   const HEART = '<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>';
   const CHAT  = '<svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
   const REEL  = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>';
