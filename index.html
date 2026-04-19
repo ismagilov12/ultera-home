@@ -2532,9 +2532,16 @@ function openModal(uid){
   window.__modalPhotoIdx = 0;
 
   if(gal){
-    gal.innerHTML = photos.map((src,i)=>
-      `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${src}" loading="eager" decoding="async"></button>`
-    ).join('');
+    // На мобільній strip прихований display:none, але <img> все одно качаються у фон.
+    // Тому не рендеримо strip на вузьких екранах взагалі.
+    const isMobile = window.matchMedia && window.matchMedia('(max-width:760px)').matches;
+    if (isMobile) {
+      gal.innerHTML = '';
+    } else {
+      gal.innerHTML = photos.map((src,i)=>
+        `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${src}" loading="lazy" decoding="async"></button>`
+      ).join('');
+    }
   }
   // counter-pill (завжди видимий)
   const pillTot = document.getElementById('m_counter_tot_g');
@@ -2562,8 +2569,26 @@ function openModal(uid){
     mi.setAttribute('fetchpriority','high');
     mi.setAttribute('decoding','async');
   }
-  // preload ALL other photos of this product immediately (Tilda CDN)
-  photos.forEach((src,i)=>{ if(i===0) return; const im = new Image(); im.decoding='async'; im.src = src; });
+  // Staged preload — уникає параллельного шторма з 20 фото.
+  // 1) чекаємо поки main[0] завантажиться
+  // 2) preload сусідів ±1 (для моментального свайпу)
+  // 3) через idle preload сусідів ±2 + хвіст
+  const _preload = (url)=>{ if(\!url) return; const im = new Image(); im.decoding='async'; im.src = url; };
+  const _kickPreload = ()=>{
+    _preload(photos[1]);                    // next
+    _preload(photos[photos.length-1]);      // prev (wrap)
+    const idle = window.requestIdleCallback || (cb=>setTimeout(cb, 250));
+    idle(()=>{
+      _preload(photos[2]);
+      _preload(photos[photos.length-2]);
+      idle(()=>{
+        for (let i=3; i<photos.length-2; i++) _preload(photos[i]);
+      });
+    });
+  };
+  const _mi = document.getElementById('m_img');
+  if (_mi && _mi.complete && _mi.naturalWidth) { _kickPreload(); }
+  else if (_mi) { _mi.addEventListener('load', _kickPreload, {once:true}); setTimeout(_kickPreload, 1200); /* fallback */ }
 
   // Матеріали (однакові для всіх моделей, окрім SHAPE)
   const MATERIALS_DEFAULT = [
@@ -2674,8 +2699,8 @@ function setModalPhoto(i){
   document.querySelectorAll('#m_dots button').forEach((d,ii)=>d.classList.toggle('active', ii===idx));
   const cnt = document.getElementById('m_counter_cur'); if(cnt) cnt.textContent = String(idx+1);
   const pcur = document.getElementById('m_counter_cur_g'); if(pcur) pcur.textContent = String(idx+1);
-  // preload neighbors ±3 прямо тут (без IIFE-обгортки)
-  [1,-1,2,-2,3,-3].forEach(d=>{
+  // preload neighbors ±2 — меньше паралельних ланцюгів на слабкому мобільному
+  [1,-1,2,-2].forEach(d=>{
     const ii = ((idx+d)%n+n)%n;
     const im = new Image(); im.decoding = 'async'; im.src = photos[ii];
   });
