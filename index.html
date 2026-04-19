@@ -2114,6 +2114,33 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 <script>
 const DATA = JSON.parse(document.getElementById('DATA').textContent);
 const EXTRA_PHOTOS = JSON.parse(document.getElementById('EXTRA').textContent);
+/* ————— Vercel Image Optimization helpers (q=90, AVIF/WebP, no quality loss) ————— */
+window.__vimg = function(url, w){
+  if(!url || typeof url !== 'string') return url;
+  if(url.indexOf('http') === 0) return url;
+  if(url.indexOf('/_vercel/') === 0) return url;
+  if(url.indexOf('data:') === 0) return url;
+  var clean = url.charAt(0) === '/' ? url : '/' + url;
+  var width = (w && w > 0) ? w : 1200;
+  return '/_vercel/image?url=' + encodeURIComponent(clean) + '&w=' + width + '&q=90';
+};
+window.__vimgMain = function(url){
+  /* main image of modal — pick width by viewport so we never upscale */
+  var vw = window.innerWidth || 1200;
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var target = Math.min(Math.max(Math.round(vw * dpr), 1080), 1920);
+  return window.__vimg(url, target);
+};
+window.__vsrcset = function(url, widths){
+  if(!url || typeof url !== 'string') return '';
+  if(url.indexOf('http') === 0 || url.indexOf('/_vercel/') === 0) return '';
+  var clean = url.charAt(0) === '/' ? url : '/' + url;
+  var ws = widths || [400, 600, 800, 1200];
+  return ws.map(function(w){
+    return '/_vercel/image?url=' + encodeURIComponent(clean) + '&w=' + w + '&q=90 ' + w + 'w';
+  }).join(', ');
+};
+
 /* ————— CART STATE ————— */
 const CART = {
   items: JSON.parse(localStorage.getItem('ultera_cart')||'[]'),
@@ -2234,7 +2261,7 @@ function renderFeatured(){
     const serialTxt = meta.serial + '-' + String(photos.length).padStart(2,'0');
     const handler = meta.handler || `openModal('${row.variants[0].uid}')`;
 
-    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}"><img src="${ph.photo}" alt="${fam} ${ph.name}" loading="lazy"></div>`).join('');
+    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}"><img src="${__vimg(ph.photo, 1200)}" srcset="${__vsrcset(ph.photo, [600,900,1200,1600])}" sizes="(max-width:760px) 100vw, 50vw" alt="${fam} ${ph.name}" loading="lazy" decoding="async"></div>`).join('');
     const swatchHtml = photos.map((ph,i) => `<button class="sw${i===0?' active':''}" data-idx="${i}" style="background:${ph.swatch}" aria-label="${ph.name}" title="${ph.name}"></button>`).join('');
 
     return `<div class="feat-card" data-fam="${fam}">
@@ -2298,7 +2325,7 @@ function renderGrid(){
       const oldP = (v.sizes && v.sizes[0] && v.sizes[0].price_old) || '';
       const dots = row.variants.map(x=>`<span class="dot" style="background:${x.swatch}"></span>`).join('');
       const card = `<div class="card" data-fam="${row.family}" onclick="openModal('${v.uid}')">
-        <div class="card-img">${badgeFor(v)}<img src="${v.photo}" alt="${v.title}" loading="lazy">
+        <div class="card-img">${badgeFor(v)}<img src="${__vimg(v.photo, 800)}" srcset="${__vsrcset(v.photo, [400,600,800,1200])}" sizes="(max-width:760px) 50vw, 33vw" alt="${v.title}" loading="lazy" decoding="async">
           <div class="card-quick"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
         </div>
         <div class="card-name">${v.title.replace('ULTERA - ','').replace('ULTERA ','')}</div>
@@ -2321,7 +2348,7 @@ function renderGrid(){
       const price = parseFloat(v.price)||0;
       const dots = row.variants.map(x=>`<span class="dot" style="background:${x.swatch}"></span>`).join('');
       mainVariants.push(`<div class="card" data-fam="${row.family}" onclick="openModal('${v.uid}')">
-        <div class="card-img">${badgeFor(v)}<img src="${v.photo}" alt="${v.title}" loading="lazy">
+        <div class="card-img">${badgeFor(v)}<img src="${__vimg(v.photo, 800)}" srcset="${__vsrcset(v.photo, [400,600,800,1200])}" sizes="(max-width:760px) 50vw, 33vw" alt="${v.title}" loading="lazy" decoding="async">
           <div class="card-quick"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
         </div>
         <div class="card-name">${v.title.replace('ULTERA - ','').replace('ULTERA ','')}</div>
@@ -2491,7 +2518,7 @@ function openModal(uid){
   document.getElementById('m_fam').textContent = p.family + (p.mark ? ' · ' + p.mark : '');
   document.getElementById('m_title').textContent = p.title.replace('ULTERA - ','').replace('ULTERA ','');
   document.getElementById('m_sku').textContent = 'SKU · ' + p.uid.slice(-10).toUpperCase();
-  document.getElementById('m_img').src = p.photo;
+  document.getElementById('m_img').src = window.__vimgMain(p.photo);
   document.getElementById('m_color_name').textContent = p.color_name;
 
   const price = parseFloat(p.price)||0;
@@ -2518,7 +2545,7 @@ function openModal(uid){
 
   const variants = row ? row.variants : [p];
   document.getElementById('m_swatches').innerHTML = variants.map(v=>
-    `<button class="swatch ${v.uid===uid?'active':''}" onclick="openModal('${v.uid}')" title="${v.color_name}"><img src="${v.photo}"></button>`
+    `<button class="swatch ${v.uid===uid?'active':''}" onclick="openModal('${v.uid}')" title="${v.color_name}"><img src="${__vimg(v.photo, 160)}" loading="lazy" decoding="async"></button>`
   ).join('');
 
   // photo strip below main image — все фото текущего товара из CSV
@@ -2539,7 +2566,7 @@ function openModal(uid){
       gal.innerHTML = '';
     } else {
       gal.innerHTML = photos.map((src,i)=>
-        `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${src}" loading="lazy" decoding="async"></button>`
+        `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${__vimg(src, 240)}" loading="lazy" decoding="async"></button>`
       ).join('');
     }
   }
@@ -2565,7 +2592,7 @@ function openModal(uid){
   }
   if (photos[0]){
     const mi = document.getElementById('m_img');
-    mi.src = photos[0];
+    mi.src = window.__vimgMain(photos[0]);
     mi.setAttribute('fetchpriority','high');
     mi.setAttribute('decoding','async');
   }
@@ -2573,7 +2600,7 @@ function openModal(uid){
   // 1) чекаємо поки main[0] завантажиться
   // 2) preload сусідів ±1 (для моментального свайпу)
   // 3) через idle preload сусідів ±2 + хвіст
-  const _preload = (url)=>{ if(!url) return; const im = new Image(); im.decoding='async'; im.src = url; };
+  const _preload = (url)=>{ if(!url) return; const im = new Image(); im.decoding='async'; im.src = window.__vimgMain(url); };
   const _kickPreload = ()=>{
     _preload(photos[1]);                    // next
     _preload(photos[photos.length-1]);      // prev (wrap)
@@ -2693,7 +2720,7 @@ function setModalPhoto(i){
   img.onerror = null;
   img.setAttribute('fetchpriority','high');
   img.setAttribute('decoding','async');
-  img.src = photos[idx];
+  img.src = window.__vimgMain(photos[idx]);
   // update strip + dots active state
   document.querySelectorAll('.modal-strip button').forEach((b,ii)=>b.classList.toggle('active', ii===idx));
   document.querySelectorAll('#m_dots button').forEach((d,ii)=>d.classList.toggle('active', ii===idx));
@@ -2702,11 +2729,11 @@ function setModalPhoto(i){
   // preload neighbors ±2 — меньше паралельних ланцюгів на слабкому мобільному
   [1,-1,2,-2].forEach(d=>{
     const ii = ((idx+d)%n+n)%n;
-    const im = new Image(); im.decoding = 'async'; im.src = photos[ii];
+    const im = new Image(); im.decoding = 'async'; im.src = window.__vimgMain(photos[ii]);
   });
 }
 // legacy fn kept for safety (no longer referenced from rendered HTML)
-function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = src; }
+function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = window.__vimgMain(src); }
 
 /* ————— Swipe + keyboard nav on modal image ————— */
 (function(){
