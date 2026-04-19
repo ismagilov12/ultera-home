@@ -1483,7 +1483,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v69 · modal-fullscreen</div>
+<div class="build-tag">v70 · preload-all-photos</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -2571,26 +2571,23 @@ function openModal(uid){
     mi.setAttribute('fetchpriority','high');
     mi.setAttribute('decoding','async');
   }
-  // Staged preload — уникає параллельного шторма з 20 фото.
-  // 1) чекаємо поки main[0] завантажиться
-  // 2) preload сусідів ±1 (для моментального свайпу)
-  // 3) через idle preload сусідів ±2 + хвіст
-  const _preload = (url)=>{ if(!url) return; const im = new Image(); im.decoding='async'; im.src = url; };
-  const _kickPreload = ()=>{
-    _preload(photos[1]);                    // next
-    _preload(photos[photos.length-1]);      // prev (wrap)
-    const idle = window.requestIdleCallback || (cb=>setTimeout(cb, 250));
-    idle(()=>{
-      _preload(photos[2]);
-      _preload(photos[photos.length-2]);
-      idle(()=>{
-        for (let i=3; i<photos.length-2; i++) _preload(photos[i]);
-      });
-    });
+  // v70: aggressive preload — стрелки и свотчи мгновенные.
+  //   1) все EXTRA_PHOTOS[uid] текущего цвета (для листания стрелками)
+  //   2) главное фото всех других вариантов (для клика по свотчу)
+  //   Браузер приоритизирует main image (fetchpriority=high) над этими preload-ами.
+  window.__preloadCache = window.__preloadCache || new Map();
+  const _preload = (url)=>{
+    if(!url) return;
+    if (window.__preloadCache.has(url)) return;
+    const im = new Image();
+    im.decoding = 'async';
+    im.src = url;
+    window.__preloadCache.set(url, im);
   };
-  const _mi = document.getElementById('m_img');
-  if (_mi && _mi.complete && _mi.naturalWidth) { _kickPreload(); }
-  else if (_mi) { _mi.addEventListener('load', _kickPreload, {once:true}); setTimeout(_kickPreload, 1200); /* fallback */ }
+  // photos of current color (index 1..n-1; photos[0] already set on m_img)
+  for (let _i = 1; _i < photos.length; _i++) _preload(photos[_i]);
+  // main photo of every other variant
+  try { for (const _v of variants) { if (_v && _v.uid !== uid && _v.photo) _preload(_v.photo); } } catch(_){}
 
   // Матеріали (однакові для всіх моделей, окрім SHAPE)
   const MATERIALS_DEFAULT = [
