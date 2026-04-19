@@ -1,0 +1,36 @@
+name: Migrate Tilda photos to Vercel
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install sharp
+        run: npm install --no-save sharp@0.33.5
+
+      - name: Migrate photos from Tilda to Vercel repo
+        run: node .github/scripts/migrate-photos.js
+
+      - name: Commit results
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add photos/ index.html
+          if git diff --cached --quiet; then
+            echo 'Nothing to commit'
+          else
+            git commit -m 'chore: migrate Tilda photos to /photos (webp, 900px)'
+            git push
+          fi
