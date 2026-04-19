@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <link rel="preload" as="image" type="image/avif" href="banners/home-pc-5.avif" media="(min-width:761px)">
 <link rel="preload" as="image" type="image/avif" href="banners/home-mob-5.avif" media="(max-width:760px)">
 <title>ULTERA™ — Handcrafted sneakers · Kharkiv, UA</title>
@@ -1374,8 +1374,42 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .modal-img{min-height:640px}
 }
 @media (max-width:760px){
-  .modal-img{aspect-ratio:1/1;min-height:auto;max-height:60vh}
+  .modal-img{aspect-ratio:3/4;min-height:auto;max-height:78vh;height:auto}
   .modal-img img{object-fit:cover}
+}
+
+/* —— COMPACT SUMMARY (mobile + desktop) —— */
+.cd-summary{padding:0;background:transparent;border-left:0;display:flex;flex-direction:column;gap:6px}
+.sum-contact,.sum-shipping,.sum-eta,.sum-items,.sum-total{margin:0}
+.sum-contact{padding:10px 12px;background:var(--bg-alt);border-left:2px solid var(--ink);font-size:12.5px;line-height:1.35}
+.sum-contact b{color:var(--ink);font-weight:700}
+.sum-shipping{padding:8px 12px;background:var(--bg-alt);font-size:11.5px;color:var(--ink-80);line-height:1.35}
+.sum-eta{padding:7px 12px;background:var(--mint);color:var(--ink);font-family:var(--font-mono);font-size:10.5px;letter-spacing:.05em;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sum-eta span{letter-spacing:.08em;text-transform:uppercase;opacity:.75;font-weight:700}
+.sum-eta b{font-weight:800}
+.sum-items{display:flex;flex-direction:column;gap:4px}
+.sum-item{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:6px 10px;background:var(--bg-alt)}
+.sum-item img{width:44px;height:44px;object-fit:cover;background:var(--line)}
+.sum-item-t{font-weight:700;font-size:12px;color:var(--ink);line-height:1.25;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.sum-item-meta{font-family:var(--font-mono);font-size:9.5px;color:var(--ink-60);letter-spacing:.03em;margin-top:2px;text-transform:uppercase}
+.sum-item-price{font-family:var(--font-mono);font-size:11px;font-weight:800;white-space:nowrap}
+.sum-total{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--ink);color:#fff;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;gap:8px;flex-wrap:nowrap}
+.sum-total > span{white-space:nowrap;opacity:.8}
+.sum-total b{font-family:var(--font-sans,system-ui);font-size:18px;font-weight:900;letter-spacing:-.01em;white-space:nowrap;color:#fff}
+
+@media (max-width:760px){
+  .sum-contact{padding:8px 10px;font-size:12px}
+  .sum-shipping{padding:6px 10px;font-size:11px}
+  .sum-eta{padding:6px 10px;font-size:10px}
+  .sum-item{padding:5px 8px;grid-template-columns:40px 1fr auto;gap:8px}
+  .sum-item img{width:40px;height:40px}
+  .sum-item-t{font-size:11.5px}
+  .sum-total{padding:9px 12px}
+  .sum-total b{font-size:16px}
+  /* cart drawer — менші відступи */
+  .cd-pane{padding:14px 16px 18px;gap:10px}
+  /* кнопки трохи нижчі на моб */
+  .cd-next,.cd-back{min-height:48px;max-height:52px;padding:14px;font-size:10.5px;letter-spacing:.1em}
 }
 </style>
 </head>
@@ -1400,7 +1434,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v52 · responsive-img</div>
+<div class="build-tag">v53 · mobile-fix</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
