@@ -1,0 +1,8 @@
+{
+  "images": {
+    "sizes": [160, 240, 400, 600, 750, 800, 900, 1080, 1200, 1600, 1920],
+    "formats": ["image/avif", "image/webp"],
+    "minimumCacheTTL": 2592000,
+    "qualities": [75, 90, 95]
+  }
+}
