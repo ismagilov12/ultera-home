@@ -3,13 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<link rel="preload" as="image" type="image/avif" href="banners/home-pc-5.avif" media="(min-width:761px)">
-<link rel="preload" as="image" type="image/avif" href="banners/home-mob-5.avif" media="(max-width:760px)">
+<script>
+/* ULTERA_TPRODUCT_HEAD_REWRITE — stash uid from /tproduct/{project}-{uid}-{slug} URL for later auto-openModal.
+   URL stays as-is; relative paths are absolute so banners/* and favicon load from root. */
+(function(){
+  try {
+    var m = location.pathname.match(/^\/tproduct\/\d+-(\d{12})(?:-|$)/);
+    if (!m) return;
+    window.__AUTO_OPEN_UID = m[1];
+  } catch(e) { /* silent */ }
+})();
+</script>
+<link rel="preload" as="image" type="image/avif" href="/banners/home-pc-5.avif" media="(min-width:761px)">
+<link rel="preload" as="image" type="image/avif" href="/banners/home-mob-5.avif" media="(max-width:760px)">
 <title>ULTERA™ — Handcrafted sneakers · Kharkiv, UA</title>
 <style>.build-tag{position:fixed;bottom:6px;right:8px;z-index:9999;font-family:ui-monospace,monospace;font-size:9px;color:rgba(150,150,150,.6);background:rgba(255,255,255,.5);padding:2px 5px;border-radius:3px;pointer-events:none}</style>
 <meta name="description" content="ULTERA — handcrafted sneakers. Italian Nappa leather. Cordura 1000D. Bounce EVA cushioning. Made in Kharkiv, Ukraine.">
-<link rel="icon" href="favicon.ico" sizes="any">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -196,9 +207,9 @@ input,textarea,select{font:inherit;color:inherit}
 .hero-slider{position:relative;overflow:hidden;border-radius:18px;background:var(--bg-alt);aspect-ratio:4/5;max-height:760px}
 .hero-slider .slide{position:absolute;inset:0;opacity:0;transition:opacity 1.1s cubic-bezier(.4,0,.2,1);overflow:hidden}
 .hero-slider .slide::before{content:"";position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(22px) brightness(.92);transform:scale(1.1);z-index:0}
-.hero-slider .slide[data-bg="1"]::before{background-image:url("banners/blur-1.jpg")}
-.hero-slider .slide[data-bg="2"]::before{background-image:url("banners/blur-2.jpg")}
-.hero-slider .slide[data-bg="3"]::before{background-image:url("banners/blur-3.jpg")}
+.hero-slider .slide[data-bg="1"]::before{background-image:url("/banners/blur-1.jpg")}
+.hero-slider .slide[data-bg="2"]::before{background-image:url("/banners/blur-2.jpg")}
+.hero-slider .slide[data-bg="3"]::before{background-image:url("/banners/blur-3.jpg")}
 .hero-slider .slide.active{opacity:1}
 .hero-slider picture,.hero-slider img{width:100%;height:100%;display:block;position:relative;z-index:1}
 .hero-slider img{object-fit:contain;object-position:center}
@@ -1484,7 +1495,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 <div class="build-tag">v54 · summary-design</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
-    <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
+    <a href="#" class="hdr-logo"><img src="/logo.png" alt="ULTERA"></a>
     <nav class="hdr-nav">
       <a href="#collection" class="active">колекція</a>
       <a href="#" data-filter="Hunk3">hunk3</a>
@@ -1521,42 +1532,42 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   <div class="ace-bg" id="aceHeroBg">
     <div class="ace-slide active" data-idx="1">
       <picture>
-        <source media="(max-width:760px)" type="image/avif" srcset="banners/home-mob-5.avif">
-        <source media="(max-width:760px)" type="image/webp" srcset="banners/home-mob-5.webp">
-        <source media="(max-width:760px)" srcset="banners/home-mob-5.jpg">
-        <source media="(min-width:761px)" type="image/avif" srcset="banners/home-pc-5.avif">
-        <source media="(min-width:761px)" type="image/webp" srcset="banners/home-pc-5.webp">
-        <img src="banners/home-pc-5.jpg" alt="ULTERA — кадр 1" decoding="async" fetchpriority="high">
+        <source media="(max-width:760px)" type="image/avif" srcset="/banners/home-mob-5.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="/banners/home-mob-5.webp">
+        <source media="(max-width:760px)" srcset="/banners/home-mob-5.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="/banners/home-pc-5.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="/banners/home-pc-5.webp">
+        <img src="/banners/home-pc-5.jpg" alt="ULTERA — кадр 1" decoding="async" fetchpriority="high">
       </picture>
     </div>
     <div class="ace-slide" data-idx="2">
       <picture>
-        <source media="(max-width:760px)" type="image/avif" srcset="banners/home-mob-4.avif">
-        <source media="(max-width:760px)" type="image/webp" srcset="banners/home-mob-4.webp">
-        <source media="(max-width:760px)" srcset="banners/home-mob-4.jpg">
-        <source media="(min-width:761px)" type="image/avif" srcset="banners/home-pc-4.avif">
-        <source media="(min-width:761px)" type="image/webp" srcset="banners/home-pc-4.webp">
-        <img src="banners/home-pc-4.jpg" alt="ULTERA — кадр 2" loading="lazy" decoding="async">
+        <source media="(max-width:760px)" type="image/avif" srcset="/banners/home-mob-4.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="/banners/home-mob-4.webp">
+        <source media="(max-width:760px)" srcset="/banners/home-mob-4.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="/banners/home-pc-4.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="/banners/home-pc-4.webp">
+        <img src="/banners/home-pc-4.jpg" alt="ULTERA — кадр 2" loading="lazy" decoding="async">
       </picture>
     </div>
     <div class="ace-slide" data-idx="3">
       <picture>
-        <source media="(max-width:760px)" type="image/avif" srcset="banners/home-mob-2.avif">
-        <source media="(max-width:760px)" type="image/webp" srcset="banners/home-mob-2.webp">
-        <source media="(max-width:760px)" srcset="banners/home-mob-2.jpg">
-        <source media="(min-width:761px)" type="image/avif" srcset="banners/home-pc-2.avif">
-        <source media="(min-width:761px)" type="image/webp" srcset="banners/home-pc-2.webp">
-        <img src="banners/home-pc-2.jpg" alt="ULTERA — кадр 3" loading="lazy" decoding="async">
+        <source media="(max-width:760px)" type="image/avif" srcset="/banners/home-mob-2.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="/banners/home-mob-2.webp">
+        <source media="(max-width:760px)" srcset="/banners/home-mob-2.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="/banners/home-pc-2.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="/banners/home-pc-2.webp">
+        <img src="/banners/home-pc-2.jpg" alt="ULTERA — кадр 3" loading="lazy" decoding="async">
       </picture>
     </div>
     <div class="ace-slide" data-idx="4">
       <picture>
-        <source media="(max-width:760px)" type="image/avif" srcset="banners/home-mob-3.avif">
-        <source media="(max-width:760px)" type="image/webp" srcset="banners/home-mob-3.webp">
-        <source media="(max-width:760px)" srcset="banners/home-mob-3.jpg">
-        <source media="(min-width:761px)" type="image/avif" srcset="banners/home-pc-3.avif">
-        <source media="(min-width:761px)" type="image/webp" srcset="banners/home-pc-3.webp">
-        <img src="banners/home-pc-3.jpg" alt="ULTERA — кадр 4" loading="lazy" decoding="async">
+        <source media="(max-width:760px)" type="image/avif" srcset="/banners/home-mob-3.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="/banners/home-mob-3.webp">
+        <source media="(max-width:760px)" srcset="/banners/home-mob-3.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="/banners/home-pc-3.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="/banners/home-pc-3.webp">
+        <img src="/banners/home-pc-3.jpg" alt="ULTERA — кадр 4" loading="lazy" decoding="async">
       </picture>
     </div>
   </div>
@@ -1653,23 +1664,23 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <div class="hero-serial">SRL · <b id="heroSrl">HK3-AB-001</b></div>
         <div class="slide active" data-bg="1">
           <picture>
-            <source media="(max-width:760px)" srcset="banners/mobile-1.jpg">
-            <source media="(min-width:761px)" srcset="banners/desktop-1.jpg">
-            <img src="banners/desktop-1.jpg" alt="ULTERA Hunk3 кадр 1">
+            <source media="(max-width:760px)" srcset="/banners/mobile-1.jpg">
+            <source media="(min-width:761px)" srcset="/banners/desktop-1.jpg">
+            <img src="/banners/desktop-1.jpg" alt="ULTERA Hunk3 кадр 1">
           </picture>
         </div>
         <div class="slide" data-bg="2">
           <picture>
-            <source media="(max-width:760px)" srcset="banners/mobile-2.jpg">
-            <source media="(min-width:761px)" srcset="banners/desktop-2.jpg">
-            <img src="banners/desktop-2.jpg" alt="ULTERA Hunk3 кадр 2">
+            <source media="(max-width:760px)" srcset="/banners/mobile-2.jpg">
+            <source media="(min-width:761px)" srcset="/banners/desktop-2.jpg">
+            <img src="/banners/desktop-2.jpg" alt="ULTERA Hunk3 кадр 2">
           </picture>
         </div>
         <div class="slide" data-bg="3">
           <picture>
-            <source media="(max-width:760px)" srcset="banners/mobile-3.jpg">
-            <source media="(min-width:761px)" srcset="banners/desktop-3.jpg">
-            <img src="banners/desktop-3.jpg" alt="ULTERA Hunk3 кадр 3">
+            <source media="(max-width:760px)" srcset="/banners/mobile-3.jpg">
+            <source media="(min-width:761px)" srcset="/banners/desktop-3.jpg">
+            <img src="/banners/desktop-3.jpg" alt="ULTERA Hunk3 кадр 3">
           </picture>
         </div>
         <div class="hero-slider-nav" id="heroDots">
@@ -1679,9 +1690,9 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         </div>
       </div>
       <div class="hero-previews" id="heroPreviews">
-        <div class="hero-prev active" data-idx="0"><img src="banners/mobile-1.jpg" alt=""></div>
-        <div class="hero-prev" data-idx="1"><img src="banners/mobile-2.jpg" alt=""></div>
-        <div class="hero-prev" data-idx="2"><img src="banners/mobile-3.jpg" alt=""></div>
+        <div class="hero-prev active" data-idx="0"><img src="/banners/mobile-1.jpg" alt=""></div>
+        <div class="hero-prev" data-idx="1"><img src="/banners/mobile-2.jpg" alt=""></div>
+        <div class="hero-prev" data-idx="2"><img src="/banners/mobile-3.jpg" alt=""></div>
         <div class="hero-prev-count"><b id="slideIdx">01</b> / 03</div>
       </div>
     </div>
@@ -1782,12 +1793,12 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
     </div>
     <div class="khark-img">
       <picture>
-        <source media="(max-width:760px)" type="image/avif" srcset="banners/work-mobile.avif">
-        <source media="(max-width:760px)" type="image/webp" srcset="banners/work-mobile.webp">
-        <source media="(max-width:760px)" srcset="banners/work-mobile.jpg">
-        <source media="(min-width:761px)" type="image/avif" srcset="banners/work-desktop.avif">
-        <source media="(min-width:761px)" type="image/webp" srcset="banners/work-desktop.webp">
-        <img src="banners/work-desktop.jpg" alt="ULTERA workshop Kharkiv" loading="lazy" decoding="async">
+        <source media="(max-width:760px)" type="image/avif" srcset="/banners/work-mobile.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="/banners/work-mobile.webp">
+        <source media="(max-width:760px)" srcset="/banners/work-mobile.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="/banners/work-desktop.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="/banners/work-desktop.webp">
+        <img src="/banners/work-desktop.jpg" alt="ULTERA workshop Kharkiv" loading="lazy" decoding="async">
       </picture>
     </div>
   </div>
@@ -2302,13 +2313,7 @@ function renderFeatured(){
     const serialTxt = meta.serial + '-' + String(photos.length).padStart(2,'0');
     const handler = meta.handler || `openModal('${row.variants[0].uid}')`;
 
-    const photosHtml = photos.map((ph,i) => {
-      if (i === 0) {
-        return `<div class="feat-photo active" data-idx="0" data-photo="${ph.photo}" data-alt="${fam} ${ph.name}">${__pic(ph.photo, 'alt="' + fam + ' ' + ph.name + '" decoding="async" fetchpriority="high"')}</div>`;
-      }
-      // defer-render: empty, hydrates on first activation
-      return `<div class="feat-photo" data-idx="${i}" data-photo="${ph.photo}" data-alt="${fam} ${ph.name}"></div>`;
-    }).join('');
+    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}">${__pic(ph.photo, 'alt="' + fam + ' ' + ph.name + '" loading="lazy" decoding="async"')}</div>`).join('');
     const swatchHtml = photos.map((ph,i) => `<button class="sw${i===0?' active':''}" data-idx="${i}" style="background:${ph.swatch}" aria-label="${ph.name}" title="${ph.name}"></button>`).join('');
 
     return `<div class="feat-card" data-fam="${fam}">
@@ -2348,32 +2353,12 @@ function renderFeatured(){
   document.querySelectorAll('.feat-card').forEach(card => {
     const swatches = card.querySelectorAll('.feat-colors-tr .sw');
     const photos   = card.querySelectorAll('.feat-photo');
-    /* hydrate picture on first activation (mobile bandwidth saver) */
-    const hydrate = el => {
-      if (!el) return;
-      if (el.querySelector('img')) return;
-      const src = el.dataset.photo; const alt = el.dataset.alt || '';
-      if (!src) return;
-      el.innerHTML = window.__pic(src, 'alt="' + alt + '" decoding="async"');
-    };
-    /* kick preload on pointer entering / touching swatch — cache warms before click */
-    const warm = idx => {
-      const p = Array.from(photos).find(x => +x.dataset.idx === idx);
-      if (!p) return;
-      const src = p.dataset.photo;
-      if (src) { const im = new Image(); im.decoding = 'async'; im.src = window.__optUrl(src); }
-    };
     swatches.forEach(sw => {
-      const idx = +sw.dataset.idx;
-      sw.addEventListener('mouseenter', () => warm(idx), { passive: true });
-      sw.addEventListener('touchstart', () => warm(idx), { passive: true });
       sw.addEventListener('click', e => {
         e.stopPropagation();
+        const idx = +sw.dataset.idx;
         swatches.forEach(x => x.classList.remove('active'));
         sw.classList.add('active');
-        /* hydrate the now-active one if empty */
-        const target = Array.from(photos).find(p => +p.dataset.idx === idx);
-        hydrate(target);
         photos.forEach(p => p.classList.toggle('active', +p.dataset.idx === idx));
       });
     });
@@ -2612,7 +2597,7 @@ function openModal(uid){
 
   const variants = row ? row.variants : [p];
   document.getElementById('m_swatches').innerHTML = variants.map(v=>
-    `<button class="swatch ${v.uid===uid?'active':''}" onclick="openModal('${v.uid}')" title="${v.color_name}"><img src="${window.__optUrl(v.photo)}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='${v.photo}'"></img></button>`
+    `<button class="swatch ${v.uid===uid?'active':''}" onclick="openModal('${v.uid}')" title="${v.color_name}"><img src="${window.__optUrl(v.photo)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${v.photo}'"></button>`
   ).join('');
 
   // photo strip below main image — все фото текущего товара из CSV
@@ -2633,7 +2618,7 @@ function openModal(uid){
       gal.innerHTML = '';
     } else {
       gal.innerHTML = photos.map((src,i)=>
-        `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${window.__optUrl(src)}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='${src}'"></button>`
+        `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${window.__optUrl(src)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${src}'"></button>`
       ).join('');
     }
   }
@@ -3529,5 +3514,32 @@ renderGrid();
 })();
 
 </script>
+<script>
+/* ULTERA_TPRODUCT_AUTO_OPEN — open product modal using uid stashed by the head rewrite script */
+(function(){
+  try {
+    var uid = window.__AUTO_OPEN_UID;
+    if (!uid) return;
+    var attempts = 0;
+    function tryOpen(){
+      attempts++;
+      if (typeof window.openModal === "function" && typeof window.findProduct === "function") {
+        var p = window.findProduct(uid);
+        if (p) {
+          window.openModal(uid);
+          return;
+        }
+      }
+      if (attempts < 60) setTimeout(tryOpen, 100);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", tryOpen);
+    } else {
+      tryOpen();
+    }
+  } catch(e) { /* silent */ }
+})();
+</script>
+                                                                                
 </body>
 </html>
