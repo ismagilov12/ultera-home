@@ -3058,10 +3058,51 @@ async function wizardSubmit(){
     if(!r.ok || result.ok === false){
       throw new Error(result.error || result.message || ('HTTP ' + r.status));
     }
-    // success
+    if(result.mock) console.log('Mock order:', result);
+    // --- WayForPay payment redirect ---
+    var fioParts = String(CART.wizard.fio||'').trim().split(/\s+/);
+    var clientFirstName = fioParts[0] || '';
+    var clientLastName  = fioParts.slice(1).join(' ') || '';
+    var products = CART.items.map(function(it){
+      return {
+        name: String(it.title||'item'),
+        count: Number(it.qty||1),
+        price: Math.round(parseFloat(it.price)||0)
+      };
+    });
+    var total = Math.round(CART.total());
+    var wfpAmount = (pm === 'np') ? 500 : total;
+    try {
+      var wfpResp = await fetch('/api/wayforpay', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          orderReference: String(orderNum),
+          amount: wfpAmount,
+          products: products,
+          clientFirstName: clientFirstName,
+          clientLastName: clientLastName,
+          clientEmail: '',
+          clientPhone: CART.wizard.phone || ''
+        })
+      });
+      var wfp = await wfpResp.json().catch(function(){ return {}; });
+      if (wfpResp.ok && wfp.ok && wfp.formHtml) {
+        try {
+          localStorage.setItem('ulteraPendingOrder', JSON.stringify({num:orderNum, ts:Date.now()}));
+        } catch(_) {}
+        document.open();
+        document.write(wfp.formHtml);
+        document.close();
+        return;
+      }
+      console.warn('WayForPay returned no formHtml:', wfp);
+    } catch(wfpErr) {
+      console.error('WayForPay request failed:', wfpErr);
+    }
     showStep('done');
     document.getElementById('wOrderNum').textContent = orderNum;
-    if(result.mock) console.log('Mock order:', result);
+    toast('Замовлення прийнято. Менеджер звʼяжеться для оплати.');
     CART.clear(); CART.wizard = {}; CART.saveWiz();
     updateCartBadge();
   } catch(e){
@@ -3139,6 +3180,52 @@ async function wizardSubmit(){
     wh.addEventListener('input', onWh);
     wh.addEventListener('focus', e => { if(CART.wizard.cityRef) onWh(e); });
     wh.addEventListener('blur', ()=>setTimeout(()=>whSug.classList.remove('open'), 180));
+  }
+})();
+
+/* ————— WAYFORPAY RETURN ————— */
+(function(){
+  function runPaidCheck(){
+    try {
+      var qs = new URLSearchParams(window.location.search);
+      var paid = qs.get('paid');
+      if (paid === null) return;
+      var order = qs.get('order') || '';
+      if (paid === '1') {
+        try {
+          if (typeof CART !== 'undefined' && CART && typeof CART.clear === 'function') {
+            CART.clear();
+            if (typeof CART.saveWiz === 'function') { CART.wizard = {}; CART.saveWiz(); }
+          }
+        } catch(_) {}
+        try { if (typeof updateCartBadge === 'function') updateCartBadge(); } catch(_) {}
+        try { localStorage.removeItem('ulteraPendingOrder'); } catch(_) {}
+        if (typeof toast === 'function') toast('Оплату прийнято. Замовлення №' + order);
+        try {
+          if (typeof openCart === 'function') {
+            openCart();
+            setTimeout(function(){
+              if (typeof showStep === 'function') showStep('done');
+              var on = document.getElementById('wOrderNum');
+              if (on && order) on.textContent = order;
+            }, 60);
+          }
+        } catch(_) {}
+      } else {
+        if (typeof toast === 'function') toast('Оплата не пройшла. Спробуй ще раз.');
+      }
+      try {
+        var url = new URL(window.location.href);
+        url.searchParams.delete('paid');
+        url.searchParams.delete('order');
+        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + url.hash);
+      } catch(_) {}
+    } catch(e){ console.warn('paid-check err', e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runPaidCheck);
+  } else {
+    setTimeout(runPaidCheck, 0);
   }
 })();
 
@@ -3415,33 +3502,6 @@ renderGrid();
   }).join('');
 })();
 
-</script>
-<script>
-/* ULTERA_TPRODUCT_AUTO_OPEN — auto-open product modal when URL matches /tproduct/{projectId}-{uid}-{slug} */
-(function(){
-  try {
-    var m = window.location.pathname.match(/^\/tproduct\/\d+-(\d{12})(?:-|$)/);
-    if (m === null) return;
-    var uid = m[1];
-    var attempts = 0;
-    function tryOpen(){
-      attempts++;
-      if (typeof window.openModal === "function" && typeof window.findProduct === "function") {
-        var p = window.findProduct(uid);
-        if (p) {
-          window.openModal(uid);
-          return;
-        }
-      }
-      if (attempts < 60) setTimeout(tryOpen, 100);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", tryOpen);
-    } else {
-      tryOpen();
-    }
-  } catch(e) { /* silent */ }
-})();
 </script>
 </body>
 </html>
