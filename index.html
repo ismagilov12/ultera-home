@@ -3,24 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<script>
-/* ULTERA_TPRODUCT_HEAD_REWRITE — stash uid from /tproduct/{project}-{uid}-{slug} URL for later auto-openModal.
-   URL stays as-is; relative paths are absolute so banners/* and favicon load from root. */
-(function(){
-  try {
-    var m = location.pathname.match(/^\/tproduct\/\d+-(\d{12})(?:-|$)/);
-    if (!m) return;
-    window.__AUTO_OPEN_UID = m[1];
-  } catch(e) { /* silent */ }
-})();
-</script>
-<link rel="preload" as="image" type="image/avif" href="/banners/home-pc-5.avif" media="(min-width:761px)">
-<link rel="preload" as="image" type="image/avif" href="/banners/home-mob-5.avif" media="(max-width:760px)">
+<link rel="preload" as="image" type="image/avif" href="banners/home-pc-5.avif" media="(min-width:761px)">
+<link rel="preload" as="image" type="image/avif" href="banners/home-mob-5.avif" media="(max-width:760px)">
 <title>ULTERA™ — Handcrafted sneakers · Kharkiv, UA</title>
 <style>.build-tag{position:fixed;bottom:6px;right:8px;z-index:9999;font-family:ui-monospace,monospace;font-size:9px;color:rgba(150,150,150,.6);background:rgba(255,255,255,.5);padding:2px 5px;border-radius:3px;pointer-events:none}</style>
 <meta name="description" content="ULTERA — handcrafted sneakers. Italian Nappa leather. Cordura 1000D. Bounce EVA cushioning. Made in Kharkiv, Ukraine.">
-<link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -207,9 +196,9 @@ input,textarea,select{font:inherit;color:inherit}
 .hero-slider{position:relative;overflow:hidden;border-radius:18px;background:var(--bg-alt);aspect-ratio:4/5;max-height:760px}
 .hero-slider .slide{position:absolute;inset:0;opacity:0;transition:opacity 1.1s cubic-bezier(.4,0,.2,1);overflow:hidden}
 .hero-slider .slide::before{content:"";position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(22px) brightness(.92);transform:scale(1.1);z-index:0}
-.hero-slider .slide[data-bg="1"]::before{background-image:url("/banners/blur-1.jpg")}
-.hero-slider .slide[data-bg="2"]::before{background-image:url("/banners/blur-2.jpg")}
-.hero-slider .slide[data-bg="3"]::before{background-image:url("/banners/blur-3.jpg")}
+.hero-slider .slide[data-bg="1"]::before{background-image:url("banners/blur-1.jpg")}
+.hero-slider .slide[data-bg="2"]::before{background-image:url("banners/blur-2.jpg")}
+.hero-slider .slide[data-bg="3"]::before{background-image:url("banners/blur-3.jpg")}
 .hero-slider .slide.active{opacity:1}
 .hero-slider picture,.hero-slider img{width:100%;height:100%;display:block;position:relative;z-index:1}
 .hero-slider img{object-fit:contain;object-position:center}
@@ -666,19 +655,20 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .modal-body{grid-row:1/3;grid-column:2/3;overflow-y:auto;max-height:min(92vh,860px);padding-bottom:20px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
 
 @media (max-width:760px){
-  .modal{grid-template-columns:1fr;grid-template-rows:auto auto;overflow-y:auto;-webkit-overflow-scrolling:touch}
-  .modal-img{grid-row:1/2;grid-column:1/2;aspect-ratio:4/5;height:auto;width:100%;touch-action:pan-y;flex-shrink:0}
+  /* v69: fullscreen mobile modal — block layout, strip hidden hard, no cascade surprises */
+  .modal{display:block;width:100%;max-width:100%;max-height:none;overflow-y:auto;-webkit-overflow-scrolling:touch;grid-template-columns:unset;grid-template-rows:unset}
+  .modal-img{display:block;order:unset;grid-row:auto;grid-column:auto;width:100%;aspect-ratio:4/5;height:auto;min-height:0;max-height:none;touch-action:pan-y;flex-shrink:0}
   .modal-img img{object-fit:cover;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
-  .modal-strip{display:none}
+  .modal-strip{display:none !important}
   .modal-dots{display:flex}
-  .modal-body{grid-row:2/3;grid-column:1/2;padding:18px 20px 28px;overflow:visible;max-height:none}
+  .modal-body{display:block;order:unset;grid-row:auto;grid-column:auto;width:100%;padding:18px 20px 36px;overflow:visible;max-height:none}
   .video-btn{top:14px;left:14px;font-size:10px;padding:6px 12px 6px 6px}
 }
 @media (min-width:761px){
   .ms-swatches-top{margin-bottom:22px}
 }
 
-.modal-body{padding:36px 34px 40px;overflow-y:auto;max-height:92vh}
+@media (min-width:761px){.modal-body{padding:36px 34px 40px;overflow-y:auto;max-height:92vh}}
 .modal-brand{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--ink-60);margin-bottom:6px;text-transform:uppercase}
 .modal-title{font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.015em;line-height:1.08;margin-bottom:8px}
 .modal-sku{font-family:var(--font-mono);font-size:11px;color:var(--ink-40);margin-bottom:18px;letter-spacing:.06em}
@@ -951,13 +941,14 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .foot-logo{font-size:34px}
   .foot-tape,.foot-bottom{flex-direction:column;gap:6px;align-items:flex-start}
 
-  /* bottom sheet modal */
-  .modal-overlay{padding:0;align-items:flex-end}
-  .modal{grid-template-columns:1fr;max-height:94vh;border-radius:18px 18px 0 0;animation:sheetIn .35s cubic-bezier(.2,.8,.2,1)}
+  /* v69: fullscreen mobile modal (was bottom sheet) — opaque overlay prevents card bleed */
+  .modal-overlay{padding:0;align-items:stretch;background:rgba(14,14,14,.92)}
+  .modal-overlay.open{display:block}
+  .modal{display:block;grid-template-columns:1fr;width:100%;max-width:100%;min-height:100vh;min-height:100dvh;max-height:100vh;max-height:100dvh;height:100dvh;border-radius:0;animation:sheetIn .28s cubic-bezier(.2,.8,.2,1);overflow-y:auto;-webkit-overflow-scrolling:touch}
   @keyframes sheetIn{from{transform:translateY(100%)}to{transform:translateY(0)}}
-  .modal::before{content:"";position:sticky;top:0;display:block;width:44px;height:4px;margin:10px auto -6px;background:var(--line);border-radius:999px;z-index:3}
-  .modal-img{aspect-ratio:4/5;height:auto;max-height:none;flex-shrink:0}
-  .modal-body{padding:22px 20px 40px;max-height:none;overflow:visible}
+  .modal::before{display:none}
+  .modal-img{display:block;aspect-ratio:4/5;height:auto;max-height:none;flex-shrink:0}
+  .modal-body{display:block;padding:22px 20px 40px;max-height:none;overflow:visible}
   .modal-title{font-size:22px}
   .mod-sizes{grid-template-columns:repeat(3,1fr)}
   .sh-sizes{grid-template-columns:repeat(5,1fr)}
@@ -1492,10 +1483,10 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v54 · summary-design</div>
+<div class="build-tag">v69 · modal-fullscreen</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
-    <a href="#" class="hdr-logo"><img src="/logo.png" alt="ULTERA"></a>
+    <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
     <nav class="hdr-nav">
       <a href="#collection" class="active">колекція</a>
       <a href="#" data-filter="Hunk3">hunk3</a>
@@ -1532,42 +1523,42 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   <div class="ace-bg" id="aceHeroBg">
     <div class="ace-slide active" data-idx="1">
       <picture>
-        <source media="(max-width:760px)" type="image/avif" srcset="/banners/home-mob-5.avif">
-        <source media="(max-width:760px)" type="image/webp" srcset="/banners/home-mob-5.webp">
-        <source media="(max-width:760px)" srcset="/banners/home-mob-5.jpg">
-        <source media="(min-width:761px)" type="image/avif" srcset="/banners/home-pc-5.avif">
-        <source media="(min-width:761px)" type="image/webp" srcset="/banners/home-pc-5.webp">
-        <img src="/banners/home-pc-5.jpg" alt="ULTERA — кадр 1" decoding="async" fetchpriority="high">
+        <source media="(max-width:760px)" type="image/avif" srcset="banners/home-mob-5.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/home-mob-5.webp">
+        <source media="(max-width:760px)" srcset="banners/home-mob-5.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="banners/home-pc-5.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/home-pc-5.webp">
+        <img src="banners/home-pc-5.jpg" alt="ULTERA — кадр 1" decoding="async" fetchpriority="high">
       </picture>
     </div>
     <div class="ace-slide" data-idx="2">
       <picture>
-        <source media="(max-width:760px)" type="image/avif" srcset="/banners/home-mob-4.avif">
-        <source media="(max-width:760px)" type="image/webp" srcset="/banners/home-mob-4.webp">
-        <source media="(max-width:760px)" srcset="/banners/home-mob-4.jpg">
-        <source media="(min-width:761px)" type="image/avif" srcset="/banners/home-pc-4.avif">
-        <source media="(min-width:761px)" type="image/webp" srcset="/banners/home-pc-4.webp">
-        <img src="/banners/home-pc-4.jpg" alt="ULTERA — кадр 2" loading="lazy" decoding="async">
+        <source media="(max-width:760px)" type="image/avif" srcset="banners/home-mob-4.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/home-mob-4.webp">
+        <source media="(max-width:760px)" srcset="banners/home-mob-4.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="banners/home-pc-4.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/home-pc-4.webp">
+        <img src="banners/home-pc-4.jpg" alt="ULTERA — кадр 2" loading="lazy" decoding="async">
       </picture>
     </div>
     <div class="ace-slide" data-idx="3">
       <picture>
-        <source media="(max-width:760px)" type="image/avif" srcset="/banners/home-mob-2.avif">
-        <source media="(max-width:760px)" type="image/webp" srcset="/banners/home-mob-2.webp">
-        <source media="(max-width:760px)" srcset="/banners/home-mob-2.jpg">
-        <source media="(min-width:761px)" type="image/avif" srcset="/banners/home-pc-2.avif">
-        <source media="(min-width:761px)" type="image/webp" srcset="/banners/home-pc-2.webp">
-        <img src="/banners/home-pc-2.jpg" alt="ULTERA — кадр 3" loading="lazy" decoding="async">
+        <source media="(max-width:760px)" type="image/avif" srcset="banners/home-mob-2.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/home-mob-2.webp">
+        <source media="(max-width:760px)" srcset="banners/home-mob-2.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="banners/home-pc-2.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/home-pc-2.webp">
+        <img src="banners/home-pc-2.jpg" alt="ULTERA — кадр 3" loading="lazy" decoding="async">
       </picture>
     </div>
     <div class="ace-slide" data-idx="4">
       <picture>
-        <source media="(max-width:760px)" type="image/avif" srcset="/banners/home-mob-3.avif">
-        <source media="(max-width:760px)" type="image/webp" srcset="/banners/home-mob-3.webp">
-        <source media="(max-width:760px)" srcset="/banners/home-mob-3.jpg">
-        <source media="(min-width:761px)" type="image/avif" srcset="/banners/home-pc-3.avif">
-        <source media="(min-width:761px)" type="image/webp" srcset="/banners/home-pc-3.webp">
-        <img src="/banners/home-pc-3.jpg" alt="ULTERA — кадр 4" loading="lazy" decoding="async">
+        <source media="(max-width:760px)" type="image/avif" srcset="banners/home-mob-3.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/home-mob-3.webp">
+        <source media="(max-width:760px)" srcset="banners/home-mob-3.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="banners/home-pc-3.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/home-pc-3.webp">
+        <img src="banners/home-pc-3.jpg" alt="ULTERA — кадр 4" loading="lazy" decoding="async">
       </picture>
     </div>
   </div>
@@ -1664,23 +1655,23 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <div class="hero-serial">SRL · <b id="heroSrl">HK3-AB-001</b></div>
         <div class="slide active" data-bg="1">
           <picture>
-            <source media="(max-width:760px)" srcset="/banners/mobile-1.jpg">
-            <source media="(min-width:761px)" srcset="/banners/desktop-1.jpg">
-            <img src="/banners/desktop-1.jpg" alt="ULTERA Hunk3 кадр 1">
+            <source media="(max-width:760px)" srcset="banners/mobile-1.jpg">
+            <source media="(min-width:761px)" srcset="banners/desktop-1.jpg">
+            <img src="banners/desktop-1.jpg" alt="ULTERA Hunk3 кадр 1">
           </picture>
         </div>
         <div class="slide" data-bg="2">
           <picture>
-            <source media="(max-width:760px)" srcset="/banners/mobile-2.jpg">
-            <source media="(min-width:761px)" srcset="/banners/desktop-2.jpg">
-            <img src="/banners/desktop-2.jpg" alt="ULTERA Hunk3 кадр 2">
+            <source media="(max-width:760px)" srcset="banners/mobile-2.jpg">
+            <source media="(min-width:761px)" srcset="banners/desktop-2.jpg">
+            <img src="banners/desktop-2.jpg" alt="ULTERA Hunk3 кадр 2">
           </picture>
         </div>
         <div class="slide" data-bg="3">
           <picture>
-            <source media="(max-width:760px)" srcset="/banners/mobile-3.jpg">
-            <source media="(min-width:761px)" srcset="/banners/desktop-3.jpg">
-            <img src="/banners/desktop-3.jpg" alt="ULTERA Hunk3 кадр 3">
+            <source media="(max-width:760px)" srcset="banners/mobile-3.jpg">
+            <source media="(min-width:761px)" srcset="banners/desktop-3.jpg">
+            <img src="banners/desktop-3.jpg" alt="ULTERA Hunk3 кадр 3">
           </picture>
         </div>
         <div class="hero-slider-nav" id="heroDots">
@@ -1690,9 +1681,9 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         </div>
       </div>
       <div class="hero-previews" id="heroPreviews">
-        <div class="hero-prev active" data-idx="0"><img src="/banners/mobile-1.jpg" alt=""></div>
-        <div class="hero-prev" data-idx="1"><img src="/banners/mobile-2.jpg" alt=""></div>
-        <div class="hero-prev" data-idx="2"><img src="/banners/mobile-3.jpg" alt=""></div>
+        <div class="hero-prev active" data-idx="0"><img src="banners/mobile-1.jpg" alt=""></div>
+        <div class="hero-prev" data-idx="1"><img src="banners/mobile-2.jpg" alt=""></div>
+        <div class="hero-prev" data-idx="2"><img src="banners/mobile-3.jpg" alt=""></div>
         <div class="hero-prev-count"><b id="slideIdx">01</b> / 03</div>
       </div>
     </div>
@@ -1793,12 +1784,12 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
     </div>
     <div class="khark-img">
       <picture>
-        <source media="(max-width:760px)" type="image/avif" srcset="/banners/work-mobile.avif">
-        <source media="(max-width:760px)" type="image/webp" srcset="/banners/work-mobile.webp">
-        <source media="(max-width:760px)" srcset="/banners/work-mobile.jpg">
-        <source media="(min-width:761px)" type="image/avif" srcset="/banners/work-desktop.avif">
-        <source media="(min-width:761px)" type="image/webp" srcset="/banners/work-desktop.webp">
-        <img src="/banners/work-desktop.jpg" alt="ULTERA workshop Kharkiv" loading="lazy" decoding="async">
+        <source media="(max-width:760px)" type="image/avif" srcset="banners/work-mobile.avif">
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/work-mobile.webp">
+        <source media="(max-width:760px)" srcset="banners/work-mobile.jpg">
+        <source media="(min-width:761px)" type="image/avif" srcset="banners/work-desktop.avif">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/work-desktop.webp">
+        <img src="banners/work-desktop.jpg" alt="ULTERA workshop Kharkiv" loading="lazy" decoding="async">
       </picture>
     </div>
   </div>
@@ -2125,74 +2116,6 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 <script>
 const DATA = JSON.parse(document.getElementById('DATA').textContent);
 const EXTRA_PHOTOS = JSON.parse(document.getElementById('EXTRA').textContent);
-/* ————— Static format fallback: use AVIF/WebP siblings of banners/*.jpg when supported ————— */
-window.__imgFmt = 'jpg';
-(function(){
-  function supports(dataUrl){
-    return new Promise(function(res){
-      var i = new Image();
-      i.onload = function(){ res(i.width > 0 && i.height > 0); };
-      i.onerror = function(){ res(false); };
-      i.src = dataUrl;
-    });
-  }
-  var AVIF = 'data:image/avif;base64,AAAAHGZ0eXBtaWYxAAAAAG1pZjFhdmlmbWlhZgAAAPFtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAAImlsb2MAAAAAREAAAQABAAAAAAEVAAEAAAAAAAAAGwAAACNpaW5mAAAAAAABAAAAFWluZmUCAAAAAAEAAGF2MDEAAAAAamlwcnAAAABLaXBjbwAAABNjb2xybmNseAABAA0ABoAAAAAMYXYxQ4EADAAAAAAUaXNwZQAAAAAAAAABAAAAAQAAABBwaXhpAAAAAAEIAAAAF2lwbWEAAAAAAAAAAQABBIECAwQAAAAcbWRhdAoICABoDMgYQBIMAgEFDAQcYQA3Bg==';
-  var WEBP = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==';
-  (async function(){
-    if (await supports(AVIF)) { window.__imgFmt = 'avif'; }
-    else if (await supports(WEBP)) { window.__imgFmt = 'webp'; }
-    try { window.dispatchEvent(new Event('__imgFmtReady')); } catch(_) {}
-  })();
-})();
-
-window.__optUrl = function(url){
-  if (!url || typeof url !== 'string') return url;
-  if (url.indexOf('http') === 0) return url;
-  if (url.indexOf('data:') === 0) return url;
-  var fmt = window.__imgFmt;
-  if (!fmt || fmt === 'jpg') return url;
-  return url.replace(/\.(jpe?g|png)(\?.*)?$/i, '.' + fmt + '$2');
-};
-
-window.__pic = function(url, imgAttrs){
-  /* Returns <picture>...<img> HTML that browser auto-picks AVIF/WebP/JPG. */
-  if (!url || typeof url !== 'string') return '<img src="" ' + (imgAttrs||'') + '>';
-  if (url.indexOf('http') === 0) return '<img src="' + url + '" ' + (imgAttrs||'') + '>';
-  var base = url.replace(/\.(jpe?g|png)(\?.*)?$/i, '');
-  var hasExt = base !== url;
-  if (!hasExt) return '<img src="' + url + '" ' + (imgAttrs||'') + '>';
-  return '<picture>'
-    + '<source type="image/avif" srcset="' + base + '.avif">'
-    + '<source type="image/webp" srcset="' + base + '.webp">'
-    + '<img src="' + url + '" ' + (imgAttrs||'') + '>'
-    + '</picture>';
-};
-
-window.__setImgSrc = function(img, url){
-  /* For <img> elements where we can't use <picture>. Tries AVIF→WebP→JPG on error. */
-  if (!img || !url) return;
-  var fmt = window.__imgFmt;
-  img.onerror = null;
-  if (fmt === 'avif') {
-    img.onerror = function(){
-      img.onerror = function(){
-        img.onerror = null;
-        img.src = url; /* final JPG fallback */
-      };
-      img.src = url.replace(/\.(jpe?g|png)(\?.*)?$/i, '.webp$2');
-    };
-    img.src = url.replace(/\.(jpe?g|png)(\?.*)?$/i, '.avif$2');
-  } else if (fmt === 'webp') {
-    img.onerror = function(){
-      img.onerror = null;
-      img.src = url;
-    };
-    img.src = url.replace(/\.(jpe?g|png)(\?.*)?$/i, '.webp$2');
-  } else {
-    img.src = url;
-  }
-};
-
 /* ————— CART STATE ————— */
 const CART = {
   items: JSON.parse(localStorage.getItem('ultera_cart')||'[]'),
@@ -2313,7 +2236,7 @@ function renderFeatured(){
     const serialTxt = meta.serial + '-' + String(photos.length).padStart(2,'0');
     const handler = meta.handler || `openModal('${row.variants[0].uid}')`;
 
-    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}">${__pic(ph.photo, 'alt="' + fam + ' ' + ph.name + '" loading="lazy" decoding="async"')}</div>`).join('');
+    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}"><img src="${ph.photo}" alt="${fam} ${ph.name}" loading="lazy"></div>`).join('');
     const swatchHtml = photos.map((ph,i) => `<button class="sw${i===0?' active':''}" data-idx="${i}" style="background:${ph.swatch}" aria-label="${ph.name}" title="${ph.name}"></button>`).join('');
 
     return `<div class="feat-card" data-fam="${fam}">
@@ -2377,7 +2300,7 @@ function renderGrid(){
       const oldP = (v.sizes && v.sizes[0] && v.sizes[0].price_old) || '';
       const dots = row.variants.map(x=>`<span class="dot" style="background:${x.swatch}"></span>`).join('');
       const card = `<div class="card" data-fam="${row.family}" onclick="openModal('${v.uid}')">
-        <div class="card-img">${badgeFor(v)}${__pic(v.photo, 'alt="' + v.title + '" loading="lazy" decoding="async"')}
+        <div class="card-img">${badgeFor(v)}<img src="${v.photo}" alt="${v.title}" loading="lazy">
           <div class="card-quick"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
         </div>
         <div class="card-name">${v.title.replace('ULTERA - ','').replace('ULTERA ','')}</div>
@@ -2400,7 +2323,7 @@ function renderGrid(){
       const price = parseFloat(v.price)||0;
       const dots = row.variants.map(x=>`<span class="dot" style="background:${x.swatch}"></span>`).join('');
       mainVariants.push(`<div class="card" data-fam="${row.family}" onclick="openModal('${v.uid}')">
-        <div class="card-img">${badgeFor(v)}${__pic(v.photo, 'alt="' + v.title + '" loading="lazy" decoding="async"')}
+        <div class="card-img">${badgeFor(v)}<img src="${v.photo}" alt="${v.title}" loading="lazy">
           <div class="card-quick"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
         </div>
         <div class="card-name">${v.title.replace('ULTERA - ','').replace('ULTERA ','')}</div>
@@ -2570,7 +2493,7 @@ function openModal(uid){
   document.getElementById('m_fam').textContent = p.family + (p.mark ? ' · ' + p.mark : '');
   document.getElementById('m_title').textContent = p.title.replace('ULTERA - ','').replace('ULTERA ','');
   document.getElementById('m_sku').textContent = 'SKU · ' + p.uid.slice(-10).toUpperCase();
-  window.__setImgSrc(document.getElementById('m_img'), p.photo);
+  document.getElementById('m_img').src = p.photo;
   document.getElementById('m_color_name').textContent = p.color_name;
 
   const price = parseFloat(p.price)||0;
@@ -2597,7 +2520,7 @@ function openModal(uid){
 
   const variants = row ? row.variants : [p];
   document.getElementById('m_swatches').innerHTML = variants.map(v=>
-    `<button class="swatch ${v.uid===uid?'active':''}" onclick="openModal('${v.uid}')" title="${v.color_name}"><img src="${window.__optUrl(v.photo)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${v.photo}'"></button>`
+    `<button class="swatch ${v.uid===uid?'active':''}" onclick="openModal('${v.uid}')" title="${v.color_name}"><img src="${v.photo}"></button>`
   ).join('');
 
   // photo strip below main image — все фото текущего товара из CSV
@@ -2618,7 +2541,7 @@ function openModal(uid){
       gal.innerHTML = '';
     } else {
       gal.innerHTML = photos.map((src,i)=>
-        `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${window.__optUrl(src)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${src}'"></button>`
+        `<button class="${i===0?'active':''}" data-idx="${i}" onclick="setModalPhoto(${i})"><img src="${src}" loading="lazy" decoding="async"></button>`
       ).join('');
     }
   }
@@ -2644,15 +2567,15 @@ function openModal(uid){
   }
   if (photos[0]){
     const mi = document.getElementById('m_img');
+    mi.src = photos[0];
     mi.setAttribute('fetchpriority','high');
     mi.setAttribute('decoding','async');
-    window.__setImgSrc(mi, photos[0]);
   }
   // Staged preload — уникає параллельного шторма з 20 фото.
   // 1) чекаємо поки main[0] завантажиться
   // 2) preload сусідів ±1 (для моментального свайпу)
   // 3) через idle preload сусідів ±2 + хвіст
-  const _preload = (url)=>{ if(!url) return; const im = new Image(); im.decoding='async'; im.src = window.__optUrl(url); };
+  const _preload = (url)=>{ if(!url) return; const im = new Image(); im.decoding='async'; im.src = url; };
   const _kickPreload = ()=>{
     _preload(photos[1]);                    // next
     _preload(photos[photos.length-1]);      // prev (wrap)
@@ -2730,7 +2653,7 @@ function openModal(uid){
   const sw = document.getElementById('m_season_wrap');
   if (sw) sw.style.display = NO_SEASON.includes(p.family) ? 'none' : '';
 
-  document.getElementById('modal').classList.add('open');
+  (function(){var __m=document.getElementById('modal');__m.classList.add('open');try{__m.scrollTop=0;var __i=__m.querySelector('.modal');if(__i)__i.scrollTop=0;}catch(_){}})();
   document.body.style.overflow = 'hidden';
 }
 function closeModal(){
@@ -2772,7 +2695,7 @@ function setModalPhoto(i){
   img.onerror = null;
   img.setAttribute('fetchpriority','high');
   img.setAttribute('decoding','async');
-  window.__setImgSrc(img, photos[idx]);
+  img.src = photos[idx];
   // update strip + dots active state
   document.querySelectorAll('.modal-strip button').forEach((b,ii)=>b.classList.toggle('active', ii===idx));
   document.querySelectorAll('#m_dots button').forEach((d,ii)=>d.classList.toggle('active', ii===idx));
@@ -2781,11 +2704,11 @@ function setModalPhoto(i){
   // preload neighbors ±2 — меньше паралельних ланцюгів на слабкому мобільному
   [1,-1,2,-2].forEach(d=>{
     const ii = ((idx+d)%n+n)%n;
-    const im = new Image(); im.decoding = 'async'; im.src = window.__optUrl(photos[ii]);
+    const im = new Image(); im.decoding = 'async'; im.src = photos[ii];
   });
 }
 // legacy fn kept for safety (no longer referenced from rendered HTML)
-function swapMainImage(btn, src, uid){ window.__setImgSrc(document.getElementById('m_img'), src); }
+function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = src; }
 
 /* ————— Swipe + keyboard nav on modal image ————— */
 (function(){
@@ -3514,32 +3437,5 @@ renderGrid();
 })();
 
 </script>
-<script>
-/* ULTERA_TPRODUCT_AUTO_OPEN — open product modal using uid stashed by the head rewrite script */
-(function(){
-  try {
-    var uid = window.__AUTO_OPEN_UID;
-    if (!uid) return;
-    var attempts = 0;
-    function tryOpen(){
-      attempts++;
-      if (typeof window.openModal === "function" && typeof window.findProduct === "function") {
-        var p = window.findProduct(uid);
-        if (p) {
-          window.openModal(uid);
-          return;
-        }
-      }
-      if (attempts < 60) setTimeout(tryOpen, 100);
-    }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", tryOpen);
-    } else {
-      tryOpen();
-    }
-  } catch(e) { /* silent */ }
-})();
-</script>
-                                                                                
 </body>
 </html>
