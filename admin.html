@@ -343,9 +343,14 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         <input type="text" id="ed-title-in" placeholder="ULTERA - Hunk3 Black">
       </div>
       <div class="field">
-        <label>SKU (uid)</label>
-        <input type="text" id="ed-uid" placeholder="числовий код">
+        <label>SKU (uid — Tilda)</label>
+        <input type="text" id="ed-uid" placeholder="593008410302">
       </div>
+    </div>
+
+    <div class="field">
+      <label>Артикул (короткий, напр. Ю11)</label>
+      <input type="text" id="ed-article" placeholder="Ю11">
     </div>
 
     <div class="field-row-3">
@@ -731,7 +736,7 @@ function renderProducts(){
       <img class="photo" src="${p.photo||''}" onerror="this.style.background='var(--bg-alt)'">
       <div>
         <div class="title">${escapeHtml(p.title)}</div>
-        <div class="sub">SKU · ${p.uid} · ${escapeHtml(p.color_name||'')}</div>
+        <div class="sub">${p.article?escapeHtml(p.article)+' · ':''}SKU · ${p.uid} · ${escapeHtml(p.color_name||'')}</div>
       </div>
       <div><span class="fam">${escapeHtml(p.family)}</span></div>
       <div class="price">${fmtPrice(p.price)}${p.price_old?`<s>${fmtPrice(p.price_old)}</s>`:''}</div>
@@ -790,6 +795,7 @@ function openEditor(p){
   document.getElementById('ed-subt').textContent = p ? `SKU · ${p.uid}` : 'Заповніть поля та натисніть «Зберегти»';
   document.getElementById('ed-title-in').value = EDITING.title||'';
   document.getElementById('ed-uid').value = EDITING.uid||'';
+  document.getElementById('ed-article').value = EDITING.article||'';
   document.getElementById('ed-family').value = EDITING.family||'';
   document.getElementById('ed-color-name').value = EDITING.color_name||'';
   document.getElementById('ed-color-hex').value = EDITING.color_hex || '#0a0a0a';
@@ -913,6 +919,7 @@ document.getElementById('ed-save').onclick = async ()=>{
   const btn = document.getElementById('ed-save'); btn.disabled=true; btn.textContent='Зберігаю…';
   const payload = {
     uid: document.getElementById('ed-uid').value.trim() || ('new-'+Date.now()),
+    article: document.getElementById('ed-article').value.trim() || null,
     family: document.getElementById('ed-family').value.trim() || 'Other',
     title: document.getElementById('ed-title-in').value.trim(),
     color_name: document.getElementById('ed-color-name').value.trim(),
