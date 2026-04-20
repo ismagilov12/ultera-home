@@ -3518,6 +3518,16 @@ renderGrid();
   function toEmbed(u){ var id = ytId(u); return id ? ('https://www.youtube.com/embed/' + id + '?rel=0&playsinline=1&modestbranding=1') : u; }
   function toPoster(u){ var id = ytId(u); return id ? ('https://img.youtube.com/vi/' + id + '/hqdefault.jpg') : u; }
 
+  function updateVideoBtnVisibility(){
+    var btn = document.getElementById('mVideoBtn');
+    if (!btn) return;
+    var photos = window.__modalPhotos || [];
+    var hasYT = false;
+    for (var i=0;i<photos.length;i++){ if (isYT(photos[i])){ hasYT = true; break; } }
+    btn.style.display = hasYT ? '' : 'none';
+  }
+
+
   function ensureIframe(){
     var img = document.getElementById('m_img');
     if (!img) return null;
@@ -3593,6 +3603,7 @@ renderGrid();
         }
       }
       hideVideo();
+      updateVideoBtnVisibility();
       return orig.call(this, i);
     };
     window.__setModalPhotoPatched = true;
@@ -3607,6 +3618,7 @@ renderGrid();
       var s = img.src || img.getAttribute('src') || '';
       if (isYT(s)) showVideo(s);
       else hideVideo();
+      updateVideoBtnVisibility();
     });
     obs.observe(img, { attributes: true, attributeFilter: ['src'] });
     var s = img.src || img.getAttribute('src') || '';
@@ -3684,14 +3696,14 @@ renderGrid();
     });
   }
 
-  function doAll(){ tryPatchSMP(); observeImg(); observeThumbs(); patchVideoBtn(); patchClose(); patchTapZones(); }
+  function doAll(){ tryPatchSMP(); observeImg(); observeThumbs(); patchVideoBtn(); patchClose(); patchTapZones(); updateVideoBtnVisibility(); }
   doAll();
   setTimeout(doAll, 200);
   setTimeout(doAll, 800);
   setTimeout(doAll, 2500);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', doAll);
   // re-apply patchVideoBtn on every click in case inline onclick is re-added
-  document.addEventListener('click', function(){ patchVideoBtn(); }, true);
+  document.addEventListener('click', function(){ patchVideoBtn(); setTimeout(updateVideoBtnVisibility, 50); setTimeout(updateVideoBtnVisibility, 250); }, true);
 })();
 </script>
 </body>
