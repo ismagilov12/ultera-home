@@ -393,19 +393,36 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
     </div>
 
     <div class="field">
-      <label>Коротке речення (під назвою / desc_short)</label>
-      <textarea id="ed-desc-short" placeholder="Наприклад: дихаюча сітка (весна/літо)" style="min-height:60px"></textarea>
+      <label>Коротке речення (під назвою)</label>
+      <textarea id="ed-desc-short" placeholder="Наприклад: дихаюча сітка (весна/літо)" style="min-height:50px"></textarea>
     </div>
 
     <div class="field">
-      <label>Повний опис + матеріали (text / HTML)</label>
-      <textarea id="ed-text" placeholder="Довгий опис з матеріалами, догляд, гарантія тощо (HTML)" style="min-height:180px"></textarea>
+      <label>Опис (довгий текст)</label>
+      <textarea id="ed-description-long" placeholder="Основний маркетинговий текст про модель. Можна HTML." style="min-height:140px"></textarea>
     </div>
 
     <div class="field">
-      <label>Сумісність / Description (legacy)</label>
-      <textarea id="ed-desc" placeholder="Старе поле description (поки лишаємо для сумісності)"></textarea>
+      <label>Характеристики</label>
+      <textarea id="ed-characteristics" placeholder="Список характеристик (по одній в рядок): &#10;Ультра міцні — служать роками&#10;Максимальний комфорт&#10;Дихаюча спортивна сітка" style="min-height:120px"></textarea>
     </div>
+
+    <div class="field">
+      <label>Матеріали</label>
+      <textarea id="ed-materials" placeholder="Список матеріалів (по одному в рядок):&#10;натуральна шкіра Nappa (Італія)&#10;дихаюча сітка&#10;підошва EVA (пінка)" style="min-height:120px"></textarea>
+    </div>
+
+    <details style="margin-bottom:14px">
+      <summary style="cursor:pointer;font-family:var(--font-mono);font-size:11px;color:var(--ink-60);letter-spacing:.06em;text-transform:uppercase">Legacy поля (text, description — для сумісності)</summary>
+      <div class="field" style="margin-top:10px">
+        <label>text (стара)</label>
+        <textarea id="ed-text" placeholder="Старий HTML текст (залишаємо для сумісності)" style="min-height:100px"></textarea>
+      </div>
+      <div class="field">
+        <label>description (legacy)</label>
+        <textarea id="ed-desc" placeholder="Старе поле description"></textarea>
+      </div>
+    </details>
 
     <div class="field">
       <label>Фото та відео</label>
@@ -734,6 +751,9 @@ function openEditor(p){
   document.getElementById('ed-category').value = EDITING.category||'';
   document.getElementById('ed-mods').value = EDITING.mods||'';
   document.getElementById('ed-desc-short').value = EDITING.desc_short||'';
+  document.getElementById('ed-description-long').value = EDITING.description_long||'';
+  document.getElementById('ed-characteristics').value = EDITING.characteristics||'';
+  document.getElementById('ed-materials').value = EDITING.materials||'';
   document.getElementById('ed-text').value = EDITING.text||'';
   document.getElementById('ed-desc').value = EDITING.description||'';
   document.getElementById('ed-pub').checked = EDITING.published !== false;
@@ -855,6 +875,9 @@ document.getElementById('ed-save').onclick = async ()=>{
     category: document.getElementById('ed-category').value.trim() || null,
     mods: document.getElementById('ed-mods').value.trim() || null,
     desc_short: document.getElementById('ed-desc-short').value,
+    description_long: document.getElementById('ed-description-long').value,
+    characteristics: document.getElementById('ed-characteristics').value,
+    materials: document.getElementById('ed-materials').value,
     text: document.getElementById('ed-text').value,
     description: document.getElementById('ed-desc').value,
     photo: EDITING.photo || '',
