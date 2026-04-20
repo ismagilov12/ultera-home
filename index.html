@@ -2124,25 +2124,31 @@ try {
     x.setRequestHeader('apikey', K);
     x.setRequestHeader('Authorization', 'Bearer ' + K);
     x.send();
-    if (x.status < 200 || x.status >= 300) throw new Error('HTTP ' + x.status + ': ' + x.responseText);
+    if (x.status < 200 || x.status >= 300) throw new Error('HTTP ' + x.status);
     return JSON.parse(x.responseText);
   }
   var products = syncGet('/rest/v1/ulhome_products?select=*&published=eq.true&order=family.asc');
   var media = syncGet('/rest/v1/ulhome_product_media?select=*&order=product_id.asc,sort_order.asc');
   var byUid = {};
-  for (var i=0; i<products.length; i++) byUid[products[i].uid] = products[i];
+  for (var i=0;i<products.length;i++) byUid[products[i].uid] = products[i];
   var id2uid = {};
-  for (var j=0; j<products.length; j++) id2uid[products[j].id] = products[j].uid;
+  for (var j=0;j<products.length;j++) id2uid[products[j].id] = products[j].uid;
   var mediaByUid = {};
-  for (var k=0; k<media.length; k++) {
+  for (var k=0;k<media.length;k++){
     var uid = id2uid[media[k].product_id];
     if (!uid) continue;
-    if (!mediaByUid[uid]) mediaByUid[uid] = {photos: [], videos: []};
+    if (!mediaByUid[uid]) mediaByUid[uid] = {photos:[], videos:[]};
     if (media[k].type === 'video') mediaByUid[uid].videos.push(media[k].url);
     else mediaByUid[uid].photos.push(media[k].url);
   }
   var newExtra = {};
-  for (var u in mediaByUid) newExtra[u] = mediaByUid[u].photos;
+  for (var u in mediaByUid){
+    var slides = [];
+    var mm = mediaByUid[u];
+    if (mm.videos && mm.videos.length) slides = slides.concat(mm.videos);
+    if (mm.photos && mm.photos.length) slides = slides.concat(mm.photos);
+    newExtra[u] = slides;
+  }
   function merge(v){
     var p = v && byUid[v.uid];
     if (!p) return;
@@ -2161,8 +2167,8 @@ try {
     if (p.mods !== undefined) v.mods = p.mods || '';
     if (Array.isArray(p.sizes) && p.sizes.length) v.sizes = p.sizes;
     if (Array.isArray(p.size_list) && p.size_list.length) v.size_list = p.size_list;
-    var mm = mediaByUid[v.uid];
-    if (mm && mm.videos && mm.videos.length) v.video = mm.videos[0];
+    var mm2 = mediaByUid[v.uid];
+    if (mm2 && mm2.videos && mm2.videos.length) v.video = mm2.videos[0];
   }
   var D_EL = document.getElementById('DATA');
   var E_EL = document.getElementById('EXTRA');
@@ -2176,7 +2182,7 @@ try {
   });
   D_EL.textContent = JSON.stringify(D);
   E_EL.textContent = JSON.stringify(newExtra);
-  window.__ULTERA_LIVE__ = {products: products.length, media: media.length, at: Date.now()};
+  window.__ULTERA_LIVE__ = {p: products.length, m: media.length};
   try { console.log('[ultera] live data:', products.length, 'products,', media.length, 'media'); } catch(_){}
 } catch (e) {
   try { console.warn('[ultera] Supabase bootstrap failed, using baked data:', e && e.message); } catch(_){}
@@ -3503,6 +3509,107 @@ renderGrid();
   }).join('');
 })();
 
+</script>
+
+<script id="VIDEO_POSTAMBLE">
+(function(){
+  function isYT(u){ return typeof u === 'string' && /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//.test(u); }
+  function toEmbed(u){
+    var m = u.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([^&?\/]+)/);
+    return m && m[1] ? ('https://www.youtube.com/embed/' + m[1] + '?rel=0&playsinline=1&modestbranding=1') : u;
+  }
+  function ensureIframe(){
+    var img = document.getElementById('m_img');
+    if (!img) return null;
+    var parent = img.parentElement;
+    if (!parent) return null;
+    var iframe = document.getElementById('m_video_iframe');
+    if (!iframe) {
+      if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+      iframe = document.createElement('iframe');
+      iframe.id = 'm_video_iframe';
+      iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;border-radius:inherit;display:none;z-index:2';
+      iframe.setAttribute('allow','autoplay; encrypted-media; picture-in-picture; fullscreen');
+      iframe.setAttribute('allowfullscreen','true');
+      parent.appendChild(iframe);
+    }
+    return iframe;
+  }
+  function hideIframe(){
+    var f = document.getElementById('m_video_iframe');
+    if (f) { f.src = 'about:blank'; f.style.display = 'none'; }
+  }
+
+  function tryPatch(){
+    if (typeof window.setModalPhoto !== 'function') return false;
+    if (window.__setModalPhotoPatched) return true;
+    var orig = window.setModalPhoto;
+    window.setModalPhoto = function(i){
+      var photos = window.__modalPhotos || [];
+      if (!photos.length) return orig.call(this, i);
+      var n = photos.length;
+      var idx = ((i % n) + n) % n;
+      var url = photos[idx];
+      if (isYT(url)){
+        var iframe = ensureIframe();
+        if (!iframe) return orig.call(this, i);
+        iframe.style.display = 'block';
+        iframe.src = toEmbed(url);
+        window.__modalPhotoIdx = idx;
+        try {
+          document.querySelectorAll('.modal-strip button, [data-strip] button').forEach(function(b,ii){ b.classList.toggle('active', ii===idx); });
+          document.querySelectorAll('#m_dots button').forEach(function(d,ii){ d.classList.toggle('active', ii===idx); });
+          var cnt = document.getElementById('m_counter_cur'); if(cnt) cnt.textContent = String(idx+1);
+          var pcur = document.getElementById('m_counter_cur_g'); if(pcur) pcur.textContent = String(idx+1);
+        } catch(_){}
+        return;
+      }
+      hideIframe();
+      return orig.call(this, i);
+    };
+    window.__setModalPhotoPatched = true;
+    return true;
+  }
+
+  // Also patch the VIDEO button: instead of "coming soon" toast, jump to video slide
+  function patchVideoBtn(){
+    var btn = document.getElementById('mVideoBtn');
+    if (!btn || btn.__uPatched) return;
+    btn.__uPatched = true;
+    btn.addEventListener('click', function(e){
+      var photos = window.__modalPhotos || [];
+      for (var i=0; i<photos.length; i++){
+        if (isYT(photos[i])){
+          e.preventDefault(); e.stopPropagation();
+          if (typeof window.setModalPhoto === 'function') window.setModalPhoto(i);
+          return false;
+        }
+      }
+    }, true);
+    // Kill inline onclick toast
+    btn.onclick = null;
+  }
+
+  // Close-modal hook: stop video playback
+  function patchClose(){
+    var closers = document.querySelectorAll('[data-close-modal], .modal-close, #m_close');
+    closers.forEach(function(c){
+      if (c.__uPatched) return;
+      c.__uPatched = true;
+      c.addEventListener('click', hideIframe, true);
+    });
+  }
+
+  // Run now + after a short delay (main script might init async)
+  function doPatch(){ tryPatch(); patchVideoBtn(); patchClose(); }
+  doPatch();
+  setTimeout(doPatch, 500);
+  setTimeout(doPatch, 2000);
+  // Also on DOMContentLoaded for safety
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', doPatch);
+  }
+})();
 </script>
 </body>
 </html>
