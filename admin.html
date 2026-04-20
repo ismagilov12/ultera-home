@@ -467,8 +467,18 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
     <div class="subt">Встав CSV з колонками <b>title,sku</b> (або <b>name,article</b>, etc.). Першим рядком — заголовки.</div>
 
     <div class="field">
-      <label>CSV (comma, tab або ; як роздільник)</label>
-      <textarea id="csv-input" placeholder="title,sku&#10;ULTERA - Hunk3 allBlack,809858137952&#10;ULTERA - Aganta,924701650982" style="min-height:160px;font-family:var(--font-mono);font-size:12px"></textarea>
+      <label>Завантажити CSV файл</label>
+      <label class="btn ghost" style="cursor:pointer;display:inline-flex">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        <span style="margin-left:6px">Вибрати .csv файл</span>
+        <input type="file" id="csv-file" accept=".csv,text/csv,text/plain" style="display:none">
+      </label>
+      <span id="csv-file-name" style="margin-left:10px;font-family:var(--font-mono);font-size:11px;color:var(--ink-60)"></span>
+    </div>
+
+    <div class="field">
+      <label>Або встав CSV вручну (comma, tab або ; як роздільник)</label>
+      <textarea id="csv-input" placeholder="title,sku&#10;ULTERA - Hunk3 allBlack,809858137952&#10;ULTERA - Aganta,924701650982" style="min-height:140px;font-family:var(--font-mono);font-size:12px"></textarea>
     </div>
 
     <div style="display:flex;gap:10px;margin-bottom:14px">
@@ -1065,12 +1075,29 @@ async function loadOrders(){
 /* ==================== CSV IMPORT ==================== */
 let CSV_PARSED = null;
 
+document.getElementById('csv-file').addEventListener('change', function(e){
+  var f = e.target.files && e.target.files[0];
+  if (!f) return;
+  var nameEl = document.getElementById('csv-file-name');
+  if (nameEl) nameEl.textContent = f.name + ' (' + Math.round(f.size/1024) + ' KB)';
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    document.getElementById('csv-input').value = ev.target.result || '';
+    // Auto-parse for convenience
+    try { document.getElementById('csv-parse-btn').click(); } catch(_){}
+  };
+  reader.onerror = function(){ toast('Не вдалось прочитати файл', 'err'); };
+  reader.readAsText(f, 'utf-8');
+});
+
 document.getElementById('csv-import-btn').onclick = ()=>{
   document.getElementById('csv-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
   document.getElementById('csv-input').value = '';
   document.getElementById('csv-preview').innerHTML = '';
   document.getElementById('csv-apply-btn').style.display = 'none';
+  var f = document.getElementById('csv-file'); if (f) f.value = '';
+  var fn = document.getElementById('csv-file-name'); if (fn) fn.textContent = '';
   CSV_PARSED = null;
 };
 
@@ -1112,17 +1139,23 @@ document.getElementById('csv-parse-btn').onclick = ()=>{
   ['title','name','product','назва','product_name'].forEach(k=>{
     if (titleIdx < 0){ var i = header.indexOf(k); if (i >= 0) titleIdx = i; }
   });
-  ['sku','uid','article','артикул','артикл'].forEach(k=>{
+  ['tilda uid','tilda_uid','uid','sku','article','артикул','артикл'].forEach(k=>{
     if (skuIdx < 0){ var i = header.indexOf(k); if (i >= 0) skuIdx = i; }
   });
+  var parentIdx = -1;
+  ['parent uid','parent_uid','parent'].forEach(k=>{
+    if (parentIdx < 0){ var i = header.indexOf(k); if (i >= 0) parentIdx = i; }
+  });
   if (titleIdx < 0 || skuIdx < 0){
-    toast('Не знайшов колонки title+sku (спробуй додати заголовки)', 'err');
+    toast('Не знайшов колонки title+sku. Заголовки: ' + header.slice(0,6).join(', '), 'err');
     return;
   }
 
   var rows = lines.slice(1).map(l => parseCSVRow(l));
   var matches = [];
+  var skippedVariants = 0;
   rows.forEach(r=>{
+    if (parentIdx >= 0 && (r[parentIdx] || '').trim()){ skippedVariants++; return; }
     var csvTitle = r[titleIdx] || '';
     var csvSku = (r[skuIdx] || '').trim();
     if (!csvTitle || !csvSku) return;
@@ -1143,7 +1176,7 @@ document.getElementById('csv-parse-btn').onclick = ()=>{
   var same = matches.filter(m => m.product && !m.changed).length;
 
   var html = '<div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-60);margin-bottom:10px">' +
-    'Всього рядків: ' + matches.length + ' · Зміниться: <b>' + changed + '</b> · Без змін: ' + same + ' · Не знайдено: ' + nomatch + '</div>';
+    'Parent-товарів: ' + matches.length + ' · Зміниться: <b>' + changed + '</b> · Без змін: ' + same + ' · Не знайдено: ' + nomatch + (typeof skippedVariants !== 'undefined' && skippedVariants ? ' · Варіантів пропущено: ' + skippedVariants : '') + '</div>';
   html += '<table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:var(--bg-alt);font-family:var(--font-mono);letter-spacing:.06em"><th style="padding:6px;text-align:left">CSV title</th><th>match</th><th>current SKU</th><th>new SKU</th></tr>';
   matches.forEach(m=>{
     var bg = !m.product ? '#ffe0e0' : (m.changed ? '#fff4d3' : '#e5f4d3');
