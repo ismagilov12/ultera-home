@@ -243,6 +243,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
           <h1>Товари</h1>
           <div class="meta"><span id="prod-count">0</span> моделей · <span id="fam-count">0</span> сімей</div>
         </div>
+        <button class="btn ghost" id="csv-import-btn" style="margin-right:8px"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>CSV SKU</button>
         <button class="btn primary" id="prod-add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Додати товар</button>
       </div>
       <div class="prod-toolbar">
@@ -454,6 +455,27 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         <button class="btn primary" id="ed-save">Зберегти</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- CSV IMPORT MODAL -->
+<div id="csv-modal" class="editor">
+  <div class="editor-box" style="max-width:720px">
+    <button class="editor-close" onclick="closeCsvModal()">✕</button>
+    <h2>Імпорт SKU з CSV</h2>
+    <div class="subt">Встав CSV з колонками <b>title,sku</b> (або <b>name,article</b>, etc.). Першим рядком — заголовки.</div>
+
+    <div class="field">
+      <label>CSV (comma, tab або ; як роздільник)</label>
+      <textarea id="csv-input" placeholder="title,sku&#10;ULTERA - Hunk3 allBlack,809858137952&#10;ULTERA - Aganta,924701650982" style="min-height:160px;font-family:var(--font-mono);font-size:12px"></textarea>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <button class="btn primary" id="csv-parse-btn">Проаналізувати</button>
+      <button class="btn ghost" id="csv-apply-btn" style="display:none">Застосувати зміни</button>
+    </div>
+
+    <div id="csv-preview" style="max-height:320px;overflow-y:auto"></div>
   </div>
 </div>
 
@@ -1022,6 +1044,128 @@ async function loadOrders(){
 }
 
 // Load orders when switching to that page
+
+/* ==================== CSV IMPORT ==================== */
+let CSV_PARSED = null;
+
+document.getElementById('csv-import-btn').onclick = ()=>{
+  document.getElementById('csv-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('csv-input').value = '';
+  document.getElementById('csv-preview').innerHTML = '';
+  document.getElementById('csv-apply-btn').style.display = 'none';
+  CSV_PARSED = null;
+};
+
+function closeCsvModal(){
+  document.getElementById('csv-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  CSV_PARSED = null;
+}
+
+function parseCSVRow(line){
+  // handle CSV with " quotes + , ; tab delimiters
+  var out = [], cur = '', inQ = false;
+  for (var i=0;i<line.length;i++){
+    var c = line[i];
+    if (c === '"'){
+      if (inQ && line[i+1] === '"'){ cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (!inQ && (c === ',' || c === ';' || c === '\t')){
+      out.push(cur); cur = '';
+    } else cur += c;
+  }
+  out.push(cur);
+  return out.map(s => s.trim());
+}
+
+function normTitle(s){
+  return (s||'').toLowerCase().replace(/[^a-zа-яіїєґ0-9]+/gi, ' ').trim();
+}
+
+document.getElementById('csv-parse-btn').onclick = ()=>{
+  var txt = document.getElementById('csv-input').value.trim();
+  if (!txt){ toast('Встав CSV', 'err'); return; }
+  var lines = txt.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2){ toast('Потрібно хоча б заголовок + 1 рядок', 'err'); return; }
+
+  var header = parseCSVRow(lines[0]).map(h => h.toLowerCase());
+  // find column indexes
+  var titleIdx = -1, skuIdx = -1;
+  ['title','name','product','назва','product_name'].forEach(k=>{
+    if (titleIdx < 0){ var i = header.indexOf(k); if (i >= 0) titleIdx = i; }
+  });
+  ['sku','uid','article','артикул','артикл'].forEach(k=>{
+    if (skuIdx < 0){ var i = header.indexOf(k); if (i >= 0) skuIdx = i; }
+  });
+  if (titleIdx < 0 || skuIdx < 0){
+    toast('Не знайшов колонки title+sku (спробуй додати заголовки)', 'err');
+    return;
+  }
+
+  var rows = lines.slice(1).map(l => parseCSVRow(l));
+  var matches = [];
+  rows.forEach(r=>{
+    var csvTitle = r[titleIdx] || '';
+    var csvSku = (r[skuIdx] || '').trim();
+    if (!csvTitle || !csvSku) return;
+    var norm = normTitle(csvTitle);
+    // find product by fuzzy title match
+    var best = null;
+    PRODUCTS.forEach(p=>{
+      var pn = normTitle(p.title);
+      if (pn === norm){ best = p; return; }
+      if (!best && (pn.includes(norm) || norm.includes(pn))) best = p;
+    });
+    matches.push({ csvTitle, csvSku, product: best, changed: best && best.uid !== csvSku });
+  });
+
+  CSV_PARSED = matches;
+  var changed = matches.filter(m => m.changed).length;
+  var nomatch = matches.filter(m => !m.product).length;
+  var same = matches.filter(m => m.product && !m.changed).length;
+
+  var html = '<div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-60);margin-bottom:10px">' +
+    'Всього рядків: ' + matches.length + ' · Зміниться: <b>' + changed + '</b> · Без змін: ' + same + ' · Не знайдено: ' + nomatch + '</div>';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:var(--bg-alt);font-family:var(--font-mono);letter-spacing:.06em"><th style="padding:6px;text-align:left">CSV title</th><th>match</th><th>current SKU</th><th>new SKU</th></tr>';
+  matches.forEach(m=>{
+    var bg = !m.product ? '#ffe0e0' : (m.changed ? '#fff4d3' : '#e5f4d3');
+    html += '<tr style="background:' + bg + ';border-bottom:1px solid var(--line)">' +
+      '<td style="padding:6px">' + escapeHtml(m.csvTitle) + '</td>' +
+      '<td style="padding:6px">' + (m.product ? escapeHtml(m.product.title) : '<i>не знайдено</i>') + '</td>' +
+      '<td style="padding:6px;font-family:var(--font-mono)">' + (m.product ? m.product.uid : '—') + '</td>' +
+      '<td style="padding:6px;font-family:var(--font-mono);font-weight:700">' + escapeHtml(m.csvSku) + '</td>' +
+      '</tr>';
+  });
+  html += '</table>';
+  document.getElementById('csv-preview').innerHTML = html;
+  if (changed > 0) document.getElementById('csv-apply-btn').style.display = 'inline-flex';
+};
+
+document.getElementById('csv-apply-btn').onclick = async ()=>{
+  if (!CSV_PARSED){ return; }
+  if (!confirm('Оновити SKU для ' + CSV_PARSED.filter(m=>m.changed).length + ' товарів?')) return;
+  var btn = document.getElementById('csv-apply-btn');
+  btn.disabled = true; btn.textContent = 'Оновлюю...';
+  var ok = 0, err = 0;
+  for (var m of CSV_PARSED){
+    if (!m.changed) continue;
+    try {
+      await rest('ulhome_products?id=eq.' + m.product.id, {
+        method:'PATCH',
+        body: JSON.stringify({ uid: m.csvSku })
+      });
+      ok++;
+    } catch(e){ err++; console.error('Failed', m.product.uid, e); }
+  }
+  btn.disabled = false; btn.textContent = 'Застосувати зміни';
+  toast('Оновлено: ' + ok + (err ? ', помилок: ' + err : ''));
+  closeCsvModal();
+  await loadProducts();
+};
+
+
+// orders
 document.querySelector('[data-page="orders"]').addEventListener('click', loadOrders);
 </script>
 
