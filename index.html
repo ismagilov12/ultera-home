@@ -3246,6 +3246,37 @@ async function wizardSubmit(){
   }
 })();
 
+/* ————— LEGACY TILDA /tproduct/:pageId-:uid-:slug → openModal(uid) ————— */
+/* FB catalog ads point to old Tilda URLs like
+   /tproduct/816840511-340180708714-ultera-shape — parse uid, open modal. */
+(function(){
+  function runTproductOpen(){
+    try {
+      var m = window.location.pathname.match(/^\/tproduct\/\d+-(\d+)(?:-|\/|$)/);
+      if (!m) return;
+      var uid = m[1];
+      var tries = 0;
+      function tryOpen(){
+        tries++;
+        if (tries > 80) return; /* ~8s max */
+        if (typeof openModal === 'function') {
+          try { openModal(uid); } catch(e){ console.warn('tproduct openModal err', e); }
+          /* clean URL so relative asset paths (banners/*, photos/*) keep working */
+          try { window.history.replaceState({}, '', '/'); } catch(_) {}
+        } else {
+          setTimeout(tryOpen, 100);
+        }
+      }
+      tryOpen();
+    } catch(e){ console.warn('tproduct-open err', e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runTproductOpen);
+  } else {
+    setTimeout(runTproductOpen, 0);
+  }
+})();
+
 /* ————— TOAST ————— */
 function toast(msg){
   const t = document.getElementById('toast');
