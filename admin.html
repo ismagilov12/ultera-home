@@ -116,6 +116,10 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 .photo-card{position:relative;aspect-ratio:4/5;background:var(--bg-alt);border-radius:8px;overflow:hidden;border:1.5px solid transparent;cursor:grab}
 .photo-card img{width:100%;height:100%;object-fit:cover;display:block}
 .photo-card.is-main{border-color:var(--mint);box-shadow:0 0 0 2px rgba(197,233,160,.5)}
+.photo-card.dragging{opacity:.4;transform:scale(.95)}
+.photo-card.drag-over{border-color:var(--ink);box-shadow:0 0 0 2px rgba(10,10,10,.3)}
+.photo-card .drag-handle{position:absolute;bottom:6px;right:6px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:13px;cursor:move;user-select:none;opacity:.7;transition:opacity .15s}
+.photo-card:hover .drag-handle{opacity:1}
 .photo-card .tag{position:absolute;top:6px;left:6px;font-family:var(--font-mono);font-size:9px;letter-spacing:.08em;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.9);color:var(--ink)}
 .photo-card .tag.video{background:var(--ink);color:var(--mint)}
 .photo-card .del{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;opacity:0;transition:opacity .15s}
@@ -751,12 +755,60 @@ function renderEdPhotos(){
   const all = [main, ...ED_MEDIA];
   g.innerHTML = all.map((m,i)=>{
     const safeUrl = escapeHtml(m.url||'');
-    return `<div class="photo-card${i===0?' is-main':''}" data-idx="${i-1}">
+    // card index in UNIFIED list (0 = main, 1..N = ED_MEDIA items)
+    return `<div class="photo-card${i===0?' is-main':''}" draggable="true" data-card-idx="${i}">
       ${m.type==='video' ? `<div style="background:var(--ink);color:var(--mint);display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:11px;font-family:var(--font-mono);letter-spacing:.08em">VIDEO</div>` : `<img src="${safeUrl}" loading="lazy">`}
       <div class="tag ${m.type==='video'?'video':''}">${i===0?'Головне':(m.type==='video'?'VIDEO':'Фото '+i)}</div>
+      <div class="drag-handle" title="Потягніть щоб змінити порядок">⋮⋮</div>
       ${i>0?`<div class="del" onclick="removeMedia(${i-1})">✕</div>`:''}
     </div>`;
   }).join('');
+  // attach drag handlers
+  g.querySelectorAll('.photo-card').forEach(card=>{
+    card.addEventListener('dragstart', onDragStart);
+    card.addEventListener('dragend', onDragEnd);
+    card.addEventListener('dragover', onDragOver);
+    card.addEventListener('dragleave', onDragLeave);
+    card.addEventListener('drop', onDrop);
+  });
+}
+
+let DRAG_FROM = null;
+
+function onDragStart(e){
+  DRAG_FROM = parseInt(this.dataset.cardIdx, 10);
+  this.classList.add('dragging');
+  try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(DRAG_FROM)); } catch(_){}
+}
+function onDragEnd(){
+  this.classList.remove('dragging');
+  document.querySelectorAll('.photo-card.drag-over').forEach(c=>c.classList.remove('drag-over'));
+  DRAG_FROM = null;
+}
+function onDragOver(e){
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  this.classList.add('drag-over');
+}
+function onDragLeave(){
+  this.classList.remove('drag-over');
+}
+function onDrop(e){
+  e.preventDefault();
+  this.classList.remove('drag-over');
+  const to = parseInt(this.dataset.cardIdx, 10);
+  const from = DRAG_FROM;
+  if (from === null || from === to || isNaN(from) || isNaN(to)) return;
+  // Build unified list: [main, ...ED_MEDIA]
+  const main = { url: EDITING.photo, type:'photo', isMain:true };
+  const all = [main, ...ED_MEDIA];
+  const [moved] = all.splice(from, 1);
+  all.splice(to, 0, moved);
+  // Write back: first item becomes main, rest go to ED_MEDIA
+  EDITING.photo = all[0].url;
+  ED_MEDIA = all.slice(1).map((m,i)=>({...m, sort_order: i}));
+  renderEdPhotos();
+  toast('Порядок оновлено — натисни «Зберегти»');
 }
 
 function removeMedia(i){ ED_MEDIA.splice(i,1); renderEdPhotos(); }
