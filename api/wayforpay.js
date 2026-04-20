@@ -107,11 +107,11 @@ module.exports = async function handler(req, res) {
   const returnUrl = `${base}/?paid=1&order=${encodeURIComponent(orderReference)}`;
   const serviceUrl = `${base}/api/wayforpay-callback`;
 
-  // Набор платёжных систем — для "оплата частями" через моно/а-банк
-  // нужно добавить paymentSystems = 'card;privat24;masterPass;visaCheckout;qrCode;bankCasa;invoiceTarget;portmone;account'.
-  // По умолчанию отдаём полный набор.
-  const paymentSystems = 'card;privat24;masterPass;visaCheckout;qrCode;bankCasa;invoiceTarget;portmone;account';
-
+  // ВАЖНО: paymentSystems НЕ отправляем — если поле отсутствует,
+  // WayForPay показывает ВСЕ способы оплаты, активированные в ЛК мерчанта
+  // (Apple Pay, Google Pay, карты, monobank частями, A-Bank частями, OTP, и т.д.).
+  // Ранее здесь был зажат список без applePay/googlePay — из-за этого
+  // на платёжке отсутствовали кнопки Apple Pay / Google Pay.
   const formData = {
     merchantAccount,
     merchantAuthType: 'SimpleSignature',
@@ -130,8 +130,7 @@ module.exports = async function handler(req, res) {
     clientPhone: clientPhone || '',
     returnUrl,
     serviceUrl,
-    language: 'UA',
-    paymentSystems
+    language: 'UA'
   };
 
   // Отдаём JSON + готовый HTML формы (на случай если фронт хочет просто
