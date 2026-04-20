@@ -250,6 +250,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         <input type="search" id="prod-search" placeholder="Пошук за назвою, кольором, SKU…">
         <select id="prod-family"><option value="">Всі сімʼї</option></select>
         <select id="prod-status"><option value="">Всі</option><option value="pub">Опубліковані</option><option value="hid">Приховані</option></select>
+        <select id="prod-sort"><option value="updated_desc">Зміна ↓</option><option value="updated_asc">Зміна ↑</option><option value="created_desc">Створено ↓</option><option value="created_asc">Створено ↑</option><option value="title_asc">Назва A→Я</option><option value="title_desc">Назва Я→A</option><option value="price_asc">Ціна ↑</option><option value="price_desc">Ціна ↓</option><option value="family_asc">Сімʼя</option></select>
       </div>
       <div class="prod-table" id="prod-table">
         <div class="prod-row head">
@@ -685,6 +686,22 @@ function renderProducts(){
     if (q && !(p.title||'').toLowerCase().includes(q) && !(p.color_name||'').toLowerCase().includes(q) && !(p.uid||'').includes(q)) return false;
     return true;
   });
+  const sortBy = (document.getElementById('prod-sort')||{}).value || 'updated_desc';
+  filtered.sort((a,b)=>{
+    const S = (v)=> (v||'').toString().toLowerCase();
+    switch (sortBy){
+      case 'updated_desc': return (b.updated_at||'').localeCompare(a.updated_at||'');
+      case 'updated_asc':  return (a.updated_at||'').localeCompare(b.updated_at||'');
+      case 'created_desc': return (b.created_at||'').localeCompare(a.created_at||'');
+      case 'created_asc':  return (a.created_at||'').localeCompare(b.created_at||'');
+      case 'title_asc':    return S(a.title).localeCompare(S(b.title));
+      case 'title_desc':   return S(b.title).localeCompare(S(a.title));
+      case 'price_asc':    return (parseFloat(a.price)||0) - (parseFloat(b.price)||0);
+      case 'price_desc':   return (parseFloat(b.price)||0) - (parseFloat(a.price)||0);
+      case 'family_asc':   return S(a.family).localeCompare(S(b.family)) || S(a.title).localeCompare(S(b.title));
+      default: return 0;
+    }
+  });
   document.getElementById('prod-count').textContent = filtered.length;
   document.getElementById('fam-count').textContent = new Set(filtered.map(p=>p.family)).size;
 
@@ -749,7 +766,7 @@ async function quickAddVideo(p){
   } catch(e){ toast('Помилка: '+e.message, 'err'); }
 }
 
-['prod-search','prod-family','prod-status'].forEach(id=>document.getElementById(id).addEventListener('input', renderProducts));
+['prod-search','prod-family','prod-status','prod-sort'].forEach(id=>document.getElementById(id).addEventListener('input', renderProducts));
 document.getElementById('prod-add').onclick = ()=>openEditor(null);
 
 function fmtPrice(p){ return p? Math.round(p).toLocaleString('uk-UA')+' ₴' : '—'; }
