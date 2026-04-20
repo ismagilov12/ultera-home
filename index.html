@@ -3561,7 +3561,7 @@ renderGrid();
         if (btn && !btn.querySelector('.yt-play-badge')){
           var badge = document.createElement('span');
           badge.className = 'yt-play-badge';
-          badge.textContent = '▶';
+          badge.textContent = String.fromCharCode(9654);
           badge.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;text-shadow:0 0 6px rgba(0,0,0,.85);pointer-events:none';
           if (getComputedStyle(btn).position === 'static') btn.style.position = 'relative';
           btn.appendChild(badge);
@@ -3629,8 +3629,7 @@ renderGrid();
 
   function patchVideoBtn(){
     var btn = document.getElementById('mVideoBtn');
-    if (!btn || btn.__uPatched) return;
-    btn.__uPatched = true;
+    if (!btn) return;
     function jumpToVideo(e){
       var photos = window.__modalPhotos || [];
       for (var i = photos.length - 1; i >= 0; i--){
@@ -3642,12 +3641,46 @@ renderGrid();
           return false;
         }
       }
+      // no video — swallow the event so inline toast does NOT fire
+      if (e && e.preventDefault) e.preventDefault();
+      if (e && e.stopPropagation) e.stopPropagation();
+      if (e && e.stopImmediatePropagation) e.stopImmediatePropagation();
+      return false;
     }
-    btn.addEventListener('click', jumpToVideo, true);
-    btn.addEventListener('pointerup', jumpToVideo, {capture: true});
-    btn.addEventListener('touchend', jumpToVideo, {capture: true, passive: false});
-    btn.addEventListener('touchstart', function(e){ e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation(); }, {capture: true, passive: true});
+    // Nuke inline onclick every time we touch the button
     btn.onclick = null;
-    btn.remove</script>
+    btn.removeAttribute('onclick');
+    if (!btn.__uPatched){
+      btn.__uPatched = true;
+      btn.addEventListener('click', jumpToVideo, true);
+      btn.addEventListener('pointerup', jumpToVideo, {capture: true});
+      btn.addEventListener('touchend', jumpToVideo, {capture: true, passive: false});
+      btn.addEventListener('touchstart', function(e){ e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); }, {capture: true, passive: true});
+      btn.style.touchAction = 'manipulation';
+      btn.style.pointerEvents = 'auto';
+      btn.style.cursor = 'pointer';
+      btn.style.zIndex = '50';
+      if (!btn.style.position) btn.style.position = 'absolute';
+    }
+  }
+
+  function patchClose(){
+    document.querySelectorAll('[data-close-modal], .modal-close, #m_close').forEach(function(c){
+      if (c.__uPatched) return;
+      c.__uPatched = true;
+      c.addEventListener('click', hideVideo, true);
+    });
+  }
+
+  function doAll(){ tryPatchSMP(); observeImg(); observeThumbs(); patchVideoBtn(); patchClose(); }
+  doAll();
+  setTimeout(doAll, 200);
+  setTimeout(doAll, 800);
+  setTimeout(doAll, 2500);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', doAll);
+  // re-apply patchVideoBtn on every click in case inline onclick is re-added
+  document.addEventListener('click', function(){ patchVideoBtn(); }, true);
+})();
+</script>
 </body>
 </html>
