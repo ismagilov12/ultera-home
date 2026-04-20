@@ -3514,17 +3514,17 @@ renderGrid();
 <script id="VIDEO_POSTAMBLE">
 (function(){
   function isYT(u){ return typeof u === 'string' && /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//.test(u); }
-  function toEmbed(u){
-    var m = u.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([^&?\/]+)/);
-    return m && m[1] ? ('https://www.youtube.com/embed/' + m[1] + '?rel=0&playsinline=1&modestbranding=1') : u;
-  }
+  function ytId(u){ var m = u.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([^&?\/]+)/); return m && m[1]; }
+  function toEmbed(u){ var id = ytId(u); return id ? ('https://www.youtube.com/embed/' + id + '?rel=0&playsinline=1&modestbranding=1') : u; }
+  function toPoster(u){ var id = ytId(u); return id ? ('https://img.youtube.com/vi/' + id + '/hqdefault.jpg') : u; }
+
   function ensureIframe(){
     var img = document.getElementById('m_img');
     if (!img) return null;
     var parent = img.parentElement;
     if (!parent) return null;
     var iframe = document.getElementById('m_video_iframe');
-    if (!iframe) {
+    if (!iframe){
       if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
       iframe = document.createElement('iframe');
       iframe.id = 'm_video_iframe';
@@ -3535,12 +3535,42 @@ renderGrid();
     }
     return iframe;
   }
-  function hideIframe(){
+  function showVideo(url){
+    var iframe = ensureIframe();
+    if (!iframe) return false;
+    iframe.style.display = 'block';
+    if (iframe.src !== toEmbed(url)) iframe.src = toEmbed(url);
+    var img = document.getElementById('m_img');
+    if (img) img.style.visibility = 'hidden';
+    return true;
+  }
+  function hideVideo(){
     var f = document.getElementById('m_video_iframe');
-    if (f) { f.src = 'about:blank'; f.style.display = 'none'; }
+    if (f){ f.src = 'about:blank'; f.style.display = 'none'; }
+    var img = document.getElementById('m_img');
+    if (img) img.style.visibility = '';
   }
 
-  function tryPatch(){
+  function fixThumbs(root){
+    (root || document).querySelectorAll('img').forEach(function(im){
+      var s = im.src || im.getAttribute('src') || '';
+      if (isYT(s) && !im.dataset.ytFixed){
+        im.src = toPoster(s);
+        im.dataset.ytFixed = '1';
+        var btn = im.closest('button');
+        if (btn && !btn.querySelector('.yt-play-badge')){
+          var badge = document.createElement('span');
+          badge.className = 'yt-play-badge';
+          badge.textContent = '▶';
+          badge.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;text-shadow:0 0 6px rgba(0,0,0,.85);pointer-events:none';
+          if (getComputedStyle(btn).position === 'static') btn.style.position = 'relative';
+          btn.appendChild(badge);
+        }
+      }
+    });
+  }
+
+  function tryPatchSMP(){
     if (typeof window.setModalPhoto !== 'function') return false;
     if (window.__setModalPhotoPatched) return true;
     var orig = window.setModalPhoto;
@@ -3551,65 +3581,75 @@ renderGrid();
       var idx = ((i % n) + n) % n;
       var url = photos[idx];
       if (isYT(url)){
-        var iframe = ensureIframe();
-        if (!iframe) return orig.call(this, i);
-        iframe.style.display = 'block';
-        iframe.src = toEmbed(url);
-        window.__modalPhotoIdx = idx;
-        try {
-          document.querySelectorAll('.modal-strip button, [data-strip] button').forEach(function(b,ii){ b.classList.toggle('active', ii===idx); });
-          document.querySelectorAll('#m_dots button').forEach(function(d,ii){ d.classList.toggle('active', ii===idx); });
-          var cnt = document.getElementById('m_counter_cur'); if(cnt) cnt.textContent = String(idx+1);
-          var pcur = document.getElementById('m_counter_cur_g'); if(pcur) pcur.textContent = String(idx+1);
-        } catch(_){}
-        return;
+        if (showVideo(url)){
+          window.__modalPhotoIdx = idx;
+          try{
+            document.querySelectorAll('.modal-strip button, [data-strip] button').forEach(function(b,ii){ b.classList.toggle('active', ii===idx); });
+            document.querySelectorAll('#m_dots button').forEach(function(d,ii){ d.classList.toggle('active', ii===idx); });
+            var cnt = document.getElementById('m_counter_cur'); if(cnt) cnt.textContent = String(idx+1);
+            var pcur = document.getElementById('m_counter_cur_g'); if(pcur) pcur.textContent = String(idx+1);
+          }catch(_){}
+          return;
+        }
       }
-      hideIframe();
+      hideVideo();
       return orig.call(this, i);
     };
     window.__setModalPhotoPatched = true;
     return true;
   }
 
-  // Also patch the VIDEO button: instead of "coming soon" toast, jump to video slide
+  function observeImg(){
+    var img = document.getElementById('m_img');
+    if (!img || img.__uObs) return;
+    img.__uObs = true;
+    var obs = new MutationObserver(function(){
+      var s = img.src || img.getAttribute('src') || '';
+      if (isYT(s)) showVideo(s);
+      else hideVideo();
+    });
+    obs.observe(img, { attributes: true, attributeFilter: ['src'] });
+    var s = img.src || img.getAttribute('src') || '';
+    if (isYT(s)) showVideo(s);
+  }
+
+  function observeThumbs(){
+    if (window.__uThumbObs) return;
+    window.__uThumbObs = true;
+    var obs = new MutationObserver(function(muts){
+      muts.forEach(function(m){
+        m.addedNodes.forEach(function(n){
+          if (n.nodeType === 1) fixThumbs(n);
+        });
+      });
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+    fixThumbs(document.body);
+  }
+
   function patchVideoBtn(){
     var btn = document.getElementById('mVideoBtn');
     if (!btn || btn.__uPatched) return;
     btn.__uPatched = true;
-    btn.addEventListener('click', function(e){
+    function jumpToVideo(e){
       var photos = window.__modalPhotos || [];
       for (var i=0; i<photos.length; i++){
         if (isYT(photos[i])){
-          e.preventDefault(); e.stopPropagation();
+          if (e && e.preventDefault) e.preventDefault();
+          if (e && e.stopPropagation) e.stopPropagation();
+          if (e && e.stopImmediatePropagation) e.stopImmediatePropagation();
           if (typeof window.setModalPhoto === 'function') window.setModalPhoto(i);
           return false;
         }
       }
-    }, true);
-    // Kill inline onclick toast
+    }
+    btn.addEventListener('click', jumpToVideo, true);
+    btn.addEventListener('touchend', jumpToVideo, {capture: true, passive: false});
+    btn.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {capture: true, passive: true});
     btn.onclick = null;
-  }
-
-  // Close-modal hook: stop video playback
-  function patchClose(){
-    var closers = document.querySelectorAll('[data-close-modal], .modal-close, #m_close');
-    closers.forEach(function(c){
-      if (c.__uPatched) return;
-      c.__uPatched = true;
-      c.addEventListener('click', hideIframe, true);
-    });
-  }
-
-  // Run now + after a short delay (main script might init async)
-  function doPatch(){ tryPatch(); patchVideoBtn(); patchClose(); }
-  doPatch();
-  setTimeout(doPatch, 500);
-  setTimeout(doPatch, 2000);
-  // Also on DOMContentLoaded for safety
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', doPatch);
-  }
-})();
-</script>
+    btn.style.touchAction = 'manipulation';
+    btn.style.pointerEvents = 'auto';
+    btn.style.cursor = 'pointer';
+    if (!btn.style.zIndex || parseIn</script>
 </body>
 </html>
