@@ -2145,8 +2145,8 @@ try {
   for (var u in mediaByUid){
     var slides = [];
     var mm = mediaByUid[u];
-    if (mm.videos && mm.videos.length) slides = slides.concat(mm.videos);
     if (mm.photos && mm.photos.length) slides = slides.concat(mm.photos);
+    if (mm.videos && mm.videos.length) slides = slides.concat(mm.videos);
     newExtra[u] = slides;
   }
   function merge(v){
@@ -3633,7 +3633,7 @@ renderGrid();
     btn.__uPatched = true;
     function jumpToVideo(e){
       var photos = window.__modalPhotos || [];
-      for (var i=0; i<photos.length; i++){
+      for (var i = photos.length - 1; i >= 0; i--){
         if (isYT(photos[i])){
           if (e && e.preventDefault) e.preventDefault();
           if (e && e.stopPropagation) e.stopPropagation();
@@ -3644,12 +3644,10 @@ renderGrid();
       }
     }
     btn.addEventListener('click', jumpToVideo, true);
+    btn.addEventListener('pointerup', jumpToVideo, {capture: true});
     btn.addEventListener('touchend', jumpToVideo, {capture: true, passive: false});
-    btn.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {capture: true, passive: true});
+    btn.addEventListener('touchstart', function(e){ e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation(); }, {capture: true, passive: true});
     btn.onclick = null;
-    btn.style.touchAction = 'manipulation';
-    btn.style.pointerEvents = 'auto';
-    btn.style.cursor = 'pointer';
-    if (!btn.style.zIndex || parseIn</script>
+    btn.remove</script>
 </body>
 </html>
