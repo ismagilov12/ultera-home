@@ -373,9 +373,34 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
       </div>
     </div>
 
+    <div class="field-row-3">
+      <div class="field">
+        <label>Бренд</label>
+        <input type="text" id="ed-brand" placeholder="ULTERA" value="ULTERA">
+      </div>
+      <div class="field">
+        <label>Категорія</label>
+        <input type="text" id="ed-category" placeholder="Весна-Осінь">
+      </div>
+      <div class="field">
+        <label>Опції (mods)</label>
+        <input type="text" id="ed-mods" placeholder="Літо / Cordura=+500">
+      </div>
+    </div>
+
     <div class="field">
-      <label>Опис</label>
-      <textarea id="ed-desc" placeholder="Короткий опис товару (можна HTML)"></textarea>
+      <label>Коротке речення (під назвою / desc_short)</label>
+      <textarea id="ed-desc-short" placeholder="Наприклад: дихаюча сітка (весна/літо)" style="min-height:60px"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Повний опис + матеріали (text / HTML)</label>
+      <textarea id="ed-text" placeholder="Довгий опис з матеріалами, догляд, гарантія тощо (HTML)" style="min-height:180px"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Сумісність / Description (legacy)</label>
+      <textarea id="ed-desc" placeholder="Старе поле description (поки лишаємо для сумісності)"></textarea>
     </div>
 
     <div class="field">
@@ -672,6 +697,11 @@ function openEditor(p){
   document.getElementById('ed-price').value = EDITING.price||0;
   document.getElementById('ed-price-old').value = EDITING.price_old||'';
   document.getElementById('ed-mark').value = EDITING.mark||'';
+  document.getElementById('ed-brand').value = EDITING.brand||'ULTERA';
+  document.getElementById('ed-category').value = EDITING.category||'';
+  document.getElementById('ed-mods').value = EDITING.mods||'';
+  document.getElementById('ed-desc-short').value = EDITING.desc_short||'';
+  document.getElementById('ed-text').value = EDITING.text||'';
   document.getElementById('ed-desc').value = EDITING.description||'';
   document.getElementById('ed-pub').checked = EDITING.published !== false;
   document.getElementById('ed-delete').style.display = p ? 'inline-flex' : 'none';
@@ -740,6 +770,11 @@ document.getElementById('ed-save').onclick = async ()=>{
     price: parseFloat(document.getElementById('ed-price').value)||0,
     price_old: parseFloat(document.getElementById('ed-price-old').value)||null,
     mark: document.getElementById('ed-mark').value.trim() || null,
+    brand: document.getElementById('ed-brand').value.trim() || 'ULTERA',
+    category: document.getElementById('ed-category').value.trim() || null,
+    mods: document.getElementById('ed-mods').value.trim() || null,
+    desc_short: document.getElementById('ed-desc-short').value,
+    text: document.getElementById('ed-text').value,
     description: document.getElementById('ed-desc').value,
     photo: EDITING.photo || '',
     published: document.getElementById('ed-pub').checked,
