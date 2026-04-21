@@ -2613,7 +2613,10 @@ try {
   function merge(v){
     var p = v && byUid[v.uid];
     if (!p) return;
-    if (p.photo) v.photo = p.photo;
+    if (p.photo) {
+      // Keep locally-owned SHAPE photos (v84+) — Supabase may not have matching media yet.
+      if (!/^\/photos\/shape-[a-z]+(-[0-9]+)?\.webp$/.test(v.photo||'')) v.photo = p.photo;
+    }
     if (p.price != null) v.price = String(p.price);
     if (p.price_old != null) v.price_old = String(p.price_old);
     if (p.mark !== undefined) v.mark = p.mark || '';
@@ -2645,7 +2648,16 @@ try {
     });
   });
   D_EL.textContent = JSON.stringify(D);
-  E_EL.textContent = JSON.stringify(newExtra);
+  // Merge Supabase media into existing EXTRA rather than replacing — so any
+  // locally-baked shape gallery (/photos/shape-*.webp) isn't wiped.
+  var existingExtra = {};
+  try { existingExtra = JSON.parse(E_EL.textContent || '{}'); } catch(_){}
+  for (var _k in newExtra){
+    var cur = existingExtra[_k];
+    var isLocalShape = Array.isArray(cur) && cur.length && typeof cur[0] === 'string' && cur[0].indexOf('/photos/shape-') === 0;
+    if (!isLocalShape) existingExtra[_k] = newExtra[_k];
+  }
+  E_EL.textContent = JSON.stringify(existingExtra);
   window.DATA = D;
   window.__ULTERA_LIVE__ = {p: products.length, m: media.length};
   try { console.log('[ultera] live data:', products.length, 'products,', media.length, 'media'); } catch(_){}
