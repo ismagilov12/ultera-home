@@ -1810,10 +1810,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .h3intro .h3-stat-lb{letter-spacing:.08em}
 }
 
-@media (prefers-reduced-motion:reduce){
-  .h3intro,.h3intro *,.h3intro *::before,.h3intro *::after{animation:none!important;transition:none!important}
-  .h3intro{display:none!important}
-}
+/* v89: intentionally no reduce-motion guard on .h3intro — brand decision, intro must play on all devices */
 
 /* ==================== SHAPE INTRO OVERLAY (slipper on sand video) ==================== */
 .shapeintro{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden;display:none;opacity:0;transition:opacity .6s ease;background:#c2a66b}
@@ -1877,10 +1874,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 }
 .shapeintro .sh-skip:hover{background:rgba(255,255,255,.85)}
 @keyframes shSkip{to{opacity:.85}}
-@media (prefers-reduced-motion:reduce){
-  .shapeintro,.shapeintro *{animation:none!important;transition:none!important}
-  .shapeintro{display:none!important}
-}
+/* v89: intentionally no reduce-motion guard on .shapeintro — brand decision, video intro must play on all devices */
 
 </style>
 </head>
