@@ -1628,12 +1628,8 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   transform:translateY(10px);
   animation:h3wmLetter .45s cubic-bezier(.22,.9,.3,1.05) forwards;
 }
-.h3intro .h3-wm-main .wm-top span:nth-child(1){animation-delay:.30s}
-.h3intro .h3-wm-main .wm-top span:nth-child(2){animation-delay:.36s}
-.h3intro .h3-wm-main .wm-top span:nth-child(3){animation-delay:.42s}
-.h3intro .h3-wm-main .wm-top span:nth-child(4){animation-delay:.48s}
-.h3intro .h3-wm-main .wm-top span:nth-child(5){animation-delay:.54s}
-.h3intro .h3-wm-main .wm-top span:nth-child(6){animation-delay:.60s}
+/* v91: all 6 letters animate together, not staggered */
+.h3intro .h3-wm-main .wm-top span{animation-delay:.20s}
 @keyframes h3wmLetter{to{opacity:1;transform:translateY(0)}}
 /* Tech hairline under BOUNCE */
 .h3intro .h3-wm-main .wm-rule{
@@ -1797,7 +1793,11 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 /* ========== MOBILE ========== */
 @media (max-width:640px){
   .h3intro .h3-wordmark{top:5%;max-width:90%}
-  .h3intro .h3-wm-sub{margin-top:7px;font-size:8.5px;letter-spacing:.22em}
+  /* v91: smaller BOUNCE wordmark on mobile */
+  .h3intro .h3-wm-main .wm-top{font-size:clamp(22px,6vw,36px)}
+  .h3intro .h3-wm-main .wm-rule{width:clamp(26px,7vw,40px);margin:5px 0 4px}
+  .h3intro .h3-wm-main .wm-bot{font-size:clamp(8px,1.6vw,9.5px)}
+  .h3intro .h3-wm-sub{margin-top:6px;font-size:8px;letter-spacing:.2em}
   .h3intro .h3-divider{top:25%}
   .h3intro .h3-stats{top:26.5%;left:4%;right:4%}
   .h3intro .h3-stat-v{font-size:clamp(18px,5.2vw,24px)}
@@ -1876,6 +1876,11 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 @keyframes shSkip{to{opacity:.85}}
 /* v89: intentionally no reduce-motion guard on .shapeintro — brand decision, video intro must play on all devices */
 
+/* v90: on mobile hide the explicit Skip pills and let tap-anywhere dismiss the intro */
+@media (max-width:760px){
+  .h3intro .h3-skip,.shapeintro .sh-skip{display:none!important}
+  .h3intro.on,.shapeintro.on{pointer-events:auto;cursor:pointer}
+}
 </style>
 </head>
 <body>
@@ -2387,7 +2392,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
       <img id="m_img" src="" alt="">
       <div class="m-counter-pill" id="m_counter_pill"><b id="m_counter_cur_g">1</b> / <span id="m_counter_tot_g">1</span></div>
       <div class="modal-dots" id="m_dots" aria-hidden="true"></div>
-      <div class="h3intro" id="hunk3Intro" aria-hidden="true">
+      <div class="h3intro" id="hunk3Intro" aria-hidden="true" onclick="hun3IntroSkip()">
         <button type="button" class="h3-skip" onclick="hun3IntroSkip()" aria-label="Пропустити">Пропустити</button>
         <div class="h3-wordmark">
           <div class="h3-wm-main"><span class="wm-top"><span>B</span><span>O</span><span>U</span><span>N</span><span>C</span><span>E</span></span><span class="wm-rule" aria-hidden="true"></span><span class="wm-bot">system</span></div>
@@ -2420,9 +2425,9 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
         <div class="h3-solebar"></div>
         <div class="h3-balls" aria-hidden="true"><i class="h3-ball"></i><i class="h3-ball"></i><i class="h3-ball"></i></div>
       </div>
-      <div class="shapeintro" id="shapeIntro" aria-hidden="true">
+      <div class="shapeintro" id="shapeIntro" aria-hidden="true" onclick="shapeIntroSkip()">
         <button type="button" class="sh-skip" onclick="shapeIntroSkip()" aria-label="Пропустити">Пропустити</button>
-        <video id="shapeIntroVideo" muted playsinline autoplay preload="auto" poster="pisok-poster.jpg">
+        <video id="shapeIntroVideo" muted playsinline autoplay preload="metadata" poster="pisok-poster.jpg">
           <source src="pisok-light.webm" type="video/webm">
           <source src="pisok-light.mp4" type="video/mp4">
           <source src="https://ultera-shape-landing.vercel.app/pisok-light.webm" type="video/webm">
