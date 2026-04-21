@@ -1904,7 +1904,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v70 · preload-all-photos</div>
+<div class="build-tag">v93 · img-opt</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -2389,7 +2389,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
       <button class="m-nav m-nav-next" id="m_next" aria-label="Наступне фото" onclick="setModalPhoto((window.__modalPhotoIdx||0)+1)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
-      <img id="m_img" src="" alt="">
+      <img id="m_img" src="" alt="" decoding="async" fetchpriority="high">
       <div class="m-counter-pill" id="m_counter_pill"><b id="m_counter_cur_g">1</b> / <span id="m_counter_tot_g">1</span></div>
       <div class="modal-dots" id="m_dots" aria-hidden="true"></div>
       <div class="h3intro" id="hunk3Intro" aria-hidden="true" onclick="hun3IntroSkip()">
@@ -2678,6 +2678,30 @@ try {
 </script>
 <script>
 const DATA = JSON.parse(document.getElementById('DATA').textContent);
+/* v92: LCP preload — first active photos of featured rows start downloading
+   before renderFeatured() runs. Avoids cold-cache delay on first visible card. */
+(function(){
+  try{
+    var rows = (DATA.featured || []).concat(DATA.grid || []);
+    var seen = {};
+    var head = document.head || document.getElementsByTagName('head')[0];
+    var limit = 0;
+    for (var i=0; i<rows.length && limit<2; i++){
+      var r = rows[i];
+      var v = r && r.variants && r.variants[0];
+      var ph = v && v.photo;
+      if (!ph || seen[ph]) continue;
+      seen[ph] = 1;
+      var link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = ph;
+      link.setAttribute('fetchpriority', 'high');
+      head.appendChild(link);
+      limit++;
+    }
+  }catch(_){}
+})();
 const EXTRA_PHOTOS = JSON.parse(document.getElementById('EXTRA').textContent);
 /* ————— CART STATE ————— */
 const CART = {
@@ -2818,7 +2842,7 @@ function renderFeatured(){
     const serialTxt = meta.serial + '-' + String(photos.length).padStart(2,'0');
     const handler = meta.handler || `openModal('${row.variants[0].uid}')`;
 
-    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}"><img src="${ph.photo}" alt="${fam} ${ph.name}" loading="lazy"></div>`).join('');
+    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}"><img src="${ph.photo}" alt="${fam} ${ph.name}" ${i===0?'loading="eager" fetchpriority="high" decoding="async"':'loading="lazy" decoding="async"'}></div>`).join('');
     const swatchHtml = photos.map((ph,i) => `<button class="sw${i===0?' active':''}" data-idx="${i}" style="background:${ph.swatch}" aria-label="${ph.name}" title="${ph.name}"></button>`).join('');
 
     return `<div class="feat-card" data-fam="${fam}">
@@ -2876,13 +2900,16 @@ function renderGrid(){
   const classicsEl = document.getElementById('classicsGrid');
   const grid = [];
   const classics = [];
+  let _classicsIdx = 0;
   DATA.grid.forEach(row=>{
     row.variants.forEach(v=>{
       const price = parseFloat(v.price)||0;
       const oldP = (v.sizes && v.sizes[0] && v.sizes[0].price_old) || '';
       const dots = row.variants.map(x=>`<span class="dot" style="background:${x.swatch}"></span>`).join('');
+      const _imgLoad = (_classicsIdx < 2) ? 'loading="eager" fetchpriority="high" decoding="async"' : 'loading="lazy" decoding="async"';
+      _classicsIdx++;
       const card = `<div class="card" data-fam="${row.family}" onclick="openModal('${v.uid}')">
-        <div class="card-img">${badgeFor(v)}<img src="${v.photo}" alt="${v.title}" loading="lazy">
+        <div class="card-img">${badgeFor(v)}<img src="${v.photo}" alt="${v.title}" ${_imgLoad}>
           <div class="card-quick"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
         </div>
         <div class="card-name">${v.title.replace('ULTERA - ','').replace('ULTERA ','')}</div>
@@ -3166,10 +3193,18 @@ function openModal(uid){
     im.src = url;
     window.__preloadCache.set(url, im);
   };
-  // photos of current color (index 1..n-1; photos[0] already set on m_img)
-  for (let _i = 1; _i < photos.length; _i++) _preload(photos[_i]);
-  // main photo of every other variant
-  try { for (const _v of variants) { if (_v && _v.uid !== uid && _v.photo) _preload(_v.photo); } } catch(_){}
+  // v92: defer preload burst so main modal photo (#m_img) wins bandwidth first
+  const _preloadBurst = () => {
+    // photos of current color (index 1..n-1; photos[0] already set on m_img)
+    for (let _i = 1; _i < photos.length; _i++) _preload(photos[_i]);
+    // main photo of every other variant
+    try { for (const _v of variants) { if (_v && _v.uid !== uid && _v.photo) _preload(_v.photo); } } catch(_){}
+  };
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(_preloadBurst, { timeout: 400 });
+  } else {
+    setTimeout(_preloadBurst, 180);
+  }
 
   // Матеріали (однакові для всіх моделей, окрім SHAPE)
   const MATERIALS_DEFAULT = [
