@@ -183,6 +183,18 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
   .field-row,.field-row-3{grid-template-columns:1fr}
   .editor-box{padding:20px 18px;max-height:96vh}
 }
+
+.swatch-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.swatch-preset{
+  width:24px;height:24px;border-radius:50%;
+  border:1.5px solid rgba(14,14,14,.14);
+  padding:0;cursor:pointer;outline:0;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55);
+  transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;
+  flex-shrink:0;
+}
+.swatch-preset:hover{transform:scale(1.1);border-color:rgba(14,14,14,.45)}
+.swatch-preset.sel{transform:scale(1.12);border-color:#0e0e0e;box-shadow:inset 0 0 0 1.5px #fff,0 0 0 2px #0e0e0e22}
 </style>
 </head>
 <body>
@@ -244,7 +256,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
           <div class="meta"><span id="prod-count">0</span> моделей · <span id="fam-count">0</span> сімей</div>
         </div>
         <button class="btn ghost" id="csv-import-btn" style="margin-right:8px"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>CSV SKU</button>
-        <button class="btn primary" id="prod-add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Додати товар</button>
+        <button class="btn ghost" id="shape-sync" type="button" style="margin-right:8px" title="Upsert 5 SHAPE variants"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg>Sync SHAPE</button><button class="btn primary" id="prod-add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Додати товар</button>
       </div>
       <div class="prod-toolbar">
         <input type="search" id="prod-search" placeholder="Пошук за назвою, кольором, SKU…">
@@ -366,6 +378,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
       <div class="field">
         <label>Свотч</label>
         <input type="color" id="ed-color-hex" value="#0a0a0a">
+        <div class="swatch-presets" role="listbox" aria-label="Готові кольори"><button type="button" class="swatch-preset" data-hex="#0a0a0a" data-name="Чорний" title="Чорний  #0a0a0a" style="background:#0a0a0a" aria-label="Чорний #0a0a0a"></button><button type="button" class="swatch-preset" data-hex="#1a1a1a" data-name="Чорний замша" title="Чорний замша  #1a1a1a" style="background:#1a1a1a" aria-label="Чорний замша #1a1a1a"></button><button type="button" class="swatch-preset" data-hex="#d4c4a0" data-name="Бежевий" title="Бежевий  #d4c4a0" style="background:#d4c4a0" aria-label="Бежевий #d4c4a0"></button><button type="button" class="swatch-preset" data-hex="#a8b65f" data-name="Фісташковий" title="Фісташковий  #a8b65f" style="background:#a8b65f" aria-label="Фісташковий #a8b65f"></button><button type="button" class="swatch-preset" data-hex="#ededeb" data-name="Білий" title="Білий  #ededeb" style="background:#ededeb" aria-label="Білий #ededeb"></button><button type="button" class="swatch-preset" data-hex="#9c9a95" data-name="Сірий" title="Сірий  #9c9a95" style="background:#9c9a95" aria-label="Сірий #9c9a95"></button><button type="button" class="swatch-preset" data-hex="#3a3a3a" data-name="Графіт" title="Графіт  #3a3a3a" style="background:#3a3a3a" aria-label="Графіт #3a3a3a"></button><button type="button" class="swatch-preset" data-hex="#2b5684" data-name="Блакитний" title="Блакитний  #2b5684" style="background:#2b5684" aria-label="Блакитний #2b5684"></button><button type="button" class="swatch-preset" data-hex="#5e1626" data-name="Бордо" title="Бордо  #5e1626" style="background:#5e1626" aria-label="Бордо #5e1626"></button><button type="button" class="swatch-preset" data-hex="#b0231f" data-name="Червоний" title="Червоний  #b0231f" style="background:#b0231f" aria-label="Червоний #b0231f"></button><button type="button" class="swatch-preset" data-hex="#d4632a" data-name="Помаранчевий" title="Помаранчевий  #d4632a" style="background:#d4632a" aria-label="Помаранчевий #d4632a"></button></div>
       </div>
     </div>
 
@@ -528,9 +541,34 @@ function authHeaders(){
   return h;
 }
 
-// Generic REST call to PostgREST — handles empty body (201 Created without representation)
+// Preemptively refresh the access_token if it's near expiry (<60s left).
+async function ensureFreshSession(){
+  if (!SESSION || !SESSION.expires_at) return;
+  if (SESSION.expires_at * 1000 < Date.now() + 60000){
+    const fresh = await authRefresh();
+    if (fresh){
+      SESSION = fresh;
+      if (fresh.user) USER = fresh.user;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(fresh));
+    }
+  }
+}
+
+// One-shot: try to refresh the session on 401. Returns true if refresh succeeded.
+async function tryRefreshOn401(){
+  const fresh = await authRefresh();
+  if (!fresh || !fresh.access_token) return false;
+  SESSION = fresh;
+  if (fresh.user) USER = fresh.user;
+  localStorage.setItem(SESSION_KEY, JSON.stringify(fresh));
+  return true;
+}
+
+// Generic REST call to PostgREST — handles empty body (201 Created without representation).
+// Auto-refreshes JWT on 401 (JWT expired) and retries once.
 async function rest(path, opts={}){
-  const r = await fetch(SB_URL + '/rest/v1/' + path, {
+  await ensureFreshSession();
+  const buildInit = () => ({
     ...opts,
     headers: {
       ...authHeaders(),
@@ -538,6 +576,18 @@ async function rest(path, opts={}){
       ...(opts.headers||{})
     }
   });
+  let r = await fetch(SB_URL + '/rest/v1/' + path, buildInit());
+  if (r.status === 401 && SESSION && SESSION.refresh_token){
+    if (await tryRefreshOn401()){
+      r = await fetch(SB_URL + '/rest/v1/' + path, buildInit());
+    } else {
+      // refresh failed — kick user back to login
+      SESSION = null; USER = null; localStorage.removeItem(SESSION_KEY);
+      toast('Сесія прострочена — увійдіть знову', 'err');
+      setTimeout(()=>location.reload(), 1500);
+      throw new Error('REST 401: session expired');
+    }
+  }
   if (!r.ok) throw new Error('REST ' + r.status + ': ' + await r.text());
   if (r.status === 204) return null;
   const txt = await r.text();
@@ -579,13 +629,20 @@ async function authSignOut(){
   showAuth();
 }
 
-// Storage helpers
+// Storage helpers — auto-refresh JWT on 401 / retry once.
 async function storageUpload(path, file){
-  const r = await fetch(SB_URL + '/storage/v1/object/' + BUCKET + '/' + path, {
+  await ensureFreshSession();
+  const buildInit = () => ({
     method: 'POST',
     headers: { ...authHeaders(), 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'false' },
     body: file
   });
+  let r = await fetch(SB_URL + '/storage/v1/object/' + BUCKET + '/' + path, buildInit());
+  if (r.status === 401 && SESSION && SESSION.refresh_token){
+    if (await tryRefreshOn401()){
+      r = await fetch(SB_URL + '/storage/v1/object/' + BUCKET + '/' + path, buildInit());
+    }
+  }
   if (!r.ok) throw new Error('Upload: ' + r.status + ' ' + await r.text());
   return SB_URL + '/storage/v1/object/public/' + BUCKET + '/' + path;
 }
@@ -1226,5 +1283,122 @@ document.getElementById('csv-apply-btn').onclick = async ()=>{
 document.querySelector('[data-page="orders"]').addEventListener('click', loadOrders);
 </script>
 
-</body>
+<script>
+// — Swatch-preset chips (admin v87) —
+(function(){
+  function wire(){
+    var chips = document.querySelectorAll('.swatch-preset');
+    if (!chips.length) return;
+    var input = document.getElementById('ed-color-hex');
+    var nameInput = document.getElementById('ed-color-name');
+    function syncSel(){
+      var cur = (input && input.value || '').toLowerCase();
+      chips.forEach(function(c){
+        c.classList.toggle('sel', (c.dataset.hex||'').toLowerCase() === cur);
+      });
+    }
+    chips.forEach(function(c){
+      c.addEventListener('click', function(){
+        var hex = c.dataset.hex || '';
+        var name = c.dataset.name || '';
+        if (input) {
+          input.value = hex;
+          input.dispatchEvent(new Event('input', {bubbles:true}));
+          input.dispatchEvent(new Event('change', {bubbles:true}));
+        }
+        if (nameInput && !nameInput.value.trim()) nameInput.value = name;
+        syncSel();
+      });
+    });
+    if (input) input.addEventListener('input', syncSel);
+    syncSel();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
+  else wire();
+})();
+</script><script>
+// — SHAPE sync (admin v88) —
+// Upsert 5 new SHAPE variants with their static data so the Supabase
+// ulhome_products table matches what's shown on the live site.
+(function(){
+  const PRESETS = [
+    {uid:'184767423395', family:'SHAPE', title:'ULTERA - SHAPE Блакитний',   color_name:'Блакитний',    color_hex:'#2b5684', photo:'/photos/shape-blue.webp',     price:2790, mark:'NEW NEW NEW'},
+    {uid:'621792744368', family:'SHAPE', title:'ULTERA - SHAPE Бордо',       color_name:'Бордо',        color_hex:'#5e1626', photo:'/photos/shape-burgundy.webp', price:2790, mark:'NEW NEW NEW'},
+    {uid:'329608071197', family:'SHAPE', title:'ULTERA - SHAPE Сірий',       color_name:'Сірий',        color_hex:'#9c9a95', photo:'/photos/shape-gray.webp',     price:2790, mark:'NEW NEW NEW'},
+    {uid:'255434553144', family:'SHAPE', title:'ULTERA - SHAPE Помаранчевий',color_name:'Помаранчевий', color_hex:'#d4632a', photo:'/photos/shape-orange.webp',   price:2790, mark:'NEW NEW NEW'},
+    {uid:'247156876545', family:'SHAPE', title:'ULTERA - SHAPE Червоний',    color_name:'Червоний',     color_hex:'#b0231f', photo:'/photos/shape-red.webp',      price:2790, mark:'NEW NEW NEW'}
+  ];
+  const SIZE_LIST = [
+    {eu:'39', cm:'25.5', qty:''},
+    {eu:'40', cm:'26',   qty:''},
+    {eu:'41', cm:'27',   qty:''},
+    {eu:'42', cm:'28',   qty:''},
+    {eu:'43', cm:'28.5', qty:''},
+    {eu:'44', cm:'29',   qty:''},
+    {eu:'45', cm:'30',   qty:''}
+  ];
+  const TEMPLATE = {
+    brand: 'ULTERA',
+    category: 'Весна-Осінь',
+    published: true,
+    desc_short: 'Анатомічні тапочки 36-45р',
+    characteristics: 'Анатомічна підошва\nІталійська шкіра Nappa\nРучна робота (Харків)\nГарантія 1 рік\nОбмін та повернення',
+    materials: 'натуральна шкіра Nappa (Італія)\nпідошва EVA\nустілка анатомічна форма',
+    description_long: '<p><strong>ULTERA Shape</strong> — літні тапочки з анатомічною підошвою. Комфорт, лаконічний дизайн і преміальні матеріали на кожен день. Ручна робота, Харків.</p>'
+  };
+
+  async function upsertVariant(v){
+    // Check if exists
+    const found = await rest('ulhome_products?uid=eq.' + encodeURIComponent(v.uid) + '&select=id');
+    const payload = Object.assign({}, TEMPLATE, v, {
+      sizes: SIZE_LIST,
+      size_list: SIZE_LIST
+    });
+    if (Array.isArray(found) && found.length){
+      const id = found[0].id;
+      await rest('ulhome_products?id=eq.' + id, {
+        method:'PATCH',
+        headers:{Prefer:'return=representation'},
+        body: JSON.stringify(payload)
+      });
+      return {uid: v.uid, action: 'updated', id: id};
+    } else {
+      const created = await rest('ulhome_products', {
+        method:'POST',
+        headers:{Prefer:'return=representation'},
+        body: JSON.stringify(payload)
+      });
+      return {uid: v.uid, action: 'created', id: (created && created[0] && created[0].id) || null};
+    }
+  }
+
+  async function runSync(){
+    if (!confirm('Upsert 5 SHAPE variants (Блакитний, Бордо, Сірий, Помаранчевий, Червоний) в Supabase?\n\nІснуючі записи з тим самим uid будуть оновлені.\nФото і hex = такі ж як на сайті.')) return;
+    const btn = document.getElementById('shape-sync');
+    btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Syncing…';
+    const results = [];
+    try {
+      for (const v of PRESETS){
+        const r = await upsertVariant(v);
+        results.push(r);
+        toast(v.color_name + ': ' + r.action + (r.id ? ' (#' + r.id + ')' : ''), 'ok');
+      }
+      toast('SHAPE sync: ' + results.length + ' варіантів готово', 'ok');
+      if (typeof loadProducts === 'function') await loadProducts();
+      if (typeof renderList === 'function') renderList();
+    } catch(e){
+      toast('Sync failed: ' + e.message, 'err');
+    } finally {
+      btn.disabled = false; btn.textContent = prev;
+    }
+  }
+
+  function wire(){
+    const btn = document.getElementById('shape-sync');
+    if (btn && !btn.__wired){ btn.__wired = true; btn.addEventListener('click', runSync); }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
+  else wire();
+})();
+</script></body>
 </html>
