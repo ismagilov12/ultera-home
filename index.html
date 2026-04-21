@@ -3857,6 +3857,9 @@ async function wizardSubmit(){
     var fioParts = String(CART.wizard.fio||'').trim().split(/\s+/);
     var clientFirstName = fioParts[0] || '';
     var clientLastName  = fioParts.slice(1).join(' ') || '';
+    var wfpItems = CART.items.map(function(it){
+      return { uid: String(it.uid||''), qty: Number(it.qty||1) };
+    });
     var products = CART.items.map(function(it){
       return {
         name: String(it.title||'item'),
@@ -3873,6 +3876,7 @@ async function wizardSubmit(){
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
           orderReference: String(orderNum),
+          items: wfpItems,
           amount: wfpAmount,
           products: products,
           clientFirstName: clientFirstName,
