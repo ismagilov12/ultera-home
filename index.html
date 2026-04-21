@@ -683,7 +683,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .modal-img{display:block;order:unset;grid-row:auto;grid-column:auto;width:100%;aspect-ratio:4/5;height:auto;min-height:0;max-height:none;touch-action:pan-y;flex-shrink:0}
   .modal-img img{object-fit:cover;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
   .modal-strip{display:none !important}
-  .modal-dots{display:flex}
+  .modal-dots{display:none} /* v88: hide old dots/counter on mobile — .m-counter-pill replaces it */
   .modal-body{display:block;order:unset;grid-row:auto;grid-column:auto;width:100%;padding:18px 20px 36px;overflow:visible;max-height:none}
   .video-btn{top:14px;left:14px;font-size:10px;padding:6px 12px 6px 6px}
 }
@@ -3253,13 +3253,15 @@ function openModal(uid){
     window.__shapeIntroActive = false;
 
     if (__freshOpen) {
-      if (__intro && (p.family === 'Hunk3' || p.family === 'Hunk3 Suede')) {
+      /* v88: case-insensitive + trimmed — Supabase LIVE_BOOTSTRAP may return different case */
+      var __fam = String(p.family == null ? '' : p.family).trim().toLowerCase();
+      if (__intro && (__fam === 'hunk3' || __fam === 'hunk3 suede')) {
         void __intro.offsetWidth;
         __intro.classList.add('on');
         window.__hun3IntroActive = true;
         window.__hun3IntroTimers.push(setTimeout(function(){ __intro.classList.add('phase2'); }, 1650));
         window.__hun3IntroTimers.push(setTimeout(function(){ __intro.classList.add('phase3'); }, 2400));
-      } else if (__shapeI && p.family === 'SHAPE') {
+      } else if (__shapeI && __fam === 'shape') {
         void __shapeI.offsetWidth;
         __shapeI.classList.add('on');
         window.__shapeIntroActive = true;
