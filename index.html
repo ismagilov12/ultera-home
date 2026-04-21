@@ -2,6 +2,18 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
+<script>
+/* v75: handle legacy Tilda /tproduct/:pageId-:uid-:slug URL.
+   Run BEFORE any <link rel="preload"> or <img> with relative paths,
+   so banners/photos resolve against / and not /tproduct/.../*. */
+try {
+  if (location.pathname.indexOf('/tproduct/') === 0) {
+    var __m = location.pathname.match(/^\/tproduct\/\d+-(\d+)/);
+    if (__m) window.__tproduct_uid__ = __m[1];
+    history.replaceState({}, '', '/');
+  }
+} catch(e){}
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <link rel="preload" as="image" type="image/avif" href="banners/home-pc-5.avif" media="(min-width:761px)">
 <link rel="preload" as="image" type="image/avif" href="banners/home-mob-5.avif" media="(max-width:760px)">
@@ -1237,15 +1249,13 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .cd-item-rm:hover{color:var(--ink)}
 
 /* footer */
-.cd-foot{padding:18px 24px 22px;border-top:1px solid var(--line);background:var(--bg-alt)}
+.cd-foot{padding:18px 24px 22px;border-top:1px solid var(--line);background:var(--bg-alt)} .cd-promo{position:relative;margin:12px 24px;background:linear-gradient(135deg,#f0fae5 0%,#e4f1d3 100%);border:1px solid #c6dca6;border-radius:14px;overflow:hidden;font-family:var(--font-sans);color:var(--ink)}.cd-promo[hidden]{display:none}.cd-promo-close{position:absolute;top:8px;right:8px;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:rgba(14,14,14,0.06);color:var(--ink);cursor:pointer;font-size:13px;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,transform .15s;z-index:2}.cd-promo-close:hover{background:rgba(14,14,14,0.16);transform:rotate(90deg)}.cd-promo-head{padding:12px 36px 10px 14px;border-bottom:1px solid rgba(14,14,14,0.08)}.cd-promo-head .lbl{display:inline-block;font-family:var(--font-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--mint);background:var(--ink);padding:2px 6px;border-radius:3px;font-weight:700;margin-right:8px;vertical-align:1px}.cd-promo-head .ttl{font-size:13px;font-weight:600;line-height:1.3;letter-spacing:-.005em;display:inline}.cd-promo-body{display:grid;grid-template-columns:104px 1fr;gap:14px;padding:12px 14px;align-items:center}.cd-promo-photo{width:104px;height:104px;border-radius:11px;background:#fff;border:1px solid rgba(14,14,14,0.1);object-fit:cover;display:block}.cd-promo-side-lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-60);margin-bottom:7px}.cd-promo-side-lbl .v{color:var(--ink);font-weight:600;letter-spacing:.04em;text-transform:none;font-family:var(--font-sans);margin-left:6px}.cd-promo-colors{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}.cd-promo-color{position:relative;width:32px;height:32px;border-radius:8px;padding:0;border:1.5px solid rgba(14,14,14,0.18);background:#fff;cursor:pointer;overflow:hidden;transition:border-color .15s,transform .15s;flex-shrink:0}.cd-promo-color img{width:100%;height:100%;object-fit:cover;display:block}.cd-promo-color:hover{border-color:var(--ink-40)}.cd-promo-color.sel{border-color:var(--ink);border-width:2px;transform:scale(1.06)}.cd-promo-price{font-family:var(--font-mono);font-size:12px;letter-spacing:.01em;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.cd-promo-price s{opacity:0.4;font-weight:400;font-size:11px}.cd-promo-price b{font-weight:700;font-size:15px;letter-spacing:-.01em}.cd-promo-save{background:var(--ink);color:var(--mint);font-family:var(--font-mono);font-size:9px;padding:2px 5px;border-radius:3px;letter-spacing:.04em;font-weight:700}.cd-promo-foot{display:grid;grid-template-columns:140px 1fr;gap:8px;padding:0 14px 14px;align-items:stretch}.cd-promo-size-sel{height:42px;padding:0 12px;border:1.5px solid var(--ink);background:#fff;border-radius:9px;font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;letter-spacing:.04em;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230e0e0e' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");background-repeat:no-repeat;background-position:right 10px center;background-size:14px;padding-right:30px;transition:border-color .15s}.cd-promo-size-sel:hover{border-color:var(--ink-80)}.cd-promo-size-sel:focus{outline:2px solid rgba(14,14,14,0.18);outline-offset:1px}.cd-promo-add{height:42px;padding:0 14px;border:0;border-radius:9px;background:var(--ink);color:var(--mint);font-family:var(--font-mono);font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:opacity .15s,transform .15s}.cd-promo-add:hover{opacity:.92;transform:translateY(-1px)}.cd-promo-add:disabled{opacity:.32;cursor:not-allowed;transform:none}.cd-promo-add .arrow{font-size:13px;font-weight:400}.cd-item.is-promo .cd-item-price s{opacity:.45;font-weight:400;margin-right:4px;font-size:12px}.cd-item .cd-disc{display:inline-block;margin-left:6px;padding:2px 6px;background:var(--ink);color:var(--mint);border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.05em;vertical-align:middle;font-family:var(--font-mono)}@media (max-width:760px){.cd-promo{margin:10px 18px;border-radius:12px}.cd-promo-head{padding:10px 32px 8px 12px}.cd-promo-head .ttl{font-size:12px}.cd-promo-body{grid-template-columns:84px 1fr;gap:12px;padding:10px 12px}.cd-promo-photo{width:84px;height:84px;border-radius:10px}.cd-promo-color{width:30px;height:30px;border-radius:7px}.cd-promo-foot{grid-template-columns:120px 1fr;padding:0 12px 12px;gap:8px}.cd-promo-size-sel{height:40px;font-size:12px}.cd-promo-add{height:40px;font-size:10px;padding:0 12px}.cd-promo-price b{font-size:14px}}@media (max-width:420px){.cd-promo-foot{grid-template-columns:1fr;gap:8px}.cd-promo-body{grid-template-columns:72px 1fr;gap:10px}.cd-promo-photo{width:72px;height:72px}}.cd-promo-photo{cursor:zoom-in;transition:transform .15s}.cd-promo-photo:hover{transform:scale(1.03)}.cd-promo-zoom{position:fixed;inset:0;background:rgba(14,14,14,0.85);display:flex;align-items:center;justify-content:center;z-index:10000;opacity:0;transition:opacity .2s ease;cursor:zoom-out;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:24px}.cd-promo-zoom.open{opacity:1}.cd-promo-zoom img{max-width:min(560px,92vw);max-height:90vh;width:auto;height:auto;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.5);transform:scale(.94);transition:transform .25s cubic-bezier(.2,.8,.2,1);background:#fff}.cd-promo-zoom.open img{transform:scale(1)}.cd-promo-zoom-close{position:fixed;top:20px;right:20px;width:42px;height:42px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,0.15);color:#fff;font-size:18px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,transform .15s;z-index:1}.cd-promo-zoom-close:hover{background:rgba(255,255,255,0.28);transform:rotate(90deg)}@media (max-width:760px){.cd-promo-zoom{padding:16px}.cd-promo-zoom img{max-width:94vw;max-height:82vh;border-radius:12px}.cd-promo-zoom-close{width:36px;height:36px;top:14px;right:14px;font-size:16px}}ont-size:12px}}
 .cd-sum{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-60)}
 .cd-sum b{font-family:var(--font-sans,system-ui);font-size:24px;font-weight:900;letter-spacing:-.02em;color:var(--ink)}
-.cd-cta{width:100%;padding:18px;background:var(--ink);color:#fff;border:0;border-radius:0;font-family:var(--font-mono);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;position:relative;overflow:hidden}
-.cd-cta::before{content:"";position:absolute;inset:0;background:var(--mint);transform:translateX(-101%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
-.cd-cta:hover::before{transform:translateX(0)}
-.cd-cta > *{position:relative;z-index:1;transition:color .35s}
-.cd-cta:hover > *{color:var(--ink)}
-.cd-cta svg{width:16px;height:16px}
+.cd-cta{width:100%;padding:18px;background:var(--ink);color:#fff;border:0;border-radius:12px;font-family:var(--font-mono);font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s,transform .2s,box-shadow .2s;position:relative;overflow:hidden;box-shadow:0 2px 14px rgba(14,14,14,0.18)}
+.cd-cta:hover{background:#000;transform:translateY(-1px);box-shadow:0 6px 20px rgba(14,14,14,0.28)}
+.cd-cta:active{transform:translateY(0)}
+.cd-cta svg{width:18px;height:18px;flex-shrink:0}
 .cd-bene{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:14px;color:var(--ink-60);font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;justify-content:center;text-transform:uppercase}
 
 /* wizard */
@@ -1910,6 +1920,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
       </div>
       <div class="cd-list-wrap" id="cdListWrap" style="display:none">
         <div class="cd-list" id="cdList"></div>
+        <div id="cdShapePromo" class="cd-promo" hidden></div>
         <div class="cd-foot">
           <div class="cd-sum"><span>Сума</span><b id="cdSum">0 ₴</b></div>
           <button class="cd-cta" onclick="startCheckout()">Замовити в 1 клік
@@ -2218,7 +2229,24 @@ const CART = {
   },
   setQty(i, q){ if(!this.items[i]) return; if(q<=0){ this.items.splice(i,1); } else { this.items[i].qty = q; } this.save(); },
   remove(i){ this.items.splice(i,1); this.save(); },
-  clear(){ this.items=[]; this.save(); }
+  clear(){ this.items=[]; this.save(); },
+  addPromo(item){ this.items.push({...item, qty: 1}); this.save(); },
+  reconcilePromo(){
+    // Если нет полной пары Shape (не promoSecond) — снять скидку у промо-пары
+    const hasFull = this.items.some(x => x && !x.promoSecond && (x.qty||1) > 0);
+    if(hasFull) return;
+    let changed = false;
+    this.items.forEach(x => {
+      if(x && x.promoSecond){
+        x.price = x.priceFull || x.price;
+        if(typeof x.title === 'string') x.title = x.title.replace(/\s*\u00B7\s*\u0414\u0440\u0443\u0433\u0430 \u043F\u0430\u0440\u0430\s*\u221230%\s*$/u, '');
+        delete x.promoSecond;
+        delete x.priceFull;
+        changed = true;
+      }
+    });
+    if(changed) this.save();
+  }
 };
 function updateCartBadge(){ document.getElementById('cartCount').textContent = CART.count(); }
 updateCartBadge();
@@ -2878,7 +2906,7 @@ function renderCart(){
   empty.style.display = 'none'; wrap.style.display = '';
   const list = document.getElementById('cdList');
   list.innerHTML = CART.items.map((it,i)=>
-    '<div class="cd-item">' +
+    '<div class="cd-item'+(it.promoSecond?' is-promo':'')+'">' +
       '<img src="'+it.photo+'" alt="">' +
       '<div class="cd-item-info">' +
         '<div class="cd-item-t">'+it.title+'</div>' +
@@ -2886,15 +2914,193 @@ function renderCart(){
         '<div class="cd-item-qty"><button onclick="cartQty('+i+',-1)">−</button><b>'+(it.qty||1)+'</b><button onclick="cartQty('+i+',1)">+</button></div>' +
       '</div>' +
       '<div>' +
-        '<div class="cd-item-price">'+Math.round(parseFloat(it.price)||0).toLocaleString('uk-UA')+' ₴</div>' +
+        '<div class="cd-item-price">'+itemPriceHtml(it)+'</div>' +
         '<button class="cd-item-rm" onclick="cartRm('+i+')" aria-label="Видалити">✕</button>' +
       '</div>' +
     '</div>'
   ).join('');
   document.getElementById('cdSum').textContent = Math.round(CART.total()).toLocaleString('uk-UA') + ' ₴';
+  renderShapePromo();
 }
-function cartQty(i, d){ CART.setQty(i, (CART.items[i]?.qty||1) + d); updateCartBadge(); renderCart(); }
-function cartRm(i){ CART.remove(i); updateCartBadge(); renderCart(); }
+function cartQty(i, d){ CART.setQty(i, (CART.items[i]?.qty||1) + d); CART.reconcilePromo(); updateCartBadge(); renderCart(); }
+function cartRm(i){ CART.remove(i); CART.reconcilePromo(); updateCartBadge(); renderCart(); }
+
+/* ————— SHAPE bonus pair −30% ————— */
+var _shapePromo = { colorIdx: 0, size: '' };
+
+function itemPriceHtml(it){
+  var cur = Math.round(parseFloat(it.price)||0).toLocaleString('uk-UA');
+  if(it.promoSecond && it.priceFull){
+    var full = Math.round(parseFloat(it.priceFull)||0).toLocaleString('uk-UA');
+    return '<s>'+full+' ₴</s> <b>'+cur+' ₴</b> <span class="cd-disc">−30%</span>';
+  }
+  return cur + ' ₴';
+}
+
+function getShapeVariants(){
+  try {
+    if(!window.DATA || !DATA.all) return [];
+    var seen = {};
+    var out = [];
+    DATA.all.forEach(function(p){
+      if(!p || p.family !== 'SHAPE') return;
+      var key = p.uid + '|' + (p.color_name||'');
+      if(seen[key]) return;
+      seen[key] = 1;
+      out.push(p);
+    });
+    return out;
+  } catch(e){ return []; }
+}
+
+function shapePromoState(){
+  var hasFull = CART.items.some(function(x){ return x && !x.promoSecond && (x.qty||1) > 0; });
+  var hasPromo = CART.items.some(function(x){ return x && x.promoSecond; });
+  return { hasFull: hasFull, hasPromo: hasPromo };
+}
+
+function _cleanColorName(v){
+  var n = (v && v.color_name) || '';
+  return n.replace('ULTERA - SHAPE','').trim() || 'Base';
+}
+
+// Округление цены вверх до ближайших 25 ₴ — даёт красивые маркетинговые цифры
+// (2790*0.7=1953 → 1975, 2890*0.7=2023 → 2025). Эффективная скидка ~29-30%.
+function shapeBonusRound(x){ return Math.ceil(x/25)*25; }
+
+function renderShapePromo(){
+  var el = document.getElementById('cdShapePromo');
+  if(!el) return;
+  if(window._shapePromoDismissed){ el.hidden = true; el.innerHTML = ''; return; }
+  var st = shapePromoState();
+  if(!st.hasFull || st.hasPromo){ el.hidden = true; el.innerHTML = ''; return; }
+  var variants = getShapeVariants();
+  if(!variants.length){ el.hidden = true; el.innerHTML = ''; return; }
+
+  if(_shapePromo.colorIdx >= variants.length || _shapePromo.colorIdx < 0) _shapePromo.colorIdx = 0;
+  var cur = variants[_shapePromo.colorIdx];
+  var fullPrice = Math.round(parseFloat(cur.price)||0);
+  var discPrice = shapeBonusRound(fullPrice * 0.7);
+  var saved = fullPrice - discPrice;
+  var curColor = _cleanColorName(cur);
+
+  var colorsHtml = variants.map(function(v, i){
+    var photo = v.photo || '';
+    var name = _cleanColorName(v);
+    var sel = (i === _shapePromo.colorIdx) ? ' sel' : '';
+    return '<button type="button" class="cd-promo-color'+sel+'" title="'+name+'" aria-label="'+name+'" onclick="selectPromoColor('+i+')">' +
+      (photo ? '<img src="'+photo+'" alt="'+name+'" loading="lazy">' : '') +
+    '</button>';
+  }).join('');
+
+  var sizes = (cur.size_list && cur.size_list.length)
+              ? cur.size_list.map(function(sl){ return sl.eu; })
+              : ['39','40','41','42','43','44','45'];
+  var sizeOpts = '<option value="">Розмір EU</option>' + sizes.map(function(sz){
+    var sel = (sz === _shapePromo.size) ? ' selected' : '';
+    return '<option value="'+sz+'"'+sel+'>EU '+sz+'</option>';
+  }).join('');
+
+  var canAdd = (_shapePromo.size !== '');
+  var btnLabel = canAdd
+    ? ('Додати · ' + discPrice.toLocaleString('uk-UA') + ' ₴')
+    : 'Оберіть розмір';
+
+  var photoSrc = cur.photo || '';
+  el.innerHTML = ''+
+    '<button type="button" class="cd-promo-close" onclick="dismissShapePromo()" aria-label="Закрити">✕</button>'+
+    '<div class="cd-promo-head">'+
+      '<span class="lbl">−30%</span>'+
+      '<span class="ttl">Додай літні тапочки Shape зі знижкою −30%</span>'+
+    '</div>'+
+    '<div class="cd-promo-body">'+
+      (photoSrc ? '<img class="cd-promo-photo" src="'+photoSrc+'" alt="'+curColor+'" loading="lazy" onclick="openPromoZoom(\''+photoSrc+'\',\''+curColor+'\')">' : '<div class="cd-promo-photo"></div>')+
+      '<div>'+
+        '<div class="cd-promo-side-lbl">Колір<span class="v">'+curColor+'</span></div>'+
+        '<div class="cd-promo-colors">'+colorsHtml+'</div>'+
+        '<div class="cd-promo-price">'+
+          '<b>'+discPrice.toLocaleString('uk-UA')+' ₴</b>'+
+          '<s>'+fullPrice.toLocaleString('uk-UA')+' ₴</s>'+
+          '<span class="cd-promo-save">−'+saved.toLocaleString('uk-UA')+' ₴</span>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="cd-promo-foot">'+
+      '<select class="cd-promo-size-sel" onchange="selectPromoSize(this.value)">'+sizeOpts+'</select>'+
+      '<button type="button" class="cd-promo-add" onclick="confirmShapeBonus()" '+(canAdd?'':'disabled')+'>'+
+        '<span>'+btnLabel+'</span>'+
+        '<span class="arrow">→</span>'+
+      '</button>'+
+    '</div>';
+  el.hidden = false;
+}
+
+function dismissShapePromo(){
+  window._shapePromoDismissed = true;
+  var el = document.getElementById('cdShapePromo');
+  if(el){ el.hidden = true; el.innerHTML = ''; }
+}
+
+function openPromoZoom(src, alt){
+  if(!src) return;
+  // prevent multiple overlays
+  var existing = document.querySelector('.cd-promo-zoom');
+  if(existing) return;
+  var ov = document.createElement('div');
+  ov.className = 'cd-promo-zoom';
+  ov.setAttribute('role','dialog');
+  ov.setAttribute('aria-modal','true');
+  ov.innerHTML = '<button class="cd-promo-zoom-close" aria-label="Закрити">✕</button><img src="'+src+'" alt="'+(alt||'')+'">';
+  function closeZoom(){
+    ov.classList.remove('open');
+    setTimeout(function(){ if(ov && ov.parentNode) ov.remove(); document.removeEventListener('keydown', onEsc); }, 220);
+  }
+  function onEsc(e){ if(e.key === 'Escape') closeZoom(); }
+  ov.addEventListener('click', function(e){ closeZoom(); });
+  document.body.appendChild(ov);
+  document.addEventListener('keydown', onEsc);
+  requestAnimationFrame(function(){ ov.classList.add('open'); });
+}
+
+function selectPromoColor(idx){
+  _shapePromo.colorIdx = idx;
+  renderShapePromo();
+}
+
+function selectPromoSize(sz){
+  _shapePromo.size = sz;
+  renderShapePromo();
+}
+
+function confirmShapeBonus(){
+  if(_shapePromo.size === ''){
+    if(typeof toast === 'function') toast('Оберіть розмір');
+    return;
+  }
+  var variants = getShapeVariants();
+  var v = variants[_shapePromo.colorIdx];
+  if(!v){ if(typeof toast === 'function') toast('Варіант не знайдено'); return; }
+  var full = Math.round(parseFloat(v.price)||0);
+  var disc = shapeBonusRound(full * 0.7);
+  var item = {
+    uid: v.uid,
+    title: (v.title||'').replace('ULTERA - ','').replace('ULTERA ','') + ' · Друга пара −30%',
+    photo: v.photo || '',
+    color_name: _cleanColorName(v),
+    size: _shapePromo.size,
+    price: disc,
+    priceFull: full,
+    family: 'SHAPE',
+    promoSecond: true
+  };
+  CART.addPromo(item);
+  _shapePromo.size = '';
+  updateCartBadge();
+  renderCart();
+  if(typeof toast === 'function') toast('Додано другу пару · −30%');
+}
+
+
 
 function phoneMask(raw){
   let d = raw.replace(/\D/g, '');
@@ -3006,7 +3212,7 @@ async function sendLead(){
       fio: CART.wizard.fio,
       phone: CART.wizard.phone,
       total: CART.total(),
-      items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family}))
+      items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, priceFull: it.priceFull||null}))
     };
     const r = await fetch('/api/order', {
       method: 'POST',
@@ -3065,7 +3271,7 @@ async function wizardSubmit(){
     wh: CART.wizard.wh, whRef: CART.wizard.whRef,
     payment: pm,
     total: CART.total(),
-    items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family}))
+    items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, priceFull: it.priceFull||null}))
   };
   try {
     const r = await fetch('/api/order', {
@@ -3089,6 +3295,7 @@ async function wizardSubmit(){
         price: Math.round(parseFloat(it.price)||0)
       };
     });
+    // NOTE: promoSecond items already carry discounted price in it.price — WayForPay gets final amounts directly
     var total = Math.round(CART.total());
     var wfpAmount = (pm === 'np') ? 500 : total;
     try {
@@ -3245,6 +3452,31 @@ async function wizardSubmit(){
     document.addEventListener('DOMContentLoaded', runPaidCheck);
   } else {
     setTimeout(runPaidCheck, 0);
+  }
+})();
+
+/* ————— LEGACY TILDA /tproduct/ → openModal — opener (URL was already
+   normalized to / by the early <head> script; uid stashed in window.__tproduct_uid__) ————— */
+(function(){
+  function runTproductOpen(){
+    var uid = window.__tproduct_uid__;
+    if (!uid) return;
+    var tries = 0;
+    function tryOpen(){
+      tries++;
+      if (tries > 80) return; /* ~8s max */
+      if (typeof openModal === 'function') {
+        try { openModal(uid); } catch(e){ console.warn('tproduct openModal err', e); }
+      } else {
+        setTimeout(tryOpen, 100);
+      }
+    }
+    tryOpen();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runTproductOpen);
+  } else {
+    setTimeout(runTproductOpen, 0);
   }
 })();
 
