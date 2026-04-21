@@ -3,13 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <script>
-/* v75: handle legacy Tilda /tproduct/:pageId-:uid-:slug URL.
-   Run BEFORE any <link rel="preload"> or <img> with relative paths,
-   so banners/photos resolve against / and not /tproduct/.../*. */
+/* v87: handle legacy Tilda product URLs — both /tproduct/... and clean custom form.
+   Supports:
+     /tproduct/{pageId}-{uid}-{slug}   (Tilda default — preserved from v75)
+     /{pageId}-{uid}-{slug}            (Tilda custom URL — ads pointing to bare path)
+   Runs BEFORE any <link rel="preload"> or <img> with relative paths,
+   so banners/photos resolve against / and not the legacy path. */
 try {
-  if (location.pathname.indexOf('/tproduct/') === 0) {
-    var __m = location.pathname.match(/^\/tproduct\/\d+-(\d+)/);
-    if (__m) window.__tproduct_uid__ = __m[1];
+  var __p = location.pathname;
+  var __uid = null;
+  if (__p.indexOf('/tproduct/') === 0) {
+    var __m = __p.match(/^\/tproduct\/\d+-(\d+)/);
+    if (__m) __uid = __m[1];
+  } else {
+    var __m2 = __p.match(/^\/(\d{7,})-(\d{10,})(?:-[^/]*)?\/?$/);
+    if (__m2) __uid = __m2[2];
+  }
+  if (__uid) {
+    window.__tproduct_uid__ = __uid;
     history.replaceState({}, '', '/');
   }
 } catch(e){}
