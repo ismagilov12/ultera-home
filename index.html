@@ -478,7 +478,7 @@ input,textarea,select{font:inherit;color:inherit}
 .card-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .card-colors{display:flex;gap:4px}
 /* v113: Woman Collection section divider between male and female families */
-.gender-divider{grid-column:1/-1;display:flex;align-items:center;gap:18px;margin:40px 0 12px;padding:0 4px}
+.gender-divider{grid-column:1/-1;display:flex;align-items:center;gap:18px;margin:48px 0 20px;padding:0 4px;width:100%;box-sizing:border-box}
 .gender-divider::before,.gender-divider::after{content:"";flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(14,14,14,.22),transparent)}
 .gender-divider b{font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);white-space:nowrap;font-weight:700}
 .gender-divider small{font-family:var(--font-mono,ui-monospace,monospace);font-size:9.5px;letter-spacing:.14em;color:rgba(14,14,14,.5);display:block;margin-top:4px}
@@ -4600,26 +4600,28 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
   };
 })();
 
-/* v113: insert Woman Collection divider between male and first female (W) family */
+/* v113.1: insert Woman Collection divider between last male and first female card */
 function insertWomanDivider(){
   try {
-    var gridEl = document.getElementById('gridWrap');
-    if (!gridEl) return;
-    // Remove old divider if any (for re-render)
-    var old = gridEl.querySelector('.gender-divider'); if (old) old.remove();
-    var cards = gridEl.querySelectorAll('.card[data-fam]');
+    // Walk ALL .card[data-fam] across the document (women are in #featuredWrap,
+    // not only in #gridWrap as the previous implementation assumed).
+    var cards = document.querySelectorAll('.card[data-fam]');
+    // Clean up any stale dividers so re-render stays idempotent.
+    document.querySelectorAll('.gender-divider').forEach(function(d){ d.remove(); });
+
     var firstFemCard = null;
     for (var i=0; i<cards.length; i++){
-      var fam = cards[i].getAttribute('data-fam') || '';
-      if (/\sW$|\sW_?$/i.test(fam) || / W$/.test(fam)){
-        firstFemCard = cards[i]; break;
-      }
+      var fam = (cards[i].getAttribute('data-fam') || '').trim();
+      // Family with trailing " W" is women (Hunk W, Aganta W, Hunk3 W, …).
+      if (/ W$/i.test(fam)){ firstFemCard = cards[i]; break; }
     }
-    if (!firstFemCard) return;
+    if (!firstFemCard) { console.warn('[woman-divider] no W card found'); return; }
+
     var div = document.createElement('div');
     div.className = 'gender-divider';
     div.innerHTML = '<div class="gd-label"><b>Woman Collection</b><small>Жіночі моделі</small></div>';
     firstFemCard.parentNode.insertBefore(div, firstFemCard);
+    try { console.log('[woman-divider] inserted before', firstFemCard.getAttribute('data-fam')); } catch(_){}
   } catch(e){ console.warn('insertWomanDivider err', e); }
 }
 
