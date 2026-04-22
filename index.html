@@ -1487,11 +1487,23 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .s-total span{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.75;font-weight:700}
 .s-total b{font-size:22px;font-weight:900;letter-spacing:-.015em;line-height:1;color:#fff}
 .cd-section.cd-section-promo{margin-top:14px}
-.cd-field-promo{display:flex;gap:8px;align-items:stretch}
-.cd-field-promo input{flex:1;text-transform:uppercase;letter-spacing:.02em}
-.cd-promo-apply{padding:0 18px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);border-radius:8px;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
-.cd-promo-apply:hover{background:var(--ink);color:#fff}
-.cd-promo-apply:disabled{opacity:.5;cursor:not-allowed}
+.cd-field-promo{position:relative;display:block}
+.cd-field-promo input{width:100%;text-transform:uppercase;letter-spacing:.04em;padding-right:68px}
+.cd-promo-apply{
+  position:absolute;
+  right:6px; top:50%; transform:translateY(-50%);
+  padding:8px 14px;
+  border:0;
+  background:var(--ink);color:#fff;
+  border-radius:8px;
+  font-family:var(--font-mono);font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;
+  line-height:1;
+  transition:background .15s,transform .15s;
+}
+.cd-promo-apply:hover{background:#2a2a2a;transform:translateY(-50%) scale(1.04)}
+.cd-promo-apply:active{transform:translateY(-50%) scale(.96)}
+.cd-promo-apply:disabled{opacity:.5;cursor:not-allowed;transform:translateY(-50%)}
 .cd-promo-status{min-height:18px;margin-top:6px;font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em}
 .cd-promo-status.ok{color:#2b7a3d}
 .cd-promo-status.err{color:#b1322e}
@@ -1514,14 +1526,14 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .h3intro.on{display:block}
 .h3intro.end{opacity:0}
 /* v105: Aganta intro — stats-only variant (no BOUNCE wordmark/balls) */
-.h3intro--aganta .h3-wordmark,
-.h3intro--aganta .h3-divider,
-.h3intro--aganta .h3-balls,
-.h3intro--aganta .h3-solebar,
-.h3intro--aganta .h3-skip{display:none}
-.h3intro--aganta .h3-stats{top:15%;transform:none;left:6%;right:6%}
+.h3intro.h3intro--aganta .h3-wordmark,
+.h3intro.h3intro--aganta .h3-divider,
+.h3intro.h3intro--aganta .h3-balls,
+.h3intro.h3intro--aganta .h3-solebar,
+.h3intro.h3intro--aganta .h3-skip{display:none}
+.h3intro.h3intro--aganta .h3-stats{top:15% !important;transform:none !important;left:6%;right:6%}
 @media (max-width:760px){
-  .h3intro--aganta .h3-stats{top:12%}
+  .h3intro.h3intro--aganta .h3-stats{top:12% !important}
 }
 /* Without wordmark/balls, skip the 1650ms/2400ms waits — reveal stats fast */
 .h3intro--aganta.on .h3-stat{opacity:0;transform:translateY(-12px)}
@@ -2404,16 +2416,17 @@ window.ulteraFbq = function(name, params){
           <label class="cd-field"><input type="text" id="wCity" placeholder="Місто — почни вводити…" autocomplete="off"><div class="cd-suggest" id="wCitySug"></div></label>
           <label class="cd-field"><input type="text" id="wWh" placeholder="Обери спочатку місто" autocomplete="off" disabled><div class="cd-suggest" id="wWhSug"></div></label>
 
-          <div class="cd-section"><b>4</b><span>Спосіб оплати</span></div>
-          <label class="cd-radio"><input type="radio" name="pm" value="card" checked><div><b>Оплата карткою</b><span>Доступна оплата частинами моно/а-банк</span></div></label>
-          <label class="cd-radio"><input type="radio" name="pm" value="np"><div><b>Оплата на пошті (наложений платіж)</b><span>Мінімальна передоплата 500 ₴</span></div></label>
 
           <div class="cd-section cd-section-promo"><span>Промокод (опціонально)</span></div>
           <label class="cd-field cd-field-promo">
             <input type="text" id="wPromo" autocomplete="off" maxlength="20" style="text-transform:uppercase">
-            <button type="button" class="cd-promo-apply" onclick="applyPromo()">Застосувати</button>
+            <button type="button" class="cd-promo-apply" onclick="applyPromo()">OK</button>
           </label>
           <div class="cd-promo-status" id="wPromoStatus"></div>
+
+          <div class="cd-section"><b>4</b><span>Спосіб оплати</span></div>
+          <label class="cd-radio"><input type="radio" name="pm" value="card" checked><div><b>Оплата карткою</b><span>Доступна оплата частинами моно/а-банк</span></div></label>
+          <label class="cd-radio"><input type="radio" name="pm" value="np"><div><b>Оплата на пошті (наложений платіж)</b><span>Мінімальна передоплата 500 ₴</span></div></label>
 
           <div class="cd-err" id="wErr1"></div>
           <button class="cd-next submit big" onclick="wizardSubmit()">Оформити замовлення<svg class="cd-arr" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
