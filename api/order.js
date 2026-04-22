@@ -1,5 +1,11 @@
 // api/order.js — proxy ultera-home frontend → KeyCRM
-// SECURITY v5 (2026-04-22):
+// SECURITY v6 (2026-04-22):
+//   - [v6] FIX: shipping_address_warehouse -> shipping_receive_point (actual KeyCRM v1 field).
+//          Previous versions silently dropped the warehouse info because KeyCRM
+//          doesn't recognize shipping_address_warehouse. 'Адреса доставки' now populates.
+//          shipping_address_city restored so it appears in the list column / filter.
+//   - [v6] Debug: log(body.city, body.wh, items[].season) to Vercel Runtime Logs.
+// SECURITY v5 (earlier):
 //   - [v5] product name includes season suffix (' / Літо' or ' / Весна/Осінь')
 //   - [v5] shipping_address_warehouse merges city + branch into one line; city left blank
 //          so KeyCRM UI shows a single 'Адреса доставки' field instead of two.
@@ -239,6 +245,18 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  // [v6] Debug log — shows in Vercel Runtime Logs
+  try {
+    console.log('[order]', {
+      num: body.num,
+      city: body.city || '(empty)',
+      wh: body.wh || '(empty)',
+      payment: body.payment,
+      promoCode: body.promoCode || null,
+      seasons: (body.items || []).map(it => ({ uid: it.uid, season: it.season || null }))
+    });
+  } catch(_){}
+
   // Build KeyCRM payload с authoritative ценами
   const pmCard = parseInt(process.env.KEYCRM_PM_CARD || '0', 10);
   const pmNp   = parseInt(process.env.KEYCRM_PM_NP   || '0', 10);
@@ -250,10 +268,10 @@ module.exports = async function handler(req, res) {
     buyer: { full_name: body.fio, phone: body.phone },
     shipping: {
       delivery_service_id: parseInt(process.env.KEYCRM_DS_NP || '1', 10),
-      // [v5] merged: KeyCRM UI field "Адреса доставки" gets full line.
-      shipping_address_city: '',
+      // [v6] Correct KeyCRM v1 shipping fields.
+      shipping_address_city: body.city || '',
       shipping_address_region: '',
-      shipping_address_warehouse: [body.city, body.wh].filter(Boolean).join(', '),
+      shipping_receive_point: [body.city, body.wh].filter(Boolean).join(', '),
       recipient_full_name: body.fio,
       recipient_phone: body.phone
     },
