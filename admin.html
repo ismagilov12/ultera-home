@@ -332,6 +332,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         <input type="search" id="prod-search" placeholder="Пошук за назвою, кольором, SKU…">
         <select id="prod-family"><option value="">Всі сімʼї</option></select>
         <select id="prod-status"><option value="">Всі</option><option value="pub">Опубліковані</option><option value="hid">Приховані</option></select>
+        <select id="prod-gender"><option value="">Стать: всі</option><option value="m">Чоловічі</option><option value="f">Жіночі</option><option value="unisex">Unisex</option></select>
         <select id="prod-sort"><option value="updated_desc">Зміна ↓</option><option value="updated_asc">Зміна ↑</option><option value="created_desc">Створено ↓</option><option value="created_asc">Створено ↑</option><option value="title_asc">Назва A→Я</option><option value="title_desc">Назва Я→A</option><option value="price_asc">Ціна ↑</option><option value="price_desc">Ціна ↓</option><option value="family_asc">Сімʼя</option></select>
       </div>
       <div class="prod-table" id="prod-table">
@@ -914,10 +915,17 @@ function renderProducts(){
   const q = (document.getElementById('prod-search').value||'').toLowerCase();
   const fam = document.getElementById('prod-family').value;
   const st = document.getElementById('prod-status').value;
+  const gen = (document.getElementById('prod-gender')||{}).value || '';
   const filtered = PRODUCTS.filter(p=>{
     if (fam && p.family !== fam) return false;
     if (st === 'pub' && !p.published) return false;
     if (st === 'hid' && p.published) return false;
+    if (gen) {
+      const g = p.gender || 'unisex';
+      if (gen === 'unisex' && g !== 'unisex') return false;
+      if (gen === 'm' && g !== 'm' && g !== 'unisex') return false;
+      if (gen === 'f' && g !== 'f') return false;
+    }
     if (q && !(p.title||'').toLowerCase().includes(q) && !(p.color_name||'').toLowerCase().includes(q) && !(p.uid||'').includes(q)) return false;
     return true;
   });
@@ -956,7 +964,7 @@ function renderProducts(){
       <img class="photo" src="${p.photo||''}" onerror="this.style.background='var(--bg-alt)'">
       <div>
         <div class="title">${escapeHtml(p.title)}</div>
-        <div class="sub">${p.article?escapeHtml(p.article)+' · ':''}SKU · ${p.uid} · ${escapeHtml(p.color_name||'')}</div>
+        <div class="sub">${p.article?escapeHtml(p.article)+' · ':''}SKU · ${p.uid} · ${escapeHtml(p.color_name||'')}${p.gender==='f'?' · <b style="color:#b1478d">♀ жін.</b>':p.gender==='m'?' · <b style="color:#3a6aa8">♂ чол.</b>':''}</div>
       </div>
       <div><span class="fam">${escapeHtml(p.family)}</span></div>
       <div class="price">${fmtPrice(p.price)}${p.price_old?`<s>${fmtPrice(p.price_old)}</s>`:''}</div>
@@ -1023,7 +1031,7 @@ function duplicateProduct(p){
   toast('Дубль створено — заповни фото і натисни Зберегти');
 }
 
-['prod-search','prod-family','prod-status','prod-sort'].forEach(id=>document.getElementById(id).addEventListener('input', renderProducts));
+['prod-search','prod-family','prod-status','prod-sort','prod-gender'].forEach(id=>{var e=document.getElementById(id); if(e) e.addEventListener('input', renderProducts);});
 document.getElementById('prod-add').onclick = ()=>openEditor(null);
 
 function fmtPrice(p){ return p? Math.round(p).toLocaleString('uk-UA')+' ₴' : '—'; }
