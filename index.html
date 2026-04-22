@@ -516,13 +516,6 @@ input,textarea,select{font:inherit;color:inherit}
 .surv-title em{font-style:normal;color:var(--warm-grey);font-weight:500}
 .surv-para{font-size:15px;color:var(--ink-60);line-height:1.7;max-width:480px}
 .surv-para strong{color:var(--ink);font-weight:600}
-.surv-specs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-.surv-spec{padding:12px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px}
-.surv-spec .k{font-family:var(--font-mono);font-size:11px;color:var(--ink-60);letter-spacing:.04em;text-transform:uppercase}
-.surv-spec .v{font-weight:700;font-size:13px}
-.surv-cta{margin-top:18px;align-self:flex-start;display:inline-flex;align-items:center;gap:10px;padding:14px 22px;border:1px solid var(--ink);border-radius:999px;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;transition:all .2s}
-.surv-cta:hover{background:var(--ink);color:#fff}
-.surv-cta svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
 
 /* ==================== CLASSIC GRID ==================== */
 .classics{padding:80px 0}
@@ -957,7 +950,6 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .tech-grid{grid-template-columns:repeat(2,1fr)}
   .tech-card{min-height:140px;padding:16px 14px}
   .surv-wrap{grid-template-columns:1fr;gap:20px}
-  .surv-specs{grid-template-columns:1fr}
   .khark-stats{grid-template-columns:repeat(2,1fr);gap:6px}
   .classics-head h2{font-size:56px}
   .foot-top{grid-template-columns:1fr 1fr;gap:24px}
@@ -2205,22 +2197,12 @@ window.ulteraFbq = function(name, params){
       <p>Розробили авторський метод виробництва — тому надаємо <strong>гарантію 1 рік</strong>. Наше взуття ультра легке та дуже зручне.</p>
       <p class="khark-accent"><strong>Технологічне та преміальне</strong> — саме так можна описати наші кроси. Ми підбираємо технологічні матеріали: вологостійкі, легкі, сучасні — і комбінуємо їх з преміальною шкірою <strong>Nappa</strong>.</p>
       <p>Наше виробництво виробляє взуття <strong>вручну та з любов'ю</strong>.</p>
-      <div class="surv-specs">
-        <div class="surv-spec"><span class="k">ПАРТІЯ</span><span class="v">#0427</span></div>
-        <div class="surv-spec"><span class="k">ВАГА</span><span class="v">480 g</span></div>
-        <div class="surv-spec"><span class="k">ТЕРМІН</span><span class="v">4—10 ДНІВ</span></div>
-        <div class="surv-spec"><span class="k">КРАЇНА</span><span class="v">KHARKIV, UA</span></div>
-      </div>
       <div class="khark-stats">
         <div class="khark-stat"><div class="n">10000+</div><div class="l">Пар виготовлено</div></div>
         <div class="khark-stat"><div class="n">27</div><div class="l">Моделі</div></div>
         <div class="khark-stat"><div class="n">12</div><div class="l">Кроків контролю</div></div>
         <div class="khark-stat"><div class="n">1y</div><div class="l">Гарантія</div></div>
       </div>
-      <a class="surv-cta" href="#collection">
-        Детальніше про Hunk3
-        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </a>
     </div>
     <div class="khark-img">
       <picture>
