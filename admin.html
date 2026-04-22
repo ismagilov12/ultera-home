@@ -226,6 +226,8 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 .hm-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .hm-controls select,.hm-controls label{font:500 13px/1 Inter,system-ui;padding:8px 10px;border:1.5px solid #ebebe6;border-radius:8px;background:#fff}
 .ana-empty{color:#0e0e0e60;font:400 13px/1.5 Inter,system-ui;padding:20px;text-align:center}
+.ana-block .chart-wrap{max-width:100%}
+.ana-block canvas{max-width:100%}
 @media (max-width:980px){
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .ana-row,.ana-row.equal,.ana-row.tri{grid-template-columns:1fr}
@@ -402,7 +404,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 
       <div class="ana-block">
         <h3>Замовлення та виручка по днях</h3>
-        <canvas id="ch-orders" height="140"></canvas>
+        <div class="chart-wrap" style="position:relative;height:340px"><canvas id="ch-orders"></canvas></div>
       </div>
 
       <div class="ana-row">
@@ -419,11 +421,11 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
       <div class="ana-row equal">
         <div class="ana-block">
           <h3>Статуси замовлень</h3>
-          <canvas id="ch-status" height="220"></canvas>
+          <div class="chart-wrap" style="position:relative;height:260px"><canvas id="ch-status"></canvas></div>
         </div>
         <div class="ana-block">
           <h3>Оплата</h3>
-          <canvas id="ch-payment" height="220"></canvas>
+          <div class="chart-wrap" style="position:relative;height:260px"><canvas id="ch-payment"></canvas></div>
         </div>
       </div>
 
@@ -450,7 +452,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         </div>
         <div class="ana-block">
           <h4>Девайси</h4>
-          <canvas id="ch-devices" height="180"></canvas>
+          <div class="chart-wrap" style="position:relative;height:220px"><canvas id="ch-devices"></canvas></div>
         </div>
       </div>
     </div>
