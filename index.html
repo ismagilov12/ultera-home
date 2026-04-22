@@ -4600,22 +4600,20 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
   };
 })();
 
-/* v113.1: insert Woman Collection divider between last male and first female card */
+/* v113.2: divider — featured rows use .feat-card, grid uses .card — select BOTH */
 function insertWomanDivider(){
   try {
-    // Walk ALL .card[data-fam] across the document (women are in #featuredWrap,
-    // not only in #gridWrap as the previous implementation assumed).
-    var cards = document.querySelectorAll('.card[data-fam]');
-    // Clean up any stale dividers so re-render stays idempotent.
+    // Featured rows render with class .feat-card; mini-grid uses .card
+    var cards = document.querySelectorAll('.feat-card[data-fam], .card[data-fam]');
+    // Clean stale dividers (idempotent re-render safety)
     document.querySelectorAll('.gender-divider').forEach(function(d){ d.remove(); });
 
     var firstFemCard = null;
     for (var i=0; i<cards.length; i++){
       var fam = (cards[i].getAttribute('data-fam') || '').trim();
-      // Family with trailing " W" is women (Hunk W, Aganta W, Hunk3 W, …).
       if (/ W$/i.test(fam)){ firstFemCard = cards[i]; break; }
     }
-    if (!firstFemCard) { console.warn('[woman-divider] no W card found'); return; }
+    if (!firstFemCard) { console.warn('[woman-divider] no W card found; scanned', cards.length, 'cards'); return; }
 
     var div = document.createElement('div');
     div.className = 'gender-divider';
