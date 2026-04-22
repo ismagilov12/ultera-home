@@ -23,6 +23,11 @@ try {
     window.__tproduct_uid__ = __uid;
     history.replaceState({}, '', '/');
   }
+  // v115: deep-link /woman → scroll to Woman Collection after render
+  if (/^\/woman(?:\/|$)/i.test(__p)) {
+    window.__gotoWoman = true;
+    history.replaceState({}, '', '/');
+  }
 } catch(e){}
 </script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
@@ -4620,6 +4625,19 @@ function insertWomanDivider(){
     div.innerHTML = '<div class="gd-label"><b>Woman Collection</b><small>Жіночі моделі</small></div>';
     firstFemCard.parentNode.insertBefore(div, firstFemCard);
     try { console.log('[woman-divider] inserted before', firstFemCard.getAttribute('data-fam')); } catch(_){}
+    // v115: deep-link /woman — scroll to the divider
+    if (window.__gotoWoman) {
+      window.__gotoWoman = false;
+      setTimeout(function(){
+        try {
+          div.scrollIntoView({behavior:'smooth', block:'start'});
+          // Nudge a bit upward so sticky header doesn't overlap
+          setTimeout(function(){ window.scrollBy(0, -80); }, 550);
+        } catch(_){
+          try { div.scrollIntoView(); } catch(__){}
+        }
+      }, 80);
+    }
   } catch(e){ console.warn('insertWomanDivider err', e); }
 }
 
