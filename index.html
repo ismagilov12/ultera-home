@@ -3914,6 +3914,7 @@ async function wizardSubmit(){
           items: wfpItems,
           amount: wfpAmount,
           products: products,
+          paymentMode: (pm === 'np' ? 'cod' : 'card'),
           clientFirstName: clientFirstName,
           clientLastName: clientLastName,
           clientEmail: '',

@@ -1,10 +1,13 @@
 // api/wayforpay.js
-// SECURITY v2.1 (2026-04-21):
+// SECURITY v3 (2026-04-22):
 //   - CORS whitelist (ultera.in.ua + *.vercel.app)
 //   - Rate limit 30 req/min по IP (Supabase RPC)
 //   - СЕРВЕРНЫЙ пересчёт amount из ulhome_products
 //   - Фронт присылает items: [{uid, qty}]; legacy products поддерживается через title-mapping
 //   - formHtml для backwards-compat
+//   - [v3] paymentMode === 'cod' → передплата фіксованої суми з env COD_PREPAYMENT_AMOUNT
+//          одна позиція "Передплата за замовлення ULT-XXXX", решту клієнт платить наложкою Нової Пошти
+//          sanity: prepayment <= authoritativeTotal (щоб на акційні дешеві товари не брати більше)
 
 const crypto = require('crypto');
 
@@ -143,6 +146,8 @@ module.exports = async function handler(req, res) {
   body = body || {};
 
   const { orderReference, items, products, clientFirstName, clientLastName, clientEmail, clientPhone } = body;
+  const paymentMode = String(body.paymentMode || '').toLowerCase();
+  const isCOD = paymentMode === 'cod';
 
   if (!orderReference || typeof orderReference !== 'string') return res.status(400).json({ error: 'orderReference is required' });
 
@@ -161,21 +166,38 @@ module.exports = async function handler(req, res) {
   const authoritativeAmount = Number(priceResult.total);
   if (!(authoritativeAmount > 0)) return res.status(400).json({ error: 'Computed amount is not positive' });
 
-  const uids = resolvedItems.map(it => String(it.uid || ''));
-  const names = await getProductNames(uids);
-
-  const productName = [];
-  const productCount = [];
-  const productPrice = [];
-  for (const line of priceResult.breakdown) {
-    productName.push(names[line.uid] || line.uid);
-    productCount.push(String(line.qty));
-    productPrice.push(Number(line.unit_price).toFixed(2));
+  // [v3] COD branch: single "Prepayment" line item with fixed server-side amount.
+  // Keeps WayForPay signature valid (amount === sum(productPrice[i] * productCount[i])).
+  let amountStr, productName, productCount, productPrice;
+  if (isCOD) {
+    const codPrepayment = Number(process.env.COD_PREPAYMENT_AMOUNT || 500);
+    if (!(codPrepayment > 0)) return res.status(500).json({ error: 'COD prepayment misconfigured' });
+    if (codPrepayment > authoritativeAmount) {
+      return res.status(400).json({
+        error: 'Prepayment exceeds order total',
+        detail: { prepayment: codPrepayment, total: authoritativeAmount }
+      });
+    }
+    amountStr      = codPrepayment.toFixed(2);
+    productName    = ['Передплата за замовлення ' + orderReference];
+    productCount   = ['1'];
+    productPrice   = [codPrepayment.toFixed(2)];
+  } else {
+    const uids = resolvedItems.map(it => String(it.uid || ''));
+    const names = await getProductNames(uids);
+    productName  = [];
+    productCount = [];
+    productPrice = [];
+    for (const line of priceResult.breakdown) {
+      productName.push(names[line.uid] || line.uid);
+      productCount.push(String(line.qty));
+      productPrice.push(Number(line.unit_price).toFixed(2));
+    }
+    amountStr = authoritativeAmount.toFixed(2);
   }
 
   const orderDate = Math.floor(Date.now() / 1000);
   const currency = 'UAH';
-  const amountStr = authoritativeAmount.toFixed(2);
 
   const signatureFields = [
     merchantAccount, merchantDomainName, orderReference, String(orderDate), amountStr, currency,
@@ -197,7 +219,15 @@ module.exports = async function handler(req, res) {
   };
 
   const formHtml = buildAutoSubmitForm(formData);
-  return res.status(200).json({ ok: true, paymentUrl: 'https://secure.wayforpay.com/pay', formData, formHtml, authoritativeAmount, breakdown: priceResult.breakdown });
+  return res.status(200).json({
+    ok: true,
+    paymentUrl: 'https://secure.wayforpay.com/pay',
+    formData, formHtml,
+    authoritativeAmount,
+    chargedAmount: Number(amountStr),
+    mode: isCOD ? 'cod-prepayment' : 'full',
+    breakdown: priceResult.breakdown
+  });
 };
 
 function buildAutoSubmitForm(data) {
