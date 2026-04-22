@@ -229,6 +229,15 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 .ana-empty{color:#0e0e0e60;font:400 13px/1.5 Inter,system-ui;padding:20px;text-align:center}
 .ana-block .chart-wrap{max-width:100%}
 .ana-block canvas{max-width:100%}
+.daily-wrap{overflow-x:auto;border-radius:10px;border:1px solid #ebebe6}
+.daily-tbl{width:100%;border-collapse:collapse;font:500 13px/1.4 Inter,system-ui}
+.daily-tbl thead th{text-align:left;padding:10px 12px;background:#f5f5f0;font:600 11px/1 JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:.06em;color:#0e0e0e80}
+.daily-tbl th.num,.daily-tbl td.num{text-align:right}
+.daily-tbl tbody td{padding:10px 12px;border-top:1px solid #ebebe6}
+.daily-tbl tbody tr:hover{background:#faf9f4}
+.daily-tbl tbody tr.has-orders{background:#f5faed}
+.daily-tbl tbody tr.today{font-weight:700}
+.daily-tbl tfoot td{padding:12px;border-top:2px solid #0e0e0e20;background:#f5f5f0;font:700 13px/1 Inter,system-ui}
 @media (max-width:980px){
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .ana-row,.ana-row.equal,.ana-row.tri{grid-template-columns:1fr}
@@ -439,6 +448,22 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         </div>
         <div class="heatmap-wrap" id="heatmap-wrap">
           <canvas id="hm-canvas" width="1200" height="900"></canvas>
+        </div>
+      </div>
+
+      <div class="ana-block">
+        <h3>Статистика по днях <span style="font-weight:400;color:#0e0e0e70;font-size:12px">· останні 30 днів</span></h3>
+        <div class="daily-wrap">
+          <table class="daily-tbl" id="daily-tbl">
+            <thead><tr>
+              <th>Дата</th>
+              <th class="num">Переходи</th>
+              <th class="num">Замовлення</th>
+              <th class="num">Виручка</th>
+              <th class="num">Сер. чек</th>
+            </tr></thead>
+            <tbody><tr><td colspan="5" class="ana-empty">Завантажую…</td></tr></tbody>
+          </table>
         </div>
       </div>
 
@@ -1580,7 +1605,23 @@ async function loadAnalytics(){
       rest('analytics_events?select=session_id,page_url,referrer,device_type,created_at&event_type=eq.page_view&limit=50000' + filterEvts)
     ]);
 
-    ANA.data = { orders: orders||[], evtAgg: evtAgg||[], pageViews: pageViews||[] };
+    // Dedupe: same phone + total + minute counts as one order
+    // (guards against double-POST retries / stage='lead' ghosts).
+    const rawOrders = orders || [];
+    const _seen = new Set();
+    const ordersReal = [];
+    let dupesFiltered = 0;
+    rawOrders.forEach(o => {
+      const isLead = (o.status==='lead') || (o.payment_status==='lead');
+      if (isLead) { dupesFiltered++; return; }
+      const key = String(o.customer_phone||'') + '|' +
+                  String(Math.round(Number(o.total)||0)) + '|' +
+                  String(o.created_at||'').slice(0,16);
+      if (_seen.has(key)) { dupesFiltered++; return; }
+      _seen.add(key);
+      ordersReal.push(o);
+    });
+    ANA.data = { orders: rawOrders, ordersReal, evtAgg: evtAgg||[], pageViews: pageViews||[], dupesFiltered };
     renderKPI();
     renderOrdersChart();
     renderFunnel();
@@ -1590,6 +1631,7 @@ async function loadAnalytics(){
     renderTopPages();
     renderTopReferrers();
     renderDevicesChart();
+    renderDailyTable();
     await loadHeatmapPages();
   } catch(e){
     console.error('analytics err', e);
@@ -1598,7 +1640,7 @@ async function loadAnalytics(){
 }
 
 function renderKPI(){
-  const o = ANA.data.orders;
+  const o = ANA.data.ordersReal;
   const pv = ANA.data.pageViews;
   const totalRevenue = o.reduce((s,x)=>s+Number(x.total||0),0);
   const aov = o.length ? totalRevenue / o.length : 0;
@@ -1610,6 +1652,10 @@ function renderKPI(){
   document.getElementById('kpi-sess').textContent = fmtInt(sessions);
   document.getElementById('kpi-pv').textContent = fmtInt(pv.length);
   document.getElementById('kpi-cr').textContent = cr;
+  // Show dup filter note under Orders KPI
+  const d = ANA.data.dupesFiltered || 0;
+  const el = document.getElementById('kpi-orders-d');
+  if (el) el.textContent = d ? ('відфільтровано дублів: ' + d) : '';
 }
 
 function _destroyChart(id){
@@ -1619,7 +1665,7 @@ function _destroyChart(id){
 function renderOrdersChart(){
   _destroyChart('orders');
   const days = {};
-  ANA.data.orders.forEach(o=>{
+  ANA.data.ordersReal.forEach(o=>{
     const k = dayKey(o.created_at);
     if(!days[k]) days[k] = { cnt:0, rev:0 };
     days[k].cnt += 1;
@@ -1666,7 +1712,7 @@ function renderFunnel(){
     { k:'click',        label:'Кліки' },
     { k:'funnel_step',  label:'Фуннель' }
   ];
-  const orders = ANA.data.orders.length;
+  const orders = ANA.data.ordersReal.length;
   const base = counts['page_view'] || 0;
   const rows = document.getElementById('funnel-rows');
   rows.innerHTML = '';
@@ -1693,7 +1739,7 @@ function renderFunnel(){
 function renderTopProducts(){
   // Aggregate by item.uid; lookup title from PRODUCTS cache
   const agg = {};
-  ANA.data.orders.forEach(o=>{
+  ANA.data.ordersReal.forEach(o=>{
     (o.items||[]).forEach(it=>{
       const uid = String(it.uid||'');
       if(!uid) return;
@@ -1717,7 +1763,7 @@ function renderTopProducts(){
 function renderStatusChart(){
   _destroyChart('status');
   const cnt = {};
-  ANA.data.orders.forEach(o=>{ const k=o.status||'—'; cnt[k]=(cnt[k]||0)+1; });
+  ANA.data.ordersReal.forEach(o=>{ const k=o.status||'—'; cnt[k]=(cnt[k]||0)+1; });
   const labels = Object.keys(cnt);
   const ctx = document.getElementById('ch-status').getContext('2d');
   ANA.charts.status = new Chart(ctx, {
@@ -1730,7 +1776,7 @@ function renderStatusChart(){
 function renderPaymentChart(){
   _destroyChart('payment');
   const cnt = {};
-  ANA.data.orders.forEach(o=>{
+  ANA.data.ordersReal.forEach(o=>{
     let k = o.payment_method || '—';
     if(k==='card') k = 'Картка';
     else if(k==='np') k = 'Наложка';
@@ -1786,6 +1832,68 @@ function renderDevicesChart(){
     data:{ labels, datasets:[{ data, backgroundColor:['#6ea04a','#c8dca7','#0e0e0e','#a0a09b']}] },
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }
   });
+}
+
+function renderDailyTable(){
+  // Aggregate pageViews and orders per day (YYYY-MM-DD)
+  const pvDay = {};
+  ANA.data.pageViews.forEach(e=>{
+    const k = dayKey(e.created_at);
+    pvDay[k] = (pvDay[k]||0) + 1;
+  });
+  const ordDay = {};
+  ANA.data.ordersReal.forEach(o=>{
+    const k = dayKey(o.created_at);
+    if(!ordDay[k]) ordDay[k] = { cnt:0, rev:0 };
+    ordDay[k].cnt += 1;
+    ordDay[k].rev += Number(o.total)||0;
+  });
+
+  // Build last 30 days (or all if period='all' and data older than 30d)
+  const ms = periodToMs(ANA.period) || 30*86400000;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const start = new Date(today.getTime() - (ms - 86400000));  // inclusive
+  const rows = [];
+  for(let t = new Date(today); t >= start; t.setDate(t.getDate()-1)){
+    const k = t.toISOString().slice(0,10);
+    const pv  = pvDay[k] || 0;
+    const cnt = (ordDay[k] && ordDay[k].cnt) || 0;
+    const rev = (ordDay[k] && ordDay[k].rev) || 0;
+    const aov = cnt ? rev/cnt : 0;
+    rows.push({ k, pv, cnt, rev, aov });
+  }
+
+  const todayK = today.toISOString().slice(0,10);
+  const tbody = document.querySelector('#daily-tbl tbody');
+  if(!tbody) return;
+  tbody.innerHTML = rows.map(r=>{
+    const date = r.k.slice(8,10) + '.' + r.k.slice(5,7) + '.' + r.k.slice(2,4);
+    const cls = (r.cnt>0 ? ' has-orders' : '') + (r.k===todayK ? ' today' : '');
+    return `<tr class="${cls.trim()}">
+      <td>${date}${r.k===todayK ? ' (сьогодні)' : ''}</td>
+      <td class="num">${fmtInt(r.pv)}</td>
+      <td class="num">${fmtInt(r.cnt)}</td>
+      <td class="num">${fmtMoney(r.rev)}</td>
+      <td class="num">${r.cnt ? fmtMoney(r.aov) : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  // Totals row
+  const totalPv  = rows.reduce((s,r)=>s+r.pv,0);
+  const totalCnt = rows.reduce((s,r)=>s+r.cnt,0);
+  const totalRev = rows.reduce((s,r)=>s+r.rev,0);
+  const totalAov = totalCnt ? totalRev/totalCnt : 0;
+  const tfoot = document.querySelector('#daily-tbl tfoot');
+  const tfootHtml = `<tr><td>Разом за ${rows.length} днів</td>
+    <td class="num">${fmtInt(totalPv)}</td>
+    <td class="num">${fmtInt(totalCnt)}</td>
+    <td class="num">${fmtMoney(totalRev)}</td>
+    <td class="num">${totalCnt ? fmtMoney(totalAov) : '—'}</td></tr>`;
+  if(tfoot){ tfoot.innerHTML = tfootHtml; }
+  else {
+    const t = document.getElementById('daily-tbl');
+    if(t){ const f = document.createElement('tfoot'); f.innerHTML = tfootHtml; t.appendChild(f); }
+  }
 }
 
 async function loadHeatmapPages(){
