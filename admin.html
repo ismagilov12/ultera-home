@@ -195,6 +195,41 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 }
 .swatch-preset:hover{transform:scale(1.1);border-color:rgba(14,14,14,.45)}
 .swatch-preset.sel{transform:scale(1.12);border-color:#0e0e0e;box-shadow:inset 0 0 0 1.5px #fff,0 0 0 2px #0e0e0e22}
+
+/* ==================== ANALYTICS ==================== */
+.period-tabs{display:inline-flex;gap:4px;background:#f5f5f0;padding:4px;border-radius:10px}
+.period-tabs button{border:0;background:transparent;padding:8px 14px;border-radius:8px;cursor:pointer;font:500 13px/1 Inter,system-ui;color:#0e0e0e99}
+.period-tabs button.active{background:#0e0e0e;color:#fff}
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:20px 0}
+.kpi-card{background:#fff;border:1.5px solid #ebebe6;border-radius:14px;padding:16px}
+.kpi-card .l{font:500 11px/1 JetBrains Mono,monospace;color:#0e0e0e70;text-transform:uppercase;letter-spacing:.06em}
+.kpi-card .v{font:700 26px/1.15 Inter,system-ui;margin-top:8px;color:#0e0e0e}
+.kpi-card .delta{font:500 11px/1 JetBrains Mono,monospace;margin-top:6px}
+.kpi-card .delta.up{color:#2b7a3d}.kpi-card .delta.down{color:#b1322e}
+.ana-row{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-top:14px}
+.ana-row.equal{grid-template-columns:1fr 1fr}
+.ana-row.tri{grid-template-columns:1fr 1fr 1fr}
+.ana-block{background:#fff;border:1.5px solid #ebebe6;border-radius:14px;padding:16px}
+.ana-block h3{margin:0 0 14px;font:600 14px/1.2 Inter,system-ui}
+.ana-block h4{margin:0 0 10px;font:600 12px/1.2 JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:.06em;color:#0e0e0e80}
+.ana-funnel{display:flex;flex-direction:column;gap:8px}
+.ana-funnel .f-step{display:grid;grid-template-columns:140px 1fr 90px;gap:10px;align-items:center;font:500 13px/1 Inter,system-ui}
+.ana-funnel .f-bar{background:#f5f5f0;border-radius:6px;height:22px;overflow:hidden;position:relative}
+.ana-funnel .f-fill{background:linear-gradient(90deg,#6ea04a,#3a6e28);height:100%;border-radius:6px;transition:width .5s}
+.ana-funnel .f-pct{font:600 12px/1 JetBrains Mono,monospace;color:#0e0e0e80;text-align:right}
+.ana-list{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto}
+.ana-list .li{display:grid;grid-template-columns:1fr 80px;gap:10px;padding:8px 10px;border-radius:8px;background:#f5f5f0;font:500 13px/1.3 Inter,system-ui}
+.ana-list .li .count{font:600 12px/1 JetBrains Mono,monospace;color:#0e0e0e80;text-align:right;align-self:center}
+.ana-list .li .meta{font:500 11px/1.2 JetBrains Mono,monospace;color:#0e0e0e70;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.heatmap-wrap{position:relative;background:#f5f5f0;border-radius:10px;overflow:hidden;margin-top:10px;min-height:600px}
+.heatmap-wrap canvas{width:100%;display:block}
+.hm-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.hm-controls select,.hm-controls label{font:500 13px/1 Inter,system-ui;padding:8px 10px;border:1.5px solid #ebebe6;border-radius:8px;background:#fff}
+.ana-empty{color:#0e0e0e60;font:400 13px/1.5 Inter,system-ui;padding:20px;text-align:center}
+@media (max-width:980px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .ana-row,.ana-row.equal,.ana-row.tri{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -231,6 +266,10 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
       <a data-page="orders">
         <svg viewBox="0 0 24 24"><path d="M6 2l3 7h10l-2 8H8L6 2zM6 2H3M9 20c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1zM20 20c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1z"/></svg>
         Замовлення
+      </a>
+      <a data-page="analytics">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18M7 15l3-3 4 4 5-7"/></svg>
+        Аналітика
       </a>
       <a data-page="settings">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -337,6 +376,82 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
       </div>
       <div class="card" id="admin-list">
         <div class="loading">Завантажую…</div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page" id="page-analytics" style="display:none">
+      <div class="page-head" style="justify-content:space-between">
+        <h1>Аналітика</h1>
+        <div class="period-tabs" id="ana-tabs">
+          <button data-period="7d" class="active">7 днів</button>
+          <button data-period="30d">30 днів</button>
+          <button data-period="90d">90 днів</button>
+          <button data-period="all">Все</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="l">Замовлення</div><div class="v" id="kpi-orders">—</div><div class="delta" id="kpi-orders-d"></div></div>
+        <div class="kpi-card"><div class="l">Виручка</div><div class="v" id="kpi-revenue">—</div><div class="delta" id="kpi-revenue-d"></div></div>
+        <div class="kpi-card"><div class="l">Середній чек</div><div class="v" id="kpi-aov">—</div></div>
+        <div class="kpi-card"><div class="l">Сесії</div><div class="v" id="kpi-sess">—</div></div>
+        <div class="kpi-card"><div class="l">Page views</div><div class="v" id="kpi-pv">—</div></div>
+        <div class="kpi-card"><div class="l">CR (orders/sessions)</div><div class="v" id="kpi-cr">—</div></div>
+      </div>
+
+      <div class="ana-block">
+        <h3>Замовлення та виручка по днях</h3>
+        <canvas id="ch-orders" height="140"></canvas>
+      </div>
+
+      <div class="ana-row">
+        <div class="ana-block">
+          <h3>Funnel конверсії</h3>
+          <div class="ana-funnel" id="funnel-rows"><div class="ana-empty">Завантажую…</div></div>
+        </div>
+        <div class="ana-block">
+          <h3>Топ товарів (виручка)</h3>
+          <div class="ana-list" id="top-products"><div class="ana-empty">Завантажую…</div></div>
+        </div>
+      </div>
+
+      <div class="ana-row equal">
+        <div class="ana-block">
+          <h3>Статуси замовлень</h3>
+          <canvas id="ch-status" height="220"></canvas>
+        </div>
+        <div class="ana-block">
+          <h3>Оплата</h3>
+          <canvas id="ch-payment" height="220"></canvas>
+        </div>
+      </div>
+
+      <div class="ana-block">
+        <h3>Heatmap кліків</h3>
+        <div class="hm-controls">
+          <select id="hm-page-sel"></select>
+          <label><input type="checkbox" id="hm-mm"> +mouse_move (слабкий сигнал)</label>
+          <span id="hm-count" style="font:500 12px/1 JetBrains Mono,monospace;color:#0e0e0e80"></span>
+        </div>
+        <div class="heatmap-wrap" id="heatmap-wrap">
+          <canvas id="hm-canvas" width="1200" height="900"></canvas>
+        </div>
+      </div>
+
+      <div class="ana-row tri">
+        <div class="ana-block">
+          <h4>Топ сторінки</h4>
+          <div class="ana-list" id="top-pages"><div class="ana-empty">Завантажую…</div></div>
+        </div>
+        <div class="ana-block">
+          <h4>Джерела (referrer)</h4>
+          <div class="ana-list" id="top-refs"><div class="ana-empty">Завантажую…</div></div>
+        </div>
+        <div class="ana-block">
+          <h4>Девайси</h4>
+          <canvas id="ch-devices" height="180"></canvas>
+        </div>
       </div>
     </div>
   </main>
@@ -510,6 +625,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 
 <div id="toast" class="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
 /* ==================== MINI REST CLIENT (no SDK) ==================== */
 const SB_URL = 'https://fsihlzzjewhxpogvjapu.supabase.co';
@@ -1400,5 +1516,345 @@ document.querySelector('[data-page="orders"]').addEventListener('click', loadOrd
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
   else wire();
 })();
+
+
+/* ==================== ANALYTICS ==================== */
+const ANA = {
+  period: '7d',                  // '7d' | '30d' | '90d' | 'all'
+  data: null,
+  charts: {},                    // Chart.js instances
+  heatmap: { page: null, mm: false, events: [], pageMeta: null }
+};
+
+function periodToMs(p){
+  const d = 86400000;
+  if(p==='7d') return 7*d;
+  if(p==='30d') return 30*d;
+  if(p==='90d') return 90*d;
+  return null; // 'all'
+}
+function periodSinceIso(p){
+  const ms = periodToMs(p);
+  if(ms == null) return null;
+  return new Date(Date.now() - ms).toISOString();
+}
+function fmtMoney(n){ return (Math.round(Number(n)||0)).toLocaleString('uk-UA') + ' ₴'; }
+function fmtInt(n){ return (Math.round(Number(n)||0)).toLocaleString('uk-UA'); }
+function dayKey(iso){ return String(iso).slice(0,10); }
+
+async function loadAnalytics(){
+  try {
+    const sinceIso = periodSinceIso(ANA.period);
+    const filterOrders = sinceIso ? '&created_at=gte.' + encodeURIComponent(sinceIso) : '';
+    const filterEvts   = sinceIso ? '&created_at=gte.' + encodeURIComponent(sinceIso) : '';
+
+    const [orders, evtAgg, pageViews] = await Promise.all([
+      rest('ulhome_orders?select=id,number,customer_name,payment_method,payment_status,items,total,status,created_at&order=created_at.desc&limit=1000' + filterOrders),
+      // Aggregate event counts by type
+      rest('analytics_events?select=event_type&limit=50000' + filterEvts),
+      rest('analytics_events?select=session_id,page_url,referrer,device_type,created_at&event_type=eq.page_view&limit=50000' + filterEvts)
+    ]);
+
+    ANA.data = { orders: orders||[], evtAgg: evtAgg||[], pageViews: pageViews||[] };
+    renderKPI();
+    renderOrdersChart();
+    renderFunnel();
+    renderTopProducts();
+    renderStatusChart();
+    renderPaymentChart();
+    renderTopPages();
+    renderTopReferrers();
+    renderDevicesChart();
+    await loadHeatmapPages();
+  } catch(e){
+    console.error('analytics err', e);
+    toast('Помилка аналітики: '+e.message, 'err');
+  }
+}
+
+function renderKPI(){
+  const o = ANA.data.orders;
+  const pv = ANA.data.pageViews;
+  const totalRevenue = o.reduce((s,x)=>s+Number(x.total||0),0);
+  const aov = o.length ? totalRevenue / o.length : 0;
+  const sessions = new Set(pv.map(x=>x.session_id)).size;
+  const cr = sessions ? (o.length/sessions*100).toFixed(2) + '%' : '—';
+  document.getElementById('kpi-orders').textContent = fmtInt(o.length);
+  document.getElementById('kpi-revenue').textContent = fmtMoney(totalRevenue);
+  document.getElementById('kpi-aov').textContent = fmtMoney(aov);
+  document.getElementById('kpi-sess').textContent = fmtInt(sessions);
+  document.getElementById('kpi-pv').textContent = fmtInt(pv.length);
+  document.getElementById('kpi-cr').textContent = cr;
+}
+
+function _destroyChart(id){
+  if(ANA.charts[id]){ try{ ANA.charts[id].destroy(); }catch(_){} delete ANA.charts[id]; }
+}
+
+function renderOrdersChart(){
+  _destroyChart('orders');
+  const days = {};
+  ANA.data.orders.forEach(o=>{
+    const k = dayKey(o.created_at);
+    if(!days[k]) days[k] = { cnt:0, rev:0 };
+    days[k].cnt += 1;
+    days[k].rev += Number(o.total)||0;
+  });
+  // fill missing days for period
+  const ms = periodToMs(ANA.period) || 30*86400000;
+  const today = new Date(); today.setHours(23,59,59,999);
+  const points = [];
+  const start = new Date(today.getTime() - ms);
+  for(let t = new Date(start); t <= today; t.setDate(t.getDate()+1)){
+    const k = t.toISOString().slice(0,10);
+    points.push({ k, cnt: (days[k]&&days[k].cnt)||0, rev: (days[k]&&days[k].rev)||0 });
+  }
+  const ctx = document.getElementById('ch-orders').getContext('2d');
+  ANA.charts.orders = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: points.map(p=>p.k.slice(5)),
+      datasets:[
+        {label:'Замовлення', data: points.map(p=>p.cnt), backgroundColor:'#c8dca7', borderRadius:4, yAxisID:'y'},
+        {label:'Виручка, ₴', data: points.map(p=>p.rev), type:'line', borderColor:'#2b7a3d', backgroundColor:'#2b7a3d33', tension:.25, yAxisID:'y1', pointRadius:3}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom'}},
+      scales:{
+        y:{beginAtZero:true, position:'left', ticks:{precision:0}, title:{display:true,text:'Кількість'}},
+        y1:{beginAtZero:true, position:'right', grid:{display:false}, title:{display:true,text:'₴'}}
+      }
+    }
+  });
+}
+
+function renderFunnel(){
+  // Count unique sessions per step from analytics_events
+  const counts = {};
+  ANA.data.evtAgg.forEach(e=>{ counts[e.event_type]=(counts[e.event_type]||0)+1; });
+  // unique sessions per event_type requires separate queries; approximate with raw count
+  const steps = [
+    { k:'page_view',    label:'Перегляди' },
+    { k:'section_view', label:'Переглянуто секції' },
+    { k:'click',        label:'Кліки' },
+    { k:'funnel_step',  label:'Фуннель' }
+  ];
+  const orders = ANA.data.orders.length;
+  const base = counts['page_view'] || 0;
+  const rows = document.getElementById('funnel-rows');
+  rows.innerHTML = '';
+  steps.forEach(s=>{
+    const v = counts[s.k]||0;
+    const pct = base ? Math.round(v/base*100) : 0;
+    const w = base ? Math.min(100, Math.round(v/base*100)) : 0;
+    rows.insertAdjacentHTML('beforeend', `
+      <div class="f-step">
+        <span>${s.label}</span>
+        <div class="f-bar"><div class="f-fill" style="width:${w}%"></div></div>
+        <span class="f-pct">${fmtInt(v)} · ${pct}%</span>
+      </div>`);
+  });
+  const opct = base ? Math.round(orders/base*100*100)/100 : 0;
+  rows.insertAdjacentHTML('beforeend', `
+    <div class="f-step">
+      <span>Замовлення</span>
+      <div class="f-bar"><div class="f-fill" style="width:${base?Math.min(100,Math.round(orders/base*100)):0}%;background:linear-gradient(90deg,#e4a24b,#b1322e)"></div></div>
+      <span class="f-pct">${fmtInt(orders)} · ${opct}%</span>
+    </div>`);
+}
+
+function renderTopProducts(){
+  // Aggregate by item.uid; lookup title from PRODUCTS cache
+  const agg = {};
+  ANA.data.orders.forEach(o=>{
+    (o.items||[]).forEach(it=>{
+      const uid = String(it.uid||'');
+      if(!uid) return;
+      const unit = parseFloat(it.price)||0;
+      const qty  = parseInt(it.qty||1,10);
+      if(!agg[uid]) agg[uid] = { uid, qty:0, rev:0, title: it.title || '' };
+      agg[uid].qty += qty;
+      agg[uid].rev += unit * qty;
+      if(!agg[uid].title && it.title) agg[uid].title = it.title;
+    });
+  });
+  const arr = Object.values(agg).sort((a,b)=>b.rev-a.rev).slice(0,10);
+  const wrap = document.getElementById('top-products');
+  if(!arr.length){ wrap.innerHTML = '<div class="ana-empty">Немає даних за період</div>'; return; }
+  wrap.innerHTML = arr.map(p=>{
+    const title = (p.title||'').replace('ULTERA - ','').replace('ULTERA ','') || p.uid;
+    return `<div class="li"><div><div>${escapeHtml(title)}</div><div class="meta">${p.qty} шт · uid ${p.uid}</div></div><div class="count">${fmtMoney(p.rev)}</div></div>`;
+  }).join('');
+}
+
+function renderStatusChart(){
+  _destroyChart('status');
+  const cnt = {};
+  ANA.data.orders.forEach(o=>{ const k=o.status||'—'; cnt[k]=(cnt[k]||0)+1; });
+  const labels = Object.keys(cnt);
+  const ctx = document.getElementById('ch-status').getContext('2d');
+  ANA.charts.status = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data: labels.map(k=>cnt[k]), backgroundColor:['#8bc26f','#c8dca7','#e4a24b','#b1322e','#6ea04a','#0e0e0e','#a0a09b']}] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }
+  });
+}
+
+function renderPaymentChart(){
+  _destroyChart('payment');
+  const cnt = {};
+  ANA.data.orders.forEach(o=>{
+    let k = o.payment_method || '—';
+    if(k==='card') k = 'Картка';
+    else if(k==='np') k = 'Наложка';
+    cnt[k]=(cnt[k]||0)+1;
+  });
+  const labels = Object.keys(cnt);
+  const ctx = document.getElementById('ch-payment').getContext('2d');
+  ANA.charts.payment = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data: labels.map(k=>cnt[k]), backgroundColor:['#2b7a3d','#e4a24b','#a0a09b']}] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }
+  });
+}
+
+function renderTopPages(){
+  const cnt = {};
+  ANA.data.pageViews.forEach(e=>{
+    const u = String(e.page_url||'').replace(/^https?:\/\/[^/]+/, '').split('?')[0] || '/';
+    cnt[u]=(cnt[u]||0)+1;
+  });
+  const arr = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const wrap = document.getElementById('top-pages');
+  if(!arr.length){ wrap.innerHTML = '<div class="ana-empty">Немає даних</div>'; return; }
+  wrap.innerHTML = arr.map(([u,n])=>`<div class="li"><div><div class="meta" style="color:#0e0e0e;font-weight:500">${escapeHtml(u)}</div></div><div class="count">${fmtInt(n)}</div></div>`).join('');
+}
+
+function renderTopReferrers(){
+  const cnt = {};
+  ANA.data.pageViews.forEach(e=>{
+    let r = String(e.referrer||'').trim();
+    if(!r) r = '(direct)';
+    else { try{ r = new URL(r).hostname.replace(/^www\./,''); }catch(_){} }
+    cnt[r]=(cnt[r]||0)+1;
+  });
+  const arr = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const wrap = document.getElementById('top-refs');
+  if(!arr.length){ wrap.innerHTML = '<div class="ana-empty">Немає даних</div>'; return; }
+  wrap.innerHTML = arr.map(([u,n])=>`<div class="li"><div><div class="meta" style="color:#0e0e0e;font-weight:500">${escapeHtml(u)}</div></div><div class="count">${fmtInt(n)}</div></div>`).join('');
+}
+
+function renderDevicesChart(){
+  _destroyChart('devices');
+  const cnt = { mobile:0, tablet:0, desktop:0, other:0 };
+  ANA.data.pageViews.forEach(e=>{
+    const d = (e.device_type||'').toLowerCase();
+    if(d in cnt) cnt[d]++; else cnt.other++;
+  });
+  const labels = ['Mobile','Tablet','Desktop','Other'];
+  const data = [cnt.mobile, cnt.tablet, cnt.desktop, cnt.other];
+  const ctx = document.getElementById('ch-devices').getContext('2d');
+  ANA.charts.devices = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data, backgroundColor:['#6ea04a','#c8dca7','#0e0e0e','#a0a09b']}] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }
+  });
+}
+
+async function loadHeatmapPages(){
+  // Distinct page_url from click events
+  const rows = await rest('analytics_events?select=page_url&event_type=eq.click&limit=20000');
+  const counts = {};
+  (rows||[]).forEach(r=>{
+    const u = String(r.page_url||'').split('?')[0];
+    if(!u) return;
+    counts[u]=(counts[u]||0)+1;
+  });
+  const arr = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const sel = document.getElementById('hm-page-sel');
+  sel.innerHTML = arr.map(([u,n])=>`<option value="${escapeHtml(u)}">${escapeHtml(u)} (${n})</option>`).join('') ||
+                  '<option value="">Немає даних</option>';
+  if(arr.length){
+    ANA.heatmap.page = arr[0][0];
+    await renderHeatmap();
+  }
+}
+
+async function renderHeatmap(){
+  const sinceIso = periodSinceIso(ANA.period);
+  const sinceFilter = sinceIso ? '&created_at=gte.' + encodeURIComponent(sinceIso) : '';
+  const pageFilter  = ANA.heatmap.page ? '&page_url=eq.' + encodeURIComponent(ANA.heatmap.page) : '';
+  const types = ANA.heatmap.mm ? 'in.(click,mouse_move)' : 'eq.click';
+  const rows = await rest(`analytics_events?select=event_data,created_at&event_type=${types}${pageFilter}${sinceFilter}&limit=20000`);
+  ANA.heatmap.events = rows || [];
+  document.getElementById('hm-count').textContent = `${rows.length} подій`;
+
+  const canvas = document.getElementById('hm-canvas');
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#fafaf5';
+  ctx.fillRect(0,0,W,H);
+
+  // Points with x_pct and y_pct (heatmap uses viewport-relative %)
+  // y_pct for scroll-wide pages can exceed 100; clamp to canvas H.
+  // Strategy: gaussian blob per point, additive, then color gradient.
+  const blobR = ANA.heatmap.mm ? 18 : 30;
+  const alpha = ANA.heatmap.mm ? 0.04 : 0.14;
+  const grd = ctx.createRadialGradient(0,0,0,0,0,blobR);
+  grd.addColorStop(0, `rgba(255,0,0,${alpha})`);
+  grd.addColorStop(0.5, `rgba(255,165,0,${alpha*0.6})`);
+  grd.addColorStop(1, `rgba(255,255,0,0)`);
+
+  ctx.globalCompositeOperation = 'source-over';
+  (rows||[]).forEach(r=>{
+    const d = r.event_data || {};
+    let x = Number(d.x_abs);
+    let y = Number(d.y_abs);
+    let xp = Number(d.x_pct);
+    let yp = Number(d.y_pct);
+    if(!isFinite(x) && isFinite(xp)) x = xp/100 * W;
+    if(!isFinite(y) && isFinite(yp)) y = yp/100 * H;
+    if(!isFinite(x) || !isFinite(y)) return;
+    // If viewport wider/narrower than W, approximate by x_pct preferred
+    if(isFinite(xp)) x = xp/100 * W;
+    if(isFinite(yp)) y = yp/100 * H;
+    x = Math.max(0, Math.min(W, x));
+    y = Math.max(0, Math.min(H, y));
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(0,0,blobR,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+// Event wiring
+(function(){
+  const tabs = document.getElementById('ana-tabs');
+  if(tabs){
+    tabs.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button[data-period]');
+      if(!btn) return;
+      tabs.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      ANA.period = btn.dataset.period;
+      await loadAnalytics();
+    });
+  }
+  const hmSel = document.getElementById('hm-page-sel');
+  if(hmSel) hmSel.addEventListener('change', async e=>{ ANA.heatmap.page = e.target.value; await renderHeatmap(); });
+  const hmMm = document.getElementById('hm-mm');
+  if(hmMm) hmMm.addEventListener('change', async e=>{ ANA.heatmap.mm = e.target.checked; await renderHeatmap(); });
+
+  // Trigger loadAnalytics when switching to analytics page
+  const anaLink = document.querySelector('[data-page="analytics"]');
+  if(anaLink) anaLink.addEventListener('click', ()=>{ setTimeout(loadAnalytics, 40); });
+})();
+
 </script></body>
 </html>
