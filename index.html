@@ -1517,8 +1517,12 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .h3intro--aganta .h3-wordmark,
 .h3intro--aganta .h3-divider,
 .h3intro--aganta .h3-balls,
-.h3intro--aganta .h3-solebar{display:none}
-.h3intro--aganta .h3-stats{top:48%;transform:translateY(-50%);left:6%;right:6%}
+.h3intro--aganta .h3-solebar,
+.h3intro--aganta .h3-skip{display:none}
+.h3intro--aganta .h3-stats{top:30%;transform:none;left:6%;right:6%}
+@media (max-width:760px){
+  .h3intro--aganta .h3-stats{top:26%}
+}
 /* Without wordmark/balls, skip the 1650ms/2400ms waits — reveal stats fast */
 .h3intro--aganta.on .h3-stat{opacity:0;transform:translateY(-12px)}
 .h3intro--aganta.phase3 .h3-stat{animation:h3statIn .7s cubic-bezier(.22,.9,.3,1.05) forwards}
