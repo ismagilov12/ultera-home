@@ -1954,6 +1954,21 @@ window.ulteraFbq = function(name, params){
     return eventId;
   } catch(e){ return null; }
 };
+/* v112: Advanced Matching — re-init pixel with user data (pixel auto-hashes SHA-256).
+   Call after wizard captures fio/phone so future events carry AM signals to Meta. */
+window.ulteraFbMatch = function(userData){
+  try {
+    if (typeof fbq !== 'function' || !userData) return;
+    var am = {};
+    if (userData.email) am.em = String(userData.email).toLowerCase().trim();
+    if (userData.phone) am.ph = String(userData.phone).replace(/\D+/g, '');
+    if (userData.firstName) am.fn = String(userData.firstName).toLowerCase().trim();
+    if (userData.lastName)  am.ln = String(userData.lastName).toLowerCase().trim();
+    if (userData.externalId) am.external_id = String(userData.externalId);
+    if (Object.keys(am).length === 0) return;
+    fbq('init', '1861447568005608', am);
+  } catch(e){}
+};
 </script>
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1861447568005608&ev=PageView&noscript=1"/></noscript>
 <!-- /Meta Pixel -->
@@ -4051,6 +4066,17 @@ async function sendLead(){
   try {
     const leadNum = CART.wizard.leadNum || ('ULT-LEAD-' + Date.now().toString().slice(-8));
     CART.wizard = {...CART.wizard, leadNum}; CART.saveWiz();
+    // v112: update FB pixel Advanced Matching with captured fio+phone
+    try {
+      if (typeof ulteraFbMatch === 'function') {
+        var __nameParts = String(CART.wizard.fio || '').trim().split(/\s+/);
+        ulteraFbMatch({
+          phone: CART.wizard.phone,
+          firstName: __nameParts[0] || '',
+          lastName: __nameParts.slice(1).join(' ') || ''
+        });
+      }
+    } catch(_){}
     const payload = {
       num: leadNum,
       stage: 'lead',
@@ -4120,6 +4146,17 @@ async function wizardSubmit(){
     total: CART.total(),
     items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, priceFull: it.priceFull||null, season: it.season || null}))
   };
+  // v112: refresh FB pixel Advanced Matching with final data
+  try {
+    if (typeof ulteraFbMatch === 'function') {
+      var __fioParts = String(CART.wizard.fio||'').trim().split(/\s+/);
+      ulteraFbMatch({
+        phone: CART.wizard.phone,
+        firstName: __fioParts[0] || '',
+        lastName: __fioParts.slice(1).join(' ') || ''
+      });
+    }
+  } catch(_){}
   try {
     const r = await fetch('/api/order', {
       method: 'POST',
