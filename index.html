@@ -1520,11 +1520,11 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .h3intro--aganta .h3-solebar{display:none}
 .h3intro--aganta .h3-stats{top:48%;transform:translateY(-50%);left:6%;right:6%}
 /* Without wordmark/balls, skip the 1650ms/2400ms waits — reveal stats fast */
-.h3intro--aganta.on .h3-stat{opacity:0}
-.h3intro--aganta.phase3 .h3-stat{animation:h3statIn .55s cubic-bezier(.22,.9,.3,1.05) forwards}
-.h3intro--aganta.phase3 .h3-stat[data-i="1"]{animation-delay:.05s}
-.h3intro--aganta.phase3 .h3-stat[data-i="2"]{animation-delay:.18s}
-.h3intro--aganta.phase3 .h3-stat[data-i="3"]{animation-delay:.31s}
+.h3intro--aganta.on .h3-stat{opacity:0;transform:translateY(-12px)}
+.h3intro--aganta.phase3 .h3-stat{animation:h3statIn .7s cubic-bezier(.22,.9,.3,1.05) forwards}
+.h3intro--aganta.phase3 .h3-stat[data-i="1"]{animation-delay:.08s}
+.h3intro--aganta.phase3 .h3-stat[data-i="2"]{animation-delay:.28s}
+.h3intro--aganta.phase3 .h3-stat[data-i="3"]{animation-delay:.48s}
 
 
 /* Very light top wash — keeps photo visible but adds a tiny bit of contrast */
@@ -3455,15 +3455,10 @@ function openModal(uid){
         void __aganta.offsetWidth;
         __aganta.classList.add('on');
         window.__hun3IntroActive = true;
-        // No BOUNCE/wordmark — reveal stats quickly
-        window.__hun3IntroTimers.push(setTimeout(function(){ __aganta.classList.add('phase3'); }, 250));
-        // Auto-hide after stats have shown (1.6s feels natural, user can tap photo to skip sooner)
-        window.__hun3IntroTimers.push(setTimeout(function(){
-          if (window.__hun3IntroActive) {
-            __aganta.classList.add('end');
-            setTimeout(function(){ __aganta.classList.remove('on','phase2','phase3','end'); window.__hun3IntroActive = false; }, 620);
-          }
-        }, 2600));
+        // Smooth staged reveal: small initial pause, then phase3 triggers the h3statIn
+        // staccato (.05 / .18 / .31s per card). No auto-hide — stays until user taps
+        // a photo or Skip, matching Hunk3 intro behavior.
+        window.__hun3IntroTimers.push(setTimeout(function(){ __aganta.classList.add('phase3'); }, 700));
       } else if (__shapeI && __fam === 'shape') {
         void __shapeI.offsetWidth;
         __shapeI.classList.add('on');
