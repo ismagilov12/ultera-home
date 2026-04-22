@@ -3629,14 +3629,25 @@ function addToCart(){
   const uid = currentColor;
   const p = findProduct(uid);
   if(!p){ toast('Помилка товару'); return; }
+  // Season: summer (default) | spring (+500 UAH). Families without season selector
+  // (SHAPE, Lite) fall through with summer/none.
+  const NO_SEASON = ['SHAPE','Lite'];
+  const canSeason = !NO_SEASON.includes(p.family);
+  const seasonId   = canSeason ? (window.__modalSeason || 'summer') : null;
+  const seasonLabel = seasonId === 'spring' ? 'Весна/Осінь' : (seasonId === 'summer' ? 'Літо' : '');
+  const seasonExtra = seasonId === 'spring' ? 500 : 0;
+  const basePrice  = parseFloat(p.price) || 0;
+  const finalPrice = (basePrice + seasonExtra).toFixed(2);
   const item = {
     uid: p.uid,
     title: p.title.replace('ULTERA - ','').replace('ULTERA ',''),
     photo: p.photo,
     color_name: p.color_name || '',
     size: sel.dataset.sz,
-    price: p.price,
-    family: p.family
+    price: finalPrice,
+    family: p.family,
+    season: seasonLabel || null,
+    seasonId: seasonId
   };
   CART.add(item);
   updateCartBadge();
@@ -4031,7 +4042,7 @@ async function sendLead(){
       fio: CART.wizard.fio,
       phone: CART.wizard.phone,
       total: CART.total(),
-      items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, priceFull: it.priceFull||null}))
+      items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, priceFull: it.priceFull||null, season: it.season || null}))
     };
     const r = await fetch('/api/order', {
       method: 'POST',
@@ -4091,7 +4102,7 @@ async function wizardSubmit(){
     payment: pm,
     promoCode: (CART.wizard && CART.wizard.promo) || null,
     total: CART.total(),
-    items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, priceFull: it.priceFull||null}))
+    items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, priceFull: it.priceFull||null, season: it.season || null}))
   };
   try {
     const r = await fetch('/api/order', {

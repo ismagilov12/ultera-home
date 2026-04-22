@@ -1,5 +1,9 @@
 // api/order.js — proxy ultera-home frontend → KeyCRM
-// SECURITY v4 (2026-04-22):
+// SECURITY v5 (2026-04-22):
+//   - [v5] product name includes season suffix (' / Літо' or ' / Весна/Осінь')
+//   - [v5] shipping_address_warehouse merges city + branch into one line; city left blank
+//          so KeyCRM UI shows a single 'Адреса доставки' field instead of two.
+// SECURITY v4 (earlier):
 //   - [v4] promoCode hardcoded table: SALE1 → -5% off whole order (pro-rata applied to unit_price)
 //   SECURITY v3 (earlier):
 //   - CORS whitelist (ultera.in.ua + *.vercel.app)
@@ -246,9 +250,10 @@ module.exports = async function handler(req, res) {
     buyer: { full_name: body.fio, phone: body.phone },
     shipping: {
       delivery_service_id: parseInt(process.env.KEYCRM_DS_NP || '1', 10),
-      shipping_address_city: body.city || '',
+      // [v5] merged: KeyCRM UI field "Адреса доставки" gets full line.
+      shipping_address_city: '',
       shipping_address_region: '',
-      shipping_address_warehouse: body.wh || '',
+      shipping_address_warehouse: [body.city, body.wh].filter(Boolean).join(', '),
       recipient_full_name: body.fio,
       recipient_phone: body.phone
     },
@@ -267,7 +272,7 @@ module.exports = async function handler(req, res) {
       if (promoPct > 0) unitPrice = Math.round(unitPrice * (100 - promoPct)) / 100;
       return {
         sku: String(it.uid || ''),
-        name: it.title + (it.color_name ? ' / ' + it.color_name : '') + (it.size ? ' / р.' + it.size : ''),
+        name: it.title + (it.color_name ? ' / ' + it.color_name : '') + (it.size ? ' / р.' + it.size : '') + (it.season ? ' / ' + it.season : ''),
         price: unitPrice,
         quantity: parseInt(it.qty || 1, 10),
         picture: it.photo || null
