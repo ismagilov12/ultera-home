@@ -1,5 +1,7 @@
 // api/wayforpay.js
-// SECURITY v3 (2026-04-22):
+// SECURITY v4 (2026-04-22):
+//   - [v4] promoCode hardcoded table: SALE1 → -5% pro-rata on card path; cod unchanged
+// SECURITY v3 (earlier):
 //   - CORS whitelist (ultera.in.ua + *.vercel.app)
 //   - Rate limit 30 req/min по IP (Supabase RPC)
 //   - СЕРВЕРНЫЙ пересчёт amount из ulhome_products
@@ -10,6 +12,9 @@
 //          sanity: prepayment <= authoritativeTotal (щоб на акційні дешеві товари не брати більше)
 
 const crypto = require('crypto');
+
+// [v4] Hardcoded promo codes — keep in sync with api/order.js
+const PROMOS = { 'SALE1': 5 };
 
 const ALLOWED_ORIGINS_EXACT = new Set([
   'https://ultera.in.ua',
@@ -183,6 +188,9 @@ module.exports = async function handler(req, res) {
     productCount   = ['1'];
     productPrice   = [codPrepayment.toFixed(2)];
   } else {
+    // [v4] Promo on card path (pro-rata on unit_price so amount = sum(price*qty)).
+    const promoCodeRaw = String(body.promoCode || '').toUpperCase().trim();
+    const promoPct = (promoCodeRaw && PROMOS[promoCodeRaw]) || 0;
     const uids = resolvedItems.map(it => String(it.uid || ''));
     const names = await getProductNames(uids);
     productName  = [];
@@ -191,9 +199,16 @@ module.exports = async function handler(req, res) {
     for (const line of priceResult.breakdown) {
       productName.push(names[line.uid] || line.uid);
       productCount.push(String(line.qty));
-      productPrice.push(Number(line.unit_price).toFixed(2));
+      let unit = Number(line.unit_price);
+      if (promoPct > 0) unit = Math.round(unit * (100 - promoPct)) / 100;
+      productPrice.push(unit.toFixed(2));
     }
-    amountStr = authoritativeAmount.toFixed(2);
+    // Recompute amount from discounted productPrice so signature matches
+    let discountedTotal = 0;
+    priceResult.breakdown.forEach((line, i) => {
+      discountedTotal += Number(productPrice[i]) * Number(productCount[i]);
+    });
+    amountStr = discountedTotal.toFixed(2);
   }
 
   const orderDate = Math.floor(Date.now() / 1000);

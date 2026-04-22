@@ -1464,6 +1464,19 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .s-total{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--ink);color:#fff}
 .s-total span{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.75;font-weight:700}
 .s-total b{font-size:22px;font-weight:900;letter-spacing:-.015em;line-height:1;color:#fff}
+.cd-section.cd-section-promo{margin-top:14px}
+.cd-field-promo{display:flex;gap:8px;align-items:stretch}
+.cd-field-promo input{flex:1;text-transform:uppercase;letter-spacing:.02em}
+.cd-promo-apply{padding:0 18px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);border-radius:8px;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.cd-promo-apply:hover{background:var(--ink);color:#fff}
+.cd-promo-apply:disabled{opacity:.5;cursor:not-allowed}
+.cd-promo-status{min-height:18px;margin-top:6px;font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em}
+.cd-promo-status.ok{color:#2b7a3d}
+.cd-promo-status.err{color:#b1322e}
+.s-discount{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:#f5faed;color:#2b7a3d;font:600 13px/1.2 Inter,system-ui}
+.s-discount .s-d-code{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em}
+.s-discount .s-d-val{font-weight:800}
+
 
 @media (max-width:760px){
   .s-row{padding:11px 12px}
@@ -2355,6 +2368,13 @@ window.ulteraFbq = function(name, params){
           <div class="cd-section"><b>4</b><span>Спосіб оплати</span></div>
           <label class="cd-radio"><input type="radio" name="pm" value="card" checked><div><b>Оплата карткою</b><span>Доступна оплата частинами моно/а-банк</span></div></label>
           <label class="cd-radio"><input type="radio" name="pm" value="np"><div><b>Оплата на пошті (наложений платіж)</b><span>Мінімальна передоплата 500 ₴</span></div></label>
+
+          <div class="cd-section cd-section-promo"><span>Промокод (опціонально)</span></div>
+          <label class="cd-field cd-field-promo">
+            <input type="text" id="wPromo" placeholder="SALE1" autocomplete="off" maxlength="20" style="text-transform:uppercase">
+            <button type="button" class="cd-promo-apply" onclick="applyPromo()">Застосувати</button>
+          </label>
+          <div class="cd-promo-status" id="wPromoStatus"></div>
 
           <div class="cd-err" id="wErr1"></div>
           <button class="cd-next submit big" onclick="wizardSubmit()">Оформити замовлення<svg class="cd-arr" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -3839,6 +3859,7 @@ function startCheckout(){
   if(w.city)  document.getElementById('wCity').value = w.city;
   if(w.wh){   document.getElementById('wWh').value = w.wh; document.getElementById('wWh').disabled = false; }
   if(w.pm){   const r = document.querySelector('input[name="pm"][value="'+w.pm+'"]'); if(r) r.checked = true; }
+  if(w.promo){ const ip = document.getElementById('wPromo'); if(ip) ip.value = w.promo; applyPromo(); }
   showStep('form');
   renderSummary();
 }
@@ -3876,9 +3897,53 @@ function renderSummary(){
       contactHtml + addrHtml +
       '<div class="s-divider"></div>' +
       itemsHtml +
-      '<div class="s-total"><span>Разом</span><b>' + total + ' ₴</b></div>' +
+      (function(){
+        var pct = (CART.wizard && CART.wizard.promoPct) || 0;
+        if(pct > 0){
+          var raw = Math.round(CART.total());
+          var disc = Math.round(raw * pct / 100);
+          var finalSum = raw - disc;
+          return '<div class="s-discount"><span class="s-d-code">Промокод ' + (CART.wizard.promo || '') + ' −' + pct + '%</span><span class="s-d-val">−' + disc.toLocaleString('uk-UA') + ' ₴</span></div>' +
+                 '<div class="s-total"><span>До сплати</span><b>' + finalSum.toLocaleString('uk-UA') + ' ₴</b></div>';
+        }
+        return '<div class="s-total"><span>Разом</span><b>' + total + ' ₴</b></div>';
+      })() +
     '</div>';
 }
+/* ----- Promo codes (hardcoded — server re-validates) ----- */
+const ULTERA_PROMOS = { 'SALE1': 5 };  // code => percent off
+function promoFinalTotal(){
+  const raw = Math.round(CART.total());
+  const pct = (CART.wizard && CART.wizard.promoPct) || 0;
+  return pct > 0 ? Math.round(raw * (100 - pct) / 100) : raw;
+}
+function applyPromo(){
+  const inp = document.getElementById('wPromo');
+  const st  = document.getElementById('wPromoStatus');
+  if(!inp || !st) return;
+  const code = String(inp.value||'').trim().toUpperCase();
+  if(!code){
+    CART.wizard = {...CART.wizard, promo:null, promoPct:0};
+    CART.saveWiz();
+    st.className = 'cd-promo-status'; st.textContent = '';
+    renderSummary();
+    return;
+  }
+  const pct = ULTERA_PROMOS[code];
+  if(pct){
+    CART.wizard = {...CART.wizard, promo: code, promoPct: pct};
+    CART.saveWiz();
+    st.className = 'cd-promo-status ok';
+    st.textContent = '✓ Застосовано −' + pct + '%. Діє на сплату карткою; передплата наложки залишається 500 ₴.';
+  } else {
+    CART.wizard = {...CART.wizard, promo:null, promoPct:0};
+    CART.saveWiz();
+    st.className = 'cd-promo-status err';
+    st.textContent = '✗ Невідомий код';
+  }
+  renderSummary();
+}
+
 async function sendLead(){
   try {
     const leadNum = CART.wizard.leadNum || ('ULT-LEAD-' + Date.now().toString().slice(-8));
@@ -3948,6 +4013,7 @@ async function wizardSubmit(){
     city: CART.wizard.city, cityRef: CART.wizard.cityRef,
     wh: CART.wizard.wh, whRef: CART.wizard.whRef,
     payment: pm,
+    promoCode: (CART.wizard && CART.wizard.promo) || null,
     total: CART.total(),
     items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, priceFull: it.priceFull||null}))
   };
@@ -3978,7 +4044,7 @@ async function wizardSubmit(){
     });
     // NOTE: promoSecond items already carry discounted price in it.price — WayForPay gets final amounts directly
     var total = Math.round(CART.total());
-    var wfpAmount = (pm === 'np') ? 500 : total;
+    var wfpAmount = (pm === 'np') ? 500 : promoFinalTotal();
     try {
       var wfpResp = await fetch('/api/wayforpay', {
         method: 'POST',
@@ -3989,6 +4055,7 @@ async function wizardSubmit(){
           amount: wfpAmount,
           products: products,
           paymentMode: (pm === 'np' ? 'cod' : 'card'),
+          promoCode: (CART.wizard && CART.wizard.promo) || null,
           clientFirstName: clientFirstName,
           clientLastName: clientLastName,
           clientEmail: '',

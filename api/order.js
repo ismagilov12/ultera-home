@@ -1,15 +1,22 @@
 // api/order.js — proxy ultera-home frontend → KeyCRM
-// SECURITY v2 (2026-04-21):
+// SECURITY v4 (2026-04-22):
+//   - [v4] promoCode hardcoded table: SALE1 → -5% off whole order (pro-rata applied to unit_price)
+//   SECURITY v3 (earlier):
 //   - CORS whitelist (ultera.in.ua + *.vercel.app)
 //   - Rate limit 10 req/min по IP
 //   - Cloudflare Turnstile (captcha) verify — если TURNSTILE_SECRET задан
 //   - Серверный пересчёт прайсов из ulhome_products
 //   - Записываем order в ulhome_orders параллельно с KeyCRM
+//   - [v3] stage=lead → только Supabase, KeyCRM не трогаем (фикс дубликата)
 //
 // Env vars:
 //   KEYCRM_TOKEN, KEYCRM_SOURCE_ID, KEYCRM_PM_CARD, KEYCRM_PM_NP, KEYCRM_DS_NP
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   TURNSTILE_SECRET (опционально — если пуст, captcha не проверяется)
+
+// [v4] Hardcoded promo codes (SERVER-SIDE truth — frontend table is advisory).
+// Extend here; if many, migrate to ulhome_promocodes table.
+const PROMOS = { 'SALE1': 5 };  // code => percent off total
 
 const ALLOWED_ORIGINS_EXACT = new Set([
   'https://ultera.in.ua',
@@ -160,25 +167,43 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ ok: false, error: 'Missing items' });
   }
 
-  // Captcha (если настроена)
-  const captcha = await verifyTurnstile(body.captchaToken, ip);
-  if (!captcha.ok) {
-    return res.status(403).json({ ok: false, error: 'Captcha failed', detail: captcha.errors || captcha.error });
+  // v3: stage-aware flow.
+  //   'lead'  — клиент только что ввёл имя+телефон (korzina). Сохраняем в Supabase
+  //             как незавершённый заказ (брошенная корзина), но НЕ создаём KeyCRM —
+  //             иначе на финал получим дубликат (фикс 2026-04-22).
+  //   'final' — клиент прошёл чекаут до оплаты. Создаём KeyCRM order.
+  const stage = String(body.stage || 'final').toLowerCase();
+  const isLead = stage === 'lead';
+
+  // Captcha (если настроена) — проверяем только для final. Lead анонимнее.
+  if (!isLead) {
+    const captcha = await verifyTurnstile(body.captchaToken, ip);
+    if (!captcha.ok) {
+      return res.status(403).json({ ok: false, error: 'Captcha failed', detail: captcha.errors || captcha.error });
+    }
   }
 
-  // Серверный пересчёт прайсов
+  // Серверный пересчёт прайсов (и для lead, чтобы корректно класть в Supabase)
   const priced = await recomputePrices(body.items);
   let authoritativeTotal = null;
   if (priced && priced.ok) {
     authoritativeTotal = Number(priced.total);
   } else {
-    // Fallback: используем фронтовые цены, но только для CoD (наложка) — там нет списания денег
-    if (body.payment === 'card') {
+    // Fallback: используем фронтовые цены, но только для CoD (наложка) и lead
+    if (!isLead && body.payment === 'card') {
       return res.status(400).json({ ok: false, error: 'Price verification failed', detail: priced });
     }
     authoritativeTotal = (body.items || []).reduce(
       (s, it) => s + (parseFloat(it.price) || 0) * (parseInt(it.qty || 1, 10)), 0
     );
+  }
+
+  // [v4] Apply promo code (if any) — server-side recompute
+  const promoCodeRaw = String(body.promoCode || '').toUpperCase().trim();
+  const promoPct = (promoCodeRaw && PROMOS[promoCodeRaw]) || 0;
+  const originalTotal = authoritativeTotal;
+  if (promoPct > 0) {
+    authoritativeTotal = Math.round(originalTotal * (100 - promoPct)) / 100;
   }
 
   // Save to Supabase ulhome_orders
@@ -189,13 +214,26 @@ module.exports = async function handler(req, res) {
     delivery_type: body.delivery_type || 'np',
     delivery_city: body.city || '',
     delivery_branch: body.wh || '',
-    payment_method: body.payment || 'np',
-    payment_status: body.payment === 'card' ? 'pending' : 'cod',
+    payment_method: body.payment || (isLead ? null : 'np'),
+    payment_status: isLead ? 'lead' : (body.payment === 'card' ? 'pending' : 'cod'),
     items: body.items,
     total: authoritativeTotal,
-    status: 'new',
-    notes: body.comment || ''
+    status: isLead ? 'lead' : 'new',
+    notes: body.comment || (isLead ? 'abandoned-cart lead' : '')
   });
+
+  // [v3] LEAD: рано выходим, KeyCRM не дёргаем.
+  if (isLead) {
+    return res.status(200).json({
+      ok: true,
+      stage: 'lead',
+      order_num: body.num,
+      supabase_order: orderRow ? orderRow.number : null,
+      authoritative_total: authoritativeTotal,
+      keycrm_id: null,
+      message: 'Lead saved to Supabase; KeyCRM deferred until final stage.'
+    });
+  }
 
   // Build KeyCRM payload с authoritative ценами
   const pmCard = parseInt(process.env.KEYCRM_PM_CARD || '0', 10);
@@ -204,7 +242,7 @@ module.exports = async function handler(req, res) {
 
   const crmPayload = {
     source_id: parseInt(process.env.KEYCRM_SOURCE_ID || '1', 10),
-    manager_comment: `ultera-home · ${body.num || (orderRow && orderRow.number) || ''}${body.payment === 'np' ? ' · наложка (мін 500₴)' : ' · картка'}`,
+    manager_comment: `ultera-home · ${body.num || (orderRow && orderRow.number) || ''}${body.payment === 'np' ? ' · наложка (мін 500₴)' : ' · картка'}${promoPct > 0 ? ` · промо ${promoCodeRaw} −${promoPct}%` : ''}`,
     buyer: { full_name: body.fio, phone: body.phone },
     shipping: {
       delivery_service_id: parseInt(process.env.KEYCRM_DS_NP || '1', 10),
@@ -225,7 +263,8 @@ module.exports = async function handler(req, res) {
       const line = priced && priced.breakdown
         ? priced.breakdown.find(b => b.uid === String(it.uid || ''))
         : null;
-      const unitPrice = line ? Number(line.unit_price) : (parseFloat(it.price) || 0);
+      let unitPrice = line ? Number(line.unit_price) : (parseFloat(it.price) || 0);
+      if (promoPct > 0) unitPrice = Math.round(unitPrice * (100 - promoPct)) / 100;
       return {
         sku: String(it.uid || ''),
         name: it.title + (it.color_name ? ' / ' + it.color_name : '') + (it.size ? ' / р.' + it.size : ''),
@@ -241,6 +280,7 @@ module.exports = async function handler(req, res) {
     console.log('[MOCK] order:', JSON.stringify(crmPayload));
     return res.status(200).json({
       ok: true, mock: true,
+      stage: 'final',
       order_num: body.num,
       supabase_order: orderRow ? orderRow.number : null,
       authoritative_total: authoritativeTotal,
@@ -265,6 +305,7 @@ module.exports = async function handler(req, res) {
     }
     return res.status(200).json({
       ok: true,
+      stage: 'final',
       order_num: body.num,
       supabase_order: orderRow ? orderRow.number : null,
       keycrm_id: data.id || null,
