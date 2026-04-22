@@ -1513,6 +1513,19 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .h3intro{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden;display:none;opacity:1;transition:opacity .6s ease;font-family:var(--font-sans,Inter,system-ui,sans-serif);color:#0e0e0e}
 .h3intro.on{display:block}
 .h3intro.end{opacity:0}
+/* v105: Aganta intro — stats-only variant (no BOUNCE wordmark/balls) */
+.h3intro--aganta .h3-wordmark,
+.h3intro--aganta .h3-divider,
+.h3intro--aganta .h3-balls,
+.h3intro--aganta .h3-solebar{display:none}
+.h3intro--aganta .h3-stats{top:48%;transform:translateY(-50%);left:6%;right:6%}
+/* Without wordmark/balls, skip the 1650ms/2400ms waits — reveal stats fast */
+.h3intro--aganta.on .h3-stat{opacity:0}
+.h3intro--aganta.phase3 .h3-stat{animation:h3statIn .55s cubic-bezier(.22,.9,.3,1.05) forwards}
+.h3intro--aganta.phase3 .h3-stat[data-i="1"]{animation-delay:.05s}
+.h3intro--aganta.phase3 .h3-stat[data-i="2"]{animation-delay:.18s}
+.h3intro--aganta.phase3 .h3-stat[data-i="3"]{animation-delay:.31s}
+
 
 /* Very light top wash — keeps photo visible but adds a tiny bit of contrast */
 .h3intro::before{
@@ -2468,6 +2481,32 @@ window.ulteraFbq = function(name, params){
         <div class="h3-solebar"></div>
         <div class="h3-balls" aria-hidden="true"><i class="h3-ball"></i><i class="h3-ball"></i><i class="h3-ball"></i></div>
       </div>
+      <div class="h3intro h3intro--aganta" id="agantaIntro" aria-hidden="true" onclick="hun3IntroSkip()">
+        <button type="button" class="h3-skip" onclick="hun3IntroSkip()" aria-label="Пропустити">Пропустити</button>
+        <div class="h3-stats">
+          <div class="h3-stat" data-i="1">
+            <div class="h3-stat-v">385<span class="u">г</span></div>
+            <div class="h3-stat-lb">
+              <span class="h3-stat-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3"/><path d="M7 6h10l-1.2 3"/><path d="M8.2 9h7.6l2 4.5a3.5 3.5 0 0 1-3.4 4.5h-4.8a3.5 3.5 0 0 1-3.4-4.5z"/><path d="M7 21h10"/><path d="M12 18v3"/></svg></span>
+              <span class="h3-stat-tx">Вага</span>
+            </div>
+          </div>
+          <div class="h3-stat" data-i="2">
+            <div class="h3-stat-v">1<span class="u">рік</span></div>
+            <div class="h3-stat-lb">
+              <span class="h3-stat-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span>
+              <span class="h3-stat-tx">Гарантія</span>
+            </div>
+          </div>
+          <div class="h3-stat" data-i="3">
+            <div class="h3-stat-v"><svg class="mesh-ic" viewBox="0 0 72 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c5-8 11-8 16 0s11 8 16 0 11-8 16 0 11 8 16 0"/><path d="M4 10c5-8 11-8 16 0s11 8 16 0 11-8 16 0 11 8 16 0" opacity=".5"/><path d="M4 30c5-8 11-8 16 0s11 8 16 0 11-8 16 0 11 8 16 0" opacity=".5"/></svg></div>
+            <div class="h3-stat-lb">
+              <span class="h3-stat-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h12a3 3 0 1 0-3-3"/><path d="M2 14h16a3 3 0 1 1-3 3"/><path d="M2 11h20" opacity=".5"/></svg></span>
+              <span class="h3-stat-tx">Дихаюча сітка</span>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="shapeintro" id="shapeIntro" aria-hidden="true" onclick="shapeIntroSkip()">
         <button type="button" class="sh-skip" onclick="shapeIntroSkip()" aria-label="Пропустити">Пропустити</button>
         <video id="shapeIntroVideo" muted playsinline autoplay preload="metadata" poster="pisok-poster.jpg">
@@ -3389,10 +3428,12 @@ function openModal(uid){
     if (window.__hun3IntroTimers) { window.__hun3IntroTimers.forEach(function(t){clearTimeout(t);}); }
     window.__hun3IntroTimers = [];
     var __intro = document.getElementById('hunk3Intro');
+    var __aganta = document.getElementById('agantaIntro');
     var __shapeI = document.getElementById('shapeIntro');
     var __freshOpen = !document.getElementById('modal').classList.contains('open');
 
     if (__intro) __intro.classList.remove('on','phase2','phase3','end');
+    if (__aganta) __aganta.classList.remove('on','phase2','phase3','end');
     if (__shapeI) {
       __shapeI.classList.remove('on','end');
       var __v = document.getElementById('shapeIntroVideo');
@@ -3410,6 +3451,19 @@ function openModal(uid){
         window.__hun3IntroActive = true;
         window.__hun3IntroTimers.push(setTimeout(function(){ __intro.classList.add('phase2'); }, 1650));
         window.__hun3IntroTimers.push(setTimeout(function(){ __intro.classList.add('phase3'); }, 2400));
+      } else if (__aganta && __fam === 'aganta') {
+        void __aganta.offsetWidth;
+        __aganta.classList.add('on');
+        window.__hun3IntroActive = true;
+        // No BOUNCE/wordmark — reveal stats quickly
+        window.__hun3IntroTimers.push(setTimeout(function(){ __aganta.classList.add('phase3'); }, 250));
+        // Auto-hide after stats have shown (1.6s feels natural, user can tap photo to skip sooner)
+        window.__hun3IntroTimers.push(setTimeout(function(){
+          if (window.__hun3IntroActive) {
+            __aganta.classList.add('end');
+            setTimeout(function(){ __aganta.classList.remove('on','phase2','phase3','end'); window.__hun3IntroActive = false; }, 620);
+          }
+        }, 2600));
       } else if (__shapeI && __fam === 'shape') {
         void __shapeI.offsetWidth;
         __shapeI.classList.add('on');
@@ -3444,11 +3498,11 @@ function closeModal(){
 // Hunk3 intro helpers
 function hun3IntroSkip(){
   try{
-    var el = document.getElementById('hunk3Intro');
-    if(!el) return;
     if (window.__hun3IntroTimers) { window.__hun3IntroTimers.forEach(function(t){clearTimeout(t);}); window.__hun3IntroTimers = []; }
     window.__hun3IntroActive = false;
-    el.classList.remove('on','phase2','phase3','end');
+    document.querySelectorAll('.h3intro').forEach(function(el){
+      el.classList.remove('on','phase2','phase3','end');
+    });
   }catch(_){}
 }
 function shapeIntroSkip(){
@@ -3504,12 +3558,13 @@ function pickSeason(btn, id, label){
 function setModalPhoto(i){
   // v6+SHAPE: dismiss any active intro on the first photo navigation.
   try {
-    var __h3 = document.getElementById('hunk3Intro');
-    if (__h3 && window.__hun3IntroActive) {
+    if (window.__hun3IntroActive) {
       window.__hun3IntroActive = false;
       if (window.__hun3IntroTimers) { window.__hun3IntroTimers.forEach(function(t){clearTimeout(t);}); window.__hun3IntroTimers = []; }
-      __h3.classList.add('end');
-      setTimeout(function(){ __h3.classList.remove('on','phase2','phase3','end'); }, 620);
+      document.querySelectorAll('.h3intro.on').forEach(function(el){
+        el.classList.add('end');
+        setTimeout(function(){ el.classList.remove('on','phase2','phase3','end'); }, 620);
+      });
     }
     var __sh = document.getElementById('shapeIntro');
     if (__sh && window.__shapeIntroActive) {
