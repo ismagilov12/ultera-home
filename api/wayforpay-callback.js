@@ -5,19 +5,22 @@
 // (idempotency) и отдаём ответ, который WayForPay принимает как
 // "полученный и принятый к обработке".
 //
-// SECURITY v2 (2026-04-21):
+// SECURITY v3 (2026-04-22):
 //   - Строгая проверка подписи: отсутствующая = отказ
 //   - Idempotency через Supabase (wayforpay_events)
 //   - Логирование в БД (не только console.log)
 //   - CORS не выставляем — это server-to-server endpoint
+//   - [v3] CAPI Purchase dedup с клиентским Pixel (event_id = orderReference)
 //
 // Env vars:
 //   WAYFORPAY_SECRET          - секретный ключ WayForPay
 //   SUPABASE_URL              - https://<project>.supabase.co
 //   SUPABASE_SERVICE_ROLE_KEY - service_role key (только сервер!)
+//   FB_PIXEL_ID, FB_CAPI_TOKEN, FB_TEST_EVENT_CODE — опционально, для CAPI
 //   (опционально) KEYCRM_TOKEN - для апдейта CRM при Approved
 
 const crypto = require('crypto');
+const { sendCAPI } = require('./fb-capi');
 
 const WFP_SIGNATURE_FIELDS = [
   'merchantAccount',
@@ -29,6 +32,48 @@ const WFP_SIGNATURE_FIELDS = [
   'transactionStatus',
   'reasonCode'
 ];
+
+// Enrich CAPI event with order data from Supabase (non-blocking).
+// Returns { user_data: {...}, custom_data: {...} } or null.
+async function lookupOrderForCAPI(orderRef) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey || !orderRef) return null;
+  try {
+    // Search ulhome_orders by notes/number containing the order reference.
+    // If not found, fall back to bare amount/currency from the WFP payload.
+    const q = encodeURIComponent(orderRef);
+    const r = await fetch(
+      `${supabaseUrl}/rest/v1/ulhome_orders?select=customer_name,customer_phone,customer_email,items,total&notes=ilike.*${q}*&limit=1`,
+      { headers: { 'apikey': supabaseKey, 'Authorization': 'Bearer ' + supabaseKey } }
+    );
+    if (!r.ok) return null;
+    const rows = await r.json();
+    if (!Array.isArray(rows) || !rows.length) return null;
+    const row = rows[0];
+    const nameParts = String(row.customer_name || '').trim().split(/\s+/);
+    const fn = nameParts[0] || null;
+    const ln = nameParts.slice(1).join(' ') || null;
+    const items = Array.isArray(row.items) ? row.items : [];
+    return {
+      user_data: {
+        em: row.customer_email ? [row.customer_email] : undefined,
+        ph: row.customer_phone ? [row.customer_phone] : undefined,
+        fn, ln
+      },
+      custom_data: {
+        content_ids: items.map(i => String(i.uid || '')).filter(Boolean),
+        content_type: 'product',
+        value: Number(row.total || 0),
+        currency: 'UAH',
+        num_items: items.length
+      }
+    };
+  } catch (e) {
+    console.warn('[wfp-callback] lookupOrderForCAPI error', e.message);
+    return null;
+  }
+}
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -65,8 +110,6 @@ module.exports = async function handler(req, res) {
   }
 
   // Строгая проверка подписи. БЕЗ signature = отказ.
-  // Старый код: `if (merchantSignature && merchantSignature !== expected)`
-  // пропускал callback без signature — критическая дыра.
   const incomingSignatureFields = [
     merchantAccount || '',
     orderReference,
@@ -92,13 +135,12 @@ module.exports = async function handler(req, res) {
   }
 
   // Idempotency: INSERT в wayforpay_events с unique(order_ref, transaction_status).
-  // Если запись уже есть — повтор, просто отвечаем "accept" без side-effects.
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   let isFirstEvent = true;
+  const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || '';
   if (supabaseUrl && supabaseKey) {
     try {
-      const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || '';
       const insertRes = await fetch(`${supabaseUrl}/rest/v1/wayforpay_events`, {
         method: 'POST',
         headers: {
@@ -121,7 +163,6 @@ module.exports = async function handler(req, res) {
       });
       if (insertRes.ok) {
         const rows = await insertRes.json().catch(() => []);
-        // ignore-duplicates: возвращает [] если дубликат, [row] если новая вставка
         isFirstEvent = Array.isArray(rows) && rows.length > 0;
       } else {
         const errText = await insertRes.text().catch(() => '');
@@ -142,12 +183,32 @@ module.exports = async function handler(req, res) {
     isFirstEvent
   });
 
-  // Side-effects (апдейт KeyCRM, списание склада) ТОЛЬКО на первом событии.
+  // Side-effects (CAPI Purchase, KeyCRM update) ТОЛЬКО на первом событии.
   if (isFirstEvent && transactionStatus === 'Approved') {
+    // --- CAPI Purchase (fire-and-forget; errors logged but not returned to WFP) ---
+    try {
+      const enriched = await lookupOrderForCAPI(orderReference);
+      const ua = req.headers['user-agent'] || '';
+      const custom = (enriched && enriched.custom_data) || {
+        value: Number(amount || 0),
+        currency: currency || 'UAH'
+      };
+      // If amount differs (e.g. COD prepayment 500 vs real total 1299), trust enriched.total.
+      const result = await sendCAPI('Purchase', {
+        event_id: orderReference, // dedup with client-side Pixel
+        event_source_url: 'https://ultera.in.ua/?paid=1&order=' + encodeURIComponent(orderReference),
+        user_data: Object.assign(
+          { client_ip_address: clientIp, client_user_agent: ua },
+          (enriched && enriched.user_data) || {}
+        ),
+        custom_data: custom
+      });
+      console.log('[wfp-callback] CAPI Purchase →', result);
+    } catch (e) {
+      console.error('[wfp-callback] CAPI exception', e.message);
+    }
     // TODO: Phase 2 — обновить ulhome_orders.payment_status = 'paid'
     //       + дёрнуть KeyCRM stage=paid.
-    // Сейчас просто логируем факт. Когда ulhome_orders начнёт заполняться
-    // из /api/order — добавим UPDATE здесь.
   }
 
   // Ответ для WayForPay (подписанный JSON).

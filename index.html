@@ -1882,6 +1882,25 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .h3intro.on,.shapeintro.on{pointer-events:auto;cursor:pointer}
 }
 </style>
+
+<!-- Meta Pixel v97 (ULTERA) -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1861447568005608');
+fbq('track', 'PageView');
+window.ulteraFbq = function(name, params){
+  try {
+    params = params || {};
+    var eventId = params.event_id || ('u-' + Date.now() + '-' + Math.random().toString(36).slice(2,8));
+    var clean = {};
+    for (var k in params) if (k !== 'event_id') clean[k] = params[k];
+    if (typeof fbq === 'function') fbq('track', name, clean, {eventID: eventId});
+    return eventId;
+  } catch(e){ return null; }
+};
+</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1861447568005608&ev=PageView&noscript=1"/></noscript>
+<!-- /Meta Pixel -->
 </head>
 <body>
 
@@ -2716,6 +2735,7 @@ const CART = {
     const ex = this.items.find(x=>x.uid+'|'+(x.size||'')===key);
     if(ex){ ex.qty = (ex.qty||1) + 1; } else { this.items.push({...item, qty:1}); }
     this.save();
+    try { if (typeof ulteraFbq === 'function') ulteraFbq('AddToCart', {content_ids:[item.uid], content_type:'product', content_name:item.title||'', value: parseFloat(item.price)||0, currency:'UAH'}); } catch(_){}
   },
   setQty(i, q){ if(!this.items[i]) return; if(q<=0){ this.items.splice(i,1); } else { this.items[i].qty = q; } this.save(); },
   remove(i){ this.items.splice(i,1); this.save(); },
@@ -3095,6 +3115,7 @@ function renderHeroSide(i){
 function openModal(uid){
   const p = findProduct(uid);
   if(!p) return;
+  try { if (typeof ulteraFbq === 'function') ulteraFbq('ViewContent', {content_ids:[p.uid], content_type:'product', content_name:p.title||'', value: parseFloat(p.price)||0, currency:'UAH'}); } catch(_){}
   // SHAPE тепер відкриває модалку як інші товари
   const row = findFamily(p.family);
   currentColor = p.uid;
@@ -3757,6 +3778,7 @@ function debounce(fn, ms){ let t; return function(...a){ clearTimeout(t); t = se
 
 function startCheckout(){
   if(CART.items.length === 0) return;
+  try { if (typeof ulteraFbq === 'function') ulteraFbq('InitiateCheckout', {content_ids: CART.items.map(function(i){return i.uid}), content_type:'product', value: CART.total(), currency:'UAH', num_items: CART.items.length}); } catch(_){}
   document.getElementById('cdListWrap').style.display = 'none';
   document.getElementById('cdWizard').style.display = '';
   const w = CART.wizard || {};
@@ -3924,7 +3946,13 @@ async function wizardSubmit(){
       var wfp = await wfpResp.json().catch(function(){ return {}; });
       if (wfpResp.ok && wfp.ok && wfp.formHtml) {
         try {
-          localStorage.setItem('ulteraPendingOrder', JSON.stringify({num:orderNum, ts:Date.now()}));
+          localStorage.setItem('ulteraPendingOrder', JSON.stringify({
+            num:orderNum, ts:Date.now(),
+            items: CART.items.map(function(i){ return {uid:i.uid, qty:i.qty||1, price: parseFloat(i.price)||0}; }),
+            value: Math.round(CART.total()),
+            currency: 'UAH',
+            pm: pm
+          }));
         } catch(_) {}
         document.open();
         document.write(wfp.formHtml);
@@ -4027,6 +4055,19 @@ async function wizardSubmit(){
       if (paid === null) return;
       var order = qs.get('order') || '';
       if (paid === '1') {
+        try {
+          var __pendRaw = localStorage.getItem('ulteraPendingOrder');
+          var __pend = __pendRaw ? JSON.parse(__pendRaw) : null;
+          if (__pend && typeof ulteraFbq === 'function') {
+            ulteraFbq('Purchase', {
+              content_ids: (__pend.items||[]).map(function(i){return i.uid}),
+              content_type: 'product',
+              value: Number(__pend.value || 0),
+              currency: __pend.currency || 'UAH',
+              event_id: order || __pend.num || undefined
+            });
+          }
+        } catch(_){}
         try {
           if (typeof CART !== 'undefined' && CART && typeof CART.clear === 'function') {
             CART.clear();
