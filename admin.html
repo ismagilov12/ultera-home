@@ -196,6 +196,25 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 }
 .swatch-preset:hover{transform:scale(1.1);border-color:rgba(14,14,14,.45)}
 .swatch-preset.sel{transform:scale(1.12);border-color:#0e0e0e;box-shadow:inset 0 0 0 1.5px #fff,0 0 0 2px #0e0e0e22}
+/* v102 orders: delete btn + expanded details */
+.ord-row{cursor:pointer}
+.ord-row:hover{background:#faf9f4}
+.ord-row > div:last-child{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.ord-del{border:1px solid transparent;background:transparent;color:#0e0e0e70;padding:6px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
+.ord-del:hover{border-color:#b1322e;color:#b1322e;background:#fff}
+.ord-det{background:#faf9f4;border-bottom:1px solid #ebebe6;padding:16px 20px;font:500 13px/1.45 Inter,system-ui}
+.ord-det-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:14px}
+.ord-det-b{min-width:0}
+.ord-det-lbl{font:600 10.5px/1 JetBrains Mono,monospace;color:#0e0e0e80;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.ord-det-sub{color:#0e0e0e70;font-weight:500}
+.ord-det-items ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}
+.ord-det-items li{display:grid;grid-template-columns:1fr 60px 100px;gap:12px;padding:8px 10px;background:#fff;border-radius:8px;font-size:13px}
+.ord-det-items .ord-it-q{color:#0e0e0e70;text-align:center;font-family:JetBrains Mono,monospace;font-size:12px}
+.ord-det-items .ord-it-p{text-align:right;font-weight:700}
+@media (max-width:780px){
+  .ord-det-grid{grid-template-columns:1fr 1fr}
+  .ord-det-items li{grid-template-columns:1fr 60px 90px}
+}
 
 /* ==================== ANALYTICS ==================== */
 .period-tabs{display:inline-flex;gap:4px;background:#f5f5f0;padding:4px;border-radius:10px}
@@ -1293,11 +1312,68 @@ async function loadOrders(){
         <div>${escapeHtml(o.customer_phone||'—')}</div>
         <div>${new Date(o.created_at).toLocaleString('uk-UA')}</div>
         <div>${fmtPrice(o.total)}</div>
-        <div><span class="ord-status ${o.status}">${o.status}</span></div>
+        <div>
+          <span class="ord-status ${o.status}">${o.status}</span>
+          <button class="ord-del" title="Видалити замовлення" onclick="event.stopPropagation(); delOrder('${o.id}', ${o.number})"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </div>
       `;
+      row.addEventListener('click', function(){
+        const next = row.nextElementSibling;
+        if(next && next.classList.contains('ord-det')){ next.remove(); return; }
+        const det = document.createElement('div');
+        det.className = 'ord-det';
+        det.innerHTML = orderDetailsHtml(o);
+        row.after(det);
+      });
       tbl.appendChild(row);
     });
   } catch(e){ tbl.innerHTML += '<div class="empty">'+e.message+'</div>'; }
+}
+
+function orderDetailsHtml(o){
+  const items = Array.isArray(o.items) ? o.items : [];
+  const addr  = [o.delivery_city, o.delivery_branch].filter(Boolean).join(', ') || '—';
+  const pm    = o.payment_method === 'card' ? 'Картка' : o.payment_method === 'np' ? 'Наложка' : (o.payment_method || '—');
+  const ps    = {pending:'очікує','cod':'наложка','paid':'сплачено','lead':'лід'}[o.payment_status] || (o.payment_status || '—');
+  const itemsHtml = items.length
+    ? items.map(it => `<li>
+        <span class="ord-it-t">${escapeHtml(it.title||'')}${it.color_name?' / '+escapeHtml(it.color_name):''}${it.size?' / р.'+escapeHtml(it.size):''}${it.season?' · <b>'+escapeHtml(it.season)+'</b>':''}</span>
+        <span class="ord-it-q">× ${parseInt(it.qty||1,10)}</span>
+        <span class="ord-it-p">${fmtPrice(it.price)}</span>
+      </li>`).join('')
+    : '<li>—</li>';
+  return `
+    <div class="ord-det-grid">
+      <div class="ord-det-b">
+        <div class="ord-det-lbl">Адреса</div>
+        <div>${escapeHtml(addr)}</div>
+      </div>
+      <div class="ord-det-b">
+        <div class="ord-det-lbl">Оплата</div>
+        <div>${escapeHtml(pm)} <span class="ord-det-sub">· ${escapeHtml(ps)}</span></div>
+      </div>
+      <div class="ord-det-b">
+        <div class="ord-det-lbl">Email</div>
+        <div>${escapeHtml(o.customer_email||'—')}</div>
+      </div>
+      <div class="ord-det-b">
+        <div class="ord-det-lbl">Нотатки</div>
+        <div>${escapeHtml(o.notes||'—')}</div>
+      </div>
+    </div>
+    <div class="ord-det-items">
+      <div class="ord-det-lbl">Товари</div>
+      <ul>${itemsHtml}</ul>
+    </div>`;
+}
+
+async function delOrder(id, number){
+  if(!confirm('Видалити замовлення #' + number + '? Це безповоротно.')) return;
+  try {
+    await rest('ulhome_orders?id=eq.' + id, { method:'DELETE' });
+    toast('Замовлення #' + number + ' видалено');
+    await loadOrders();
+  } catch(e) { toast('Помилка: ' + e.message, 'err'); }
 }
 
 // Load orders when switching to that page
