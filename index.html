@@ -2658,6 +2658,76 @@ try {
       if (Array.isArray(fam.variants)) fam.variants.forEach(merge);
     });
   });
+
+  // [v102] INJECT new products from Supabase that aren't in baked DATA yet.
+  // Allows admin-added products to appear on site without manual DATA edit.
+  var usedUids = {};
+  if (Array.isArray(D.all)) D.all.forEach(function(v){ if (v && v.uid) usedUids[v.uid] = 1; });
+  ['featured','grid'].forEach(function(sec){
+    if (Array.isArray(D[sec])) D[sec].forEach(function(fam){
+      if (fam.hero && fam.hero.uid) usedUids[fam.hero.uid] = 1;
+      (fam.variants||[]).forEach(function(v){ if (v && v.uid) usedUids[v.uid] = 1; });
+    });
+  });
+  function productToVariant(p){
+    return {
+      uid: p.uid,
+      brand: p.brand || 'ULTERA',
+      mark: p.mark || '',
+      category: p.category || '',
+      title: p.title || '',
+      desc: p.desc_short || '',
+      text: p.text || '',
+      photo: p.photo || '',
+      price: String(p.price != null ? p.price : 0),
+      mods: p.mods || '',
+      sizes: Array.isArray(p.sizes) ? p.sizes : [],
+      price_old: p.price_old != null ? String(p.price_old) : null,
+      family: p.family || '',
+      swatch: p.color_hex || '',
+      color_name: p.color_name || '',
+      size_list: Array.isArray(p.size_list) ? p.size_list : [],
+      description_long: p.description_long || '',
+      characteristics: p.characteristics || '',
+      materials: p.materials || ''
+    };
+  }
+  var gridByFamily = {};
+  if (Array.isArray(D.grid)) D.grid.forEach(function(fam){ if (fam && fam.family) gridByFamily[fam.family] = fam; });
+  // Sort products by (family, sort_order) so new family's hero = lowest sort_order
+  var sortedProducts = products.slice().sort(function(a,b){
+    var fa = String(a.family||''), fb = String(b.family||'');
+    if (fa !== fb) return fa < fb ? -1 : 1;
+    var sa = Number(a.sort_order != null ? a.sort_order : 9999);
+    var sb = Number(b.sort_order != null ? b.sort_order : 9999);
+    return sa - sb;
+  });
+  var injectedCount = 0;
+  sortedProducts.forEach(function(p){
+    if (usedUids[p.uid]) return;
+    var v = productToVariant(p);
+    // Attach videos from mediaByUid (merge() does this for existing; replicate here)
+    var mm = mediaByUid[v.uid];
+    if (mm && mm.videos && mm.videos.length) v.video = mm.videos[0];
+    // D.all: append
+    if (!Array.isArray(D.all)) D.all = [];
+    D.all.push(v);
+    // D.grid: group by family (create entry if family new)
+    var fam = gridByFamily[p.family];
+    if (!fam){
+      fam = { family: p.family || '—', hero: v, variants: [v] };
+      if (!Array.isArray(D.grid)) D.grid = [];
+      D.grid.push(fam);
+      gridByFamily[p.family] = fam;
+    } else {
+      if (!Array.isArray(fam.variants)) fam.variants = [];
+      fam.variants.push(v);
+    }
+    usedUids[p.uid] = 1;
+    injectedCount++;
+  });
+  try { if (injectedCount) console.log('[ultera] injected new products:', injectedCount); } catch(_){}
+
   D_EL.textContent = JSON.stringify(D);
   // Merge Supabase media into existing EXTRA rather than replacing — so any
   // locally-baked shape gallery (/photos/shape-*.webp) isn't wiped.
