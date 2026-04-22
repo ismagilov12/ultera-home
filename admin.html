@@ -471,7 +471,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
       </div>
 
       <div class="ana-block">
-        <h3>Статистика по днях <span style="font-weight:400;color:#0e0e0e70;font-size:12px">· останні 30 днів</span></h3>
+        <h3>Статистика по днях <span id="daily-caption" style="font-weight:400;color:#0e0e0e70;font-size:12px">· останні 7 днів</span></h3>
         <div class="daily-wrap">
           <table class="daily-tbl" id="daily-tbl">
             <thead><tr>
@@ -1666,7 +1666,11 @@ function periodSinceIso(p){
 }
 function fmtMoney(n){ return (Math.round(Number(n)||0)).toLocaleString('uk-UA') + ' ₴'; }
 function fmtInt(n){ return (Math.round(Number(n)||0)).toLocaleString('uk-UA'); }
-function dayKey(iso){ return String(iso).slice(0,10); }
+function dayKey(iso){
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return String(iso).slice(0,10);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
 
 async function loadAnalytics(){
   try {
@@ -1753,7 +1757,7 @@ function renderOrdersChart(){
   const points = [];
   const start = new Date(today.getTime() - ms);
   for(let t = new Date(start); t <= today; t.setDate(t.getDate()+1)){
-    const k = t.toISOString().slice(0,10);
+    const k = dayKey(t);
     points.push({ k, cnt: (days[k]&&days[k].cnt)||0, rev: (days[k]&&days[k].rev)||0 });
   }
   const ctx = document.getElementById('ch-orders').getContext('2d');
@@ -1931,7 +1935,7 @@ function renderDailyTable(){
   const start = new Date(today.getTime() - (ms - 86400000));  // inclusive
   const rows = [];
   for(let t = new Date(today); t >= start; t.setDate(t.getDate()-1)){
-    const k = t.toISOString().slice(0,10);
+    const k = dayKey(t);
     const pv  = pvDay[k] || 0;
     const cnt = (ordDay[k] && ordDay[k].cnt) || 0;
     const rev = (ordDay[k] && ordDay[k].rev) || 0;
@@ -1939,7 +1943,10 @@ function renderDailyTable(){
     rows.push({ k, pv, cnt, rev, aov });
   }
 
-  const todayK = today.toISOString().slice(0,10);
+  const todayK = dayKey(today);
+  // Update dynamic caption to reflect actual period
+  const capEl = document.getElementById('daily-caption');
+  if (capEl) capEl.textContent = '· останні ' + rows.length + ' днів';
   const tbody = document.querySelector('#daily-tbl tbody');
   if(!tbody) return;
   tbody.innerHTML = rows.map(r=>{
