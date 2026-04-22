@@ -90,6 +90,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 .prod-row .acts button{padding:6px;border-radius:6px;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;transition:all .15s}
 .prod-row .acts button:hover{border-color:var(--ink)}
 .prod-row .acts button.del:hover{border-color:var(--err);color:var(--err)}
+.prod-row .acts button.dup-btn:hover{border-color:#6ea04a;color:#3a6e28}
 .prod-row .acts svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2}
 .prod-row:hover{background:#faf9f4}
 
@@ -918,13 +919,15 @@ function renderProducts(){
       <div><span class="status ${p.published?'':'off'}"><span class="dot"></span>${p.published?'Опублік.':'Прихов.'}</span></div>
       <div class="acts">
         <button class="vid-btn" title="${hasVideo?'Є відео — замінити':'Додати відео'}" style="${hasVideo?'border-color:#7ec06d !important;color:#7ec06d':''}"><svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7" fill="currentColor" stroke="none"/><rect x="1" y="5" width="15" height="14" rx="2" fill="none"/></svg></button>
-        <button title="Редагувати"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="edit-btn" title="Редагувати"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="dup-btn" title="Дублювати (без фото)"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
         <button class="del" title="Видалити"><svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
       </div>
     `;
     row.querySelector('.vid-btn').onclick = (e)=>{ e.stopPropagation(); quickAddVideo(p); };
-    row.querySelectorAll('button')[1].onclick = (e)=>{ e.stopPropagation(); openEditor(p); };
-    row.querySelectorAll('button')[2].onclick = (e)=>{ e.stopPropagation(); delProduct(p); };
+    row.querySelector('.edit-btn').onclick = (e)=>{ e.stopPropagation(); openEditor(p); };
+    row.querySelector('.dup-btn').onclick  = (e)=>{ e.stopPropagation(); duplicateProduct(p); };
+    row.querySelector('.del').onclick      = (e)=>{ e.stopPropagation(); delProduct(p); };
     row.addEventListener('click', e=>{ if (!e.target.closest('button')) openEditor(p); });
     table.appendChild(row);
   });
@@ -954,6 +957,26 @@ async function quickAddVideo(p){
     }
     await loadProducts();
   } catch(e){ toast('Помилка: '+e.message, 'err'); }
+}
+
+function duplicateProduct(p){
+  if(!p) return;
+  const newUid = Array.from({length:12}, _ => Math.floor(Math.random()*10)).join('');
+  const clone = {...p};
+  delete clone.id;
+  delete clone.created_at;
+  delete clone.updated_at;
+  clone.uid = newUid;
+  clone.title = (p.title || '') + ' (копія)';
+  clone.photo = '';
+  clone.published = false;
+  openEditor(clone);
+  ED_MEDIA = [];
+  renderEdPhotos();
+  const t = document.getElementById('ed-title');    if (t) t.textContent = 'Дублювання товару';
+  const st = document.getElementById('ed-subt');    if (st) st.textContent = 'Клон "' + (p.title||'') + '" · нове SKU · фото не скопійовані · приховано';
+  const dl = document.getElementById('ed-delete');  if (dl) dl.style.display = 'none';
+  toast('Дубль створено — заповни фото і натисни Зберегти');
 }
 
 ['prod-search','prod-family','prod-status','prod-sort'].forEach(id=>document.getElementById(id).addEventListener('input', renderProducts));
