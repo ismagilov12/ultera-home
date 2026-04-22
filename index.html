@@ -1519,9 +1519,9 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .h3intro--aganta .h3-balls,
 .h3intro--aganta .h3-solebar,
 .h3intro--aganta .h3-skip{display:none}
-.h3intro--aganta .h3-stats{top:30%;transform:none;left:6%;right:6%}
+.h3intro--aganta .h3-stats{top:15%;transform:none;left:6%;right:6%}
 @media (max-width:760px){
-  .h3intro--aganta .h3-stats{top:26%}
+  .h3intro--aganta .h3-stats{top:12%}
 }
 /* Without wordmark/balls, skip the 1650ms/2400ms waits — reveal stats fast */
 .h3intro--aganta.on .h3-stat{opacity:0;transform:translateY(-12px)}
@@ -3946,7 +3946,10 @@ function startCheckout(){
   if(w.city)  document.getElementById('wCity').value = w.city;
   if(w.wh){   document.getElementById('wWh').value = w.wh; document.getElementById('wWh').disabled = false; }
   if(w.pm){   const r = document.querySelector('input[name="pm"][value="'+w.pm+'"]'); if(r) r.checked = true; }
-  if(w.promo){ const ip = document.getElementById('wPromo'); if(ip) ip.value = w.promo; applyPromo(); }
+  // v106.2: do NOT auto-restore promo — user re-enters each time
+  CART.wizard = {...CART.wizard, promo:null, promoPct:0}; CART.saveWiz();
+  const __ip = document.getElementById('wPromo'); if(__ip) __ip.value = '';
+  const __st = document.getElementById('wPromoStatus'); if(__st){ __st.className='cd-promo-status'; __st.textContent=''; }
   showStep('form');
   renderSummary();
 }
