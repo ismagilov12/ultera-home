@@ -4041,13 +4041,13 @@ function renderSummary(){
     '</div>';
 }
 /* ----- Promo codes (hardcoded — server re-validates) ----- */
-const ULTERA_PROMOS = { 'SALE1': 5 };  // code => percent off
+const ULTERA_PROMOS = { 'SALE1': 5, 'ULTERA50': 50, 'ULTERA25': 25, 'ULTERA10': 10 };  // code => percent off (server validates via /api/validate-promo + decrements atomically at checkout)
 function promoFinalTotal(){
   const raw = Math.round(CART.total());
   const pct = (CART.wizard && CART.wizard.promoPct) || 0;
   return pct > 0 ? Math.round(raw * (100 - pct) / 100) : raw;
 }
-function applyPromo(){
+async function applyPromo(){
   const inp = document.getElementById('wPromo');
   const st  = document.getElementById('wPromoStatus');
   if(!inp || !st) return;
@@ -4059,17 +4059,34 @@ function applyPromo(){
     renderSummary();
     return;
   }
-  const pct = ULTERA_PROMOS[code];
-  if(pct){
+  // Try server-side validator first (authoritative: returns remaining, rejects exhausted).
+  st.className = 'cd-promo-status';
+  st.textContent = 'Перевіряю…';
+  let server = null;
+  try {
+    const r = await fetch('/api/validate-promo', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({code})
+    });
+    if (r.ok) server = await r.json();
+  } catch(_){}
+  const localPct = ULTERA_PROMOS[code] || 0;
+  let pct = (server && server.valid) ? server.discount_pct : 0;
+  let remaining = (server && server.valid) ? server.remaining : null;
+  // Fallback to local dict only if server unreachable (not if server explicitly said invalid).
+  if (!pct && !server && localPct) pct = localPct;
+
+  if(pct > 0){
     CART.wizard = {...CART.wizard, promo: code, promoPct: pct};
     CART.saveWiz();
     st.className = 'cd-promo-status ok';
-    st.textContent = '✓ Застосовано −' + pct + '%. Діє на сплату карткою; передплата наложки залишається 500 ₴.';
+    st.textContent = '✓ −' + pct + '%' + (remaining != null ? ' · залишилось ' + remaining : '') + ' · діє на оплату карткою';
   } else {
     CART.wizard = {...CART.wizard, promo:null, promoPct:0};
     CART.saveWiz();
     st.className = 'cd-promo-status err';
-    st.textContent = '✗ Невідомий код';
+    st.textContent = (server && server.valid === false) ? '✗ Код вичерпано або недійсний' : '✗ Невідомий код';
   }
   renderSummary();
 }
@@ -5066,5 +5083,256 @@ insertWomanDivider();
 })();
 </script>
 
+
+<script>
+/* ULTERA promo-code quest (v1, 2026-04-23) — hide 3 tiers of promo codes
+ * across mobile-friendly reveal mechanics. Actual redemption + atomic
+ * decrement лежить у сервері (api/order.js + ulhome_redeem_promo).
+ */
+(function(){
+  'use strict';
+  if (window.__ULTERA_PROMO_QUEST_ON) return;
+  window.__ULTERA_PROMO_QUEST_ON = true;
+
+  const STORAGE_KEY = 'ultera_promo_found';
+  const LAST_MODAL_TS = 'ultera_promo_last_modal_ts';
+
+  // Debounce: don't show modal more than once per 10 seconds.
+  function canShowModal(){
+    const last = parseInt(sessionStorage.getItem(LAST_MODAL_TS) || '0', 10);
+    return Date.now() - last > 10000;
+  }
+  function markModalShown(){ sessionStorage.setItem(LAST_MODAL_TS, String(Date.now())); }
+
+  function reveal(code, pct){
+    if (!canShowModal()) return;
+    markModalShown();
+    try { localStorage.setItem(STORAGE_KEY, code); } catch(_){}
+    showModal(code, pct);
+    // fire analytics event (existing tracker picks it up)
+    try {
+      if (typeof window.__ULTERA_TRACKER_ON !== 'undefined'){
+        // Mimic enqueue via click event — простіше додати атрибут на прихований елемент
+      }
+    } catch(_){}
+  }
+
+  /* ============ 1. Logo tap combo (7 taps / 3s on .hdr-logo) ============ */
+  let taps = [];
+  const TAP_WINDOW = 3000, TAP_COUNT = 7;
+  function onLogoTap(e){
+    const now = Date.now();
+    taps.push(now);
+    taps = taps.filter(t => now - t < TAP_WINDOW);
+    if (taps.length >= TAP_COUNT){
+      taps = [];
+      reveal('ULTERA25', 25);
+      if (e) e.preventDefault();
+    }
+  }
+  document.addEventListener('click', function(e){
+    const el = e.target.closest('.hdr-logo, .hdr .hdr-logo, header .hdr-logo, .hdr-logo img');
+    if (el) onLogoTap(e);
+  }, true);
+
+  /* ============ 2. Long-press on brand banners (1.5s hold) ============ */
+  let lpTimer = null, lpStartY = 0;
+  const LP_MS = 1500, LP_TOLERANCE = 10;
+  const BANNER_SEL = '.shapeintro, .h3intro, .khark-intro, .khark-img, .khark, .khark-hero';
+  function lpStart(e){
+    const target = (e.target.closest && e.target.closest(BANNER_SEL));
+    if (!target) return;
+    lpStartY = (e.touches && e.touches[0]) ? e.touches[0].clientY : (e.clientY || 0);
+    lpTimer = setTimeout(function(){
+      reveal('ULTERA10', 10);
+      lpTimer = null;
+    }, LP_MS);
+  }
+  function lpEnd(){ if (lpTimer){ clearTimeout(lpTimer); lpTimer = null; } }
+  function lpMove(e){
+    if (!lpTimer) return;
+    const y = (e.touches && e.touches[0]) ? e.touches[0].clientY : (e.clientY || 0);
+    if (Math.abs(y - lpStartY) > LP_TOLERANCE) lpEnd();
+  }
+  document.addEventListener('touchstart', lpStart, {passive:true});
+  document.addEventListener('touchend',   lpEnd,   {passive:true});
+  document.addEventListener('touchmove',  lpMove,  {passive:true});
+  document.addEventListener('touchcancel',lpEnd,   {passive:true});
+  document.addEventListener('mousedown', lpStart);
+  document.addEventListener('mouseup',   lpEnd);
+  document.addEventListener('mouseleave',lpEnd);
+
+  /* ============ 3. Scroll to 100% + bounce x3 ============ */
+  let lastScrollY = 0, bounceCount = 0, reached100 = false;
+  window.addEventListener('scroll', function(){
+    const st = pageYOffset || document.documentElement.scrollTop;
+    const dh = document.documentElement.scrollHeight - innerHeight;
+    const pct = dh > 0 ? (st / dh * 100) : 0;
+    if (!reached100 && pct >= 97){
+      reached100 = true;
+      lastScrollY = st;
+      return;
+    }
+    if (!reached100) return;
+    // Count a "bounce" on direction flip after pct>=90
+    const dir = st > lastScrollY ? 1 : (st < lastScrollY ? -1 : 0);
+    if (dir !== 0) {
+      const prevDir = window.__ultera_prev_dir || 0;
+      if (prevDir !== 0 && prevDir !== dir) bounceCount++;
+      window.__ultera_prev_dir = dir;
+      lastScrollY = st;
+    }
+    if (bounceCount >= 3){
+      bounceCount = 0;
+      reveal('ULTERA10', 10);
+    }
+  }, {passive:true});
+
+  /* ============ 4. Hidden pixel button in footer ============ */
+  function installPixel(){
+    const footer = document.querySelector('footer') || document.body;
+    if (!footer || footer.querySelector('.__ultera_pixel')) return;
+    const pixel = document.createElement('button');
+    pixel.className = '__ultera_pixel';
+    pixel.type = 'button';
+    pixel.title = '';
+    pixel.setAttribute('aria-label', '');
+    pixel.style.cssText = [
+      'width:10px','height:10px','border-radius:50%','background:rgba(14,14,14,0.22)',
+      'border:0','padding:0','margin:0 6px','cursor:default','opacity:.35',
+      'transition:opacity .25s,transform .25s,background .25s',
+      'vertical-align:middle','-webkit-tap-highlight-color:transparent','display:inline-block'
+    ].join(';');
+    pixel.addEventListener('click', function(e){
+      e.stopPropagation(); e.preventDefault();
+      reveal('ULTERA50', 50);
+    });
+    // Slight tease on hover/touch for findability without giving it away
+    pixel.addEventListener('pointerenter', function(){
+      pixel.style.opacity = '.6';
+      pixel.style.transform = 'scale(1.4)';
+    });
+    pixel.addEventListener('pointerleave', function(){
+      pixel.style.opacity = '.35';
+      pixel.style.transform = 'scale(1)';
+    });
+    footer.appendChild(pixel);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installPixel);
+  else installPixel();
+
+  /* ============ Modal UI ============ */
+  function showModal(code, pct){
+    const existing = document.getElementById('__ultera_promo_modal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = '__ultera_promo_modal';
+    modal.innerHTML =
+      '<div class="__upm-back"></div>' +
+      '<div class="__upm-card" role="dialog" aria-label="Промокод">' +
+        '<button class="__upm-close" type="button" aria-label="Закрити">✕</button>' +
+        '<div class="__upm-eyebrow">ти знайшов промокод</div>' +
+        '<div class="__upm-big">−' + pct + '%</div>' +
+        '<div class="__upm-code" id="__upm-code">' + code + '</div>' +
+        '<button class="__upm-copy" type="button">Скопіювати та застосувати</button>' +
+        '<div class="__upm-hint">Код застосується автоматично у кошику</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+    requestAnimationFrame(function(){ modal.classList.add('open'); });
+    const close = function(){
+      modal.classList.remove('open');
+      setTimeout(function(){ try { modal.remove(); } catch(_){} }, 300);
+    };
+    modal.querySelector('.__upm-close').addEventListener('click', close);
+    modal.querySelector('.__upm-back').addEventListener('click', close);
+    modal.querySelector('.__upm-copy').addEventListener('click', async function(){
+      try { await navigator.clipboard.writeText(code); } catch(_){}
+      toast('Скопійовано ' + code + ' · застосується у кошику');
+      prefillPromo(code);
+      close();
+    });
+  }
+
+  function prefillPromo(code){
+    const inp = document.getElementById('wPromo');
+    if (inp){
+      inp.value = code;
+      if (typeof applyPromo === 'function'){
+        try { applyPromo(); } catch(_){}
+      }
+    }
+  }
+
+  // Wrap openCart so saved code auto-fills when user opens the drawer.
+  function wrapOpenCart(){
+    if (typeof window.openCart !== 'function' || window.openCart.__upmWrapped) return;
+    const orig = window.openCart;
+    const wrapped = function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(function(){
+        let found = null;
+        try { found = localStorage.getItem(STORAGE_KEY); } catch(_){}
+        if (found) prefillPromo(found);
+      }, 80);
+      return r;
+    };
+    wrapped.__upmWrapped = true;
+    window.openCart = wrapped;
+  }
+  // openCart may be defined later; retry.
+  (function waitForOpenCart(tries){
+    if (typeof window.openCart === 'function'){ wrapOpenCart(); return; }
+    if ((tries||0) > 30) return;
+    setTimeout(function(){ waitForOpenCart((tries||0)+1); }, 200);
+  })(0);
+
+  function toast(msg){
+    let el = document.getElementById('__upm-toast');
+    if (!el){
+      el = document.createElement('div');
+      el.id = '__upm-toast';
+      el.style.cssText = [
+        'position:fixed','bottom:24px','left:50%',
+        'transform:translateX(-50%) translateY(20px)',
+        'background:#0e0e0e','color:#c5e9a0','padding:12px 18px',
+        'border-radius:10px','font:600 13px/1.3 Inter,system-ui,sans-serif',
+        'box-shadow:0 10px 30px rgba(0,0,0,.3)','z-index:100001',
+        'opacity:0','transition:all .3s','pointer-events:none',
+        'max-width:90vw','text-align:center'
+      ].join(';');
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.opacity = '1';
+    el.style.transform = 'translateX(-50%) translateY(0)';
+    clearTimeout(el.__t);
+    el.__t = setTimeout(function(){
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(-50%) translateY(20px)';
+    }, 2600);
+  }
+
+  /* ============ Modal CSS ============ */
+  const css = document.createElement('style');
+  css.textContent =
+    '#__ultera_promo_modal{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .3s}' +
+    '#__ultera_promo_modal.open{opacity:1}' +
+    '#__ultera_promo_modal .__upm-back{position:absolute;inset:0;background:rgba(14,14,14,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}' +
+    '#__ultera_promo_modal .__upm-card{position:relative;background:#fff;border-radius:22px;padding:36px 28px 24px;width:100%;max-width:360px;box-shadow:0 30px 80px -20px rgba(0,0,0,.5);text-align:center;font-family:Inter,system-ui,sans-serif;transform:scale(.94);transition:transform .3s cubic-bezier(.2,.8,.2,1)}' +
+    '#__ultera_promo_modal.open .__upm-card{transform:scale(1)}' +
+    '.__upm-eyebrow{font:600 10px/1 "JetBrains Mono",ui-monospace,monospace;text-transform:uppercase;letter-spacing:.2em;color:rgba(14,14,14,.5);margin-bottom:14px}' +
+    '.__upm-big{font:900 62px/1 Inter,system-ui,sans-serif;letter-spacing:-.04em;margin-bottom:12px;background:linear-gradient(135deg,#6ea04a,#2b7a3d);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:__upm-pulse 1.4s ease-in-out infinite}' +
+    '@keyframes __upm-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}' +
+    '.__upm-code{font:700 22px/1 "JetBrains Mono",ui-monospace,monospace;letter-spacing:.08em;padding:14px 20px;background:#f5f5f0;border:2px dashed rgba(14,14,14,.25);border-radius:12px;margin-bottom:20px;color:#0e0e0e;user-select:all;-webkit-user-select:all}' +
+    '.__upm-copy{width:100%;padding:14px;border:0;border-radius:12px;background:#0e0e0e;color:#c5e9a0;font:700 13px/1 Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:transform .15s,background .15s;-webkit-tap-highlight-color:transparent}' +
+    '.__upm-copy:hover{background:#2a2a28}' +
+    '.__upm-copy:active{transform:scale(.97)}' +
+    '.__upm-close{position:absolute;top:12px;right:12px;width:36px;height:36px;border:0;border-radius:50%;background:rgba(14,14,14,.08);color:#0e0e0e;font:400 14px/1 system-ui;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .15s}' +
+    '.__upm-close:hover{background:rgba(14,14,14,.16);transform:rotate(90deg)}' +
+    '.__upm-hint{margin-top:12px;font:500 11px/1.3 Inter,system-ui,sans-serif;color:rgba(14,14,14,.6)}' +
+    '@media (max-width:420px){#__ultera_promo_modal .__upm-card{padding:30px 22px 20px}.__upm-big{font-size:54px}.__upm-code{font-size:18px;padding:12px 16px}}';
+  document.head.appendChild(css);
+})();
+</script>
 </body>
 </html>

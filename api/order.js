@@ -1,32 +1,27 @@
 // api/order.js — proxy ultera-home frontend → KeyCRM
+// SECURITY v7 (2026-04-23):
+//   - [v7] DB-backed promo codes via ulhome_promo_codes table.
+//          On final stage → ulhome_redeem_promo() (atomic +1 with max_uses guard).
+//          On lead stage → ulhome_peek_promo() (no mutation).
+//          Legacy hardcoded PROMOS still honored for SALE1 backward-compat.
 // SECURITY v6 (2026-04-22):
 //   - [v6] FIX: shipping_address_warehouse -> shipping_receive_point (actual KeyCRM v1 field).
-//          Previous versions silently dropped the warehouse info because KeyCRM
-//          doesn't recognize shipping_address_warehouse. 'Адреса доставки' now populates.
 //          shipping_address_city restored so it appears in the list column / filter.
 //   - [v6] Debug: log(body.city, body.wh, items[].season) to Vercel Runtime Logs.
 // SECURITY v5 (earlier):
 //   - [v5] product name includes season suffix (' / Літо' or ' / Весна/Осінь')
-//   - [v5] shipping_address_warehouse merges city + branch into one line; city left blank
-//          so KeyCRM UI shows a single 'Адреса доставки' field instead of two.
 // SECURITY v4 (earlier):
-//   - [v4] promoCode hardcoded table: SALE1 → -5% off whole order (pro-rata applied to unit_price)
-//   SECURITY v3 (earlier):
-//   - CORS whitelist (ultera.in.ua + *.vercel.app)
-//   - Rate limit 10 req/min по IP
-//   - Cloudflare Turnstile (captcha) verify — если TURNSTILE_SECRET задан
-//   - Серверный пересчёт прайсов из ulhome_products
-//   - Записываем order в ulhome_orders параллельно с KeyCRM
-//   - [v3] stage=lead → только Supabase, KeyCRM не трогаем (фикс дубликата)
+//   - [v4] promoCode hardcoded table: SALE1 → -5% off whole order
+// SECURITY v3 (earlier):
+//   - CORS whitelist (ultera.in.ua + *.vercel.app), Rate limit 10/min/IP, Turnstile
 //
 // Env vars:
 //   KEYCRM_TOKEN, KEYCRM_SOURCE_ID, KEYCRM_PM_CARD, KEYCRM_PM_NP, KEYCRM_DS_NP
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-//   TURNSTILE_SECRET (опционально — если пуст, captcha не проверяется)
+//   TURNSTILE_SECRET (optional)
 
-// [v4] Hardcoded promo codes (SERVER-SIDE truth — frontend table is advisory).
-// Extend here; if many, migrate to ulhome_promocodes table.
-const PROMOS = { 'SALE1': 5 };  // code => percent off total
+// Legacy hardcoded promo codes (server-side truth; extend with DB codes).
+const LEGACY_PROMOS = { 'SALE1': 5 };
 
 const ALLOWED_ORIGINS_EXACT = new Set([
   'https://ultera.in.ua',
@@ -79,7 +74,7 @@ async function checkRateLimit(ip, limit) {
 
 async function verifyTurnstile(token, remoteIp) {
   const secret = process.env.TURNSTILE_SECRET;
-  if (!secret) return { ok: true, skipped: true };  // captcha disabled
+  if (!secret) return { ok: true, skipped: true };
   if (!token) return { ok: false, error: 'captcha token missing' };
   try {
     const form = new URLSearchParams();
@@ -115,6 +110,43 @@ async function recomputePrices(items) {
     if (!r.ok) return null;
     return await r.json();
   } catch (e) {
+    return null;
+  }
+}
+
+// [v7] DB-backed promo resolver. If `redeem` is true → atomic ulhome_redeem_promo
+// (increments uses_count, returns {discount_pct, remaining} or empty if maxed).
+// Else peek (ulhome_peek_promo) — no mutation, returns same shape + active flag.
+async function resolveDbPromo(code, redeem) {
+  if (!code) return null;
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  try {
+    const rpc = redeem ? 'ulhome_redeem_promo' : 'ulhome_peek_promo';
+    const r = await fetch(`${url}/rest/v1/rpc/${rpc}`, {
+      method: 'POST',
+      headers: {
+        'apikey': key,
+        'Authorization': 'Bearer ' + key,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_code: code })
+    });
+    if (!r.ok) {
+      const t = await r.text().catch(() => '');
+      console.warn('[order] db-promo RPC fail', r.status, t);
+      return null;
+    }
+    const rows = await r.json();
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    const row = rows[0];
+    if (redeem) return { discount_pct: row.discount_pct, remaining: row.remaining };
+    // peek: respect active flag
+    if (!row.active || row.remaining <= 0) return null;
+    return { discount_pct: row.discount_pct, remaining: row.remaining };
+  } catch (e) {
+    console.warn('[order] db-promo exception', e.message);
     return null;
   }
 }
@@ -177,15 +209,9 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ ok: false, error: 'Missing items' });
   }
 
-  // v3: stage-aware flow.
-  //   'lead'  — клиент только что ввёл имя+телефон (korzina). Сохраняем в Supabase
-  //             как незавершённый заказ (брошенная корзина), но НЕ создаём KeyCRM —
-  //             иначе на финал получим дубликат (фикс 2026-04-22).
-  //   'final' — клиент прошёл чекаут до оплаты. Создаём KeyCRM order.
   const stage = String(body.stage || 'final').toLowerCase();
   const isLead = stage === 'lead';
 
-  // Captcha (если настроена) — проверяем только для final. Lead анонимнее.
   if (!isLead) {
     const captcha = await verifyTurnstile(body.captchaToken, ip);
     if (!captcha.ok) {
@@ -193,13 +219,11 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // Серверный пересчёт прайсов (и для lead, чтобы корректно класть в Supabase)
   const priced = await recomputePrices(body.items);
   let authoritativeTotal = null;
   if (priced && priced.ok) {
     authoritativeTotal = Number(priced.total);
   } else {
-    // Fallback: используем фронтовые цены, но только для CoD (наложка) и lead
     if (!isLead && body.payment === 'card') {
       return res.status(400).json({ ok: false, error: 'Price verification failed', detail: priced });
     }
@@ -208,15 +232,30 @@ module.exports = async function handler(req, res) {
     );
   }
 
-  // [v4] Apply promo code (if any) — server-side recompute
+  // [v7] Apply promo — legacy dict → DB peek/redeem.
   const promoCodeRaw = String(body.promoCode || '').toUpperCase().trim();
-  const promoPct = (promoCodeRaw && PROMOS[promoCodeRaw]) || 0;
+  let promoPct = 0;
+  let promoSource = null;
+  let promoRemaining = null;
+  if (promoCodeRaw) {
+    if (LEGACY_PROMOS[promoCodeRaw]) {
+      promoPct = LEGACY_PROMOS[promoCodeRaw];
+      promoSource = 'legacy';
+    } else {
+      // On lead → peek only (UI can show discount preview). On final → redeem atomically.
+      const db = await resolveDbPromo(promoCodeRaw, !isLead);
+      if (db) {
+        promoPct = db.discount_pct;
+        promoRemaining = db.remaining;
+        promoSource = isLead ? 'db-peek' : 'db-redeem';
+      }
+    }
+  }
   const originalTotal = authoritativeTotal;
   if (promoPct > 0) {
     authoritativeTotal = Math.round(originalTotal * (100 - promoPct)) / 100;
   }
 
-  // Save to Supabase ulhome_orders
   const orderRow = await saveOrderToSupabase({
     customer_name: body.fio,
     customer_phone: body.phone,
@@ -229,10 +268,10 @@ module.exports = async function handler(req, res) {
     items: body.items,
     total: authoritativeTotal,
     status: isLead ? 'lead' : 'new',
-    notes: body.comment || (isLead ? 'abandoned-cart lead' : '')
+    notes: (body.comment || (isLead ? 'abandoned-cart lead' : '')) +
+           (promoCodeRaw && promoPct ? `\npromo: ${promoCodeRaw} -${promoPct}% (${promoSource})` : '')
   });
 
-  // [v3] LEAD: рано выходим, KeyCRM не дёргаем.
   if (isLead) {
     return res.status(200).json({
       ok: true,
@@ -241,11 +280,11 @@ module.exports = async function handler(req, res) {
       supabase_order: orderRow ? orderRow.number : null,
       authoritative_total: authoritativeTotal,
       keycrm_id: null,
+      promo: promoPct > 0 ? { code: promoCodeRaw, discount_pct: promoPct, remaining: promoRemaining, source: promoSource } : null,
       message: 'Lead saved to Supabase; KeyCRM deferred until final stage.'
     });
   }
 
-  // [v6] Debug log — shows in Vercel Runtime Logs
   try {
     console.log('[order]', {
       num: body.num,
@@ -253,11 +292,13 @@ module.exports = async function handler(req, res) {
       wh: body.wh || '(empty)',
       payment: body.payment,
       promoCode: body.promoCode || null,
+      promoPct: promoPct || 0,
+      promoSource,
+      promoRemaining,
       seasons: (body.items || []).map(it => ({ uid: it.uid, season: it.season || null }))
     });
   } catch(_){}
 
-  // Build KeyCRM payload с authoritative ценами
   const pmCard = parseInt(process.env.KEYCRM_PM_CARD || '0', 10);
   const pmNp   = parseInt(process.env.KEYCRM_PM_NP   || '0', 10);
   const paymentMethodId = body.payment === 'card' ? pmCard : pmNp;
@@ -268,7 +309,6 @@ module.exports = async function handler(req, res) {
     buyer: { full_name: body.fio, phone: body.phone },
     shipping: {
       delivery_service_id: parseInt(process.env.KEYCRM_DS_NP || '1', 10),
-      // [v6] Correct KeyCRM v1 shipping fields.
       shipping_address_city: body.city || '',
       shipping_address_region: '',
       shipping_receive_point: [body.city, body.wh].filter(Boolean).join(', '),
@@ -282,7 +322,6 @@ module.exports = async function handler(req, res) {
       description: body.payment === 'card' ? 'Оплата карткою' : 'Наложений платіж'
     }] : [],
     products: (body.items || []).map(it => {
-      // Если есть priced.breakdown — берём серверную цену, иначе фронтовую
       const line = priced && priced.breakdown
         ? priced.breakdown.find(b => b.uid === String(it.uid || ''))
         : null;
@@ -307,6 +346,7 @@ module.exports = async function handler(req, res) {
       order_num: body.num,
       supabase_order: orderRow ? orderRow.number : null,
       authoritative_total: authoritativeTotal,
+      promo: promoPct > 0 ? { code: promoCodeRaw, discount_pct: promoPct, remaining: promoRemaining, source: promoSource } : null,
       message: 'Mock order logged.'
     });
   }
@@ -332,7 +372,8 @@ module.exports = async function handler(req, res) {
       order_num: body.num,
       supabase_order: orderRow ? orderRow.number : null,
       keycrm_id: data.id || null,
-      authoritative_total: authoritativeTotal
+      authoritative_total: authoritativeTotal,
+      promo: promoPct > 0 ? { code: promoCodeRaw, discount_pct: promoPct, remaining: promoRemaining, source: promoSource } : null
     });
   } catch (e) {
     console.error('KeyCRM exception', e);
