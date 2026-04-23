@@ -2812,8 +2812,12 @@ try {
       materials: p.materials || ''
     };
   }
-  var gridByFamily = {};
-  if (Array.isArray(D.grid)) D.grid.forEach(function(fam){ if (fam && fam.family) gridByFamily[fam.family] = fam; });
+  // [v117] featuredByFamily + trim-normalize keys so new Supabase products
+  // with family matching a FEATURED row (Aganta/Hunk3/SHAPE/etc.) merge into
+  // that existing family's variants instead of spawning a duplicate grid card.
+  var gridByFamily = {}, featuredByFamily = {};
+  if (Array.isArray(D.grid)) D.grid.forEach(function(fam){ if (fam && fam.family) gridByFamily[String(fam.family).trim()] = fam; });
+  if (Array.isArray(D.featured)) D.featured.forEach(function(fam){ if (fam && fam.family) featuredByFamily[String(fam.family).trim()] = fam; });
   // Sort products by (family, sort_order) so new family's hero = lowest sort_order
   var sortedProducts = products.slice().sort(function(a,b){
     var fa = String(a.family||''), fb = String(b.family||'');
@@ -2833,12 +2837,13 @@ try {
     if (!Array.isArray(D.all)) D.all = [];
     D.all.push(v);
     // D.grid: group by family (create entry if family new)
-    var fam = gridByFamily[p.family];
+    var famKey = String(p.family||'').trim();
+    var fam = featuredByFamily[famKey] || gridByFamily[famKey];
     if (!fam){
       fam = { family: p.family || '—', hero: v, variants: [v] };
       if (!Array.isArray(D.grid)) D.grid = [];
       D.grid.push(fam);
-      gridByFamily[p.family] = fam;
+      gridByFamily[famKey] = fam;
     } else {
       if (!Array.isArray(fam.variants)) fam.variants = [];
       fam.variants.push(v);
