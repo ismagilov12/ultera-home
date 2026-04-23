@@ -4350,20 +4350,33 @@ async function wizardSubmit(){
 })();
 
 /* ————— LEGACY TILDA /tproduct/ → openModal — opener (URL was already
-   normalized to / by the early <head> script; uid stashed in window.__tproduct_uid__) ————— */
+   normalized to / by the early <head> script; uid stashed in window.__tproduct_uid__) —————
+   v116: wait for BOTH openModal and findProduct(uid) — covers women catalog links
+   whose uid only appears in DATA.all after Supabase bootstrap injects them. */
 (function(){
   function runTproductOpen(){
     var uid = window.__tproduct_uid__;
     if (!uid) return;
-    var tries = 0;
+    var tries = 0, maxTries = 150; /* 150 × 100ms = 15s total */
+    function ready(){
+      if (typeof openModal !== 'function') return false;
+      if (typeof findProduct !== 'function') return false;
+      try { return !!findProduct(uid); } catch(_) { return false; }
+    }
     function tryOpen(){
       tries++;
-      if (tries > 80) return; /* ~8s max */
-      if (typeof openModal === 'function') {
-        try { openModal(uid); } catch(e){ console.warn('tproduct openModal err', e); }
-      } else {
-        setTimeout(tryOpen, 100);
+      if (ready()){
+        try {
+          openModal(uid);
+          try { console.log('[tproduct] opened', uid, 'after', tries, 'tries'); } catch(_){}
+        } catch(e){ console.warn('tproduct openModal err', e); }
+        return;
       }
+      if (tries >= maxTries){
+        console.warn('[tproduct] gave up opening uid', uid, '— not found in DATA.all after', tries*100, 'ms');
+        return;
+      }
+      setTimeout(tryOpen, 100);
     }
     tryOpen();
   }
