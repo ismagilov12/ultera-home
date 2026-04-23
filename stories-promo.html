@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ULTERA · сторіс промокодів</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{--ink:#0e0e0e;--ink-60:#5a5a58;--ink-40:#9a9a98;--bg:#f6f5f0;--bg-alt:#ecebe5;--line:#e4e3dc;--mint:#c5e9a0;--mint-dk:#7ea84b;--font:"Inter",system-ui,sans-serif;--font-mono:"JetBrains Mono",ui-monospace,monospace}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased}
+  body{scroll-snap-type:y mandatory;overflow-y:scroll;scroll-behavior:smooth}
+  .slide{position:relative;width:100%;height:100dvh;min-height:100vh;padding:56px 28px 44px;display:flex;flex-direction:column;justify-content:space-between;scroll-snap-align:start;overflow:hidden}
+  .top{display:flex;align-items:center;justify-content:space-between;font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .brand-mark{font-weight:900;letter-spacing:-.01em;font-family:var(--font)}
+  .brand-mark b{background:var(--ink);color:var(--mint);padding:1px 6px;border-radius:3px}
+  .page-num{font-variant-numeric:tabular-nums}
+  .body{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:18px 0}
+  .center{align-items:center;text-align:center}
+  .kicker{font-family:var(--font-mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-60);margin-bottom:18px}
+  .kicker-mint{color:var(--mint-dk)}
+  .headline{font-weight:900;letter-spacing:-.035em;line-height:.94;font-size:clamp(46px,12vw,88px)}
+  .subhead{margin-top:22px;font-weight:500;font-size:clamp(16px,4.2vw,20px);line-height:1.32;color:var(--ink-60);max-width:38ch}
+  .bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-60)}
+  .bottom .url{color:var(--ink);font-weight:700}
+  .s-dark{background:var(--ink);color:var(--bg)}
+  .s-dark .kicker{color:rgba(255,255,255,.6)}.s-dark .subhead{color:rgba(255,255,255,.72)}
+  .s-dark .top{opacity:.55}.s-dark .bottom{color:rgba(255,255,255,.55)}.s-dark .bottom .url{color:var(--mint)}
+  .s-dark .brand-mark b{background:var(--mint);color:var(--ink)}
+  .s-mint{background:var(--mint);color:var(--ink)}
+  .hero{background:var(--ink);color:var(--bg)}
+  .hero .body{justify-content:center;align-items:center;text-align:center}
+  .hero .logo-word{font-weight:900;letter-spacing:-.05em;font-size:clamp(64px,18vw,140px);line-height:.88}
+  .hero .mint{color:var(--mint)}
+  .hero .pill{display:inline-flex;align-items:center;gap:8px;margin-top:28px;padding:8px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:999px;font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+  .hero .dot{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 10px var(--mint);animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
+  .teaser{background:linear-gradient(165deg,var(--bg) 0%,var(--bg-alt) 100%)}
+  .teaser .mega{font-weight:900;font-size:clamp(130px,38vw,260px);line-height:.82;letter-spacing:-.06em;color:var(--ink)}
+  .teaser .mega em{font-style:normal;background:linear-gradient(135deg,var(--mint-dk),#3e6624);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .tiers{background:var(--bg)}
+  .tier-grid{display:flex;flex-direction:column;gap:14px;margin-top:18px;width:100%}
+  .tier{display:flex;align-items:center;justify-content:space-between;padding:22px 20px;background:#fff;border:1.5px solid var(--line);border-radius:16px}
+  .tier-50{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .tier-25{background:var(--mint);color:var(--ink);border-color:#a5c684}
+  .tier .pct{font-weight:900;font-size:42px;letter-spacing:-.03em;line-height:1}
+  .tier .pct.small{font-size:34px}
+  .tier .count{font-family:var(--font-mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+  .tier .count b{font-size:20px;margin-right:4px}
+  .mech .body{justify-content:space-between;padding:8px 0 14px}
+  .mech .illus{width:100%;max-width:320px;aspect-ratio:1;margin:8px auto 0;display:grid;place-items:center;align-self:center}
+  .mech .illus svg{width:100%;height:auto;display:block}
+  .mech .num-chip{display:inline-block;padding:4px 10px;background:var(--ink);color:var(--mint);border-radius:999px;font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;font-weight:700;margin-bottom:12px}
+  .mech .discount-line{display:inline-flex;align-items:baseline;gap:10px;margin-top:20px;padding:12px 18px;background:#fff;border:2px solid var(--ink);border-radius:14px;font-family:var(--font-mono)}
+  .mech .discount-line .pct{font-weight:900;font-size:36px;letter-spacing:-.02em;line-height:1;color:var(--ink)}
+  .mech .discount-line .lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-60)}
+  .mech.s-dark .discount-line{background:transparent;border-color:var(--mint);color:var(--bg)}
+  .mech.s-dark .discount-line .pct{color:var(--mint)}
+  .mech.s-dark .discount-line .lbl{color:rgba(255,255,255,.6)}
+  .mech.s-mint .discount-line{background:#fff;border-color:var(--ink)}
+  .mech.s-mint .num-chip{background:var(--ink);color:var(--mint)}
+  .cta{background:var(--ink);color:var(--bg);text-align:center}
+  .cta .body{align-items:center;justify-content:center}
+  .cta .huge{font-weight:900;font-size:clamp(46px,12vw,80px);letter-spacing:-.04em;line-height:.95}
+  .cta .huge .mint{color:var(--mint)}
+  .cta .url-box{margin-top:28px;padding:14px 22px;border:1.5px dashed rgba(255,255,255,.4);border-radius:14px;font-family:var(--font-mono);font-size:17px;letter-spacing:.06em;font-weight:700}
+  .cta .mini{margin-top:22px;font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.55}
+  body::-webkit-scrollbar{display:none}
+  body{-ms-overflow-style:none;scrollbar-width:none}
+  @media (max-width:380px){.slide{padding:48px 22px 38px}}
+  .dl-btn{position:absolute;top:12px;right:12px;z-index:10;display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border:0;border-radius:999px;background:rgba(14,14,14,.82);color:var(--mint);font:700 11px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 4px 12px rgba(0,0,0,.15);transition:transform .15s,background .15s;-webkit-tap-highlight-color:transparent}
+  .dl-btn:hover{background:#0e0e0e;transform:scale(1.04)}
+  .dl-btn:active{transform:scale(.96)}
+  .dl-btn:disabled{opacity:.6;cursor:wait}
+  .dl-btn svg{width:13px;height:13px}
+  .s-mint .dl-btn{background:#0e0e0e}
+  .dl-all{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:20;padding:12px 22px;border:0;border-radius:999px;background:var(--ink);color:var(--mint);font:700 11px/1 var(--font-mono);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.2);display:flex;align-items:center;gap:8px;-webkit-tap-highlight-color:transparent}
+  .dl-all:disabled{opacity:.6;cursor:wait}
+  .dl-all svg{width:14px;height:14px}
+  .dl-toast{position:fixed;bottom:74px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);color:var(--mint);padding:10px 16px;border-radius:10px;font:600 12px/1.3 var(--font);z-index:30;opacity:0;transition:all .3s;pointer-events:none;max-width:90vw;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+  .dl-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<section class="slide hero s-dark" data-idx="1">
+  <div class="top"><span class="brand-mark"><b>ULTERA</b></span><span class="page-num">01 / 08</span></div>
+  <div class="body">
+    <div class="logo-word">ULTERA<span class="mint">.</span></div>
+    <div class="subhead" style="color:rgba(255,255,255,.65);text-align:center;margin-top:12px">новий сайт</div>
+    <div class="pill"><span class="dot"></span>online · ultera.in.ua</div>
+  </div>
+  <div class="bottom"><span>ua · 2026</span><span class="url">ultera.in.ua</span></div>
+</section>
+
+<section class="slide teaser" data-idx="2">
+  <div class="top"><span class="brand-mark"><b>ULTERA</b></span><span class="page-num">02 / 08</span></div>
+  <div class="body">
+    <div class="kicker kicker-mint">увага · сюрприз</div>
+    <div class="mega">&minus;<em>%</em></div>
+    <div class="subhead" style="margin-top:24px;font-size:21px;color:var(--ink);font-weight:600">ми заховали на сайті <br>20 промокодів на знижку</div>
+  </div>
+  <div class="bottom"><span>знайди — забери</span><span class="url">ultera.in.ua</span></div>
+</section>
+
+<section class="slide tiers" data-idx="3">
+  <div class="top"><span class="brand-mark"><b>ULTERA</b></span><span class="page-num">03 / 08</span></div>
+  <div class="body" style="justify-content:flex-start;padding-top:10px">
+    <div class="kicker">три рівні знижки</div>
+    <div class="headline" style="font-size:clamp(38px,9.5vw,62px)">Вибирай,<br>що знайдеш.</div>
+    <div class="tier-grid">
+      <div class="tier tier-50"><span class="pct">&minus;50%</span><span class="count"><b>5</b>кодів</span></div>
+      <div class="tier tier-25"><span class="pct">&minus;25%</span><span class="count"><b>5</b>кодів</span></div>
+      <div class="tier"><span class="pct small">&minus;10%</span><span class="count"><b>10</b>кодів</span></div>
+    </div>
+    <div class="subhead" style="margin-top:18px;font-size:14px">перший знайшов — перший отримав. зник — значить зник.</div>
+  </div>
+  <div class="bottom"><span>всього 20</span><span class="url">ultera.in.ua</span></div>
+</section>
+
+<section class="slide mech s-mint" data-idx="4">
+  <div class="top"><span class="brand-mark"><b>ULTERA</b></span><span class="page-num">04 / 08</span></div>
+  <div class="body center">
+    <span class="num-chip">схованка № 1</span>
+    <div class="headline" style="font-size:clamp(36px,9vw,54px);text-align:center">Тапни<br>по логотипу<br>7 разів</div>
+    <div class="illus">
+      <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="120" cy="120" r="60" fill="none" stroke="#0e0e0e" stroke-width="2" opacity=".2"/>
+        <circle cx="120" cy="120" r="80" fill="none" stroke="#0e0e0e" stroke-width="2" opacity=".12"/>
+        <circle cx="120" cy="120" r="102" fill="none" stroke="#0e0e0e" stroke-width="2" opacity=".06"/>
+        <circle cx="120" cy="120" r="34" fill="#0e0e0e"/>
+        <text x="120" y="128" text-anchor="middle" font-family="Inter,sans-serif" font-weight="900" font-size="22" fill="#c5e9a0">&times;7</text>
+        <rect x="36" y="190" width="168" height="32" rx="16" fill="#0e0e0e"/>
+        <text x="120" y="211" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="600" font-size="11" fill="#c5e9a0" letter-spacing="2">U L T E R A</text>
+      </svg>
+    </div>
+    <div class="subhead" style="text-align:center;max-width:28ch">швидко. протягом 3 секунд. у хедері сайту.</div>
+    <div class="discount-line"><span class="pct">&minus;25%</span><span class="lbl">твій приз</span></div>
+  </div>
+  <div class="bottom"><span>hint: у хедері</span><span class="url">ultera.in.ua</span></div>
+</section>
+
+<section class="slide mech s-dark" data-idx="5">
+  <div class="top"><span class="brand-mark"><b>ULTERA</b></span><span class="page-num">05 / 08</span></div>
+  <div class="body center">
+    <span class="num-chip" style="background:var(--mint);color:var(--ink)">схованка № 2</span>
+    <div class="headline" style="font-size:clamp(34px,8.5vw,52px);color:var(--bg);text-align:center">Затисни банер<br>на 1,5 секунди</div>
+    <div class="illus">
+      <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+        <rect x="30" y="44" width="180" height="36" rx="10" fill="#c5e9a0" opacity=".4"/>
+        <rect x="30" y="88" width="180" height="36" rx="10" fill="#c5e9a0" opacity=".7"/>
+        <rect x="30" y="132" width="180" height="36" rx="10" fill="#c5e9a0"/>
+        <text x="120" y="156" text-anchor="middle" font-family="Inter,sans-serif" font-weight="900" font-size="17" fill="#0e0e0e" letter-spacing=".4">HUNK3 &middot; SHAPE &middot; AGANTA</text>
+        <circle cx="120" cy="150" r="42" fill="none" stroke="#c5e9a0" stroke-width="2.5" stroke-dasharray="6 6" opacity=".6"/>
+        <rect x="72" y="196" width="96" height="24" rx="12" fill="#c5e9a0"/>
+        <text x="120" y="213" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="700" font-size="11" fill="#0e0e0e" letter-spacing="1.5">1.5 СЕК</text>
+      </svg>
+    </div>
+    <div class="subhead" style="text-align:center;max-width:30ch">будь-який банер колекції — Hunk3, SHAPE або Aganta.</div>
+    <div class="discount-line"><span class="pct">&minus;10%</span><span class="lbl">твій приз</span></div>
+  </div>
+  <div class="bottom"><span>hint: притисни і тримай</span><span class="url">ultera.in.ua</span></div>
+</section>
+
+<section class="slide mech" data-idx="6">
+  <div class="top"><span class="brand-mark"><b>ULTERA</b></span><span class="page-num">06 / 08</span></div>
+  <div class="body center">
+    <span class="num-chip">схованка № 3</span>
+    <div class="headline" style="font-size:clamp(34px,8.5vw,52px);text-align:center">Докрути<br>до самого низу<br>і потряси</div>
+    <div class="illus">
+      <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+        <rect x="76" y="30" width="88" height="168" rx="14" fill="none" stroke="#0e0e0e" stroke-width="2.5"/>
+        <rect x="84" y="42" width="72" height="134" rx="4" fill="#f5f5f0"/>
+        <rect x="92" y="50" width="56" height="6" rx="2" fill="#0e0e0e" opacity=".2"/>
+        <rect x="92" y="62" width="40" height="6" rx="2" fill="#0e0e0e" opacity=".15"/>
+        <rect x="92" y="74" width="52" height="6" rx="2" fill="#0e0e0e" opacity=".12"/>
+        <rect x="92" y="86" width="48" height="6" rx="2" fill="#0e0e0e" opacity=".1"/>
+        <rect x="92" y="164" width="56" height="8" rx="3" fill="#0e0e0e"/>
+        <path d="M50 90 l-8 -14 l16 0 z" fill="#7ea84b"/>
+        <path d="M50 150 l-8 14 l16 0 z" fill="#7ea84b"/>
+        <line x1="50" y1="92" x2="50" y2="148" stroke="#7ea84b" stroke-width="2" stroke-dasharray="3 3"/>
+        <path d="M190 90 l-8 -14 l16 0 z" fill="#7ea84b"/>
+        <path d="M190 150 l-8 14 l16 0 z" fill="#7ea84b"/>
+        <line x1="190" y1="92" x2="190" y2="148" stroke="#7ea84b" stroke-width="2" stroke-dasharray="3 3"/>
+        <rect x="96" y="208" width="48" height="20" rx="10" fill="#0e0e0e"/>
+        <text x="120" y="222" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="700" font-size="11" fill="#c5e9a0">&times;3</text>
+      </svg>
+    </div>
+    <div class="subhead" style="text-align:center;max-width:30ch">скрол на 100%, потім вгору-вниз тричі.</div>
+    <div class="discount-line"><span class="pct">&minus;10%</span><span class="lbl">твій приз</span></div>
+  </div>
+  <div class="bottom"><span>hint: до футера</span><span class="url">ultera.in.ua</span></div>
+</section>
+
+<section class="slide mech s-dark" data-idx="7">
+  <div class="top"><span class="brand-mark"><b>ULTERA</b></span><span class="page-num">07 / 08</span></div>
+  <div class="body center">
+    <span class="num-chip" style="background:#b1322e;color:#fff">найрідкісніший</span>
+    <div class="headline" style="font-size:clamp(34px,8.5vw,52px);color:var(--bg);text-align:center">Знайди<br>крихітну крапку<br>у футері</div>
+    <div class="illus">
+      <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="108" cy="108" r="56" fill="none" stroke="#c5e9a0" stroke-width="3"/>
+        <line x1="148" y1="148" x2="186" y2="186" stroke="#c5e9a0" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="108" cy="108" r="7" fill="#c5e9a0"/>
+        <path d="M58 64 Q 72 84 96 100" fill="none" stroke="#c5e9a0" stroke-width="2" stroke-dasharray="3 3" stroke-linecap="round"/>
+        <text x="40" y="56" font-family="JetBrains Mono,monospace" font-weight="600" font-size="10" fill="#c5e9a0" letter-spacing="1">tiny dot</text>
+        <rect x="32" y="200" width="176" height="24" rx="5" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.18)"/>
+        <circle cx="176" cy="212" r="3" fill="#c5e9a0" opacity=".6"/>
+        <text x="46" y="216" font-family="JetBrains Mono,monospace" font-weight="500" font-size="9" fill="rgba(255,255,255,.55)" letter-spacing="1">FOOTER &middot; UKR &middot; 2026</text>
+      </svg>
+    </div>
+    <div class="subhead" style="text-align:center;max-width:28ch">10&times;10 px · ледве помітна · тільки для найуважніших.</div>
+    <div class="discount-line"><span class="pct">&minus;50%</span><span class="lbl">трофей</span></div>
+  </div>
+  <div class="bottom"><span>hint: у самому низу</span><span class="url">ultera.in.ua</span></div>
+</section>
+
+<section class="slide cta" data-idx="8">
+  <div class="top"><span class="brand-mark"><b>ULTERA</b></span><span class="page-num">08 / 08</span></div>
+  <div class="body">
+    <div class="kicker" style="color:rgba(255,255,255,.5)">твоя черга</div>
+    <div class="huge">Хто перший —<br>той <span class="mint">у знижці</span>.</div>
+    <div class="url-box">ultera.in.ua</div>
+    <div class="mini">swipe up · знайди · оформи</div>
+  </div>
+  <div class="bottom"><span>ULTERA</span><span class="url">end</span></div>
+</section>
+
+<button class="dl-all" id="dlAll" data-html2canvas-ignore="true">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+  <span id="dlAllLabel">Зберегти всі 8</span>
+</button>
+<div class="dl-toast" id="dlToast" data-html2canvas-ignore="true"></div>
+
+<script>
+(function(){
+  var SLIDE_W = 1080, SLIDE_H = 1920;
+  var ARROW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+
+  slides.forEach(function(sl, i){
+    var btn = document.createElement('button');
+    btn.className = 'dl-btn';
+    btn.setAttribute('data-html2canvas-ignore', 'true');
+    btn.innerHTML = ARROW_SVG + '<span>PNG</span>';
+    btn.addEventListener('click', async function(){
+      btn.disabled = true;
+      await downloadSlide(sl, i + 1);
+      btn.disabled = false;
+    });
+    sl.appendChild(btn);
+  });
+
+  var toast = document.getElementById('dlToast');
+  var toastTimer = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toast.classList.remove('show'); }, 2400);
+  }
+
+  async function waitFonts(){
+    if (document.fonts && document.fonts.ready){
+      try { await document.fonts.ready; } catch(e){}
+    }
+  }
+
+  async function captureSlide(sl){
+    var clone = sl.cloneNode(true);
+    var list = clone.querySelectorAll('[data-html2canvas-ignore]');
+    for (var i = 0; i < list.length; i++) list[i].remove();
+    var stage = document.createElement('div');
+    stage.style.cssText = 'position:fixed;left:-10000px;top:0;width:' + SLIDE_W + 'px;height:' + SLIDE_H + 'px;overflow:hidden;z-index:-1;pointer-events:none';
+    clone.style.width = SLIDE_W + 'px';
+    clone.style.height = SLIDE_H + 'px';
+    clone.style.minHeight = SLIDE_H + 'px';
+    clone.style.padding = '140px 72px 110px';
+    stage.appendChild(clone);
+    document.body.appendChild(stage);
+    var canvas = await html2canvas(clone, {
+      width: SLIDE_W, height: SLIDE_H,
+      windowWidth: SLIDE_W, windowHeight: SLIDE_H,
+      scale: 1, useCORS: true, backgroundColor: null, logging: false
+    });
+    stage.remove();
+    return canvas;
+  }
+
+  function canvasToBlob(canvas){
+    return new Promise(function(resolve){ canvas.toBlob(resolve, 'image/png', 0.95); });
+  }
+
+  async function downloadSlide(sl, idx){
+    try {
+      await waitFonts();
+      showToast('Рендер слайду ' + idx + '...');
+      var canvas = await captureSlide(sl);
+      var blob = await canvasToBlob(canvas);
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'ultera-story-' + (idx < 10 ? '0' + idx : idx) + '.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+      showToast('OK slide ' + idx + ' saved');
+    } catch(e){
+      console.error('capture err', e);
+      showToast('ERR: ' + e.message);
+    }
+  }
+
+  var dlAll = document.getElementById('dlAll');
+  var dlAllLabel = document.getElementById('dlAllLabel');
+  dlAll.addEventListener('click', async function(){
+    dlAll.disabled = true;
+    await waitFonts();
+    for (var i = 0; i < slides.length; i++){
+      dlAllLabel.textContent = (i + 1) + ' / ' + slides.length + '...';
+      await downloadSlide(slides[i], i + 1);
+      await new Promise(function(r){ setTimeout(r, 500); });
+    }
+    dlAllLabel.textContent = 'Done';
+    setTimeout(function(){ dlAllLabel.textContent = 'Зберегти всі 8'; dlAll.disabled = false; }, 2200);
+  });
+})();
+</script>
+</body>
+</html>
