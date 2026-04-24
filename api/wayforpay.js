@@ -14,7 +14,7 @@
 const crypto = require('crypto');
 
 // [v4] Hardcoded promo codes — keep in sync with api/order.js
-const PROMOS = { 'SALE1': 5 };
+const PROMOS = { 'SALE1': 5, 'ULTERA10': 10 };
 
 const ALLOWED_ORIGINS_EXACT = new Set([
   'https://ultera.in.ua',

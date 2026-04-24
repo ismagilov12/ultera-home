@@ -24,7 +24,7 @@
 //   TURNSTILE_SECRET (optional)
 
 // Legacy hardcoded promo codes (server-side truth; extend with DB codes).
-const LEGACY_PROMOS = { 'SALE1': 5 };
+const LEGACY_PROMOS = { 'SALE1': 5, 'ULTERA10': 10 };
 
 const ALLOWED_ORIGINS_EXACT = new Set([
   'https://ultera.in.ua',

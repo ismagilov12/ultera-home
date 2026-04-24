@@ -4059,7 +4059,7 @@ function renderSummary(){
     '</div>';
 }
 /* ----- Promo codes (hardcoded — server re-validates) ----- */
-const ULTERA_PROMOS = { 'SALE1': 5, 'ULTERA50': 50, 'ULTERA25': 25, 'ULTERA10': 10 };  // code => percent off (server validates via /api/validate-promo + decrements atomically at checkout)
+const ULTERA_PROMOS = { 'SALE1': 5, 'ULTERA10': 10 };  // code => percent off (server validates via /api/validate-promo + decrements atomically at checkout)
 function promoFinalTotal(){
   const raw = Math.round(CART.total());
   const pct = (CART.wizard && CART.wizard.promoPct) || 0;
@@ -5144,7 +5144,7 @@ insertWomanDivider();
     taps = taps.filter(t => now - t < TAP_WINDOW);
     if (taps.length >= TAP_COUNT){
       taps = [];
-      reveal('ULTERA25', 25);
+      reveal('ULTERA10', 10);
       if (e) e.preventDefault();
     }
   }
@@ -5223,7 +5223,7 @@ insertWomanDivider();
     ].join(';');
     pixel.addEventListener('click', function(e){
       e.stopPropagation(); e.preventDefault();
-      reveal('ULTERA50', 50);
+      reveal('ULTERA10', 10);
     });
     // Slight tease on hover/touch for findability without giving it away
     pixel.addEventListener('pointerenter', function(){

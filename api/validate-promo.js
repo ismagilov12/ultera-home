@@ -4,11 +4,17 @@
 // only inside api/order.js at final stage via ulhome_redeem_promo() (atomic).
 //
 // Contract:
-//   POST /api/validate-promo { code: "ULTERA50" }
+//   POST /api/validate-promo { code: "ULTERA10" }
 //   → 200 { ok:true, valid:true|false, code, discount_pct, remaining }
 //   → 429 if rate-limited
 //
+// [v2 2026-04-24] Hardcoded PROMOS table short-circuits before DB peek, so
+// SALE1 / ULTERA10 always validate green regardless of DB rows. Keep this
+// table in sync with api/order.js LEGACY_PROMOS and api/wayforpay.js PROMOS.
+//
 // Env vars: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+
+const HARDCODED_PROMOS = { 'SALE1': 5, 'ULTERA10': 10 };
 
 const ALLOWED_ORIGINS_EXACT = new Set([
   'https://ultera.in.ua',
@@ -105,6 +111,18 @@ module.exports = async function handler(req, res) {
   const code = String(body.code || '').trim().toUpperCase();
   if (!code || code.length > 32) {
     return res.status(400).json({ ok: false, error: 'Invalid code' });
+  }
+
+  // [v2] Hardcoded shortcut — always-valid codes do not consume DB usage counter.
+  if (HARDCODED_PROMOS[code]) {
+    return res.status(200).json({
+      ok: true,
+      valid: true,
+      code,
+      discount_pct: HARDCODED_PROMOS[code],
+      remaining: null,
+      source: 'hardcoded'
+    });
   }
 
   const peek = await peekPromo(code);
