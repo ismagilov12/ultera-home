@@ -1697,13 +1697,12 @@ async function loadAnalytics(){
   try {
     const sinceIso = periodSinceIso(ANA.period);
     const filterOrders = sinceIso ? '&created_at=gte.' + encodeURIComponent(sinceIso) : '';
-    const filterEvts   = sinceIso ? '&created_at=gte.' + encodeURIComponent(sinceIso) : '';
 
-    const [orders, evtAgg, pageViews] = await Promise.all([
+    // Single RPC call replaces two analytics_events SELECTs that were capped at
+    // ~1000 rows by PostgREST (breaking "Переходи" KPI when events > 1000).
+    const [orders, summary] = await Promise.all([
       rest('ulhome_orders?select=id,number,customer_name,payment_method,payment_status,items,total,status,created_at&order=created_at.desc&limit=1000' + filterOrders),
-      // Aggregate event counts by type
-      rest('analytics_events?select=event_type&limit=50000' + filterEvts),
-      rest('analytics_events?select=session_id,page_url,referrer,device_type,created_at&event_type=eq.page_view&limit=50000' + filterEvts)
+      rest('rpc/ulhome_analytics_summary', { method:'POST', body: JSON.stringify({ since_iso: sinceIso }) })
     ]);
 
     // Dedupe: same phone + total + minute counts as one order
@@ -1722,7 +1721,8 @@ async function loadAnalytics(){
       _seen.add(key);
       ordersReal.push(o);
     });
-    ANA.data = { orders: rawOrders, ordersReal, evtAgg: evtAgg||[], pageViews: pageViews||[], dupesFiltered };
+    const analytics = summary || { daily:[], top_pages:[], referrers:[], devices:[], evt_counts:[], kpi:{unique_sessions:0, page_views:0} };
+    ANA.data = { orders: rawOrders, ordersReal, analytics, evtAgg: [], pageViews: [], dupesFiltered };
     renderKPI();
     renderOrdersChart();
     renderFunnel();
@@ -1742,10 +1742,10 @@ async function loadAnalytics(){
 
 function renderKPI(){
   const o = ANA.data.ordersReal;
-  const pv = ANA.data.pageViews;
+  const kpi = (ANA.data.analytics && ANA.data.analytics.kpi) || {unique_sessions:0, page_views:0};
   const totalRevenue = o.reduce((s,x)=>s+Number(x.total||0),0);
   const aov = o.length ? totalRevenue / o.length : 0;
-  const sessions = new Set(pv.map(x=>x.session_id)).size;
+  const sessions = Number(kpi.unique_sessions) || 0;
   const cr = sessions ? (o.length/sessions*100).toFixed(2) + '%' : '—';
   document.getElementById('kpi-orders').textContent = fmtInt(o.length);
   document.getElementById('kpi-revenue').textContent = fmtMoney(totalRevenue);
@@ -1808,9 +1808,11 @@ function renderOrdersChart(){
 }
 
 function renderFunnel(){
-  // Count unique sessions per step from analytics_events
+  // Event counts come from ulhome_analytics_summary RPC (evt_counts[{event_type,cnt}])
+  // to avoid the PostgREST 1000-row cap that used to break the funnel.
   const counts = {};
-  ANA.data.evtAgg.forEach(e=>{ counts[e.event_type]=(counts[e.event_type]||0)+1; });
+  const evtCounts = (ANA.data.analytics && ANA.data.analytics.evt_counts) || [];
+  evtCounts.forEach(e=>{ counts[e.event_type] = (Number(e.cnt) || 0); });
   // unique sessions per event_type requires separate queries; approximate with raw count
   const steps = [
     { k:'page_view',    label:'Перегляди' },
@@ -1898,26 +1900,18 @@ function renderPaymentChart(){
 }
 
 function renderTopPages(){
-  const cnt = {};
-  ANA.data.pageViews.forEach(e=>{
-    const u = String(e.page_url||'').replace(/^https?:\/\/[^/]+/, '').split('?')[0] || '/';
-    cnt[u]=(cnt[u]||0)+1;
-  });
-  const arr = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  // Top pages come from ulhome_analytics_summary RPC (top_pages[{path,cnt}]).
+  const rows = (ANA.data.analytics && ANA.data.analytics.top_pages) || [];
+  const arr = rows.slice(0,8).map(r => [String(r.path||'/'), Number(r.cnt)||0]);
   const wrap = document.getElementById('top-pages');
   if(!arr.length){ wrap.innerHTML = '<div class="ana-empty">Немає даних</div>'; return; }
   wrap.innerHTML = arr.map(([u,n])=>`<div class="li"><div><div class="meta" style="color:#0e0e0e;font-weight:500">${escapeHtml(u)}</div></div><div class="count">${fmtInt(n)}</div></div>`).join('');
 }
 
 function renderTopReferrers(){
-  const cnt = {};
-  ANA.data.pageViews.forEach(e=>{
-    let r = String(e.referrer||'').trim();
-    if(!r) r = '(direct)';
-    else { try{ r = new URL(r).hostname.replace(/^www\./,''); }catch(_){} }
-    cnt[r]=(cnt[r]||0)+1;
-  });
-  const arr = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  // Referrers come from ulhome_analytics_summary RPC (referrers[{ref_host,cnt}]).
+  const rows = (ANA.data.analytics && ANA.data.analytics.referrers) || [];
+  const arr = rows.slice(0,8).map(r => [String(r.ref_host||'(direct)'), Number(r.cnt)||0]);
   const wrap = document.getElementById('top-refs');
   if(!arr.length){ wrap.innerHTML = '<div class="ana-empty">Немає даних</div>'; return; }
   wrap.innerHTML = arr.map(([u,n])=>`<div class="li"><div><div class="meta" style="color:#0e0e0e;font-weight:500">${escapeHtml(u)}</div></div><div class="count">${fmtInt(n)}</div></div>`).join('');
@@ -1925,10 +1919,13 @@ function renderTopReferrers(){
 
 function renderDevicesChart(){
   _destroyChart('devices');
+  // Devices come from ulhome_analytics_summary RPC (devices[{device,cnt}]).
   const cnt = { mobile:0, tablet:0, desktop:0, other:0 };
-  ANA.data.pageViews.forEach(e=>{
-    const d = (e.device_type||'').toLowerCase();
-    if(d in cnt) cnt[d]++; else cnt.other++;
+  const rows = (ANA.data.analytics && ANA.data.analytics.devices) || [];
+  rows.forEach(r => {
+    const d = String(r.device||'').toLowerCase();
+    const n = Number(r.cnt) || 0;
+    if (d in cnt) cnt[d] += n; else cnt.other += n;
   });
   const labels = ['Mobile','Tablet','Desktop','Other'];
   const data = [cnt.mobile, cnt.tablet, cnt.desktop, cnt.other];
@@ -1941,16 +1938,14 @@ function renderDevicesChart(){
 }
 
 function renderDailyTable(){
-  // Aggregate: count UNIQUE sessions per day (not raw page_view events).
-  // Same session id multiple views same day = 1 переход.
-  const pvSessByDay = {};
-  ANA.data.pageViews.forEach(e=>{
-    const k = dayKey(e.created_at);
-    if (!pvSessByDay[k]) pvSessByDay[k] = new Set();
-    if (e.session_id) pvSessByDay[k].add(e.session_id);
-  });
+  // Unique-sessions-per-day now come pre-aggregated from
+  // ulhome_analytics_summary RPC (daily[{day,unique_sessions,page_views}]).
+  // RPC returns YYYY-MM-DD strings (Kyiv tz), matching dayKey() output.
   const pvDay = {};
-  for (const k in pvSessByDay) pvDay[k] = pvSessByDay[k].size;
+  const daily = (ANA.data.analytics && ANA.data.analytics.daily) || [];
+  daily.forEach(d => {
+    pvDay[String(d.day)] = Number(d.unique_sessions) || 0;
+  });
 
   const ordDay = {};
   ANA.data.ordersReal.forEach(o=>{
@@ -2158,3 +2153,4 @@ async function renderHeatmap(){
 
 </script></body>
 </html>
+
