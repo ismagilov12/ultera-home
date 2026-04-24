@@ -1,6 +1,24 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
+<script id="ulh-attribution-bootstrap">
+/* ulh_session_id__bootstrap_v1 — attribution bootstrap 2026-04-24 */
+(function(){
+  try {
+    var key = "ulh_session_id";
+    var sid = sessionStorage.getItem(key);
+    if(!sid){
+      sid = "s-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,10);
+      sessionStorage.setItem(key, sid);
+    }
+    if(!window.ULHOME_SESSION_ID) window.ULHOME_SESSION_ID = sid;
+    var lkey = "ulh_landing_url";
+    if(!sessionStorage.getItem(lkey)) sessionStorage.setItem(lkey, location.href);
+    if(!window.ULHOME_LANDING_URL) window.ULHOME_LANDING_URL = sessionStorage.getItem(lkey);
+  } catch(e){}
+})();
+</script>
+
 <meta charset="UTF-8">
 <script>
 /* v87: handle legacy Tilda product URLs — both /tproduct/... and clean custom form.
@@ -4107,7 +4125,7 @@ async function sendLead(){
     const r = await fetch('/api/order', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
+      body: JSON.stringify(Object.assign({}, (payload), { /* ULHOME_ATTR_WRAP */ session_id: (window.ULHOME_SESSION_ID||null), referrer: (document.referrer||null), landing_url: (window.ULHOME_LANDING_URL||location.href) }))
     });
     const result = await r.json().catch(()=>({}));
     if(r.ok && result.keycrm_id){
@@ -4168,7 +4186,7 @@ async function wizardSubmit(){
     const r = await fetch('/api/order', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
+      body: JSON.stringify(Object.assign({}, (payload), { /* ULHOME_ATTR_WRAP */ session_id: (window.ULHOME_SESSION_ID||null), referrer: (document.referrer||null), landing_url: (window.ULHOME_LANDING_URL||location.href) }))
     });
     const result = await r.json().catch(()=>({}));
     if(!r.ok || result.ok === false){

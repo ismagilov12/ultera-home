@@ -1,4 +1,7 @@
 // api/order.js — proxy ultera-home frontend → KeyCRM
+// ATTRIBUTION v8 (2026-04-24):
+//   - [v8] Accept session_id / referrer / landing_url from client and store on ulhome_orders.
+//          Sanitized to strings; session_id <=200 chars, referrer/landing_url <=2000.
 // SECURITY v7 (2026-04-23):
 //   - [v7] DB-backed promo codes via ulhome_promo_codes table.
 //          On final stage → ulhome_redeem_promo() (atomic +1 with max_uses guard).
@@ -269,7 +272,11 @@ module.exports = async function handler(req, res) {
     total: authoritativeTotal,
     status: isLead ? 'lead' : 'new',
     notes: (body.comment || (isLead ? 'abandoned-cart lead' : '')) +
-           (promoCodeRaw && promoPct ? `\npromo: ${promoCodeRaw} -${promoPct}% (${promoSource})` : '')
+           (promoCodeRaw && promoPct ? `\npromo: ${promoCodeRaw} -${promoPct}% (${promoSource})` : ''),
+    session_id:  (typeof body.session_id  === 'string' ? body.session_id  : '').slice(0, 200)  || null,
+    referrer:    (typeof body.referrer    === 'string' ? body.referrer    : '').slice(0, 2000) || null,
+    landing_url: (typeof body.landing_url === 'string' ? body.landing_url : '').slice(0, 2000) || null
+
   });
 
   if (isLead) {

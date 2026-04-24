@@ -493,6 +493,11 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         </div>
       </div>
 
+      <div class="ana-block" style="margin-top:14px">
+        <h3>Джерела по днях <span style="font-weight:400;color:#0e0e0e70;font-size:12px">· топ-8 + агрегат</span></h3>
+        <div id="sources-daily-wrap" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
       <div class="ana-row tri">
         <div class="ana-block">
           <h4>Топ сторінки</h4>
@@ -1700,9 +1705,10 @@ async function loadAnalytics(){
 
     // Single RPC call replaces two analytics_events SELECTs that were capped at
     // ~1000 rows by PostgREST (breaking "Переходи" KPI when events > 1000).
-    const [orders, summary] = await Promise.all([
+    const [orders, summary, sourcesDaily] = await Promise.all([
       rest('ulhome_orders?select=id,number,customer_name,payment_method,payment_status,items,total,status,created_at&order=created_at.desc&limit=1000' + filterOrders),
-      rest('rpc/ulhome_analytics_summary', { method:'POST', body: JSON.stringify({ since_iso: sinceIso }) })
+      rest('rpc/ulhome_analytics_summary', { method:'POST', body: JSON.stringify({ since_iso: sinceIso }) }),
+      rest('rpc/ulhome_analytics_sources_daily', { method:'POST', body: JSON.stringify({ since_iso: sinceIso, top_n: 8 }) })
     ]);
 
     // Dedupe: same phone + total + minute counts as one order
@@ -1723,6 +1729,7 @@ async function loadAnalytics(){
     });
     const analytics = summary || { daily:[], top_pages:[], referrers:[], devices:[], evt_counts:[], kpi:{unique_sessions:0, page_views:0} };
     ANA.data = { orders: rawOrders, ordersReal, analytics, evtAgg: [], pageViews: [], dupesFiltered };
+    ANA.data.sourcesDaily = (sourcesDaily && sourcesDaily.by_day) || [];
     renderKPI();
     renderOrdersChart();
     renderFunnel();
@@ -1733,6 +1740,7 @@ async function loadAnalytics(){
     renderTopReferrers();
     renderDevicesChart();
     renderDailyTable();
+    renderSourcesDaily();
     await loadHeatmapPages();
   } catch(e){
     console.error('analytics err', e);
@@ -1974,6 +1982,49 @@ function renderDailyTable(){
 }
 
 // Render the daily table body + totals honoring ANA.sort state.
+function renderSourcesDaily(){
+  /* ULHOME_SOURCES_DAILY_V1 */
+  var wrap = document.getElementById('sources-daily-wrap');
+  if(!wrap) return;
+  var rows = (ANA.data && ANA.data.sourcesDaily) || [];
+  if(!rows.length){ wrap.innerHTML = '<div style="color:#0e0e0e80;font-size:12.5px;padding:8px 0">Немає даних</div>'; return; }
+  var esc = (typeof escapeHtml === 'function') ? escapeHtml : function(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]; }); };
+  wrap.innerHTML = rows.map(function(d, i){
+    var dateLbl = d.day;
+    var totalCR = d.day_sessions>0 ? ((d.day_orders||0)*100/d.day_sessions).toFixed(2)+'%' : '—';
+    var revFmt  = fmtMoney(d.day_revenue||0);
+    var srcRows = (d.sources||[]).map(function(s){
+      var crFmt = (s.cr!=null ? Number(s.cr).toFixed(2)+'%' : (s.sessions>0 ? (s.orders*100/s.sessions).toFixed(2)+'%' : '—'));
+      return '<tr>' +
+        '<td style="padding:6px 8px;border-bottom:1px dashed #ecebe5">' + esc(s.ref_host) + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;border-bottom:1px dashed #ecebe5">' + fmtInt(s.sessions) + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;border-bottom:1px dashed #ecebe5">' + fmtInt(s.orders) + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;border-bottom:1px dashed #ecebe5">' + fmtMoney(s.revenue||0) + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;border-bottom:1px dashed #ecebe5">' + crFmt + '</td>' +
+      '</tr>';
+    }).join('');
+    var openAttr = (i === 0 ? ' open' : '');
+    return '<details' + openAttr + ' style="border:1px solid #e4e3dc;border-radius:10px;background:#fff;margin-bottom:8px">' +
+      '<summary style="padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;gap:16px;font-weight:600;font-size:13px;list-style:none">' +
+        '<span>' + esc(dateLbl) + '</span>' +
+        '<span style="color:#0e0e0e80;font-weight:400">' + fmtInt(d.day_sessions||0) + ' переходів · ' + fmtInt(d.day_orders||0) + ' замовлень · ' + revFmt + ' · CR ' + totalCR + '</span>' +
+      '</summary>' +
+      '<div style="padding:4px 14px 14px">' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12.5px">' +
+          '<thead><tr style="color:#0e0e0e80">' +
+            '<th style="padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #e4e3dc">Джерело</th>' +
+            '<th style="padding:6px 8px;text-align:right;font-weight:500;border-bottom:1px solid #e4e3dc">Переходи</th>' +
+            '<th style="padding:6px 8px;text-align:right;font-weight:500;border-bottom:1px solid #e4e3dc">Замовлення</th>' +
+            '<th style="padding:6px 8px;text-align:right;font-weight:500;border-bottom:1px solid #e4e3dc">Виручка</th>' +
+            '<th style="padding:6px 8px;text-align:right;font-weight:500;border-bottom:1px solid #e4e3dc">CR</th>' +
+          '</tr></thead>' +
+          '<tbody>' + srcRows + '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</details>';
+  }).join('');
+}
+
 function renderDailyTableRows(){
   const rows = (ANA.dailyRows || []).slice();
   const sort = ANA.sort || { key:'k', dir:'desc' };
