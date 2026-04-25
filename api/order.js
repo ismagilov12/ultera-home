@@ -1,4 +1,8 @@
 // api/order.js — proxy ultera-home frontend → KeyCRM
+// ATTRIBUTION v9 (2026-04-25):
+//   - [v9] After successful KeyCRM creation, PATCH ulhome_orders with keycrm_id
+//          and keycrm_external_id so /api/keycrm-sync can correlate later.
+//          Also passes external_id=order.number to KeyCRM for two-way linkage.
 // ATTRIBUTION v8 (2026-04-24):
 //   - [v8] Accept session_id / referrer / landing_url from client and store on ulhome_orders.
 //          Sanitized to strings; session_id <=200 chars, referrer/landing_url <=2000.
@@ -182,6 +186,40 @@ async function saveOrderToSupabase(order) {
   }
 }
 
+// [v9] Зв'язати наш ulhome_orders.id з KeyCRM order id для подальшого sync.
+// Викликається після успішного POST /v1/order у KeyCRM.
+async function patchOrderKeycrmLink(supabaseId, keycrmId, externalId) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey) return false;
+  if (!supabaseId || !keycrmId) return false;
+  try {
+    const r = await fetch(`${supabaseUrl}/rest/v1/ulhome_orders?id=eq.${encodeURIComponent(supabaseId)}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': 'Bearer ' + supabaseKey,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        keycrm_id:           parseInt(keycrmId, 10),
+        keycrm_external_id:  externalId != null ? String(externalId) : null,
+        keycrm_synced_at:    new Date().toISOString()
+      })
+    });
+    if (!r.ok) {
+      const t = await r.text().catch(() => '');
+      console.warn('[order] keycrm-link patch failed', r.status, t);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error('[order] keycrm-link patch exception', e.message);
+    return false;
+  }
+}
+
 module.exports = async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -310,8 +348,12 @@ module.exports = async function handler(req, res) {
   const pmNp   = parseInt(process.env.KEYCRM_PM_NP   || '0', 10);
   const paymentMethodId = body.payment === 'card' ? pmCard : pmNp;
 
+  // [v9] external_id для двостороннього linking (orderRow.number — наш unique id у Supabase).
+  const externalId = String(orderRow ? orderRow.number : (body.num || ''));
+
   const crmPayload = {
     source_id: parseInt(process.env.KEYCRM_SOURCE_ID || '1', 10),
+    external_id: externalId,
     manager_comment: `ultera-home · ${body.num || (orderRow && orderRow.number) || ''}${body.payment === 'np' ? ' · наложка (мін 500₴)' : ' · картка'}${promoPct > 0 ? ` · промо ${promoCodeRaw} −${promoPct}%` : ''}`,
     buyer: { full_name: body.fio, phone: body.phone },
     shipping: {
@@ -372,6 +414,11 @@ module.exports = async function handler(req, res) {
     if (!r.ok) {
       console.error('KeyCRM error', r.status, data);
       return res.status(r.status).json({ ok: false, error: data.message || 'KeyCRM error', details: data });
+    }
+    // [v9] fire-and-forget: link Supabase row → KeyCRM order id (не блокуємо response)
+    if (orderRow && orderRow.id && data && data.id) {
+      patchOrderKeycrmLink(orderRow.id, data.id, externalId)
+        .catch(e => console.warn('[order] keycrm-link bg fail', e.message));
     }
     return res.status(200).json({
       ok: true,

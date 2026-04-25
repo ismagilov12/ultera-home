@@ -220,7 +220,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 .period-tabs{display:inline-flex;gap:4px;background:#f5f5f0;padding:4px;border-radius:10px}
 .period-tabs button{border:0;background:transparent;padding:8px 14px;border-radius:8px;cursor:pointer;font:500 13px/1 Inter,system-ui;color:#0e0e0e99}
 .period-tabs button.active{background:#0e0e0e;color:#fff}
-.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:20px 0}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:20px 0}
 .kpi-card{background:#fff;border:1.5px solid #ebebe6;border-radius:14px;padding:16px}
 .kpi-card .l{font:500 11px/1 JetBrains Mono,monospace;color:#0e0e0e70;text-transform:uppercase;letter-spacing:.06em}
 .kpi-card .v{font:700 26px/1.15 Inter,system-ui;margin-top:8px;color:#0e0e0e}
@@ -435,6 +435,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         <div class="kpi-card"><div class="l">Сесії</div><div class="v" id="kpi-sess">—</div></div>
         <div class="kpi-card"><div class="l">Унікальні переходи</div><div class="v" id="kpi-pv">—</div></div>
         <div class="kpi-card"><div class="l">CR (orders/sessions)</div><div class="v" id="kpi-cr">—</div></div>
+        <div class="kpi-card" title="Апрув = approved / (approved + rejected) на основі статусів KeyCRM"><div class="l">Апрув % (KeyCRM)</div><div class="v" id="kpi-approval">—</div><div class="delta" id="kpi-approval-d"></div></div>
       </div>
 
       <div class="ana-block">
@@ -1761,6 +1762,17 @@ function renderKPI(){
   document.getElementById('kpi-sess').textContent = fmtInt(sessions);
   document.getElementById('kpi-pv').textContent = fmtInt(sessions);  // уникальные сессии, не сырые events
   document.getElementById('kpi-cr').textContent = cr;
+  // [KeyCRM v1] Апрув % з ulhome_analytics_summary.kpi (RPC)
+  try {
+    var ar = (kpi && (kpi.approval_rate != null) ? Number(kpi.approval_rate) : null);
+    var apEl = document.getElementById('kpi-approval');
+    var apDelta = document.getElementById('kpi-approval-d');
+    if (apEl) apEl.textContent = (ar == null ? '—' : ar.toFixed(2) + '%');
+    if (apDelta) {
+      var ap = Number(kpi.approved_orders || 0), rj = Number(kpi.rejected_orders || 0), pn = Number(kpi.pending_orders || 0), uns = Number(kpi.unsynced_orders || 0);
+      apDelta.textContent = ap + ' прийн · ' + rj + ' відмов · ' + pn + ' в обр' + (uns ? ' · ' + uns + ' не синк' : '');
+    }
+  } catch(e){ console.warn('[kpi-approval]', e); }
   // Show dup filter note under Orders KPI
   const d = ANA.data.dupesFiltered || 0;
   const el = document.getElementById('kpi-orders-d');
@@ -1995,19 +2007,22 @@ function renderSourcesDaily(){
     var revFmt  = fmtMoney(d.day_revenue||0);
     var srcRows = (d.sources||[]).map(function(s){
       var crFmt = (s.cr!=null ? Number(s.cr).toFixed(2)+'%' : (s.sessions>0 ? (s.orders*100/s.sessions).toFixed(2)+'%' : '—'));
+      var apFmt = (s.approval_rate != null ? Number(s.approval_rate).toFixed(2)+'%' : (s.approved||s.rejected ? '—' : ''));
+      var apTitle = 'approved=' + (s.approved||0) + ' · rejected=' + (s.rejected||0) + ' · pending=' + (s.pending||0);
       return '<tr>' +
         '<td style="padding:6px 8px;border-bottom:1px dashed #ecebe5">' + esc(s.ref_host) + '</td>' +
         '<td style="padding:6px 8px;text-align:right;border-bottom:1px dashed #ecebe5">' + fmtInt(s.sessions) + '</td>' +
         '<td style="padding:6px 8px;text-align:right;border-bottom:1px dashed #ecebe5">' + fmtInt(s.orders) + '</td>' +
         '<td style="padding:6px 8px;text-align:right;border-bottom:1px dashed #ecebe5">' + fmtMoney(s.revenue||0) + '</td>' +
         '<td style="padding:6px 8px;text-align:right;border-bottom:1px dashed #ecebe5">' + crFmt + '</td>' +
+        '<td style="padding:6px 8px;text-align:right;border-bottom:1px dashed #ecebe5" title="' + apTitle + '">' + apFmt + '</td>' +
       '</tr>';
     }).join('');
     var openAttr = (i === 0 ? ' open' : '');
     return '<details' + openAttr + ' style="border:1px solid #e4e3dc;border-radius:10px;background:#fff;margin-bottom:8px">' +
       '<summary style="padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;gap:16px;font-weight:600;font-size:13px;list-style:none">' +
         '<span>' + esc(dateLbl) + '</span>' +
-        '<span style="color:#0e0e0e80;font-weight:400">' + fmtInt(d.day_sessions||0) + ' переходів · ' + fmtInt(d.day_orders||0) + ' замовлень · ' + revFmt + ' · CR ' + totalCR + '</span>' +
+        '<span style="color:#0e0e0e80;font-weight:400">' + fmtInt(d.day_sessions||0) + ' переходів · ' + fmtInt(d.day_orders||0) + ' замовлень · ' + revFmt + ' · CR ' + totalCR + (d.day_approval_rate != null ? ' · Апрув ' + Number(d.day_approval_rate).toFixed(2) + '%' : (d.day_approved||d.day_rejected ? ' · Апрув —' : '')) + '</span>' +
       '</summary>' +
       '<div style="padding:4px 14px 14px">' +
         '<table style="width:100%;border-collapse:collapse;font-size:12.5px">' +
@@ -2017,6 +2032,7 @@ function renderSourcesDaily(){
             '<th style="padding:6px 8px;text-align:right;font-weight:500;border-bottom:1px solid #e4e3dc">Замовлення</th>' +
             '<th style="padding:6px 8px;text-align:right;font-weight:500;border-bottom:1px solid #e4e3dc">Виручка</th>' +
             '<th style="padding:6px 8px;text-align:right;font-weight:500;border-bottom:1px solid #e4e3dc">CR</th>' +
+            '<th style="padding:6px 8px;text-align:right;font-weight:500;border-bottom:1px solid #e4e3dc" title="approved / (approved+rejected) з KeyCRM">Апрув %</th>' +
           '</tr></thead>' +
           '<tbody>' + srcRows + '</tbody>' +
         '</table>' +

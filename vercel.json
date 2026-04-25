@@ -4,5 +4,8 @@
     { "source": "/tproduct/:path*", "destination": "/index.html" },
     { "source": "/woman", "destination": "/index.html" },
     { "source": "/woman/:path*", "destination": "/index.html" }
+  ],
+  "crons": [
+    { "path": "/api/keycrm-sync?action=sync", "schedule": "*/5 * * * *" }
   ]
 }
