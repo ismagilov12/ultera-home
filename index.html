@@ -4059,7 +4059,7 @@ function renderSummary(){
     '</div>';
 }
 /* ----- Promo codes (hardcoded — server re-validates) ----- */
-const ULTERA_PROMOS = { 'SALE1': 5, 'ULTERA10': 10 };  // code => percent off (server validates via /api/validate-promo + decrements atomically at checkout)
+const ULTERA_PROMOS = { 'SALE1': 5 };  // code => percent off (server validates via /api/validate-promo + decrements atomically at checkout)
 function promoFinalTotal(){
   const raw = Math.round(CART.total());
   const pct = (CART.wizard && CART.wizard.promoPct) || 0;
@@ -5123,6 +5123,7 @@ insertWomanDivider();
   function markModalShown(){ sessionStorage.setItem(LAST_MODAL_TS, String(Date.now())); }
 
   function reveal(code, pct){
+    return; /* ULTERA10 promo decommissioned 2026-04-26 (v120) */
     if (!canShowModal()) return;
     markModalShown();
     try { localStorage.setItem(STORAGE_KEY, code); } catch(_){}
