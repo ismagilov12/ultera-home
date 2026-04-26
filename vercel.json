@@ -6,6 +6,9 @@
     { "source": "/woman/:path*", "destination": "/index.html" }
   ],
   "crons": [
-    { "path": "/api/keycrm-sync?action=sync", "schedule": "*/5 * * * *" }
+    {
+      "path": "/api/keycrm-sync?action=sync",
+      "schedule": "*/5 * * * *"
+    }
   ]
 }
