@@ -16,8 +16,8 @@
 //   SUPABASE_URL              — https://...supabase.co
 //   SUPABASE_SERVICE_ROLE_KEY — service role JWT
 //
-// Версія: v1.2 (2026-04-28) — phone+date fallback link (для замовлень без keycrm_external_id),
-//             multi-page sweep у actionSync (до 5 сторiнок * 50 = 250 KeyCRM-замовлень за один вiклик)
+// Версія: v1.3 (2026-04-28) — include=buyer.contacts (KeyCRM повертає buyer лише з include),
+//             debug=skipped_sample у вiдповiдi для дiагностики
 
 'use strict';
 
@@ -182,8 +182,21 @@ async function linkByExternalId(payload) {
 // Потрiбен для замовлень, що були створенi до того як api/order.js v9 почав
 // записувати keycrm_external_id (тобто все що до 2026-04-28 деплою).
 async function linkByPhone(payload, kcOrder) {
-  const phone = (kcOrder.buyer && (kcOrder.buyer.phone || kcOrder.buyer.phones?.[0]?.phone))
-              || kcOrder.contact_phone || kcOrder.phone || null;
+  // KeyCRM phone може бути у багатьох мiсцях залежно вiд include параметрiв
+  let phone = null;
+  const b = kcOrder.buyer || {};
+  if (b.phone) phone = b.phone;
+  if (!phone && Array.isArray(b.phones) && b.phones.length) phone = b.phones[0].phone || b.phones[0].value || b.phones[0];
+  if (!phone && Array.isArray(b.contacts)) {
+    for (const c of b.contacts) {
+      if (c && (c.type === 'phone' || c.contact_type === 'phone' || c.value_type === 'phone') && c.value) {
+        phone = c.value; break;
+      }
+      // Sometimes contacts have just {value: '+380...'}
+      if (c && typeof c.value === 'string' && /^\+?[0-9 ()\-]{8,}$/.test(c.value)) { phone = c.value; break; }
+    }
+  }
+  if (!phone) phone = kcOrder.contact_phone || kcOrder.phone || null;
   if (!phone) return 0;
   const digits = String(phone).replace(/\D/g, '');
   if (digits.length < 9) return 0;
@@ -247,7 +260,7 @@ async function actionSync({ sinceOverride, limit, force }) {
 
   // KeyCRM v1: GET /order?include=products&filter[updated_between]=since,now&sort=updated_at,asc
   const params = {
-    'include':            'products',
+    'include':            'buyer.contacts,products,manager',
     'limit':              pageLimit,
     'sort':               'updated_at'
   };
@@ -272,6 +285,7 @@ async function actionSync({ sinceOverride, limit, force }) {
   let linked = 0;
   let skipped = 0;
   let lastSeen = since;
+  const skippedSample = []; // v1.3 diagnostic
 
   for (const ko of orders) {
     const cls = classifyStatus(ko.status_id, ko.status, statusMap);
@@ -286,6 +300,15 @@ async function actionSync({ sinceOverride, limit, force }) {
       const p = await linkByPhone(payload, ko);
       if (p > 0) { linked += p; continue; }
       skipped++;
+      if (skippedSample.length < 5) {
+        skippedSample.push({
+          keycrm_id: payload.keycrm_id,
+          external_id: payload.keycrm_external_id,
+          buyer_id: ko.buyer_id || (ko.buyer && ko.buyer.id) || null,
+          phone_present: !!(ko.buyer && (ko.buyer.phone || (Array.isArray(ko.buyer.phones) && ko.buyer.phones[0]) || (Array.isArray(ko.buyer.contacts) && ko.buyer.contacts[0]))),
+          created_at: ko.created_at || null
+        });
+      }
     } catch (e) {
       console.error('[keycrm-sync] row error', payload.keycrm_id, e.message);
       skipped++;
@@ -323,7 +346,8 @@ async function actionSync({ sinceOverride, limit, force }) {
     linked,
     skipped,
     next_cursor:  lastSeen,
-    has_more:     false  // v1.2 multi-page sweep already done inside
+    has_more:     false,
+    skipped_sample: skippedSample  // v1.3 diagnostic
   };
 }
 
