@@ -16,7 +16,7 @@
 //   SUPABASE_URL              — https://...supabase.co
 //   SUPABASE_SERVICE_ROLE_KEY — service role JWT
 //
-// Версія: v1.3 (2026-04-28) — include=buyer.contacts (KeyCRM повертає buyer лише з include),
+// Версія: v1.3.1 (2026-04-28) — include=buyer.contacts (KeyCRM повертає buyer лише з include),
 //             debug=skipped_sample у вiдповiдi для дiагностики
 
 'use strict';
@@ -260,7 +260,7 @@ async function actionSync({ sinceOverride, limit, force }) {
 
   // KeyCRM v1: GET /order?include=products&filter[updated_between]=since,now&sort=updated_at,asc
   const params = {
-    'include':            'buyer.contacts,products,manager',
+    'include':            'buyer,products',
     'limit':              pageLimit,
     'sort':               'updated_at'
   };
