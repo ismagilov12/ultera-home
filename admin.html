@@ -199,6 +199,26 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 /* v102 orders: delete btn + expanded details */
 .ord-row{cursor:pointer}
 .ord-row:hover{background:#faf9f4}
+/* v123 orders filter + keycrm */
+.ord-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;flex-wrap:wrap}
+.ord-filters{display:inline-flex;gap:6px;background:#f5f5f0;padding:4px;border-radius:10px;border:1px solid var(--line)}
+.ord-filters button{appearance:none;border:0;background:transparent;font:600 12px/1 JetBrains Mono,monospace;letter-spacing:.06em;text-transform:uppercase;color:#0e0e0e80;padding:8px 14px;border-radius:7px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:8px}
+.ord-filters button:hover{color:var(--ink)}
+.ord-filters button.active{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.ord-filters .cnt{font-weight:500;color:#0e0e0e60;font-size:11px}
+.ord-filters button.active .cnt{color:#0e0e0e90}
+.ord-status.lead{background:#fff0e0;color:#a85d12}
+.kc-chip{display:inline-flex;align-items:center;gap:6px;font:600 10.5px/1 JetBrains Mono,monospace;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:#eef0f5;color:#3a3f4a;margin-left:8px}
+.kc-chip.approved{background:#d3f5d9;color:#1f6b29}
+.kc-chip.pending{background:#fff4d3;color:#856b1a}
+.kc-chip.rejected{background:#ffe0e0;color:#8a2020}
+.kc-chip.excluded{background:#e9e8e3;color:#0e0e0e60}
+.kc-chip.none{background:#f5f5f0;color:#0e0e0e60;border:1px dashed #d6d4cc}
+.btn-sync{appearance:none;border:1px solid var(--line);background:#fff;color:var(--ink);padding:8px 14px;border-radius:8px;font:600 11px/1 JetBrains Mono,monospace;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:8px}
+.btn-sync:hover{background:#faf9f4;border-color:#bfbeb6}
+.btn-sync.busy{opacity:.55;pointer-events:none}
+.btn-sync svg{width:13px;height:13px}
+
 .ord-row > div:last-child{display:flex;align-items:center;gap:10px;justify-content:space-between}
 .ord-del{border:1px solid transparent;background:transparent;color:#0e0e0e70;padding:6px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
 .ord-del:hover{border-color:#b1322e;color:#b1322e;background:#fff}
@@ -241,10 +261,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 .ana-list .li{display:grid;grid-template-columns:1fr 80px;gap:10px;padding:8px 10px;border-radius:8px;background:#f5f5f0;font:500 13px/1.3 Inter,system-ui}
 .ana-list .li .count{font:600 12px/1 JetBrains Mono,monospace;color:#0e0e0e80;text-align:right;align-self:center}
 .ana-list .li .meta{font:500 11px/1.2 JetBrains Mono,monospace;color:#0e0e0e70;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.heatmap-wrap{position:relative;background:#f5f5f0;border-radius:10px;overflow:hidden;margin-top:10px;min-height:600px}
-.heatmap-wrap canvas{width:100%;display:block}
-.hm-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
-.hm-controls select,.hm-controls label{font:500 13px/1 Inter,system-ui;padding:8px 10px;border:1.5px solid #ebebe6;border-radius:8px;background:#fff}
+/* heatmap removed in v123 */
 .ana-empty{color:#0e0e0e60;font:400 13px/1.5 Inter,system-ui;padding:20px;text-align:center}
 .ana-block .chart-wrap{max-width:100%}
 .ana-block canvas{max-width:100%}
@@ -350,6 +367,17 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
     <!-- ORDERS -->
     <div class="page" id="page-orders" style="display:none">
       <div class="page-head"><h1>Замовлення</h1></div>
+      <div class="ord-toolbar">
+        <div class="ord-filters" id="ord-filters" role="tablist" aria-label="Фільтр замовлень">
+          <button type="button" data-filter="new" class="active" role="tab" aria-selected="true">Нові замовлення <span class="cnt" data-cnt="new"></span></button>
+          <button type="button" data-filter="lead" role="tab" aria-selected="false">Ліди <span class="cnt" data-cnt="lead"></span></button>
+          <button type="button" data-filter="all" role="tab" aria-selected="false">Усі <span class="cnt" data-cnt="all"></span></button>
+        </div>
+        <button type="button" class="btn-sync" id="ord-keycrm-sync" title="Запустити синхронізацію статусів з KeyCRM (підтягує апрув у аналітику)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-7.75-4.5"/><path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 7.75 4.5"/><polyline points="21 3 21 9 15 9"/><polyline points="3 21 3 15 9 15"/></svg>
+          <span id="ord-keycrm-sync-label">Синхронізувати KeyCRM</span>
+        </button>
+      </div>
       <div class="ord-table" id="ord-table">
         <div class="ord-row head">
           <div>№</div><div>Клієнт</div><div>Телефон</div><div>Дата</div><div>Сума</div><div>Статус</div>
@@ -462,18 +490,6 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         <div class="ana-block">
           <h3>Оплата</h3>
           <div class="chart-wrap" style="position:relative;height:260px"><canvas id="ch-payment"></canvas></div>
-        </div>
-      </div>
-
-      <div class="ana-block">
-        <h3>Heatmap кліків</h3>
-        <div class="hm-controls">
-          <select id="hm-page-sel"></select>
-          <label><input type="checkbox" id="hm-mm"> +mouse_move (слабкий сигнал)</label>
-          <span id="hm-count" style="font:500 12px/1 JetBrains Mono,monospace;color:#0e0e0e80"></span>
-        </div>
-        <div class="heatmap-wrap" id="heatmap-wrap">
-          <canvas id="hm-canvas" width="1200" height="900"></canvas>
         </div>
       </div>
 
@@ -1316,45 +1332,171 @@ async function delAdmin(email){
 }
 
 /* ==================== ORDERS ==================== */
-async function loadOrders(){
-  const tbl = document.getElementById('ord-table');
-  const head = tbl.querySelector('.head');
-  tbl.innerHTML = ''; tbl.appendChild(head);
-  try {
-    const data = await rest('ulhome_orders?select=*&order=created_at.desc');
-    if (!data || !data.length){ tbl.innerHTML += '<div class="empty">Замовлень ще немає</div>'; return; }
-    data.forEach(o=>{
-      const row = document.createElement('div');
-      row.className='ord-row';
-      row.innerHTML = `
-        <div class="num">#${o.number}</div>
-        <div>${escapeHtml(o.customer_name||'—')}</div>
-        <div>${escapeHtml(o.customer_phone||'—')}</div>
-        <div>${new Date(o.created_at).toLocaleString('uk-UA')}</div>
-        <div>${fmtPrice(o.total)}</div>
-        <div>
-          <span class="ord-status ${o.status}">${o.status}</span>
-          <button class="ord-del" title="Видалити замовлення" onclick="event.stopPropagation(); delOrder('${o.id}', ${o.number})"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
-        </div>
-      `;
-      row.addEventListener('click', function(){
-        const next = row.nextElementSibling;
-        if(next && next.classList.contains('ord-det')){ next.remove(); return; }
-        const det = document.createElement('div');
-        det.className = 'ord-det';
-        det.innerHTML = orderDetailsHtml(o);
-        row.after(det);
-      });
-      tbl.appendChild(row);
-    });
-  } catch(e){ tbl.innerHTML += '<div class="empty">'+e.message+'</div>'; }
+// v123 — filter chips (new/lead/all) + KeyCRM linkage + manual sync
+var ORDERS_STATE = { all: [], filter: 'new' };
+function isLeadOrder(o){
+  return (o && (o.status === 'lead' || o.payment_status === 'lead'));
 }
+function applyOrdersFilter(arr, f){
+  if (!Array.isArray(arr)) return [];
+  if (f === 'lead') return arr.filter(isLeadOrder);
+  if (f === 'new')  return arr.filter(function(o){ return !isLeadOrder(o); });
+  return arr;
+}
+function updateOrderFilterCounts(){
+  var arr = ORDERS_STATE.all || [];
+  var allN = arr.length;
+  var leadN = arr.filter(isLeadOrder).length;
+  var newN  = allN - leadN;
+  var elNew  = document.querySelector('[data-cnt="new"]');
+  var elLead = document.querySelector('[data-cnt="lead"]');
+  var elAll  = document.querySelector('[data-cnt="all"]');
+  if (elNew)  elNew.textContent  = '· ' + newN;
+  if (elLead) elLead.textContent = '· ' + leadN;
+  if (elAll)  elAll.textContent  = '· ' + allN;
+}
+function renderOrdersList(){
+  var tbl = document.getElementById('ord-table');
+  if (!tbl) return;
+  var head = tbl.querySelector('.head');
+  tbl.innerHTML = '';
+  if (head) tbl.appendChild(head);
+  var rows = applyOrdersFilter(ORDERS_STATE.all, ORDERS_STATE.filter);
+  if (!rows.length) {
+    var emptyMsg = ORDERS_STATE.filter === 'lead'
+      ? 'Лідів за обраний період немає'
+      : (ORDERS_STATE.filter === 'new' ? 'Нових замовлень поки немає' : 'Замовлень ще немає');
+    tbl.innerHTML += '<div class="empty">' + emptyMsg + '</div>';
+    return;
+  }
+  rows.forEach(function(o){
+    var row = document.createElement('div');
+    row.className = 'ord-row';
+    var statusLabel = (isLeadOrder(o) ? 'lead' : (o.status || 'new'));
+    var statusCls   = isLeadOrder(o) ? 'lead' : (o.status || 'new');
+    var kcGroup = (o && o.keycrm_status_group) ? o.keycrm_status_group : '';
+    var kcLabel = (o && o.keycrm_status_name)  ? o.keycrm_status_name  : '';
+    var kcChip = '';
+    if (o && o.keycrm_id) {
+      kcChip = '<span class="kc-chip ' + escapeHtml(kcGroup||'') + '" title="KeyCRM #' + escapeHtml(String(o.keycrm_id)) + (kcLabel ? ' · ' + escapeHtml(kcLabel) : '') + '">CRM ' + escapeHtml(kcLabel || kcGroup || ('#' + o.keycrm_id)) + '</span>';
+    }
+    row.innerHTML = ''
+      + '<div class="num">#' + o.number + '</div>'
+      + '<div>' + escapeHtml(o.customer_name || '—') + '</div>'
+      + '<div>' + escapeHtml(o.customer_phone || '—') + '</div>'
+      + '<div>' + new Date(o.created_at).toLocaleString('uk-UA') + '</div>'
+      + '<div>' + fmtPrice(o.total) + '</div>'
+      + '<div>'
+      +   '<span class="ord-status ' + escapeHtml(statusCls) + '">' + escapeHtml(statusLabel) + '</span>'
+      +   kcChip
+      +   '<button class="ord-del" title="Видалити замовлення" onclick="event.stopPropagation(); delOrder(\'' + o.id + '\', ' + o.number + ')"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'
+      + '</div>';
+    row.addEventListener('click', function(){
+      var next = row.nextElementSibling;
+      if (next && next.classList.contains('ord-det')) { next.remove(); return; }
+      var det = document.createElement('div');
+      det.className = 'ord-det';
+      det.innerHTML = orderDetailsHtml(o);
+      row.after(det);
+    });
+    tbl.appendChild(row);
+  });
+}
+async function loadOrders(){
+  var tbl = document.getElementById('ord-table');
+  if (!tbl) return;
+  try {
+    var data = await rest('ulhome_orders?select=*&order=created_at.desc');
+    ORDERS_STATE.all = Array.isArray(data) ? data : [];
+    updateOrderFilterCounts();
+    renderOrdersList();
+  } catch(e) {
+    var head = tbl.querySelector('.head');
+    tbl.innerHTML = '';
+    if (head) tbl.appendChild(head);
+    tbl.innerHTML += '<div class="empty">' + e.message + '</div>';
+  }
+}
+// Filter chips wiring
+(function(){
+  var bar = document.getElementById('ord-filters');
+  if (!bar) return;
+  bar.addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-filter]');
+    if (!btn) return;
+    bar.querySelectorAll('button').forEach(function(b){
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+    ORDERS_STATE.filter = btn.dataset.filter || 'new';
+    renderOrdersList();
+  });
+})();
+// KeyCRM manual sync (admin → /api/keycrm-sync)
+async function runKeycrmSync(){
+  var btn = document.getElementById('ord-keycrm-sync');
+  var lbl = document.getElementById('ord-keycrm-sync-label');
+  var token = localStorage.getItem('ulhome_keycrm_sync_token') || '';
+  if (!token) {
+    token = prompt('Введіть KEYCRM_SYNC_TOKEN (зберігається у браузері):');
+    if (!token) return;
+    token = token.trim();
+    localStorage.setItem('ulhome_keycrm_sync_token', token);
+  }
+  if (btn) btn.classList.add('busy');
+  if (lbl) lbl.textContent = 'Синхронізую…';
+  try {
+    var r = await fetch('/api/keycrm-sync?action=sync', { headers: { 'Authorization': 'Bearer ' + token } });
+    var j = await r.json();
+    if (!r.ok || !j.ok) {
+      if (r.status === 403) {
+        localStorage.removeItem('ulhome_keycrm_sync_token');
+        toast('Токен невалідний — спробуйте ще раз', 'err');
+      } else {
+        toast('KeyCRM sync: ' + (j.error || r.status), 'err');
+      }
+    } else {
+      var msg = 'KeyCRM: оновлено ' + (j.updated||0) + ' · звʼязано ' + (j.linked||0) + ' · отримано ' + (j.fetched||0);
+      toast(msg);
+      await loadOrders();
+    }
+  } catch(e) {
+    toast('KeyCRM sync error: ' + e.message, 'err');
+  } finally {
+    if (btn) btn.classList.remove('busy');
+    if (lbl) lbl.textContent = 'Синхронізувати KeyCRM';
+  }
+}
+(function(){
+  var b = document.getElementById('ord-keycrm-sync');
+  if (b) b.addEventListener('click', runKeycrmSync);
+})();
 
 function orderDetailsHtml(o){
   const items = Array.isArray(o.items) ? o.items : [];
   const addr  = [o.delivery_city, o.delivery_branch].filter(Boolean).join(', ') || '—';
   const pm    = o.payment_method === 'card' ? 'Картка' : o.payment_method === 'np' ? 'Наложка' : (o.payment_method || '—');
   const ps    = {pending:'очікує','cod':'наложка','paid':'сплачено','lead':'лід'}[o.payment_status] || (o.payment_status || '—');
+  // v123 KeyCRM linkage block
+  const kcId    = (o.keycrm_id != null) ? String(o.keycrm_id) : '';
+  const kcLabel = o.keycrm_status_name || '';
+  const kcGroup = o.keycrm_status_group || '';
+  const kcSync  = o.keycrm_synced_at ? new Date(o.keycrm_synced_at).toLocaleString('uk-UA') : '';
+  let kcHtml;
+  if (kcId) {
+    const groupLabel = {approved:'Апрув',pending:'Очікує',rejected:'Відмова',excluded:'Виключено'}[kcGroup] || (kcGroup || '—');
+    kcHtml = '<span class="kc-chip ' + escapeHtml(kcGroup) + '">' + escapeHtml(groupLabel) + '</span>'
+           + '<div style="margin-top:6px;font-size:12px;color:#0e0e0e80">'
+           +   '#' + escapeHtml(kcId)
+           +   (kcLabel ? ' · ' + escapeHtml(kcLabel) : '')
+           +   (kcSync ? ' · sync ' + escapeHtml(kcSync) : '')
+           + '</div>';
+  } else {
+    kcHtml = '<span class="kc-chip none">не звʼязано</span>'
+           + '<div style="margin-top:6px;font-size:12px;color:#0e0e0e80">Натисніть "Синхронізувати KeyCRM" угорі</div>';
+  }
   const itemsHtml = items.length
     ? items.map(it => `<li>
         <span class="ord-it-t">${escapeHtml(it.title||'')}${it.color_name?' / '+escapeHtml(it.color_name):''}${it.size?' / р.'+escapeHtml(it.size):''}${it.season?' · <b>'+escapeHtml(it.season)+'</b>':''}</span>
@@ -1377,6 +1519,10 @@ function orderDetailsHtml(o){
         <div>${escapeHtml(o.customer_email||'—')}</div>
       </div>
       <div class="ord-det-b">
+        <div class="ord-det-lbl">KeyCRM</div>
+        <div>${kcHtml}</div>
+      </div>
+      <div class="ord-det-b" style="grid-column:1/-1">
         <div class="ord-det-lbl">Нотатки</div>
         <div>${escapeHtml(o.notes||'—')}</div>
       </div>
@@ -1669,7 +1815,6 @@ const ANA = {
   period: '7d',                  // '7d' | '30d' | '90d' | 'all'
   data: null,
   charts: {},                    // Chart.js instances
-  heatmap: { page: null, mm: false, events: [], pageMeta: null },
   sort: { key:'k', dir:'desc' }, // daily table sort (default: newest first)
   dailyRows: []                  // cached rows for re-sort without re-query
 };
@@ -1742,7 +1887,6 @@ async function loadAnalytics(){
     renderDevicesChart();
     renderDailyTable();
     renderSourcesDaily();
-    await loadHeatmapPages();
   } catch(e){
     console.error('analytics err', e);
     toast('Помилка аналітики: '+e.message, 'err');
@@ -2125,76 +2269,6 @@ function wireDailySort(){
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wireDailySort);
 else wireDailySort();
 
-async function loadHeatmapPages(){
-  // Distinct page_url from click events
-  const rows = await rest('analytics_events?select=page_url&event_type=eq.click&limit=20000');
-  const counts = {};
-  (rows||[]).forEach(r=>{
-    const u = String(r.page_url||'').split('?')[0];
-    if(!u) return;
-    counts[u]=(counts[u]||0)+1;
-  });
-  const arr = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-  const sel = document.getElementById('hm-page-sel');
-  sel.innerHTML = arr.map(([u,n])=>`<option value="${escapeHtml(u)}">${escapeHtml(u)} (${n})</option>`).join('') ||
-                  '<option value="">Немає даних</option>';
-  if(arr.length){
-    ANA.heatmap.page = arr[0][0];
-    await renderHeatmap();
-  }
-}
-
-async function renderHeatmap(){
-  const sinceIso = periodSinceIso(ANA.period);
-  const sinceFilter = sinceIso ? '&created_at=gte.' + encodeURIComponent(sinceIso) : '';
-  const pageFilter  = ANA.heatmap.page ? '&page_url=eq.' + encodeURIComponent(ANA.heatmap.page) : '';
-  const types = ANA.heatmap.mm ? 'in.(click,mouse_move)' : 'eq.click';
-  const rows = await rest(`analytics_events?select=event_data,created_at&event_type=${types}${pageFilter}${sinceFilter}&limit=20000`);
-  ANA.heatmap.events = rows || [];
-  document.getElementById('hm-count').textContent = `${rows.length} подій`;
-
-  const canvas = document.getElementById('hm-canvas');
-  const W = canvas.width, H = canvas.height;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle = '#fafaf5';
-  ctx.fillRect(0,0,W,H);
-
-  // Points with x_pct and y_pct (heatmap uses viewport-relative %)
-  // y_pct for scroll-wide pages can exceed 100; clamp to canvas H.
-  // Strategy: gaussian blob per point, additive, then color gradient.
-  const blobR = ANA.heatmap.mm ? 18 : 30;
-  const alpha = ANA.heatmap.mm ? 0.04 : 0.14;
-  const grd = ctx.createRadialGradient(0,0,0,0,0,blobR);
-  grd.addColorStop(0, `rgba(255,0,0,${alpha})`);
-  grd.addColorStop(0.5, `rgba(255,165,0,${alpha*0.6})`);
-  grd.addColorStop(1, `rgba(255,255,0,0)`);
-
-  ctx.globalCompositeOperation = 'source-over';
-  (rows||[]).forEach(r=>{
-    const d = r.event_data || {};
-    let x = Number(d.x_abs);
-    let y = Number(d.y_abs);
-    let xp = Number(d.x_pct);
-    let yp = Number(d.y_pct);
-    if(!isFinite(x) && isFinite(xp)) x = xp/100 * W;
-    if(!isFinite(y) && isFinite(yp)) y = yp/100 * H;
-    if(!isFinite(x) || !isFinite(y)) return;
-    // If viewport wider/narrower than W, approximate by x_pct preferred
-    if(isFinite(xp)) x = xp/100 * W;
-    if(isFinite(yp)) y = yp/100 * H;
-    x = Math.max(0, Math.min(W, x));
-    y = Math.max(0, Math.min(H, y));
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.fillStyle = grd;
-    ctx.beginPath();
-    ctx.arc(0,0,blobR,0,Math.PI*2);
-    ctx.fill();
-    ctx.restore();
-  });
-}
-
 // Event wiring
 (function(){
   const tabs = document.getElementById('ana-tabs');
@@ -2208,11 +2282,6 @@ async function renderHeatmap(){
       await loadAnalytics();
     });
   }
-  const hmSel = document.getElementById('hm-page-sel');
-  if(hmSel) hmSel.addEventListener('change', async e=>{ ANA.heatmap.page = e.target.value; await renderHeatmap(); });
-  const hmMm = document.getElementById('hm-mm');
-  if(hmMm) hmMm.addEventListener('change', async e=>{ ANA.heatmap.mm = e.target.checked; await renderHeatmap(); });
-
   // Trigger loadAnalytics when switching to analytics page
   const anaLink = document.querySelector('[data-page="analytics"]');
   if(anaLink) anaLink.addEventListener('click', ()=>{ setTimeout(loadAnalytics, 40); });
@@ -2220,4 +2289,3 @@ async function renderHeatmap(){
 
 </script></body>
 </html>
-
