@@ -16,7 +16,7 @@
 //   SUPABASE_URL              — https://...supabase.co
 //   SUPABASE_SERVICE_ROLE_KEY — service role JWT
 //
-// Версія: v1.3.1 (2026-04-28) — include=buyer.contacts (KeyCRM повертає buyer лише з include),
+// Версія: v1.4 (2026-04-28) — мінімальний since = 2026-04-25, скидає старий курсор з 2023 (2026-04-28) — include=buyer.contacts (KeyCRM повертає buyer лише з include),
 //             debug=skipped_sample у вiдповiдi для дiагностики
 
 'use strict';
@@ -254,7 +254,11 @@ async function actionStatuses() {
 
 async function actionSync({ sinceOverride, limit, force }) {
   const cursor = await getSyncCursor();
-  const since = sinceOverride || cursor.last_updated_at || null;
+  let since = sinceOverride || cursor.last_updated_at || null;
+  // v1.4: KeyCRM має 2 роки старих замовлень. ULTERA-аналітика стартувала 25.04.2026 —
+  // все старіше нерелевантне і "забивало" курсор. Завжди тримаємо since >= 2026-04-25.
+  const ULTERA_CUTOFF = '2026-04-25T00:00:00Z';
+  if (!since || since < ULTERA_CUTOFF) since = ULTERA_CUTOFF;
 
   const pageLimit = Math.min(parseInt(limit || 50, 10), 50);
 
