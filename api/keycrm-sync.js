@@ -16,7 +16,8 @@
 //   SUPABASE_URL              — https://...supabase.co
 //   SUPABASE_SERVICE_ROLE_KEY — service role JWT
 //
-// Версія: v1.1 (2026-04-28) — fix KeyCRM sort param (was 'updated_at,asc' → KeyCRM 400)
+// Версія: v1.2 (2026-04-28) — phone+date fallback link (для замовлень без keycrm_external_id),
+//             multi-page sweep у actionSync (до 5 сторiнок * 50 = 250 KeyCRM-замовлень за один вiклик)
 
 'use strict';
 
@@ -176,6 +177,48 @@ async function linkByExternalId(payload) {
   return 0;
 }
 
+
+// v1.2: Fallback — match by phone (last 9 digits) + created_at ±72h.
+// Потрiбен для замовлень, що були створенi до того як api/order.js v9 почав
+// записувати keycrm_external_id (тобто все що до 2026-04-28 деплою).
+async function linkByPhone(payload, kcOrder) {
+  const phone = (kcOrder.buyer && (kcOrder.buyer.phone || kcOrder.buyer.phones?.[0]?.phone))
+              || kcOrder.contact_phone || kcOrder.phone || null;
+  if (!phone) return 0;
+  const digits = String(phone).replace(/\D/g, '');
+  if (digits.length < 9) return 0;
+  const last9 = digits.slice(-9);
+  // Час створення в KeyCRM
+  const created = kcOrder.created_at || kcOrder.ordered_at || payload.keycrm_status_updated_at;
+  if (!created) return 0;
+  const dt = new Date(created);
+  if (isNaN(dt.getTime())) return 0;
+  const lo = new Date(dt.getTime() - 72 * 3600 * 1000).toISOString();
+  const hi = new Date(dt.getTime() + 72 * 3600 * 1000).toISOString();
+  // Шукаємо рядок з тим же телефоном (LIKE *last9*) у вiкнi ±72 год
+  const path = 'ulhome_orders?keycrm_id=is.null'
+             + '&customer_phone=ilike.' + encodeURIComponent('*' + last9 + '*')
+             + '&created_at=gte.' + encodeURIComponent(lo)
+             + '&created_at=lte.' + encodeURIComponent(hi)
+             + '&select=id,number,customer_phone,created_at'
+             + '&order=created_at.desc&limit=1';
+  let rows;
+  try { rows = await sbRest(path); } catch (e) { return 0; }
+  if (!Array.isArray(rows) || rows.length === 0) return 0;
+  const target = rows[0];
+  try {
+    await sbRest('ulhome_orders?id=eq.' + encodeURIComponent(target.id), {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+      headers: { 'Prefer': 'return=minimal' }
+    });
+    return 1;
+  } catch (e) {
+    console.warn('[keycrm-sync] linkByPhone PATCH fail', target.id, e.message);
+    return 0;
+  }
+}
+
 // ===== Action handlers =====
 async function actionStatuses() {
   // GET /v1/order/status — повертає список доступних статусів цього аккаунта.
@@ -210,8 +253,18 @@ async function actionSync({ sinceOverride, limit, force }) {
   };
   if (since) params['filter[updated_between]'] = since + ',' + new Date().toISOString();
 
-  const data = await keycrmGet('/order', params);
-  const orders = Array.isArray(data) ? data : (data.data || []);
+  // v1.2: multi-page fetch (KeyCRM hard-limit 50/page).
+  // Тягнемо до 5 сторiнок за один виклик щоб ручний "Синхронiзувати" все вибирав.
+  const allOrders = [];
+  for (let pg = 1; pg <= 5; pg++) {
+    const pgParams = Object.assign({}, params, { page: pg });
+    const data = await keycrmGet('/order', pgParams);
+    const arr = Array.isArray(data) ? data : (data.data || []);
+    if (!arr || arr.length === 0) break;
+    allOrders.push.apply(allOrders, arr);
+    if (arr.length < pageLimit) break;
+  }
+  const orders = allOrders;
 
   const statusMap = (await loadStatusMapFromSupabase(SUPABASE_URL, SUPABASE_KEY)) || DEFAULT_STATUS_MAP;
 
@@ -229,6 +282,9 @@ async function actionSync({ sinceOverride, limit, force }) {
       if (u > 0) { updated += u; continue; }
       const l = await linkByExternalId(payload);
       if (l > 0) { linked += l; continue; }
+      // v1.2: phone+date fallback for legacy orders without keycrm_external_id
+      const p = await linkByPhone(payload, ko);
+      if (p > 0) { linked += p; continue; }
       skipped++;
     } catch (e) {
       console.error('[keycrm-sync] row error', payload.keycrm_id, e.message);
@@ -267,7 +323,7 @@ async function actionSync({ sinceOverride, limit, force }) {
     linked,
     skipped,
     next_cursor:  lastSeen,
-    has_more:     orders.length >= pageLimit
+    has_more:     false  // v1.2 multi-page sweep already done inside
   };
 }
 
