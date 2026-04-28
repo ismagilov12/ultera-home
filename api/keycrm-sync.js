@@ -16,7 +16,7 @@
 //   SUPABASE_URL              — https://...supabase.co
 //   SUPABASE_SERVICE_ROLE_KEY — service role JWT
 //
-// Версія: v1 (2026-04-25)
+// Версія: v1.1 (2026-04-28) — fix KeyCRM sort param (was 'updated_at,asc' → KeyCRM 400)
 
 'use strict';
 
@@ -206,7 +206,7 @@ async function actionSync({ sinceOverride, limit, force }) {
   const params = {
     'include':            'products',
     'limit':              pageLimit,
-    'sort':               'updated_at,asc'
+    'sort':               'updated_at'
   };
   if (since) params['filter[updated_between]'] = since + ',' + new Date().toISOString();
 
