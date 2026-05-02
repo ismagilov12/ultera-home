@@ -130,6 +130,17 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 .uploader{display:inline-flex}
 .uploader input{display:none}
 
+/* ===== SIZES EDITOR ===== */
+.sz-wrap{border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden}
+.sz-head{display:grid;grid-template-columns:1fr 1fr 1fr 40px;gap:10px;padding:8px 12px;background:var(--bg-alt);font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-60)}
+.sz-row{display:grid;grid-template-columns:1fr 1fr 1fr 40px;gap:10px;padding:8px 12px;border-top:1px solid var(--line);align-items:center}
+.sz-row input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;outline:0;font-size:13px;font-family:var(--font-mono)}
+.sz-row input:focus{border-color:var(--ink)}
+.sz-row .del-sz{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-60);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+.sz-row .del-sz:hover{background:var(--err);color:#fff;border-color:var(--err)}
+.sz-empty{padding:18px 14px;color:var(--ink-60);font-size:12.5px;text-align:center;border-top:1px solid var(--line)}
+.sz-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
 .editor-foot{display:flex;justify-content:space-between;align-items:center;padding-top:18px;border-top:1px solid var(--line);margin-top:18px;gap:12px;flex-wrap:wrap}
 .editor-foot .left{display:flex;gap:10px;align-items:center}
 .editor-foot label.chk{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px}
@@ -655,6 +666,28 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
       </div>
     </div>
 
+    <div class="field">
+      <label>Розміри (доступні до замовлення)</label>
+      <div class="sz-wrap">
+        <div class="sz-head">
+          <div>EU</div>
+          <div>см (стопа)</div>
+          <div>Залишок (qty)</div>
+          <div></div>
+        </div>
+        <div id="ed-sizes"></div>
+      </div>
+      <div class="sz-actions">
+        <button type="button" class="btn ghost" onclick="szAddRow()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Додати розмір
+        </button>
+        <button type="button" class="btn ghost" onclick="szPreset('39-45')">Заповнити сітку 39-45</button>
+        <button type="button" class="btn ghost" onclick="szPreset('36-45')">36-45</button>
+        <button type="button" class="btn ghost" onclick="szClear()">Очистити</button>
+      </div>
+    </div>
+
     <div class="editor-foot">
       <div class="left">
         <label class="chk"><input type="checkbox" id="ed-pub" checked> Опубліковано</label>
@@ -1066,9 +1099,131 @@ function fmtPrice(p){ return p? Math.round(p).toLocaleString('uk-UA')+' ₴' : '
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 
 /* ==================== EDITOR ==================== */
+let ED_SIZES = [];
+const SIZE_PRESETS = {
+  '39-45': [
+    {eu:'39', cm:'25.5', qty:''},
+    {eu:'40', cm:'26',   qty:''},
+    {eu:'41', cm:'27',   qty:''},
+    {eu:'42', cm:'28',   qty:''},
+    {eu:'43', cm:'28.5', qty:''},
+    {eu:'44', cm:'29',   qty:''},
+    {eu:'45', cm:'30',   qty:''}
+  ],
+  '36-45': [
+    {eu:'36', cm:'23',   qty:''},
+    {eu:'37', cm:'23.5', qty:''},
+    {eu:'38', cm:'24.5', qty:''},
+    {eu:'39', cm:'25.5', qty:''},
+    {eu:'40', cm:'26',   qty:''},
+    {eu:'41', cm:'27',   qty:''},
+    {eu:'42', cm:'28',   qty:''},
+    {eu:'43', cm:'28.5', qty:''},
+    {eu:'44', cm:'29',   qty:''},
+    {eu:'45', cm:'30',   qty:''}
+  ]
+};
+
+function normalizeSizes(p){
+  // Build [{eu, cm, qty}] from p.size_list (preferred) or legacy p.sizes
+  if (Array.isArray(p && p.size_list) && p.size_list.length){
+    return p.size_list.map(s => ({
+      eu:  String(s.eu  != null ? s.eu  : (s.size || '')).trim(),
+      cm:  String(s.cm  != null ? s.cm  : (s.length || '')).trim(),
+      qty: String(s.qty != null ? s.qty : '').trim()
+    })).filter(s => s.eu);
+  }
+  if (Array.isArray(p && p.sizes) && p.sizes.length){
+    // Legacy CSV-style: editions like "Розмір ( повномірний ):40 - 26см"
+    return p.sizes.map(s => {
+      if (s && (s.eu != null || s.cm != null)){
+        return { eu:String(s.eu||'').trim(), cm:String(s.cm||'').trim(), qty:String(s.qty||'').trim() };
+      }
+      const ed = String((s && s.editions) || '');
+      const m = ed.match(/(\d{2})\s*-\s*([\d.,]+)/);
+      return {
+        eu:  m ? m[1] : '',
+        cm:  m ? m[2].replace(',', '.') : '',
+        qty: String((s && s.qty) || '').trim()
+      };
+    }).filter(s => s.eu);
+  }
+  return [];
+}
+
+function renderEdSizes(){
+  const wrap = document.getElementById('ed-sizes');
+  if (!wrap) return;
+  if (!ED_SIZES.length){
+    wrap.innerHTML = '<div class="sz-empty">Розміри не задано. Натисніть «Заповнити сітку 39-45» або «Додати розмір».</div>';
+    return;
+  }
+  wrap.innerHTML = ED_SIZES.map((s,i)=>(
+    '<div class="sz-row">'
+    +   '<input type="text" inputmode="numeric" placeholder="42" value="'+escapeHtml(String(s.eu||''))+'" oninput="szEdit('+i+',\'eu\',this.value)">'
+    +   '<input type="text" inputmode="decimal" placeholder="28" value="'+escapeHtml(String(s.cm||''))+'" oninput="szEdit('+i+',\'cm\',this.value)">'
+    +   '<input type="text" inputmode="numeric" placeholder="0" value="'+escapeHtml(String(s.qty||''))+'" oninput="szEdit('+i+',\'qty\',this.value)">'
+    +   '<button type="button" class="del-sz" onclick="szRemove('+i+')" title="Видалити">✕</button>'
+    + '</div>'
+  )).join('');
+}
+
+function szEdit(i, field, val){
+  if (!ED_SIZES[i]) return;
+  ED_SIZES[i][field] = val;
+}
+function szAddRow(){
+  ED_SIZES.push({eu:'', cm:'', qty:''});
+  renderEdSizes();
+}
+function szRemove(i){
+  ED_SIZES.splice(i,1);
+  renderEdSizes();
+}
+function szPreset(name){
+  const tpl = SIZE_PRESETS[name];
+  if (!tpl) return;
+  if (ED_SIZES.length && !confirm('Замінити поточну сітку розмірів пресетом ' + name + '?')) return;
+  ED_SIZES = tpl.map(s => ({...s}));
+  renderEdSizes();
+}
+function szClear(){
+  if (ED_SIZES.length && !confirm('Очистити всі розміри?')) return;
+  ED_SIZES = [];
+  renderEdSizes();
+}
+
+function buildSizesPayload(){
+  // Filter out empty rows, normalize values
+  const rows = ED_SIZES
+    .map(s => ({
+      eu:  String(s.eu||'').trim(),
+      cm:  String(s.cm||'').trim().replace(',', '.'),
+      qty: String(s.qty||'').trim()
+    }))
+    .filter(s => s.eu);
+  // size_list = modern format [{eu,cm,qty}]
+  const size_list = rows.map(s => ({eu:s.eu, cm:s.cm, qty: s.qty === '' ? '' : (parseInt(s.qty,10) || 0)}));
+  // sizes = legacy CSV-style for index.html DATA snapshot compatibility
+  const parentUid = (document.getElementById('ed-uid').value || '').trim();
+  const baseTitle = (document.getElementById('ed-title-in').value || '').trim();
+  const price     = parseFloat(document.getElementById('ed-price').value)||0;
+  const priceOld  = document.getElementById('ed-price-old').value;
+  const sizes = rows.map(s => ({
+    parent: parentUid,
+    title:  baseTitle + ' - ' + s.eu + (s.cm ? ' - ' + s.cm + 'см' : ''),
+    price:  String(price.toFixed(2)),
+    price_old: priceOld || '',
+    editions: 'Розмір ( повномірний ):' + s.eu + (s.cm ? ' - ' + s.cm + 'см' : ''),
+    qty: s.qty === '' ? '9999' : String(parseInt(s.qty,10) || 0)
+  }));
+  return { size_list, sizes };
+}
+
 function openEditor(p){
   EDITING = p ? {...p} : { uid:'', family:'', title:'', color_name:'', color_hex:'#0a0a0a', price:0, price_old:null, mark:'', description:'', photo:'', published:true };
   ED_MEDIA = p ? (MEDIA_BY_PRODUCT[p.id]||[]).map(m=>({...m})) : [];
+  ED_SIZES = normalizeSizes(p);
   document.getElementById('ed-title').textContent = p ? 'Редагування' : 'Новий товар';
   document.getElementById('ed-subt').textContent = p ? `SKU · ${p.uid}` : 'Заповніть поля та натисніть «Зберегти»';
   document.getElementById('ed-title-in').value = EDITING.title||'';
@@ -1092,6 +1247,7 @@ function openEditor(p){
   document.getElementById('ed-pub').checked = EDITING.published !== false;
   document.getElementById('ed-delete').style.display = p ? 'inline-flex' : 'none';
   renderEdPhotos();
+  renderEdSizes();
   document.getElementById('editor').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -1195,6 +1351,7 @@ document.getElementById('ed-upload').addEventListener('change', async e=>{
 
 document.getElementById('ed-save').onclick = async ()=>{
   const btn = document.getElementById('ed-save'); btn.disabled=true; btn.textContent='Зберігаю…';
+  const sizesPayload = buildSizesPayload();
   const payload = {
     uid: document.getElementById('ed-uid').value.trim() || ('new-'+Date.now()),
     article: document.getElementById('ed-article').value.trim() || null,
@@ -1216,6 +1373,8 @@ document.getElementById('ed-save').onclick = async ()=>{
     description: document.getElementById('ed-desc').value,
     photo: EDITING.photo || '',
     published: document.getElementById('ed-pub').checked,
+    size_list: sizesPayload.size_list,
+    sizes: sizesPayload.sizes,
   };
   try {
     let row;
