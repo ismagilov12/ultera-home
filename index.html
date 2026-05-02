@@ -2634,7 +2634,7 @@ window.ulteraFbq = function(name, params){
             <div class="step" data-step="3">3</div>
           </div>
           <div class="sh-panel active" id="shStep1">
-            <div class="sh-label">Довжина стопи, см (від п'ятки до великого пальця)</div>
+            <div class="sh-label">Довжина стопи або устілки, см (від п'ятки до великого пальця)</div>
             <div class="drum" id="shDrum">
               <div class="drum-list" id="shDrumList"></div>
               <div class="drum-hi"></div>
@@ -4521,6 +4521,7 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
 
 /* ————— SIZE HELPER ————— */
 (function(){
+  // Fallback grid used only if D.all is empty / wizard opened on landing
   const INSOLE_MAP = [
     {min:22.5,max:23.4,size:36},{min:23.5,max:24.0,size:37},{min:24.1,max:24.5,size:38},
     {min:24.6,max:25.4,size:39},{min:25.5,max:26.0,size:40},{min:26.1,max:26.5,size:41},
@@ -4528,6 +4529,144 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
     {min:28.6,max:29.4,size:45},{min:29.5,max:30.0,size:46}
   ];
   const STATE = { insole:26.5, usualSize:0, width:'normal', step:1 };
+
+  // Build {family -> {eu -> avg_cm}} from real product data (D.all -> .size_list).
+  // Empty cm rows are skipped. ALL = average across every family.
+  function buildSizeGrids(){
+    const out = {ALL:{}};
+    const acc = {ALL:{}};
+    const products = (window.D && Array.isArray(D.all)) ? D.all : [];
+    products.forEach(p => {
+      const fam = (p && p.family ? String(p.family).trim() : '');
+      const list = (p && Array.isArray(p.size_list)) ? p.size_list : [];
+      if (!list.length) return;
+      list.forEach(s => {
+        const eu = parseInt(s && s.eu, 10);
+        const cm = parseFloat(String(s && s.cm || '').replace(',', '.'));
+        if (!eu || !cm) return;
+        acc.ALL[eu] = acc.ALL[eu] || []; acc.ALL[eu].push(cm);
+        if (fam) {
+          acc[fam] = acc[fam] || {};
+          acc[fam][eu] = acc[fam][eu] || [];
+          acc[fam][eu].push(cm);
+        }
+      });
+    });
+    Object.keys(acc).forEach(fam => {
+      out[fam] = {};
+      Object.keys(acc[fam]).forEach(eu => {
+        const arr = acc[fam][eu];
+        out[fam][eu] = arr.reduce((a,b)=>a+b, 0) / arr.length;
+      });
+    });
+    return out;
+  }
+  function getGrids(){
+    if (!window.__SH_GRIDS || !Object.keys(window.__SH_GRIDS.ALL || {}).length){
+      window.__SH_GRIDS = buildSizeGrids();
+    }
+    return window.__SH_GRIDS;
+  }
+  function refreshGrids(){ window.__SH_GRIDS = buildSizeGrids(); return window.__SH_GRIDS; }
+  // Family of the currently opened product modal, or '' if none.
+  function currentFamily(){
+    try {
+      const uid = window.__modalUid;
+      if (!uid || typeof findProduct !== 'function') return '';
+      const p = findProduct(uid);
+      return (p && p.family) ? String(p.family).trim() : '';
+    } catch(_){ return ''; }
+  }
+  function gridFor(fam){
+    const g = getGrids();
+    if (fam && g[fam] && Object.keys(g[fam]).length) return {grid:g[fam], used:fam};
+    if (g.ALL && Object.keys(g.ALL).length) return {grid:g.ALL, used:'ALL'};
+    // last resort: build from INSOLE_MAP
+    const fb = {};
+    INSOLE_MAP.forEach(m => { fb[m.size] = (m.min + m.max) / 2; });
+    return {grid:fb, used:'fallback'};
+  }
+  // ───────────────────────────────────────────────────────────────────────
+  //  REAL FITTING TABLE — hand-tested by ULTERA owner from years of orders.
+  //  Maps (foot/insole cm, customer's habitual EU, foot width) -> our EU.
+  //  This is the most reliable source. Heuristics only fire when no row matches.
+  //  Note: customers conflate "insole length" and "foot length" — handled the same.
+  // ───────────────────────────────────────────────────────────────────────
+  const REAL_LOOKUP = [
+    {cm:25.5, usual:40, w:'*',    our:40},
+    {cm:26.0, usual:40, w:'*',    our:40},
+    {cm:26.5, usual:41, w:'*',    our:41},
+    {cm:27.0, usual:41, w:'*',    our:41},
+    {cm:27.0, usual:42, w:'*',    our:42},
+    {cm:27.5, usual:42, w:'*',    our:42},
+    {cm:27.5, usual:43, w:'*',    our:43},
+    {cm:28.0, usual:42, w:'*',    our:42},
+    {cm:28.0, usual:44, w:'*',    our:44},
+    {cm:28.5, usual:43, w:'*',    our:43},
+    {cm:28.5, usual:44, w:'*',    our:44},
+    {cm:28.5, usual:0,  w:'wide', our:45},   // wide foot at 28.5 jumps a size
+    {cm:29.0, usual:44, w:'*',    our:44},
+    {cm:29.0, usual:45, w:'*',    our:45},
+    {cm:29.5, usual:45, w:'*',    our:45},
+    {cm:30.0, usual:45, w:'*',    our:45}
+  ];
+
+  function snapHalf(x){ return Math.round(x * 2) / 2; }
+
+  function lookupRealSize(insoleCm, usual, width){
+    const cm = snapHalf(insoleCm);
+    // 1) explicit width override (e.g. 28.5 + wide -> 45)
+    const widthHit = REAL_LOOKUP.find(r => r.cm === cm && r.w === width);
+    if (widthHit) return {eu: widthHit.our, conf: 96, source: 'real-width'};
+    // 2) exact (cm + usual) match
+    if (usual){
+      const exact = REAL_LOOKUP.find(r => r.cm === cm && r.usual === usual);
+      if (exact) return {eu: exact.our, conf: 99, source: 'real-exact'};
+    }
+    // 3) same cm, nearest usual size
+    if (usual){
+      const sameCm = REAL_LOOKUP.filter(r => r.cm === cm && r.usual);
+      if (sameCm.length){
+        sameCm.sort((a,b) => Math.abs(a.usual - usual) - Math.abs(b.usual - usual));
+        if (Math.abs(sameCm[0].usual - usual) <= 2){
+          return {eu: sameCm[0].our, conf: 90, source: 'real-near-usual'};
+        }
+      }
+    }
+    // 4) same usual, nearest cm (within ±1.0 cm)
+    if (usual){
+      const sameUsual = REAL_LOOKUP.filter(r => r.usual === usual);
+      if (sameUsual.length){
+        sameUsual.sort((a,b) => Math.abs(a.cm - cm) - Math.abs(b.cm - cm));
+        if (Math.abs(sameUsual[0].cm - cm) <= 1.0){
+          return {eu: sameUsual[0].our, conf: 86, source: 'real-near-cm'};
+        }
+      }
+    }
+    return null;
+  }
+
+  // Pick EU from insole length using real cm values for given family.
+  // Strategy: smallest EU whose recorded cm >= insole + comfort_offset (0.3cm).
+  function pickEuFromInsole(insoleCm, fam){
+    const g = gridFor(fam);
+    const entries = Object.keys(g.grid)
+      .map(eu => ({eu: +eu, cm: +g.grid[eu]}))
+      .filter(e => e.eu && e.cm)
+      .sort((a,b)=>a.eu - b.eu);
+    if (!entries.length) return {eu:42, cm:0, used:g.used};
+    const target = insoleCm + 0.3;
+    let pick = entries.find(e => e.cm >= target);
+    if (!pick) pick = entries[entries.length - 1];
+    if (insoleCm <= entries[0].cm - 0.3) pick = entries[0];
+    return {eu: pick.eu, cm: pick.cm, used: g.used};
+  }
+  // EU values available for given family (sorted asc).
+  function eusFor(fam){
+    const g = gridFor(fam);
+    const eus = Object.keys(g.grid).map(n=>+n).filter(Boolean).sort((a,b)=>a-b);
+    return eus.length ? eus : [38,39,40,41,42,43,44,45];
+  }
   const VALUES = [];
   for (let v=22; v<=32.1; v+=0.5) VALUES.push(v.toFixed(1));
   const ITEM_H = 40;
@@ -4560,9 +4699,15 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
   function renderSizes(){
     const el = document.getElementById('shSizes');
     el.innerHTML = '';
-    for(let s=36; s<=48; s++){
+    refreshGrids();
+    const fam = currentFamily();
+    const eus = eusFor(fam);
+    const g   = gridFor(fam).grid;
+    eus.forEach(s=>{
       const b = document.createElement('button');
       b.textContent = s;
+      const cm = g[s];
+      if (cm) b.title = s + ' EU ≈ ' + cm.toFixed(1) + ' см (в моделі ' + (fam||'ULTERA') + ')';
       b.addEventListener('click',()=>{
         document.querySelectorAll('#shSizes button').forEach(x=>x.classList.remove('selected'));
         b.classList.add('selected');
@@ -4570,6 +4715,18 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
         setTimeout(()=>go(3), 220);
       });
       el.appendChild(b);
+    });
+    // optional helper note above the grid
+    const wrap = el.parentElement;
+    if (wrap && !wrap.querySelector('.sh-fam-note')){
+      const n = document.createElement('div');
+      n.className = 'sh-fam-note';
+      n.style.cssText = 'font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--ink-60);margin:0 0 8px;text-transform:uppercase';
+      n.textContent = fam ? ('Сітка для ' + fam + ' · реальні заміри') : 'Усереднена сітка ULTERA';
+      wrap.insertBefore(n, el);
+    } else if (wrap){
+      const n = wrap.querySelector('.sh-fam-note');
+      if (n) n.textContent = fam ? ('Сітка для ' + fam + ' · реальні заміри') : 'Усереднена сітка ULTERA';
     }
   }
 
@@ -4600,20 +4757,54 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
   window.shNext = function(from){ if(from===1) go(2); };
 
   function showResult(){
-    let fromIns = 42;
-    for(const m of INSOLE_MAP){ if(STATE.insole>=m.min && STATE.insole<=m.max){ fromIns=m.size; break; } }
-    if(STATE.insole>30.0) fromIns=46;
-    if(STATE.insole<22.5) fromIns=36;
-    const diff = Math.abs(fromIns - (STATE.usualSize || fromIns));
-    let final = fromIns, conf = 99;
-    if(STATE.usualSize){
-      if(diff===0) conf=99;
-      else if(diff===1) conf=95;
-      else { final = Math.round((fromIns+STATE.usualSize)/2); conf=86; }
+    const fam = currentFamily();
+    const eus = eusFor(fam);
+    let final, conf, source = '';
+
+    // 1) Owner's real fitting table — highest priority
+    const real = lookupRealSize(STATE.insole, STATE.usualSize, STATE.width);
+    if (real){
+      final = real.eu; conf = real.conf; source = real.source;
+    } else {
+      // 2) Heuristic fallback: usual size dominates if provided, else cm-based pick
+      const cmPick = pickEuFromInsole(STATE.insole, fam);
+      if (STATE.usualSize){
+        const diff = Math.abs(cmPick.eu - STATE.usualSize);
+        if (diff <= 1){ final = STATE.usualSize; conf = 88; }
+        else { final = Math.round((cmPick.eu + STATE.usualSize) / 2); conf = 78; }
+        source = 'usual-led';
+      } else {
+        final = cmPick.eu; conf = 90; source = 'cm-only';
+      }
+      // Width nudges only when no real-table row applied
+      if (STATE.width === 'wide' && eus.length){
+        const idx = eus.indexOf(final);
+        if (idx >= 0 && idx < eus.length - 1){ final = eus[idx + 1]; conf = Math.min(conf, 85); }
+      }
     }
-    let note = 'Повномірна колодка ULTERA. Bounce EVA додає мʼякості.';
-    if(STATE.width==='narrow') note = 'Вузька стопа — шкіра Nappa швидко прийме форму.';
-    else if(STATE.width==='wide') note = 'Широка стопа — візьми на пів-розміру більше для максимуму комфорту.';
+
+    // Clamp to family-available EU so we never recommend a size we don't sell
+    if (eus.length && eus.indexOf(final) === -1){
+      const closest = eus.reduce((a,b) => Math.abs(a - final) <= Math.abs(b - final) ? a : b);
+      final = closest;
+      conf = Math.min(conf, 84);
+    }
+
+    // Compose note grounded in real data
+    const cmFor = gridFor(fam).grid[final];
+    const familyLabel = fam || 'ULTERA';
+    let note = '';
+    if (source === 'real-exact')      note = 'Підібрано за реальною таблицею ULTERA (точне співпадіння). ';
+    else if (source === 'real-width') note = 'Підібрано з урахуванням ширини стопи на цій довжині. ';
+    else if (source === 'real-near-usual') note = 'Найближчий випадок із наших реальних замовлень для довжини ' + snapHalf(STATE.insole) + ' см. ';
+    else if (source === 'real-near-cm')    note = 'Знайшли клієнтів із розміром ' + STATE.usualSize + ' і близькою довжиною стопи. ';
+    else if (source === 'usual-led')  note = 'Орієнтуємось на ваш звичний розмір. ';
+    else                              note = 'За усередненою сіткою ' + familyLabel + '. ';
+    if (cmFor) note += 'Наш ' + final + ' ≈ ' + cmFor.toFixed(1) + ' см устілка. ';
+    if (STATE.width === 'narrow' && source.indexOf('real') !== 0) note += 'Вузька стопа — шкіра Nappa швидко прийме форму.';
+    else if (STATE.width === 'wide' && source !== 'real-width') note += 'Широка стопа — врахували в підборі.';
+    else if (STATE.width === 'normal') note += 'Bounce EVA додає мʼякості.';
+
     document.getElementById('shResultSize').textContent = final;
     document.getElementById('shResultCta').textContent = final;
     document.getElementById('shResultConf').textContent = '✓ ' + conf + '% match';
