@@ -1,15 +1,17 @@
 // api/wayforpay.js
-// SECURITY v4 (2026-04-22):
+// SECURITY v5 (2026-05-05):
+//   - [v5] PER-LINE PROMO: items[].promo_pct (e.g. Shape "second pair −30%") forwarded
+//          to compute_order_total RPC. Backend now matches frontend cart total.
+//          SALE1 (-5%) NO LONGER applies to lines with promo_pct>0 (no stacking).
+// SECURITY v4 (earlier):
 //   - [v4] promoCode hardcoded table: SALE1 → -5% pro-rata on card path; cod unchanged
 // SECURITY v3 (earlier):
 //   - CORS whitelist (ultera.in.ua + *.vercel.app)
 //   - Rate limit 30 req/min по IP (Supabase RPC)
 //   - СЕРВЕРНЫЙ пересчёт amount из ulhome_products
-//   - Фронт присылает items: [{uid, qty}]; legacy products поддерживается через title-mapping
+//   - Фронт присылает items: [{uid, qty, promo_pct?}]; legacy products через title-mapping
 //   - formHtml для backwards-compat
-//   - [v3] paymentMode === 'cod' → передплата фіксованої суми з env COD_PREPAYMENT_AMOUNT
-//          одна позиція "Передплата за замовлення ULT-XXXX", решту клієнт платить наложкою Нової Пошти
-//          sanity: prepayment <= authoritativeTotal (щоб на акційні дешеві товари не брати більше)
+//   - paymentMode === 'cod' → передплата фіксованої суми з env COD_PREPAYMENT_AMOUNT
 
 const crypto = require('crypto');
 
@@ -158,7 +160,16 @@ module.exports = async function handler(req, res) {
 
   let resolvedItems = null;
   if (Array.isArray(items) && items.length > 0) {
-    resolvedItems = items.map(it => ({ uid: String(it.uid || ''), qty: Math.max(parseInt(it.qty || 1, 10), 1) }));
+    // [v5] Forward per-line promo_pct (e.g. Shape "second pair −30%").
+    resolvedItems = items.map(it => {
+      const pct = Number(it.promo_pct || 0);
+      const safePct = Math.max(0, Math.min(90, pct));
+      return {
+        uid: String(it.uid || ''),
+        qty: Math.max(parseInt(it.qty || 1, 10), 1),
+        promo_pct: safePct
+      };
+    });
   } else if (Array.isArray(products) && products.length > 0) {
     resolvedItems = await deriveItemsFromLegacyProducts(products);
     if (!resolvedItems) return res.status(400).json({ error: 'Legacy products could not be mapped to SKUs. Update frontend to send items: [{uid, qty}].' });
@@ -172,7 +183,6 @@ module.exports = async function handler(req, res) {
   if (!(authoritativeAmount > 0)) return res.status(400).json({ error: 'Computed amount is not positive' });
 
   // [v3] COD branch: single "Prepayment" line item with fixed server-side amount.
-  // Keeps WayForPay signature valid (amount === sum(productPrice[i] * productCount[i])).
   let amountStr, productName, productCount, productPrice;
   if (isCOD) {
     const codPrepayment = Number(process.env.COD_PREPAYMENT_AMOUNT || 500);
@@ -188,7 +198,8 @@ module.exports = async function handler(req, res) {
     productCount   = ['1'];
     productPrice   = [codPrepayment.toFixed(2)];
   } else {
-    // [v4] Promo on card path (pro-rata on unit_price so amount = sum(price*qty)).
+    // [v5] Card path: SALE1 applies ONLY to lines without per-line promo_pct
+    //      (no stacking with Shape "second pair −30%" etc.).
     const promoCodeRaw = String(body.promoCode || '').toUpperCase().trim();
     const promoPct = (promoCodeRaw && PROMOS[promoCodeRaw]) || 0;
     const uids = resolvedItems.map(it => String(it.uid || ''));
@@ -200,10 +211,14 @@ module.exports = async function handler(req, res) {
       productName.push(names[line.uid] || line.uid);
       productCount.push(String(line.qty));
       let unit = Number(line.unit_price);
-      if (promoPct > 0) unit = Math.round(unit * (100 - promoPct)) / 100;
+      const linePromoPct = Number(line.promo_pct || 0);
+      // SALE1 stacking guard: skip if line already has per-line promo
+      if (promoPct > 0 && linePromoPct <= 0) {
+        unit = Math.round(unit * (100 - promoPct)) / 100;
+      }
       productPrice.push(unit.toFixed(2));
     }
-    // Recompute amount from discounted productPrice so signature matches
+    // Recompute amount from final productPrice so signature matches
     let discountedTotal = 0;
     priceResult.breakdown.forEach((line, i) => {
       discountedTotal += Number(productPrice[i]) * Number(productCount[i]);
