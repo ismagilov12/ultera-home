@@ -1,26 +1,20 @@
 // api/order.js — proxy ultera-home frontend → KeyCRM
+// ATTRIBUTION v10 (2026-05-05):
+//   - [v10] PER-LINE PROMO: items[].promoSecond → promo_pct=30 forwarded to compute_order_total.
+//           SALE1 (-5%) NO LONGER applies to lines with promo_pct>0 (no stacking).
+//           authoritativeTotal now matches frontend cart for Shape "second pair" promo.
 // ATTRIBUTION v9 (2026-04-25):
 //   - [v9] After successful KeyCRM creation, PATCH ulhome_orders with keycrm_id
 //          and keycrm_external_id so /api/keycrm-sync can correlate later.
-//          Also passes external_id=order.number to KeyCRM for two-way linkage.
 // ATTRIBUTION v8 (2026-04-24):
-//   - [v8] Accept session_id / referrer / landing_url from client and store on ulhome_orders.
-//          Sanitized to strings; session_id <=200 chars, referrer/landing_url <=2000.
+//   - [v8] Accept session_id / referrer / landing_url; sanitized.
 // SECURITY v7 (2026-04-23):
-//   - [v7] DB-backed promo codes via ulhome_promo_codes table.
-//          On final stage → ulhome_redeem_promo() (atomic +1 with max_uses guard).
-//          On lead stage → ulhome_peek_promo() (no mutation).
-//          Legacy hardcoded PROMOS still honored for SALE1 backward-compat.
+//   - [v7] DB-backed promo codes via ulhome_promo_codes (peek/redeem RPC).
 // SECURITY v6 (2026-04-22):
-//   - [v6] FIX: shipping_address_warehouse -> shipping_receive_point (actual KeyCRM v1 field).
-//          shipping_address_city restored so it appears in the list column / filter.
-//   - [v6] Debug: log(body.city, body.wh, items[].season) to Vercel Runtime Logs.
-// SECURITY v5 (earlier):
-//   - [v5] product name includes season suffix (' / Літо' or ' / Весна/Осінь')
-// SECURITY v4 (earlier):
-//   - [v4] promoCode hardcoded table: SALE1 → -5% off whole order
-// SECURITY v3 (earlier):
-//   - CORS whitelist (ultera.in.ua + *.vercel.app), Rate limit 10/min/IP, Turnstile
+//   - [v6] FIX: shipping_address_warehouse -> shipping_receive_point.
+// SECURITY v5: product name includes season suffix.
+// SECURITY v4: hardcoded SALE1.
+// SECURITY v3: CORS, Rate limit, Turnstile.
 //
 // Env vars:
 //   KEYCRM_TOKEN, KEYCRM_SOURCE_ID, KEYCRM_PM_CARD, KEYCRM_PM_NP, KEYCRM_DS_NP
@@ -99,12 +93,24 @@ async function verifyTurnstile(token, remoteIp) {
   }
 }
 
+// [v10] Forward promoSecond → promo_pct=30 so RPC applies the same Shape discount
+//       the user sees in the cart. Items can carry promo_pct directly too.
 async function recomputePrices(items) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !supabaseKey) return null;
   try {
-    const payload = items.map(it => ({ uid: String(it.uid || ''), qty: parseInt(it.qty || 1, 10) }));
+    const payload = items.map(it => {
+      const explicitPct = Number(it.promo_pct || 0);
+      const inferredPct = it.promoSecond ? 30 : 0;
+      const pct = explicitPct > 0 ? explicitPct : inferredPct;
+      const safePct = Math.max(0, Math.min(90, pct));
+      return {
+        uid: String(it.uid || ''),
+        qty: parseInt(it.qty || 1, 10),
+        promo_pct: safePct
+      };
+    });
     const r = await fetch(`${supabaseUrl}/rest/v1/rpc/compute_order_total`, {
       method: 'POST',
       headers: {
@@ -121,9 +127,6 @@ async function recomputePrices(items) {
   }
 }
 
-// [v7] DB-backed promo resolver. If `redeem` is true → atomic ulhome_redeem_promo
-// (increments uses_count, returns {discount_pct, remaining} or empty if maxed).
-// Else peek (ulhome_peek_promo) — no mutation, returns same shape + active flag.
 async function resolveDbPromo(code, redeem) {
   if (!code) return null;
   const url = process.env.SUPABASE_URL;
@@ -149,7 +152,6 @@ async function resolveDbPromo(code, redeem) {
     if (!Array.isArray(rows) || rows.length === 0) return null;
     const row = rows[0];
     if (redeem) return { discount_pct: row.discount_pct, remaining: row.remaining };
-    // peek: respect active flag
     if (!row.active || row.remaining <= 0) return null;
     return { discount_pct: row.discount_pct, remaining: row.remaining };
   } catch (e) {
@@ -186,8 +188,6 @@ async function saveOrderToSupabase(order) {
   }
 }
 
-// [v9] Зв'язати наш ulhome_orders.id з KeyCRM order id для подальшого sync.
-// Викликається після успішного POST /v1/order у KeyCRM.
 async function patchOrderKeycrmLink(supabaseId, keycrmId, externalId) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -283,7 +283,6 @@ module.exports = async function handler(req, res) {
       promoPct = LEGACY_PROMOS[promoCodeRaw];
       promoSource = 'legacy';
     } else {
-      // On lead → peek only (UI can show discount preview). On final → redeem atomically.
       const db = await resolveDbPromo(promoCodeRaw, !isLead);
       if (db) {
         promoPct = db.discount_pct;
@@ -292,8 +291,22 @@ module.exports = async function handler(req, res) {
       }
     }
   }
-  const originalTotal = authoritativeTotal;
-  if (promoPct > 0) {
+  // [v10] SALE1 applies ONLY to lines without per-line promo_pct (no stacking).
+  //       Compute order-level discount across NON-promoSecond subtotal only.
+  let originalTotal = authoritativeTotal;
+  if (promoPct > 0 && priced && priced.ok && Array.isArray(priced.breakdown)) {
+    let nonPromoSubtotal = 0;
+    let promoSubtotal = 0;
+    for (const line of priced.breakdown) {
+      const lp = Number(line.promo_pct || 0);
+      const lt = Number(line.line_total || (Number(line.unit_price) * Number(line.qty)));
+      if (lp > 0) promoSubtotal += lt;
+      else nonPromoSubtotal += lt;
+    }
+    const discounted = Math.round(nonPromoSubtotal * (100 - promoPct)) / 100;
+    authoritativeTotal = discounted + promoSubtotal;
+  } else if (promoPct > 0) {
+    // Fallback (priced missing): full-cart discount as before.
     authoritativeTotal = Math.round(originalTotal * (100 - promoPct)) / 100;
   }
 
@@ -310,11 +323,10 @@ module.exports = async function handler(req, res) {
     total: authoritativeTotal,
     status: isLead ? 'lead' : 'new',
     notes: (body.comment || (isLead ? 'abandoned-cart lead' : '')) +
-           (promoCodeRaw && promoPct ? `\npromo: ${promoCodeRaw} -${promoPct}% (${promoSource})` : ''),
+           (promoCodeRaw && promoPct ? `\npromo: ${promoCodeRaw} -${promoPct}% (${promoSource}, non-promo lines only)` : ''),
     session_id:  (typeof body.session_id  === 'string' ? body.session_id  : '').slice(0, 200)  || null,
     referrer:    (typeof body.referrer    === 'string' ? body.referrer    : '').slice(0, 2000) || null,
     landing_url: (typeof body.landing_url === 'string' ? body.landing_url : '').slice(0, 2000) || null
-
   });
 
   if (isLead) {
@@ -340,7 +352,7 @@ module.exports = async function handler(req, res) {
       promoPct: promoPct || 0,
       promoSource,
       promoRemaining,
-      seasons: (body.items || []).map(it => ({ uid: it.uid, season: it.season || null }))
+      seasons: (body.items || []).map(it => ({ uid: it.uid, season: it.season || null, promoSecond: !!it.promoSecond }))
     });
   } catch(_){}
 
@@ -348,13 +360,12 @@ module.exports = async function handler(req, res) {
   const pmNp   = parseInt(process.env.KEYCRM_PM_NP   || '0', 10);
   const paymentMethodId = body.payment === 'card' ? pmCard : pmNp;
 
-  // [v9] external_id для двостороннього linking (orderRow.number — наш unique id у Supabase).
   const externalId = String(orderRow ? orderRow.number : (body.num || ''));
 
   const crmPayload = {
     source_id: parseInt(process.env.KEYCRM_SOURCE_ID || '1', 10),
     external_id: externalId,
-    manager_comment: `ultera-home · ${body.num || (orderRow && orderRow.number) || ''}${body.payment === 'np' ? ' · наложка (мін 500₴)' : ' · картка'}${promoPct > 0 ? ` · промо ${promoCodeRaw} −${promoPct}%` : ''}`,
+    manager_comment: `ultera-home · ${body.num || (orderRow && orderRow.number) || ''}${body.payment === 'np' ? ' · наложка (мін 500₴)' : ' · картка'}${promoPct > 0 ? ` · промо ${promoCodeRaw} −${promoPct}% (без promo-ліній)` : ''}`,
     buyer: { full_name: body.fio, phone: body.phone },
     shipping: {
       delivery_service_id: parseInt(process.env.KEYCRM_DS_NP || '1', 10),
@@ -375,7 +386,11 @@ module.exports = async function handler(req, res) {
         ? priced.breakdown.find(b => b.uid === String(it.uid || ''))
         : null;
       let unitPrice = line ? Number(line.unit_price) : (parseFloat(it.price) || 0);
-      if (promoPct > 0) unitPrice = Math.round(unitPrice * (100 - promoPct)) / 100;
+      const linePromoPct = line ? Number(line.promo_pct || 0) : (it.promoSecond ? 30 : 0);
+      // [v10] SALE1 applies only to lines without per-line promo
+      if (promoPct > 0 && linePromoPct <= 0) {
+        unitPrice = Math.round(unitPrice * (100 - promoPct)) / 100;
+      }
       return {
         sku: String(it.uid || ''),
         name: it.title + (it.color_name ? ' / ' + it.color_name : '') + (it.size ? ' / р.' + it.size : '') + (it.season ? ' / ' + it.season : ''),
@@ -415,7 +430,6 @@ module.exports = async function handler(req, res) {
       console.error('KeyCRM error', r.status, data);
       return res.status(r.status).json({ ok: false, error: data.message || 'KeyCRM error', details: data });
     }
-    // [v9] fire-and-forget: link Supabase row → KeyCRM order id (не блокуємо response)
     if (orderRow && orderRow.id && data && data.id) {
       patchOrderKeycrmLink(orderRow.id, data.id, externalId)
         .catch(e => console.warn('[order] keycrm-link bg fail', e.message));
