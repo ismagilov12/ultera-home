@@ -4049,10 +4049,13 @@ function renderSummary(){
       (function(){
         var pct = (CART.wizard && CART.wizard.promoPct) || 0;
         if(pct > 0){
-          var raw = Math.round(CART.total());
-          var disc = Math.round(raw * pct / 100);
-          var finalSum = raw - disc;
-          return '<div class="s-discount"><span class="s-d-code">Промокод ' + (CART.wizard.promo || '') + ' −' + pct + '%</span><span class="s-d-val">−' + disc.toLocaleString('uk-UA') + ' ₴</span></div>' +
+          var nonPromo = Math.round(nonPromoSubtotal());
+          var promoSec = Math.round(promoSecondSubtotal());
+          var disc = Math.round(nonPromo * pct / 100);
+          var finalSum = nonPromo - disc + promoSec;
+          var hasShape = promoSec > 0;
+          var codeNote = hasShape ? ' (без Shape −30%)' : '';
+          return '<div class="s-discount"><span class="s-d-code">Промокод ' + (CART.wizard.promo || '') + ' −' + pct + '%' + codeNote + '</span><span class="s-d-val">−' + disc.toLocaleString('uk-UA') + ' ₴</span></div>' +
                  '<div class="s-total"><span>До сплати</span><b>' + finalSum.toLocaleString('uk-UA') + ' ₴</b></div>';
         }
         return '<div class="s-total"><span>Разом</span><b>' + total + ' ₴</b></div>';
@@ -4061,10 +4064,27 @@ function renderSummary(){
 }
 /* ----- Promo codes (hardcoded — server re-validates) ----- */
 const ULTERA_PROMOS = { 'SALE1': 5 };  // code => percent off (server validates via /api/validate-promo + decrements atomically at checkout)
+// [v118 2026-05-05] SALE1 не накладається на лінії promoSecond (Shape −30% друга пара).
+function nonPromoSubtotal(){
+  return CART.items.reduce(function(s,it){
+    if(it && it.promoSecond) return s;
+    return s + (parseFloat(it.price)||0) * (it.qty||1);
+  }, 0);
+}
+function promoSecondSubtotal(){
+  return CART.items.reduce(function(s,it){
+    if(!it || !it.promoSecond) return s;
+    return s + (parseFloat(it.price)||0) * (it.qty||1);
+  }, 0);
+}
 function promoFinalTotal(){
-  const raw = Math.round(CART.total());
+  const nonPromo = Math.round(nonPromoSubtotal());
+  const promoSec = Math.round(promoSecondSubtotal());
   const pct = (CART.wizard && CART.wizard.promoPct) || 0;
-  return pct > 0 ? Math.round(raw * (100 - pct) / 100) : raw;
+  if(pct > 0){
+    return Math.round(nonPromo * (100 - pct) / 100) + promoSec;
+  }
+  return nonPromo + promoSec;
 }
 async function applyPromo(){
   const inp = document.getElementById('wPromo');
@@ -4100,7 +4120,7 @@ async function applyPromo(){
     CART.wizard = {...CART.wizard, promo: code, promoPct: pct};
     CART.saveWiz();
     st.className = 'cd-promo-status ok';
-    st.textContent = '✓ −' + pct + '%' + (remaining != null ? ' · залишилось ' + remaining : '') + ' · діє на оплату карткою';
+    st.textContent = '✓ −' + pct + '%' + (remaining != null ? ' · залишилось ' + remaining : '') + ' · діє на оплату карткою (не сумується з −30% Shape)';
   } else {
     CART.wizard = {...CART.wizard, promo:null, promoPct:0};
     CART.saveWiz();
@@ -4199,7 +4219,8 @@ async function wizardSubmit(){
     var clientFirstName = fioParts[0] || '';
     var clientLastName  = fioParts.slice(1).join(' ') || '';
     var wfpItems = CART.items.map(function(it){
-      return { uid: String(it.uid||''), qty: Number(it.qty||1) };
+      return { uid: String(it.uid||''), qty: Number(it.qty||1),
+               promo_pct: it.promoSecond ? 30 : 0 };
     });
     var products = CART.items.map(function(it){
       return {
