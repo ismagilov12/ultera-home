@@ -1,5 +1,9 @@
 // api/wayforpay.js
-// SECURITY v5 (2026-05-05):
+// SECURITY v6 (2026-05-07):
+//   - [v6] returnUrl now points at /api/wfp-return so WFP's POST-back doesn't
+//          hit the static homepage and bounce with 405. /api/wfp-return
+//          accepts POST/GET and 302-redirects to /?paid=1&order=...
+// SECURITY v5 (earlier):
 //   - [v5] PER-LINE PROMO: items[].promo_pct (e.g. Shape "second pair −30%") forwarded
 //          to compute_order_total RPC. Backend now matches frontend cart total.
 //          SALE1 (-5%) NO LONGER applies to lines with promo_pct>0 (no stacking).
@@ -236,7 +240,9 @@ module.exports = async function handler(req, res) {
   const merchantSignature = crypto.createHmac('md5', secretKey).update(signatureFields.join(';'), 'utf8').digest('hex');
 
   const base = 'https://' + merchantDomainName;
-  const returnUrl = base + '/?paid=1&order=' + encodeURIComponent(orderReference);
+  // [v6] Use a serverless redirect endpoint as returnUrl. WFP posts here
+  //      after payment, we 302 the customer to /?paid=1&order=...
+  const returnUrl = base + '/api/wfp-return?order=' + encodeURIComponent(orderReference);
   const serviceUrl = base + '/api/wayforpay-callback';
 
   const formData = {

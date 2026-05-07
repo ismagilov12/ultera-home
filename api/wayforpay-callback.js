@@ -5,6 +5,10 @@
 // (idempotency) и отдаём ответ, который WayForPay принимает как
 // "полученный и принятый к обработке".
 //
+// SECURITY v4 (2026-05-07):
+//   - [v4] DEBUG: при mismatch логируем сырой payload и поля, чтобы поймать
+//          расхождение формата amount/reasonCode (наблюдается 100% mismatch
+//          в проде — все callback падают с 400).
 // SECURITY v3 (2026-04-22):
 //   - Строгая проверка подписи: отсутствующая = отказ
 //   - Idempotency через Supabase (wayforpay_events)
@@ -88,6 +92,7 @@ module.exports = async function handler(req, res) {
 
   // WayForPay шлёт JSON. Поддерживаем и x-www-form-urlencoded на всякий случай.
   let body = req.body;
+  const rawBodyType = typeof body;
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch (e) { body = {}; }
   }
@@ -125,13 +130,101 @@ module.exports = async function handler(req, res) {
     .update(incomingSignatureFields.join(';'), 'utf8')
     .digest('hex');
 
-  if (!merchantSignature || merchantSignature !== expected) {
+  // [v4] If mismatch, also try a few alternative formats that WFP is known
+  //      to use across integrations (amount as float string, reasonCode as
+  //      string number) — helps narrow down the exact cause without losing
+  //      strict verification.
+  let signatureOk = !!merchantSignature && merchantSignature === expected;
+  let matchedVariant = signatureOk ? 'primary' : null;
+  if (!signatureOk && merchantSignature) {
+    const variants = [];
+    // Variant A: amount with two decimals
+    if (amount != null) {
+      variants.push({
+        name: 'amount.toFixed(2)',
+        fields: [
+          merchantAccount || '',
+          orderReference,
+          Number(amount).toFixed(2),
+          currency || '',
+          authCode || '',
+          cardPan || '',
+          transactionStatus || '',
+          reasonCode != null ? String(reasonCode) : ''
+        ]
+      });
+    }
+    // Variant B: amount as integer string (drop trailing .00)
+    if (amount != null) {
+      variants.push({
+        name: 'amount.parseInt',
+        fields: [
+          merchantAccount || '',
+          orderReference,
+          String(parseInt(amount, 10)),
+          currency || '',
+          authCode || '',
+          cardPan || '',
+          transactionStatus || '',
+          reasonCode != null ? String(reasonCode) : ''
+        ]
+      });
+    }
+    // Variant C: amount stringified via JSON.stringify (handles "1499.00" originals)
+    if (amount != null) {
+      variants.push({
+        name: 'amount.json',
+        fields: [
+          merchantAccount || '',
+          orderReference,
+          JSON.stringify(amount),
+          currency || '',
+          authCode || '',
+          cardPan || '',
+          transactionStatus || '',
+          reasonCode != null ? String(reasonCode) : ''
+        ]
+      });
+    }
+    for (const v of variants) {
+      const calc = crypto.createHmac('md5', secretKey).update(v.fields.join(';'), 'utf8').digest('hex');
+      if (calc === merchantSignature) {
+        signatureOk = true;
+        matchedVariant = v.name;
+        break;
+      }
+    }
+  }
+
+  if (!signatureOk) {
     console.warn('[wfp-callback] signature mismatch', {
       orderReference,
-      got: merchantSignature || '(missing)',
-      expected_prefix: expected.slice(0, 8) + '...'
+      ct: req.headers['content-type'] || '',
+      rawBodyType,
+      bodyKeys: Object.keys(body || {}),
+      types: {
+        amount: typeof body.amount,
+        currency: typeof body.currency,
+        authCode: typeof body.authCode,
+        cardPan: typeof body.cardPan,
+        transactionStatus: typeof body.transactionStatus,
+        reasonCode: typeof body.reasonCode
+      },
+      values: {
+        merchantAccount, amount, currency, authCode,
+        cardPan, transactionStatus, reasonCode
+      },
+      signedString: incomingSignatureFields.join(';'),
+      expected_full: expected,
+      got_full: merchantSignature || '(missing)'
     });
     return res.status(400).json({ error: 'Invalid signature' });
+  }
+
+  if (matchedVariant && matchedVariant !== 'primary') {
+    console.log('[wfp-callback] signature matched via fallback variant', {
+      orderReference, variant: matchedVariant
+    });
   }
 
   // Idempotency: INSERT в wayforpay_events с unique(order_ref, transaction_status).
@@ -180,7 +273,8 @@ module.exports = async function handler(req, res) {
     transactionStatus,
     amount,
     reasonCode,
-    isFirstEvent
+    isFirstEvent,
+    matchedVariant
   });
 
   // Side-effects (CAPI Purchase, KeyCRM update) ТОЛЬКО на первом событии.
