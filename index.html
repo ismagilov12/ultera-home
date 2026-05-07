@@ -1578,7 +1578,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 }
 /* Without wordmark/balls, skip the 1650ms/2400ms waits — reveal stats fast */
 .h3intro--aganta.on .h3-stat{opacity:0;transform:translateY(-12px)}
-.h3intro--aganta.phase3 .h3-stat{animation:h3statIn .7s cubic-bezier(.22,.9,.3,1.05) forwards}
+.h3intro--aganta.phase3 .h3-stat{animation:h3statIn .55s cubic-bezier(.22,.9,.3,1.05) forwards}
 .h3intro--aganta.phase3 .h3-stat[data-i="1"]{animation-delay:.08s}
 .h3intro--aganta.phase3 .h3-stat[data-i="2"]{animation-delay:.28s}
 .h3intro--aganta.phase3 .h3-stat[data-i="3"]{animation-delay:.48s}
@@ -1693,7 +1693,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   max-width:80%;
 }
 .h3intro.phase2 .h3-wordmark{
-  animation:h3wmIn .55s cubic-bezier(.22,.9,.3,1.05) forwards .2s;
+  animation:h3wmIn .42s cubic-bezier(.22,.9,.3,1.05) forwards .12s;
 }
 @keyframes h3wmIn{
   0%{opacity:0;transform:translate(-50%,-6px)}
@@ -1777,7 +1777,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   opacity:0;
 }
 .h3intro.phase2 .h3-divider{
-  animation:h3div .55s ease-out forwards .8s;
+  animation:h3div .4s ease-out forwards .35s;
 }
 @keyframes h3div{to{opacity:1;transform:translateY(-50%) scaleX(1)}}
 
@@ -1807,10 +1807,10 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   width:1px;
   background:linear-gradient(to bottom,transparent 0%,rgba(14,14,14,.22) 50%,transparent 100%);
 }
-.h3intro.phase3 .h3-stat{animation:h3statIn .5s cubic-bezier(.22,.9,.3,1.05) forwards}
-.h3intro.phase3 .h3-stat[data-i="1"]{animation-delay:.05s}
-.h3intro.phase3 .h3-stat[data-i="2"]{animation-delay:.18s}
-.h3intro.phase3 .h3-stat[data-i="3"]{animation-delay:.31s}
+.h3intro.phase3 .h3-stat{animation:h3statIn .38s cubic-bezier(.22,.9,.3,1.05) forwards}
+.h3intro.phase3 .h3-stat[data-i="1"]{animation-delay:.03s}
+.h3intro.phase3 .h3-stat[data-i="2"]{animation-delay:.12s}
+.h3intro.phase3 .h3-stat[data-i="3"]{animation-delay:.22s}
 @keyframes h3statIn{to{opacity:1;transform:translateY(0)}}
 
 .h3intro .h3-stat-v{
@@ -3512,8 +3512,8 @@ function openModal(uid){
         void __intro.offsetWidth;
         __intro.classList.add('on');
         window.__hun3IntroActive = true;
-        window.__hun3IntroTimers.push(setTimeout(function(){ __intro.classList.add('phase2'); }, 1650));
-        window.__hun3IntroTimers.push(setTimeout(function(){ __intro.classList.add('phase3'); }, 2400));
+        window.__hun3IntroTimers.push(setTimeout(function(){ __intro.classList.add('phase2'); }, 800));
+        window.__hun3IntroTimers.push(setTimeout(function(){ __intro.classList.add('phase3'); }, 1250));
       } else if (__aganta && __fam === 'aganta') {
         void __aganta.offsetWidth;
         __aganta.classList.add('on');
