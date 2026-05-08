@@ -20,7 +20,7 @@
 </script>
 
 <meta charset="UTF-8">
-<!-- v122 manual deploy 2026-04-26 -->
+<!-- v125 intro auto-dismiss 2026-05-08 -->
 <script>
 /* v87: handle legacy Tilda product URLs — both /tproduct/... and clean custom form.
    Supports:
@@ -3514,14 +3514,34 @@ function openModal(uid){
         window.__hun3IntroActive = true;
         window.__hun3IntroTimers.push(setTimeout(function(){ __intro.classList.add('phase2'); }, 800));
         window.__hun3IntroTimers.push(setTimeout(function(){ __intro.classList.add('phase3'); }, 1250));
+        /* v125: auto-dismiss after stats animation completes — клієнти не розуміли, що треба тапнути,
+           особливо на мобілі (Skip-кнопка прихована). Дві фази: .end → opacity 0, потім remove on. */
+        window.__hun3IntroTimers.push(setTimeout(function(){
+          if (window.__hun3IntroActive) {
+            window.__hun3IntroActive = false;
+            __intro.classList.add('end');
+            window.__hun3IntroTimers.push(setTimeout(function(){
+              __intro.classList.remove('on','phase2','phase3','end');
+            }, 620));
+          }
+        }, 2800));
       } else if (__aganta && __fam === 'aganta') {
         void __aganta.offsetWidth;
         __aganta.classList.add('on');
         window.__hun3IntroActive = true;
         // Smooth staged reveal: small initial pause, then phase3 triggers the h3statIn
-        // staccato (.05 / .18 / .31s per card). No auto-hide — stays until user taps
-        // a photo or Skip, matching Hunk3 intro behavior.
+        // staccato (.05 / .18 / .31s per card). v125: ДОДАНО авто-скіп — раніше клієнти
+        // думали що сайт не вантажить фото бо інтро не зникало (на мобілі Skip-кнопка прихована).
         window.__hun3IntroTimers.push(setTimeout(function(){ __aganta.classList.add('phase3'); }, 700));
+        window.__hun3IntroTimers.push(setTimeout(function(){
+          if (window.__hun3IntroActive) {
+            window.__hun3IntroActive = false;
+            __aganta.classList.add('end');
+            window.__hun3IntroTimers.push(setTimeout(function(){
+              __aganta.classList.remove('on','phase2','phase3','end');
+            }, 620));
+          }
+        }, 2400));
       } else if (__shapeI && __fam === 'shape') {
         void __shapeI.offsetWidth;
         __shapeI.classList.add('on');
@@ -3535,10 +3555,11 @@ function openModal(uid){
             var pr = vid.play();
             if (pr && typeof pr.catch === 'function') pr.catch(function(){});
           } catch(_){}
-          // Fallback — if 'ended' never fires (e.g. short buffer), auto-hide after 6s
+          // Fallback — if 'ended' never fires (e.g. short buffer), auto-hide after 4s
+          // v125: знижено з 6.5с до 4с — клієнти на повільному 3G чекали забагато
           window.__hun3IntroTimers.push(setTimeout(function(){
             if (window.__shapeIntroActive) shapeIntroSkip();
-          }, 6500));
+          }, 4000));
         }
       }
     }
