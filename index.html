@@ -20,7 +20,7 @@
 </script>
 
 <meta charset="UTF-8">
-<!-- v126 async Supabase bootstrap 2026-05-11 (was v125 intro auto-dismiss) -->
+<!-- v127 fix DATA bail + add prune 2026-05-11 (was v126 async) -->
 <script>
 /* v87: handle legacy Tilda product URLs — both /tproduct/... and clean custom form.
    Supports:
@@ -2020,7 +2020,7 @@ window.ulteraFbq = function(name, params){
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v126 · async</div>
+<div class="build-tag">v127 · sync</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -2725,11 +2725,16 @@ window.ulteraFbq = function(name, params){
 .struct-block li{margin:2px 0;list-style:disc}
 </style>
 <script id="LIVE_BOOTSTRAP">
-/* v126 2026-05-11: ASYNC Supabase bootstrap.
-   Раніше блок робив 2 синхронні XMLHttpRequest (open(..., false)), що блокувало
-   рендер каталога на 0.5-3+ сек залежно від мережі. Тепер baked DATA рендериться
-   одразу, а Supabase merge + re-render відбувається у фоні.
-*/
+// v127 2026-05-11: ASYNC Supabase bootstrap + PRUNE unpublished + DATA fix.
+// Bugfixes vs v126:
+//   1) applyLive() used `var D = window.DATA`, but `window.DATA` was never set
+//      (in v125 it was set by sync-XHR). The async merge always bailed via
+//      `if (!D) return;` so nothing updated. Now we read the lexical DATA
+//      const from the sibling script block.
+//   2) Old code only ADDED new products, never REMOVED unpublished baked
+//      variants. Added a prune step: for each family that has ANY Supabase
+//      row, drop baked variants whose uid is missing from Supabase.
+// SHAPE local sh-* uids are kept (they are not managed by the admin DB).
 (function(){
   var SB = 'https://fsihlzzjewhxpogvjapu.supabase.co';
   var K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU';
@@ -2745,9 +2750,24 @@ window.ulteraFbq = function(name, params){
     });
   }
 
+  function getDATA(){
+    // First try lexical const DATA (declared in the next script block).
+    // Fallback to window.DATA if for some reason it is not yet defined.
+    try { if (typeof DATA !== 'undefined' && DATA) return DATA; } catch(_){}
+    try { if (window.DATA) return window.DATA; } catch(_){}
+    return null;
+  }
+
   function applyLive(products, media){
-    var D = window.DATA;
-    if (!D) return;
+    var D = getDATA();
+    if (!D) {
+      try { console.warn('[ultera] DATA not ready, abort merge'); } catch(_){}
+      return;
+    }
+    /* Make sure window.DATA points at the same object (for any consumer that
+       reads window.DATA — cart calculator does so on line 3806). */
+    try { window.DATA = D; } catch(_){}
+
     var byUid = {};
     for (var i=0;i<products.length;i++) byUid[products[i].uid] = products[i];
     var id2uid = {};
@@ -2802,6 +2822,53 @@ window.ulteraFbq = function(name, params){
       });
     });
 
+    /* ─── PRUNE: видалити baked-варіанти, скасовані в адмінці. ───
+       Логіка: для будь-якого family, що має хоч один товар у Supabase
+       (тобто family керується адмінкою) — у featured/grid/all лишаємо
+       лише варіанти, чий uid є в Supabase. Винятки:
+         - uid починається на "sh-" → локальні SHAPE swatch'і (не керує Supabase)
+    */
+    var supaFamilies = {};
+    var supaUids = {};
+    products.forEach(function(p){
+      supaFamilies[String(p.family||'').trim()] = true;
+      supaUids[p.uid] = true;
+    });
+    function keepVariant(v, famKey){
+      if (!v) return false;
+      if (!supaFamilies[famKey]) return true;
+      if (v.uid && /^sh-/.test(v.uid)) return true;
+      return !!(v.uid && supaUids[v.uid]);
+    }
+    var prunedCount = 0;
+    ['featured','grid'].forEach(function(sec){
+      if (!Array.isArray(D[sec])) return;
+      D[sec].forEach(function(fam){
+        var famKey = String(fam.family||'').trim();
+        if (!supaFamilies[famKey]) return;
+        if (Array.isArray(fam.variants)) {
+          var before = fam.variants.length;
+          fam.variants = fam.variants.filter(function(v){ return keepVariant(v, famKey); });
+          prunedCount += (before - fam.variants.length);
+        }
+        if (fam.hero && !keepVariant(fam.hero, famKey)) {
+          if (Array.isArray(fam.variants) && fam.variants.length > 0) {
+            fam.hero = fam.variants[0];
+          }
+        }
+      });
+    });
+    if (Array.isArray(D.all)) {
+      var beforeAll = D.all.length;
+      D.all = D.all.filter(function(v){
+        var famKey = String(v.family||'').trim();
+        return keepVariant(v, famKey);
+      });
+      prunedCount += (beforeAll - D.all.length);
+    }
+    try { if (prunedCount) console.log('[ultera] pruned unpublished variants:', prunedCount); } catch(_){}
+
+    /* ─── INJECT new products (same as v117 logic). ─── */
     var usedUids = {};
     if (Array.isArray(D.all)) D.all.forEach(function(v){ if (v && v.uid) usedUids[v.uid] = 1; });
     ['featured','grid'].forEach(function(sec){
@@ -2867,6 +2934,7 @@ window.ulteraFbq = function(name, params){
     });
     try { if (injectedCount) console.log('[ultera] injected new products:', injectedCount); } catch(_){}
 
+    /* Update EXTRA media in place */
     var E_EL = document.getElementById('EXTRA');
     if (E_EL) {
       var existingExtra = {};
@@ -2880,21 +2948,10 @@ window.ulteraFbq = function(name, params){
       try { window.EXTRA = existingExtra; } catch(_){}
     }
 
-    /* synchronise const DATA snapshot if it exists separately */
-    try {
-      if (typeof DATA !== 'undefined' && DATA !== window.DATA) {
-        DATA.all = D.all;
-        DATA.grid = D.grid;
-        DATA.featured = D.featured;
-      }
-    } catch(_){}
+    window.__ULTERA_LIVE__ = {p: products.length, m: media.length, injected: injectedCount, pruned: prunedCount};
+    try { console.log('[ultera] live data:', products.length, 'products,', media.length, 'media (async v127), injected=', injectedCount, 'pruned=', prunedCount); } catch(_){}
 
-    window.__ULTERA_LIVE__ = {p: products.length, m: media.length};
-    try { console.log('[ultera] live data:', products.length, 'products,', media.length, 'media (async)'); } catch(_){}
-
-    /* Re-render with merged data. renderFeatured/renderGrid/insertWomanDivider
-       are global function declarations from the main script — by the time this
-       async callback fires, they exist. */
+    /* Re-render with merged + pruned data. */
     try {
       if (typeof renderFeatured === 'function') renderFeatured();
       if (typeof renderGrid === 'function') renderGrid();
@@ -2915,7 +2972,6 @@ window.ulteraFbq = function(name, params){
     });
   }
 
-  /* Defer until after initial render so the user sees the catalogue immediately. */
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(go, 0);
   } else {
