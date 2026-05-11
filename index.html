@@ -20,7 +20,7 @@
 </script>
 
 <meta charset="UTF-8">
-<!-- v125 intro auto-dismiss 2026-05-08 -->
+<!-- v126 async Supabase bootstrap 2026-05-11 (was v125 intro auto-dismiss) -->
 <script>
 /* v87: handle legacy Tilda product URLs — both /tproduct/... and clean custom form.
    Supports:
@@ -2020,7 +2020,7 @@ window.ulteraFbq = function(name, params){
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v93 · img-opt</div>
+<div class="build-tag">v126 · async</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -2725,170 +2725,202 @@ window.ulteraFbq = function(name, params){
 .struct-block li{margin:2px 0;list-style:disc}
 </style>
 <script id="LIVE_BOOTSTRAP">
+/* v126 2026-05-11: ASYNC Supabase bootstrap.
+   Раніше блок робив 2 синхронні XMLHttpRequest (open(..., false)), що блокувало
+   рендер каталога на 0.5-3+ сек залежно від мережі. Тепер baked DATA рендериться
+   одразу, а Supabase merge + re-render відбувається у фоні.
+*/
 (function(){
-try {
   var SB = 'https://fsihlzzjewhxpogvjapu.supabase.co';
   var K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU';
-  function syncGet(path){
-    var x = new XMLHttpRequest();
-    x.open('GET', SB + path, false);
-    x.setRequestHeader('apikey', K);
-    x.setRequestHeader('Authorization', 'Bearer ' + K);
-    x.send();
-    if (x.status < 200 || x.status >= 300) throw new Error('HTTP ' + x.status);
-    return JSON.parse(x.responseText);
-  }
-  var products = syncGet('/rest/v1/ulhome_products?select=*&published=eq.true&order=family.asc');
-  var media = syncGet('/rest/v1/ulhome_product_media?select=*&order=product_id.asc,sort_order.asc');
-  var byUid = {};
-  for (var i=0;i<products.length;i++) byUid[products[i].uid] = products[i];
-  var id2uid = {};
-  for (var j=0;j<products.length;j++) id2uid[products[j].id] = products[j].uid;
-  var mediaByUid = {};
-  for (var k=0;k<media.length;k++){
-    var uid = id2uid[media[k].product_id];
-    if (!uid) continue;
-    if (!mediaByUid[uid]) mediaByUid[uid] = {photos:[], videos:[]};
-    if (media[k].type === 'video') mediaByUid[uid].videos.push(media[k].url);
-    else mediaByUid[uid].photos.push(media[k].url);
-  }
-  var newExtra = {};
-  for (var u in mediaByUid){
-    var slides = [];
-    var mm = mediaByUid[u];
-    if (mm.photos && mm.photos.length) slides = slides.concat(mm.photos);
-    if (mm.videos && mm.videos.length) slides = slides.concat(mm.videos);
-    newExtra[u] = slides;
-  }
-  function merge(v){
-    var p = v && byUid[v.uid];
-    if (!p) return;
-    if (p.photo) {
-      // Keep locally-owned SHAPE photos (v84+) — Supabase may not have matching media yet.
-      if (!/^\/photos\/shape-[a-z]+(-[0-9]+)?\.webp$/.test(v.photo||'')) v.photo = p.photo;
-    }
-    if (p.price != null) v.price = String(p.price);
-    if (p.price_old != null) v.price_old = String(p.price_old);
-    if (p.mark !== undefined) v.mark = p.mark || '';
-    if (p.color_name) v.color_name = p.color_name;
-    if (p.color_hex) v.swatch = p.color_hex;
-    if (p.family) v.family = p.family;
-    if (p.title) v.title = p.title;
-    if (p.brand) v.brand = p.brand;
-    if (p.category !== undefined) v.category = p.category || '';
-    if (p.text) v.text = p.text;
-    if (p.desc_short !== undefined) v.desc = p.desc_short || '';
-    if (p.description_long !== undefined) v.description_long = p.description_long || '';
-    if (p.characteristics !== undefined) v.characteristics = p.characteristics || '';
-    if (p.materials !== undefined) v.materials = p.materials || '';
-    if (p.mods !== undefined) v.mods = p.mods || '';
-    if (Array.isArray(p.sizes) && p.sizes.length) v.sizes = p.sizes;
-    if (Array.isArray(p.size_list) && p.size_list.length) v.size_list = p.size_list;
-    var mm2 = mediaByUid[v.uid];
-    if (mm2 && mm2.videos && mm2.videos.length) v.video = mm2.videos[0];
-  }
-  var D_EL = document.getElementById('DATA');
-  var E_EL = document.getElementById('EXTRA');
-  var D = JSON.parse(D_EL.textContent);
-  if (Array.isArray(D.all)) D.all.forEach(merge);
-  ['featured','grid'].forEach(function(sec){
-    if (Array.isArray(D[sec])) D[sec].forEach(function(fam){
-      if (fam.hero) merge(fam.hero);
-      if (Array.isArray(fam.variants)) fam.variants.forEach(merge);
-    });
-  });
 
-  // [v102] INJECT new products from Supabase that aren't in baked DATA yet.
-  // Allows admin-added products to appear on site without manual DATA edit.
-  var usedUids = {};
-  if (Array.isArray(D.all)) D.all.forEach(function(v){ if (v && v.uid) usedUids[v.uid] = 1; });
-  ['featured','grid'].forEach(function(sec){
-    if (Array.isArray(D[sec])) D[sec].forEach(function(fam){
-      if (fam.hero && fam.hero.uid) usedUids[fam.hero.uid] = 1;
-      (fam.variants||[]).forEach(function(v){ if (v && v.uid) usedUids[v.uid] = 1; });
+  function fetchJSON(path){
+    return fetch(SB + path, {
+      headers: { 'apikey': K, 'Authorization': 'Bearer ' + K },
+      cache: 'default',
+      credentials: 'omit'
+    }).then(function(r){
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
     });
-  });
-  function productToVariant(p){
-    return {
-      uid: p.uid,
-      brand: p.brand || 'ULTERA',
-      mark: p.mark || '',
-      category: p.category || '',
-      title: p.title || '',
-      desc: p.desc_short || '',
-      text: p.text || '',
-      photo: p.photo || '',
-      price: String(p.price != null ? p.price : 0),
-      mods: p.mods || '',
-      sizes: Array.isArray(p.sizes) ? p.sizes : [],
-      price_old: p.price_old != null ? String(p.price_old) : null,
-      family: p.family || '',
-      swatch: p.color_hex || '',
-      color_name: p.color_name || '',
-      size_list: Array.isArray(p.size_list) ? p.size_list : [],
-      description_long: p.description_long || '',
-      characteristics: p.characteristics || '',
-      materials: p.materials || ''
-    };
   }
-  // [v117] featuredByFamily + trim-normalize keys so new Supabase products
-  // with family matching a FEATURED row (Aganta/Hunk3/SHAPE/etc.) merge into
-  // that existing family's variants instead of spawning a duplicate grid card.
-  var gridByFamily = {}, featuredByFamily = {};
-  if (Array.isArray(D.grid)) D.grid.forEach(function(fam){ if (fam && fam.family) gridByFamily[String(fam.family).trim()] = fam; });
-  if (Array.isArray(D.featured)) D.featured.forEach(function(fam){ if (fam && fam.family) featuredByFamily[String(fam.family).trim()] = fam; });
-  // Sort products by (family, sort_order) so new family's hero = lowest sort_order
-  var sortedProducts = products.slice().sort(function(a,b){
-    var fa = String(a.family||''), fb = String(b.family||'');
-    if (fa !== fb) return fa < fb ? -1 : 1;
-    var sa = Number(a.sort_order != null ? a.sort_order : 9999);
-    var sb = Number(b.sort_order != null ? b.sort_order : 9999);
-    return sa - sb;
-  });
-  var injectedCount = 0;
-  sortedProducts.forEach(function(p){
-    if (usedUids[p.uid]) return;
-    var v = productToVariant(p);
-    // Attach videos from mediaByUid (merge() does this for existing; replicate here)
-    var mm = mediaByUid[v.uid];
-    if (mm && mm.videos && mm.videos.length) v.video = mm.videos[0];
-    // D.all: append
-    if (!Array.isArray(D.all)) D.all = [];
-    D.all.push(v);
-    // D.grid: group by family (create entry if family new)
-    var famKey = String(p.family||'').trim();
-    var fam = featuredByFamily[famKey] || gridByFamily[famKey];
-    if (!fam){
-      fam = { family: p.family || '—', hero: v, variants: [v] };
-      if (!Array.isArray(D.grid)) D.grid = [];
-      D.grid.push(fam);
-      gridByFamily[famKey] = fam;
-    } else {
-      if (!Array.isArray(fam.variants)) fam.variants = [];
-      fam.variants.push(v);
-    }
-    usedUids[p.uid] = 1;
-    injectedCount++;
-  });
-  try { if (injectedCount) console.log('[ultera] injected new products:', injectedCount); } catch(_){}
 
-  D_EL.textContent = JSON.stringify(D);
-  // Merge Supabase media into existing EXTRA rather than replacing — so any
-  // locally-baked shape gallery (/photos/shape-*.webp) isn't wiped.
-  var existingExtra = {};
-  try { existingExtra = JSON.parse(E_EL.textContent || '{}'); } catch(_){}
-  for (var _k in newExtra){
-    var cur = existingExtra[_k];
-    var isLocalShape = Array.isArray(cur) && cur.length && typeof cur[0] === 'string' && cur[0].indexOf('/photos/shape-') === 0;
-    if (!isLocalShape) existingExtra[_k] = newExtra[_k];
+  function applyLive(products, media){
+    var D = window.DATA;
+    if (!D) return;
+    var byUid = {};
+    for (var i=0;i<products.length;i++) byUid[products[i].uid] = products[i];
+    var id2uid = {};
+    for (var j=0;j<products.length;j++) id2uid[products[j].id] = products[j].uid;
+    var mediaByUid = {};
+    for (var k=0;k<media.length;k++){
+      var uid = id2uid[media[k].product_id];
+      if (!uid) continue;
+      if (!mediaByUid[uid]) mediaByUid[uid] = {photos:[], videos:[]};
+      if (media[k].type === 'video') mediaByUid[uid].videos.push(media[k].url);
+      else mediaByUid[uid].photos.push(media[k].url);
+    }
+    var newExtra = {};
+    for (var u in mediaByUid){
+      var slides = [];
+      var mm = mediaByUid[u];
+      if (mm.photos && mm.photos.length) slides = slides.concat(mm.photos);
+      if (mm.videos && mm.videos.length) slides = slides.concat(mm.videos);
+      newExtra[u] = slides;
+    }
+    function merge(v){
+      var p = v && byUid[v.uid];
+      if (!p) return;
+      if (p.photo) {
+        if (!/^\/photos\/shape-[a-z]+(-[0-9]+)?\.webp$/.test(v.photo||'')) v.photo = p.photo;
+      }
+      if (p.price != null) v.price = String(p.price);
+      if (p.price_old != null) v.price_old = String(p.price_old);
+      if (p.mark !== undefined) v.mark = p.mark || '';
+      if (p.color_name) v.color_name = p.color_name;
+      if (p.color_hex) v.swatch = p.color_hex;
+      if (p.family) v.family = p.family;
+      if (p.title) v.title = p.title;
+      if (p.brand) v.brand = p.brand;
+      if (p.category !== undefined) v.category = p.category || '';
+      if (p.text) v.text = p.text;
+      if (p.desc_short !== undefined) v.desc = p.desc_short || '';
+      if (p.description_long !== undefined) v.description_long = p.description_long || '';
+      if (p.characteristics !== undefined) v.characteristics = p.characteristics || '';
+      if (p.materials !== undefined) v.materials = p.materials || '';
+      if (p.mods !== undefined) v.mods = p.mods || '';
+      if (Array.isArray(p.sizes) && p.sizes.length) v.sizes = p.sizes;
+      if (Array.isArray(p.size_list) && p.size_list.length) v.size_list = p.size_list;
+      var mm2 = mediaByUid[v.uid];
+      if (mm2 && mm2.videos && mm2.videos.length) v.video = mm2.videos[0];
+    }
+    if (Array.isArray(D.all)) D.all.forEach(merge);
+    ['featured','grid'].forEach(function(sec){
+      if (Array.isArray(D[sec])) D[sec].forEach(function(fam){
+        if (fam.hero) merge(fam.hero);
+        if (Array.isArray(fam.variants)) fam.variants.forEach(merge);
+      });
+    });
+
+    var usedUids = {};
+    if (Array.isArray(D.all)) D.all.forEach(function(v){ if (v && v.uid) usedUids[v.uid] = 1; });
+    ['featured','grid'].forEach(function(sec){
+      if (Array.isArray(D[sec])) D[sec].forEach(function(fam){
+        if (fam.hero && fam.hero.uid) usedUids[fam.hero.uid] = 1;
+        (fam.variants||[]).forEach(function(v){ if (v && v.uid) usedUids[v.uid] = 1; });
+      });
+    });
+    function productToVariant(p){
+      return {
+        uid: p.uid,
+        brand: p.brand || 'ULTERA',
+        mark: p.mark || '',
+        category: p.category || '',
+        title: p.title || '',
+        desc: p.desc_short || '',
+        text: p.text || '',
+        photo: p.photo || '',
+        price: String(p.price != null ? p.price : 0),
+        mods: p.mods || '',
+        sizes: Array.isArray(p.sizes) ? p.sizes : [],
+        price_old: p.price_old != null ? String(p.price_old) : null,
+        family: p.family || '',
+        swatch: p.color_hex || '',
+        color_name: p.color_name || '',
+        size_list: Array.isArray(p.size_list) ? p.size_list : [],
+        description_long: p.description_long || '',
+        characteristics: p.characteristics || '',
+        materials: p.materials || ''
+      };
+    }
+    var gridByFamily = {}, featuredByFamily = {};
+    if (Array.isArray(D.grid)) D.grid.forEach(function(fam){ if (fam && fam.family) gridByFamily[String(fam.family).trim()] = fam; });
+    if (Array.isArray(D.featured)) D.featured.forEach(function(fam){ if (fam && fam.family) featuredByFamily[String(fam.family).trim()] = fam; });
+    var sortedProducts = products.slice().sort(function(a,b){
+      var fa = String(a.family||''), fb = String(b.family||'');
+      if (fa !== fb) return fa < fb ? -1 : 1;
+      var sa = Number(a.sort_order != null ? a.sort_order : 9999);
+      var sb = Number(b.sort_order != null ? b.sort_order : 9999);
+      return sa - sb;
+    });
+    var injectedCount = 0;
+    sortedProducts.forEach(function(p){
+      if (usedUids[p.uid]) return;
+      var v = productToVariant(p);
+      var mm = mediaByUid[v.uid];
+      if (mm && mm.videos && mm.videos.length) v.video = mm.videos[0];
+      if (!Array.isArray(D.all)) D.all = [];
+      D.all.push(v);
+      var famKey = String(p.family||'').trim();
+      var fam = featuredByFamily[famKey] || gridByFamily[famKey];
+      if (!fam){
+        fam = { family: p.family || '—', hero: v, variants: [v] };
+        if (!Array.isArray(D.grid)) D.grid = [];
+        D.grid.push(fam);
+        gridByFamily[famKey] = fam;
+      } else {
+        if (!Array.isArray(fam.variants)) fam.variants = [];
+        fam.variants.push(v);
+      }
+      usedUids[p.uid] = 1;
+      injectedCount++;
+    });
+    try { if (injectedCount) console.log('[ultera] injected new products:', injectedCount); } catch(_){}
+
+    var E_EL = document.getElementById('EXTRA');
+    if (E_EL) {
+      var existingExtra = {};
+      try { existingExtra = JSON.parse(E_EL.textContent || '{}'); } catch(_){}
+      for (var _k in newExtra){
+        var cur = existingExtra[_k];
+        var isLocalShape = Array.isArray(cur) && cur.length && typeof cur[0] === 'string' && cur[0].indexOf('/photos/shape-') === 0;
+        if (!isLocalShape) existingExtra[_k] = newExtra[_k];
+      }
+      E_EL.textContent = JSON.stringify(existingExtra);
+      try { window.EXTRA = existingExtra; } catch(_){}
+    }
+
+    /* synchronise const DATA snapshot if it exists separately */
+    try {
+      if (typeof DATA !== 'undefined' && DATA !== window.DATA) {
+        DATA.all = D.all;
+        DATA.grid = D.grid;
+        DATA.featured = D.featured;
+      }
+    } catch(_){}
+
+    window.__ULTERA_LIVE__ = {p: products.length, m: media.length};
+    try { console.log('[ultera] live data:', products.length, 'products,', media.length, 'media (async)'); } catch(_){}
+
+    /* Re-render with merged data. renderFeatured/renderGrid/insertWomanDivider
+       are global function declarations from the main script — by the time this
+       async callback fires, they exist. */
+    try {
+      if (typeof renderFeatured === 'function') renderFeatured();
+      if (typeof renderGrid === 'function') renderGrid();
+      if (typeof insertWomanDivider === 'function') insertWomanDivider();
+    } catch(e){
+      try { console.warn('[ultera] re-render after live merge failed:', e && e.message); } catch(_){}
+    }
   }
-  E_EL.textContent = JSON.stringify(existingExtra);
-  window.DATA = D;
-  window.__ULTERA_LIVE__ = {p: products.length, m: media.length};
-  try { console.log('[ultera] live data:', products.length, 'products,', media.length, 'media'); } catch(_){}
-} catch (e) {
-  try { console.warn('[ultera] Supabase bootstrap failed, using baked data:', e && e.message); } catch(_){}
-}
+
+  function go(){
+    Promise.all([
+      fetchJSON('/rest/v1/ulhome_products?select=*&published=eq.true&order=family.asc'),
+      fetchJSON('/rest/v1/ulhome_product_media?select=*&order=product_id.asc,sort_order.asc')
+    ]).then(function(r){
+      try { applyLive(r[0], r[1]); } catch(e){ try{ console.warn('[ultera] applyLive err:', e && e.message); }catch(_){} }
+    }).catch(function(e){
+      try { console.warn('[ultera] Supabase bootstrap failed, using baked data:', e && e.message); } catch(_){}
+    });
+  }
+
+  /* Defer until after initial render so the user sees the catalogue immediately. */
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(go, 0);
+  } else {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(go, 0); });
+  }
 })();
 </script>
 <script>
