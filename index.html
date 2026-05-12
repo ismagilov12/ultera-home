@@ -20,7 +20,7 @@
 </script>
 
 <meta charset="UTF-8">
-<!-- v127 fix DATA bail + add prune 2026-05-11 (was v126 async) -->
+<!-- v128 fix featured modal opens active variant 2026-05-12 (was v127 prune) -->
 <script>
 /* v87: handle legacy Tilda product URLs — both /tproduct/... and clean custom form.
    Supports:
@@ -2020,7 +2020,7 @@ window.ulteraFbq = function(name, params){
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v127 · sync</div>
+<div class="build-tag">v128 · modal-fix</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -3144,12 +3144,14 @@ function renderFeatured(){
     const priceOld = oldMin > 0 ? '<s>' + Math.round(oldMin).toLocaleString('uk-UA') + ' \u20b4</s>' : '';
 
     const serialTxt = meta.serial + '-' + String(photos.length).padStart(2,'0');
-    const handler = meta.handler || `openModal('${row.variants[0].uid}')`;
+    // v128: handler reads currently-active variant uid from card dataset.
+    const initialUid = (row.variants[0] && row.variants[0].uid) || '';
+    const handler = meta.handler || `__featOpen(this)`;
 
-    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}"><img src="${ph.photo}" alt="${fam} ${ph.name}" ${i===0?'loading="eager" fetchpriority="high" decoding="async"':'loading="lazy" decoding="async"'}></div>`).join('');
-    const swatchHtml = photos.map((ph,i) => `<button class="sw${i===0?' active':''}" data-idx="${i}" style="background:${ph.swatch}" aria-label="${ph.name}" title="${ph.name}"></button>`).join('');
+    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}" data-uid="${ph.uid}"><img src="${ph.photo}" alt="${fam} ${ph.name}" ${i===0?'loading="eager" fetchpriority="high" decoding="async"':'loading="lazy" decoding="async"'}></div>`).join('');
+    const swatchHtml = photos.map((ph,i) => `<button class="sw${i===0?' active':''}" data-idx="${i}" data-uid="${ph.uid}" style="background:${ph.swatch}" aria-label="${ph.name}" title="${ph.name}"></button>`).join('');
 
-    return `<div class="feat-card" data-fam="${fam}">
+    return `<div class="feat-card" data-fam="${fam}" data-active-uid="${initialUid}">
       <div class="feat-left">
         <div class="feat-top">
           <div class="feat-serial">SRL \u00b7 <b>${serialTxt}</b></div>
@@ -3182,7 +3184,7 @@ function renderFeatured(){
     </div>`;
   }).join('');
 
-  // Wire swatch clicks for color crossfade
+  // Wire swatch clicks for color crossfade + track active uid (v128)
   document.querySelectorAll('.feat-card').forEach(card => {
     const swatches = card.querySelectorAll('.feat-colors-tr .sw');
     const photos   = card.querySelectorAll('.feat-photo');
@@ -3193,10 +3195,28 @@ function renderFeatured(){
         swatches.forEach(x => x.classList.remove('active'));
         sw.classList.add('active');
         photos.forEach(p => p.classList.toggle('active', +p.dataset.idx === idx));
+        // v128: remember which variant is currently displayed so a click on
+        // the photo/Деталі opens the right modal — used by __featOpen().
+        if (sw.dataset.uid) card.dataset.activeUid = sw.dataset.uid;
       });
     });
   });
 }
+
+/* v128: open modal for the currently-active variant of a featured card. */
+window.__featOpen = function(node){
+  try {
+    var card = node && node.closest ? node.closest('.feat-card') : null;
+    if (!card) { return; }
+    var uid = card.dataset.activeUid;
+    if (!uid) {
+      // fallback — first photo's data-uid
+      var firstPhoto = card.querySelector('.feat-photo');
+      if (firstPhoto) uid = firstPhoto.dataset.uid;
+    }
+    if (uid && typeof openModal === 'function') openModal(uid);
+  } catch (e) { try { console.warn('__featOpen err', e); } catch(_){} }
+};
 
 /* ————— GRID (general + classics) ————— */
 function renderGrid(){
