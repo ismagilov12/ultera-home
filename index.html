@@ -20,7 +20,7 @@
 </script>
 
 <meta charset="UTF-8">
-<!-- v128 fix featured modal opens active variant 2026-05-12 (was v127 prune) -->
+<!-- v129 fix modal photo fallback for Aganta Сафарі/Олива 2026-05-12 (was v128 active variant) -->
 <script>
 /* v87: handle legacy Tilda product URLs — both /tproduct/... and clean custom form.
    Supports:
@@ -3459,9 +3459,14 @@ function openModal(uid){
 
   // photo strip below main image — все фото текущего товара из CSV
   const gal = document.getElementById('m_gallery');
-  const photosArr = (EXTRA_PHOTOS && EXTRA_PHOTOS[uid] && EXTRA_PHOTOS[uid].length)
-    ? EXTRA_PHOTOS[uid]
-    : variants.map(v=>v.photo);
+  // v129 2026-05-12: prefer live window.EXTRA injected from Supabase (EXTRA_PHOTOS is
+  //   parsed once at load and stays stale for new SKUs like Aganta Сафарі / Олива).
+  //   Fallback ONLY to the selected variant's main photo — never mix sibling colors
+  //   into the strip (the swatches above already serve that purpose).
+  const _EXTRAS = (typeof window !== 'undefined' && window.EXTRA) ? window.EXTRA : EXTRA_PHOTOS;
+  const photosArr = (_EXTRAS && _EXTRAS[uid] && _EXTRAS[uid].length)
+    ? _EXTRAS[uid]
+    : [p.photo];
   // unique photos
   const photos = [...new Set(photosArr)];
   window.__modalPhotos = photos;
