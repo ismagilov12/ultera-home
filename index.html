@@ -2980,6 +2980,9 @@ window.ulteraFbq = function(name, params){
 
     window.__ULTERA_LIVE__ = {p: products.length, m: media.length, injected: injectedCount, pruned: prunedCount};
     try { console.log('[ultera] live data:', products.length, 'products,', media.length, 'media (async v127), injected=', injectedCount, 'pruned=', prunedCount); } catch(_){}
+    /* v131: signal that async bootstrap is finished so tproduct opener can wait for fresh EXTRA */
+    try { window.__ulteraBootstrapDone = true; } catch(_){}
+    try { window.dispatchEvent(new CustomEvent('ultera:bootstrap:done')); } catch(_){}
 
     /* Re-render with merged + pruned data. */
     try {
@@ -4582,34 +4585,52 @@ async function wizardSubmit(){
 
 /* ————— LEGACY TILDA /tproduct/ → openModal — opener (URL was already
    normalized to / by the early <head> script; uid stashed in window.__tproduct_uid__) —————
-   v116: wait for BOTH openModal and findProduct(uid) — covers women catalog links
-   whose uid only appears in DATA.all after Supabase bootstrap injects them. */
+   v131: BEFORE trying findProduct(uid), wait for async Supabase bootstrap to finish.
+          Otherwise FB-catalog deep-links open a stale baked card with 1 photo +
+          old swatches because EXTRA[uid] gallery only arrives after bootstrap. */
 (function(){
+  function waitForBootstrap(cb){
+    try { if (window.__ulteraBootstrapDone === true) { cb(); return; } } catch(_){}
+    var done = false;
+    function fire(){ if (done) return; done = true; try { cb(); } catch(_){} }
+    try { window.addEventListener('ultera:bootstrap:done', fire, { once: true }); } catch(_){}
+    /* belt + suspenders: poll the flag too in case event already fired */
+    var iters = 0, MAX_ITERS = 80; /* 80 × 100ms = 8s timeout */
+    (function poll(){
+      if (done) return;
+      try { if (window.__ulteraBootstrapDone === true) { fire(); return; } } catch(_){}
+      iters++;
+      if (iters >= MAX_ITERS) { try { console.warn('[tproduct] bootstrap wait timed out after', iters*100, 'ms'); } catch(_){} fire(); return; }
+      setTimeout(poll, 100);
+    })();
+  }
   function runTproductOpen(){
     var uid = window.__tproduct_uid__;
     if (!uid) return;
-    var tries = 0, maxTries = 150; /* 150 × 100ms = 15s total */
-    function ready(){
-      if (typeof openModal !== 'function') return false;
-      if (typeof findProduct !== 'function') return false;
-      try { return !!findProduct(uid); } catch(_) { return false; }
-    }
-    function tryOpen(){
-      tries++;
-      if (ready()){
-        try {
-          openModal(uid);
-          try { console.log('[tproduct] opened', uid, 'after', tries, 'tries'); } catch(_){}
-        } catch(e){ console.warn('tproduct openModal err', e); }
-        return;
+    waitForBootstrap(function(){
+      var tries = 0, maxTries = 150; /* 150 × 100ms = 15s total */
+      function ready(){
+        if (typeof openModal !== 'function') return false;
+        if (typeof findProduct !== 'function') return false;
+        try { return !!findProduct(uid); } catch(_) { return false; }
       }
-      if (tries >= maxTries){
-        console.warn('[tproduct] gave up opening uid', uid, '— not found in DATA.all after', tries*100, 'ms');
-        return;
+      function tryOpen(){
+        tries++;
+        if (ready()){
+          try {
+            openModal(uid);
+            try { console.log('[tproduct] opened', uid, 'after', tries, 'tries (bootstrap done:', window.__ulteraBootstrapDone === true, ')'); } catch(_){}
+          } catch(e){ console.warn('tproduct openModal err', e); }
+          return;
+        }
+        if (tries >= maxTries){
+          console.warn('[tproduct] gave up opening uid', uid, '— not found in DATA.all after', tries*100, 'ms');
+          return;
+        }
+        setTimeout(tryOpen, 100);
       }
-      setTimeout(tryOpen, 100);
-    }
-    tryOpen();
+      tryOpen();
+    });
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', runTproductOpen);
