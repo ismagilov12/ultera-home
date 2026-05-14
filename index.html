@@ -2750,6 +2750,36 @@ window.ulteraFbq = function(name, params){
     });
   }
 
+  /* v130 2026-05-14: PostgREST default page cap can be <1000. For media we need
+     ALL rows — paginate with Range header until short page returned. */
+  function fetchAllRows(path, pageSize){
+    pageSize = pageSize || 1000;
+    var acc = [];
+    function step(from){
+      var to = from + pageSize - 1;
+      return fetch(SB + path, {
+        headers: {
+          'apikey': K,
+          'Authorization': 'Bearer ' + K,
+          'Range-Unit': 'items',
+          'Range': from + '-' + to,
+          'Prefer': 'count=none'
+        },
+        cache: 'default',
+        credentials: 'omit'
+      }).then(function(r){
+        if (!r.ok && r.status !== 206) throw new Error('HTTP ' + r.status);
+        return r.json().then(function(rows){
+          if (!Array.isArray(rows)) return acc;
+          acc = acc.concat(rows);
+          if (rows.length < pageSize) return acc;
+          return step(from + pageSize);
+        });
+      });
+    }
+    return step(0);
+  }
+
   function getDATA(){
     // First try lexical const DATA (declared in the next script block).
     // Fallback to window.DATA if for some reason it is not yet defined.
@@ -2964,9 +2994,14 @@ window.ulteraFbq = function(name, params){
   function go(){
     Promise.all([
       fetchJSON('/rest/v1/ulhome_products?select=*&published=eq.true&order=family.asc'),
-      fetchJSON('/rest/v1/ulhome_product_media?select=*&order=product_id.asc,sort_order.asc')
+      /* v130: was fetchJSON (capped at PostgREST default page size, дропало
+         частину з 282 фото). Тепер fetchAllRows тягне всі рядки через Range. */
+      fetchAllRows('/rest/v1/ulhome_product_media?select=product_id,url,type,sort_order&order=product_id.asc,sort_order.asc', 1000)
     ]).then(function(r){
-      try { applyLive(r[0], r[1]); } catch(e){ try{ console.warn('[ultera] applyLive err:', e && e.message); }catch(_){} }
+      try {
+        try { console.log('[ultera] bootstrap media rows:', (r[1]||[]).length); } catch(_){}
+        applyLive(r[0], r[1]);
+      } catch(e){ try{ console.warn('[ultera] applyLive err:', e && e.message); }catch(_){} }
     }).catch(function(e){
       try { console.warn('[ultera] Supabase bootstrap failed, using baked data:', e && e.message); } catch(_){}
     });
