@@ -874,7 +874,7 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
           <div class="cd-promo-status" id="wPromoStatus"></div>
           <div class="cd-section"><b>4</b><span>Спосіб оплати</span></div>
           <label class="cd-radio"><input type="radio" name="pm" value="card" checked><div><b>Оплата карткою</b><span>WayForPay · оплата частинами моно/а-банк</span></div></label>
-          <label class="cd-radio"><input type="radio" name="pm" value="np"><div><b>Оплата на пошті (наложений платіж)</b><span>Передоплата 500 ₴ карткою, решта при отриманні</span></div></label>
+          <label class="cd-radio"><input type="radio" name="pm" value="np"><div><b>Оплата на пошті (наложений платіж)</b><span>Передоплата 200 ₴ карткою, решта при отриманні</span></div></label>
           <div class="cd-err" id="wErr1"></div>
           <button class="cd-next" id="wSubmit" onclick="wizardSubmit()">Оформити замовлення <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
           <div class="cd-section"><b>5</b><span>Деталі замовлення</span></div>
@@ -1373,9 +1373,9 @@ function renderSummary(){
     html += '<div class="row"><span>'+it.title+' ('+(it.qty||1)+' шт)</span><span>'+priceFmt((parseFloat(it.price)||0)*(it.qty||1))+'</span></div>';
   });
   if(pct>0) html += '<div class="row"><span>Промокод (−'+pct+'%)</span><span>−'+priceFmt(discount)+'</span></div>';
-  html += '<div class="row"><span>Доставка</span><span>'+(pm==='np'?'Передоплата 500 ₴':'Безкоштовно')+'</span></div>';
-  html += '<div class="total"><span>До сплати</span><span>'+priceFmt(pm==='np' ? 500 : total)+'</span></div>';
-  if(pm==='np') html += '<div class="row" style="margin-top:8px;font-size:11px;color:var(--ink-60)"><span>Решта при отриманні: '+priceFmt(total - 500)+'</span></div>';
+  html += '<div class="row"><span>Доставка</span><span>'+(pm==='np'?'Передоплата 200 ₴':'Безкоштовно')+'</span></div>';
+  html += '<div class="total"><span>До сплати</span><span>'+priceFmt(pm==='np' ? 200 : total)+'</span></div>';
+  if(pm==='np') html += '<div class="row" style="margin-top:8px;font-size:11px;color:var(--ink-60)"><span>Решта при отриманні: '+priceFmt(total - 200)+'</span></div>';
   sum.innerHTML = html;
 }
 
@@ -1445,7 +1445,7 @@ async function wizardSubmit(){
     const fioParts = String(CART.wizard.fio||'').trim().split(/\s+/);
     const wfpItems = CART.items.map(it => ({uid:String(it.uid||''), qty:Number(it.qty||1), promo_pct:Number(CART.wizard.promoPct||0)}));
     const products = CART.items.map(it => ({name:String(it.title||'item'), count:Number(it.qty||1), price:Math.round(parseFloat(it.price)||0)}));
-    const wfpAmount = (pm === 'np') ? 500 : promoFinalTotal();
+    const wfpAmount = (pm === 'np') ? 200 : promoFinalTotal();
     try{
       const wfpResp = await fetch('/api/wayforpay', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
         orderReference: orderNum, items: wfpItems, amount: wfpAmount, products,

@@ -1,5 +1,8 @@
 // api/wayforpay.js
-// SECURITY v6 (2026-05-07):
+// SECURITY v7 (2026-05-15):
+//   - [v7] TEES COD prepayment: orders with any tee-* uid use 200₴ (env COD_PREPAYMENT_AMOUNT_TEES);
+//          all other orders keep 500₴ (env COD_PREPAYMENT_AMOUNT). Backward compatible.
+// SECURITY v6 (earlier):
 //   - [v6] returnUrl now points at /api/wfp-return so WFP's POST-back doesn't
 //          hit the static homepage and bounce with 405. /api/wfp-return
 //          accepts POST/GET and 302-redirects to /?paid=1&order=...
@@ -107,7 +110,6 @@ async function getProductNames(uids) {
   } catch (e) { return {}; }
 }
 
-// Legacy fallback: если фронт прислал только products без uid — мапим по title.
 async function deriveItemsFromLegacyProducts(products) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -164,7 +166,6 @@ module.exports = async function handler(req, res) {
 
   let resolvedItems = null;
   if (Array.isArray(items) && items.length > 0) {
-    // [v5] Forward per-line promo_pct (e.g. Shape "second pair −30%").
     resolvedItems = items.map(it => {
       const pct = Number(it.promo_pct || 0);
       const safePct = Math.max(0, Math.min(90, pct));
@@ -186,10 +187,13 @@ module.exports = async function handler(req, res) {
   const authoritativeAmount = Number(priceResult.total);
   if (!(authoritativeAmount > 0)) return res.status(400).json({ error: 'Computed amount is not positive' });
 
-  // [v3] COD branch: single "Prepayment" line item with fixed server-side amount.
   let amountStr, productName, productCount, productPrice;
   if (isCOD) {
-    const codPrepayment = Number(process.env.COD_PREPAYMENT_AMOUNT || 500);
+    // [v7] Tees orders use lower COD prepayment (200₴ default vs 500₴ for sneakers).
+    const hasTees = resolvedItems.some(it => String(it.uid || '').startsWith('tee-'));
+    const codPrepayment = hasTees
+      ? Number(process.env.COD_PREPAYMENT_AMOUNT_TEES || 200)
+      : Number(process.env.COD_PREPAYMENT_AMOUNT || 500);
     if (!(codPrepayment > 0)) return res.status(500).json({ error: 'COD prepayment misconfigured' });
     if (codPrepayment > authoritativeAmount) {
       return res.status(400).json({
@@ -202,8 +206,6 @@ module.exports = async function handler(req, res) {
     productCount   = ['1'];
     productPrice   = [codPrepayment.toFixed(2)];
   } else {
-    // [v5] Card path: SALE1 applies ONLY to lines without per-line promo_pct
-    //      (no stacking with Shape "second pair −30%" etc.).
     const promoCodeRaw = String(body.promoCode || '').toUpperCase().trim();
     const promoPct = (promoCodeRaw && PROMOS[promoCodeRaw]) || 0;
     const uids = resolvedItems.map(it => String(it.uid || ''));
@@ -216,13 +218,11 @@ module.exports = async function handler(req, res) {
       productCount.push(String(line.qty));
       let unit = Number(line.unit_price);
       const linePromoPct = Number(line.promo_pct || 0);
-      // SALE1 stacking guard: skip if line already has per-line promo
       if (promoPct > 0 && linePromoPct <= 0) {
         unit = Math.round(unit * (100 - promoPct)) / 100;
       }
       productPrice.push(unit.toFixed(2));
     }
-    // Recompute amount from final productPrice so signature matches
     let discountedTotal = 0;
     priceResult.breakdown.forEach((line, i) => {
       discountedTotal += Number(productPrice[i]) * Number(productCount[i]);
@@ -240,8 +240,6 @@ module.exports = async function handler(req, res) {
   const merchantSignature = crypto.createHmac('md5', secretKey).update(signatureFields.join(';'), 'utf8').digest('hex');
 
   const base = 'https://' + merchantDomainName;
-  // [v6] Use a serverless redirect endpoint as returnUrl. WFP posts here
-  //      after payment, we 302 the customer to /?paid=1&order=...
   const returnUrl = base + '/api/wfp-return?order=' + encodeURIComponent(orderReference);
   const serviceUrl = base + '/api/wayforpay-callback';
 
