@@ -408,6 +408,9 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
 .m-nav svg{width:18px;height:18px;fill:none;stroke:var(--ink);stroke-width:2}
 .m-nav-prev{left:14px}.m-nav-next{right:14px}
 .m-counter-pill{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(14,14,14,.55);color:#fff;font-family:var(--font-mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;z-index:5;letter-spacing:.08em;backdrop-filter:blur(8px)}
+.m-video-toggle{position:absolute;top:14px;left:14px;z-index:6;display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;border-radius:999px;background:rgba(14,14,14,.6);backdrop-filter:blur(10px);color:#fff;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.08em;cursor:pointer;transition:all .2s}
+.m-video-toggle:hover{background:rgba(14,14,14,.85)}
+.m-video-toggle svg{width:14px;height:14px;color:var(--mint);background:rgba(255,255,255,.15);border-radius:50%;padding:3px}
 .modal-strip{grid-column:1/2;grid-row:2/3;display:flex;gap:6px;padding:8px;background:var(--bg-alt);border-top:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
 .modal-strip::-webkit-scrollbar{display:none}
 .modal-strip button{width:64px;height:64px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#fff;border:1.5px solid transparent;transition:border-color .2s;cursor:pointer;padding:0}
@@ -810,6 +813,11 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
       <button class="m-nav m-nav-prev" onclick="modalPhoto(-1)" aria-label="Попереднє"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
       <button class="m-nav m-nav-next" onclick="modalPhoto(1)" aria-label="Наступне"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
       <img id="m_img" src="" alt="" decoding="async">
+      <video id="m_video" style="display:none;width:100%;height:100%;object-fit:cover" playsinline muted loop autoplay controls></video>
+      <button id="m_video_btn" class="m-video-toggle" onclick="toggleModalVideo()" style="display:none">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+        <span id="m_video_label">ВІДЕО</span>
+      </button>
       <div class="m-counter-pill"><b id="m_cur">1</b> / <span id="m_tot">1</span></div>
     </div>
     <div class="modal-strip" id="m_strip"></div>
@@ -946,12 +954,17 @@ async function bootstrapFromSupabase(){
       console.warn('[tees] no published products — falling back to embedded JSON');
       return;
     }
-    // Group media by product_id
+    // Group media by product_id — separate photos and videos
     const mediaByProduct = {};
+    const videosByProduct = {};
     for(const m of media){
-      if(m.type !== 'photo') continue;
-      if(!mediaByProduct[m.product_id]) mediaByProduct[m.product_id] = [];
-      mediaByProduct[m.product_id].push(m.url);
+      if(m.type === 'photo'){
+        if(!mediaByProduct[m.product_id]) mediaByProduct[m.product_id] = [];
+        mediaByProduct[m.product_id].push(m.url);
+      } else if(m.type === 'video'){
+        if(!videosByProduct[m.product_id]) videosByProduct[m.product_id] = [];
+        videosByProduct[m.product_id].push(m.url);
+      }
     }
     // Build DATA from DB
     const built = products.map(p => {
@@ -964,6 +977,7 @@ async function bootstrapFromSupabase(){
       const slug = (p.category||'').split(';').slice(-1)[0] || p.title || '';
       // Find original slug from fallback by uid match
       const fbk = FALLBACK_DATA.find(x => x.uid === p.uid);
+      const videos = (videosByProduct[p.id] || []).map(u => u.startsWith('/') ? u.slice(1) : u);
       return {
         uid: p.uid,
         slug: fbk ? fbk.slug : (p.title||'').replace('ULTERA Tees™ — ','').replace(' · ','-'),
@@ -977,7 +991,8 @@ async function bootstrapFromSupabase(){
         color_hex: p.color_hex || '#0e0e0e',
         price: Number(p.price)||1490,
         old_price: Number(p.price_old)||1790,
-        photos: photos
+        photos: photos,
+        videos: videos
       };
     });
     DATA = built;
@@ -1279,6 +1294,21 @@ function openModal(p){
   document.getElementById('m_brand').textContent = 'ULTERA TEES™ · '+p.group.toUpperCase();
   const md = document.getElementById('m_desc');
   if(p.desc){ md.textContent = p.desc; md.style.display = ''; } else { md.style.display = 'none'; }
+  // Video toggle: show button if product has videos
+  const vbtn = document.getElementById('m_video_btn');
+  const vEl = document.getElementById('m_video');
+  if(p.videos && p.videos.length){
+    vbtn.style.display = 'inline-flex';
+    document.getElementById('m_video_label').textContent = 'ВІДЕО';
+    modalCtx.videos = p.videos;
+    modalCtx.videoMode = false;
+    vEl.style.display = 'none';
+    vEl.pause(); vEl.removeAttribute('src');
+  } else {
+    vbtn.style.display = 'none';
+    vEl.style.display = 'none';
+    vEl.pause(); vEl.removeAttribute('src');
+  }
   setModalPhoto(0);
   const strip = document.getElementById('m_strip');
   strip.innerHTML = '';
@@ -1299,7 +1329,31 @@ function openModal(p){
 function closeModal(){
   document.getElementById('modal').classList.remove('open');
   document.body.style.overflow = '';
+  // Stop any playing video
+  const v = document.getElementById('m_video');
+  if(v){ v.pause(); v.removeAttribute('src'); v.load(); v.style.display='none'; }
+  const img = document.getElementById('m_img');
+  if(img) img.style.display = '';
   modalCtx = null;
+}
+function toggleModalVideo(){
+  if(!modalCtx || !modalCtx.videos || !modalCtx.videos.length) return;
+  const vEl = document.getElementById('m_video');
+  const img = document.getElementById('m_img');
+  const lbl = document.getElementById('m_video_label');
+  modalCtx.videoMode = !modalCtx.videoMode;
+  if(modalCtx.videoMode){
+    vEl.src = modalCtx.videos[0];
+    vEl.style.display = '';
+    img.style.display = 'none';
+    vEl.play().catch(()=>{});
+    lbl.textContent = 'ФОТО';
+  } else {
+    vEl.pause();
+    vEl.style.display = 'none';
+    img.style.display = '';
+    lbl.textContent = 'ВІДЕО';
+  }
 }
 function setModalPhoto(i){
   if(!modalCtx) return;
@@ -1743,23 +1797,22 @@ function toast(msg, ic){
 bindHeroAce();
 bindChips();
 updateCartBadge();
-// Show grid with embedded fallback FIRST (zero flicker), then refresh from Supabase
 buildGrid();
 bootstrapFromSupabase().then(() => buildGrid()).catch(()=>{});
 
-/* ---------- DEEP LINK ?p=tee-XXX (for FB catalog feed) ---------- */
+/* ---------- DEEP LINK ?p=tee-XXX ---------- */
 (function(){
   try{
     const qs = new URLSearchParams(location.search);
     const pid = qs.get('p');
     if(!pid) return;
-    const product = DATA.find(x => x.uid === pid);
-    if(!product) return;
     setTimeout(() => {
+      const product = DATA.find(x => x.uid === pid);
+      if(!product) return;
       openModal(product);
       try{ if(typeof ulteraFbq==='function') ulteraFbq('ViewContent', {content_ids:[pid], content_type:'product', content_name:product.name, value:product.price, currency:'UAH'}); }catch(_){}
-    }, 300);
-  }catch(e){ console.warn('deep-link error:', e); }
+    }, 600);
+  }catch(e){}
 })();
 
 console.log('ULTERA TEES Drop 01 models:', DATA.length);
