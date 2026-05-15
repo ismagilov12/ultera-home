@@ -294,6 +294,65 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
   .ana-row,.ana-row.equal,.ana-row.tri{grid-template-columns:1fr}
 }
 </style>
+<!-- TEES_EDITOR_PATCH -->
+<style id="tees-editor-patch">
+  /* Hide sneaker-specific size block (Tees use one L size) */
+  .field:has(#ed-sizes), .sz-actions{display:none !important}
+  /* Subtle hint banner inside editor */
+  #ed-tees-hint{
+    margin-bottom:18px;
+    padding:12px 14px;
+    background:linear-gradient(135deg,var(--mint) 0%,#cde8b4 100%);
+    border:1px solid #b4d699;
+    border-radius:10px;
+    font-size:12.5px;
+    line-height:1.5;
+    color:var(--ink);
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+  }
+  #ed-tees-hint b{display:block;font-weight:800;letter-spacing:.02em;margin-bottom:2px;font-size:11.5px;text-transform:uppercase;font-family:var(--font-mono)}
+  #ed-tees-hint .ic{font-size:18px;line-height:1}
+</style>
+<script id="tees-editor-init">
+(function(){
+  if(!window.__TEES_ADMIN__) return;
+  // After editor renders, set family=Tees + add hint banner
+  function applyTeesDefaults(){
+    var fam = document.getElementById('ed-family');
+    if(fam && (!fam.value || fam.value === '')) fam.value = 'Tees';
+    var brand = document.getElementById('ed-brand');
+    if(brand && !brand.value) brand.value = 'ULTERA';
+    // Insert hint banner once
+    if(document.getElementById('ed-tees-hint')) return;
+    var title = document.getElementById('ed-title');
+    if(!title) return;
+    var hint = document.createElement('div');
+    hint.id = 'ed-tees-hint';
+    hint.innerHTML = '<span class="ic">👕</span><div><b>Tees редактор</b>Усі футболки — розмір L оверсайз. Поле «Розміри» приховано (не потрібне). Family автоматично «Tees». Опис у полі <b style="display:inline">Опис короткий (desc_short)</b> виводиться на картку каталогу.</div>';
+    var subt = document.getElementById('ed-subt');
+    if(subt && subt.parentNode) subt.parentNode.insertBefore(hint, subt.nextSibling);
+  }
+  // Run when editor opens (it shows when openEditor() is called)
+  var mo = new MutationObserver(function(){
+    var modal = document.getElementById('editor-modal') || document.querySelector('.editor-modal') || document.querySelector('[data-editor]');
+    if(modal && (modal.style.display !== 'none' && modal.offsetParent !== null)){
+      applyTeesDefaults();
+    }
+  });
+  mo.observe(document.body, {attributes:true, subtree:true, attributeFilter:['style','class']});
+  // Also apply on initial load
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyTeesDefaults, 500); });
+  // And when admin clicks "Додати товар"
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    if(t && (t.id === 'prod-add' || (t.closest && t.closest('#prod-add')))){
+      setTimeout(applyTeesDefaults, 150);
+    }
+  });
+})();
+</script>
 </head>
 <body>
 
