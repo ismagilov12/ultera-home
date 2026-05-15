@@ -681,9 +681,9 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
       <div class="coll-meta">
         <div class="tag em">DROP 01 — SS26</div>
         <div class="tag">SERIES_01_LIFESTYLE · 10</div>
-        <div class="tag">SERIES_02_CONCEPT · 37</div>
+        <div class="tag">CONCEPT · скоро</div>
         <div class="desc">
-          <strong>47 принтів, один силует.</strong> Lifestyle-серія знята на моделях у міському середовищі. Concept-серія — архівні принти ULTERA. Усі футболки — розмір L оверсайз, однакова щільність, однакова якість друку.
+          <strong>10 lifestyle-принтів, один силует.</strong> Серія знята на моделях у міському середовищі. Усі футболки — розмір L оверсайз, щільна бавовна 240 gsm. Concept-серія готується до релізу.
         </div>
       </div>
     </div>
@@ -691,17 +691,17 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
     <div class="coll-toolbar">
       <div class="count"><b id="countNum">47</b> <span>моделей</span></div>
       <div class="coll-chips" id="chips">
-        <button class="coll-chip active" data-fk="all">Усі <span class="ct">47</span></button>
+        <button class="coll-chip active" data-fk="all">Усі <span class="ct">10</span></button>
         <button class="coll-chip" data-fk="lifestyle">Lifestyle <span class="ct">10</span></button>
-        <button class="coll-chip" data-fk="concept">Concept <span class="ct">37</span></button>
-        <button class="coll-chip" data-fk="ink"><span class="sw" style="background:#0e0e0e"></span>Чорний <span class="ct">14</span></button>
-        <button class="coll-chip" data-fk="white"><span class="sw" style="background:#f4f3ee"></span>Білий <span class="ct">5</span></button>
-        <button class="coll-chip" data-fk="grey"><span class="sw" style="background:#aaaba2"></span>Сірий <span class="ct">5</span></button>
-        <button class="coll-chip" data-fk="cream"><span class="sw" style="background:#e8dec5"></span>Крем <span class="ct">5</span></button>
-        <button class="coll-chip" data-fk="graphite"><span class="sw" style="background:#3b3b3a"></span>Графіт <span class="ct">4</span></button>
-        <button class="coll-chip" data-fk="olive"><span class="sw" style="background:#6c7250"></span>Оливка <span class="ct">3</span></button>
-        <button class="coll-chip" data-fk="pink"><span class="sw" style="background:#ffc8a5"></span>Рожевий <span class="ct">7</span></button>
-        <button class="coll-chip" data-fk="red"><span class="sw" style="background:#c53a2c"></span>Червоний <span class="ct">4</span></button>
+        <button class="coll-chip" data-fk="concept" style="display:none">Concept <span class="ct">37</span></button>
+        <button class="coll-chip" data-fk="ink"><span class="sw" style="background:#0e0e0e"></span>Чорний <span class="ct">2</span></button>
+        <button class="coll-chip" data-fk="white"><span class="sw" style="background:#f4f3ee"></span>Білий <span class="ct">3</span></button>
+        <button class="coll-chip" data-fk="grey"><span class="sw" style="background:#aaaba2"></span>Сірий <span class="ct">2</span></button>
+        <button class="coll-chip" data-fk="cream" style="display:none"><span class="sw" style="background:#e8dec5"></span>Крем <span class="ct">0</span></button>
+        <button class="coll-chip" data-fk="graphite"><span class="sw" style="background:#3b3b3a"></span>Графіт <span class="ct">1</span></button>
+        <button class="coll-chip" data-fk="olive" style="display:none"><span class="sw" style="background:#6c7250"></span>Оливка <span class="ct">0</span></button>
+        <button class="coll-chip" data-fk="pink"><span class="sw" style="background:#ffc8a5"></span>Рожевий <span class="ct">1</span></button>
+        <button class="coll-chip" data-fk="red"><span class="sw" style="background:#c53a2c"></span>Червоний <span class="ct">1</span></button>
       </div>
     </div>
 
@@ -1076,7 +1076,7 @@ function buildGrid(){
     return p.color === activeFilter;
   });
   const lifeItems = filtered.filter(p => p.group === 'lifestyle');
-  const concItems = filtered.filter(p => p.group === 'concept');
+  const concItems = []; // Concept hidden — TODO: enable when ready
   let visible = 0;
   if(lifeItems.length){
     if(activeFilter==='all' || activeFilter==='lifestyle'){
@@ -1659,8 +1659,6 @@ function toast(msg, ic){
 
 /* ---------- INIT ---------- */
 bindHeroAce();
-buildGrid();
-bindChips();
 updateCartBadge();
 console.log('ULTERA TEES Drop 01 models:', DATA.length);
 </script>
