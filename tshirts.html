@@ -96,51 +96,62 @@ input,select,textarea{font:inherit;color:inherit}
 .mobile-menu.show{display:flex}
 .mobile-menu a{font-size:24px;font-weight:800;text-transform:uppercase;padding:18px 0;border-bottom:1px solid var(--line);letter-spacing:-.01em}
 
-/* ====== HERO ACE — full-bleed photo (same style as index.html) ====== */
-.hero-ace{position:relative;overflow:hidden;color:#fff;background:#0a0a0a;min-height:min(780px,96vh);display:flex;flex-direction:column;padding:0;margin:-72px 0 18px}
-.ace-bg{position:absolute;inset:0;z-index:0;background:#0a0a0a;overflow:hidden;contain:paint}
-.ace-slide{position:absolute;inset:0;opacity:0;transition:opacity 1s cubic-bezier(.4,0,.2,1)}
-.ace-slide.active{opacity:1}
-.ace-slide picture,.ace-slide img{width:100%;height:100%;display:block}
-.ace-slide img{object-fit:cover;object-position:center 35%;transform:translateZ(0)}
-.ace-slide.active img{animation:aceZoom 14s ease-in-out infinite alternate}
-@keyframes aceZoom{0%{transform:scale(1) translateZ(0)}100%{transform:scale(1.05) translateZ(0)}}
-.ace-bg::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(140% 60% at 50% 100%,rgba(10,10,10,.55),transparent 60%),linear-gradient(180deg,rgba(10,10,10,.55) 0%,rgba(10,10,10,.12) 30%,rgba(10,10,10,.12) 55%,rgba(10,10,10,.78) 100%)}
-.ace-grid-svg{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.55}
-.ace-hud-ticks{position:absolute;inset:14px;z-index:2;pointer-events:none}
+/* ====== HERO ACE — split layout (text + full photo) ====== */
+.hero-ace{position:relative;overflow:hidden;color:#fff;background:#0a0a0a;min-height:min(720px,92vh);display:grid;grid-template-columns:1.05fr 1fr;padding:0;margin:-72px 0 18px}
+.ace-bg-deco{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(120% 80% at 12% 40%,rgba(20,22,28,1) 0%,#0a0a0a 60%)}
+.ace-grid-svg{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.35}
+.ace-hud-ticks{position:absolute;inset:14px;z-index:3;pointer-events:none}
 .ace-hud-ticks::before,.ace-hud-ticks::after,.ace-hud-ticks > i::before,.ace-hud-ticks > i::after{content:"";position:absolute;width:18px;height:18px}
 .ace-hud-ticks::before{top:0;left:0;border-left:1.5px solid var(--mint);border-top:1.5px solid var(--mint)}
 .ace-hud-ticks::after{top:0;right:0;border-right:1.5px solid var(--mint);border-top:1.5px solid var(--mint)}
 .ace-hud-ticks > i::before{bottom:0;left:0;border-left:1.5px solid var(--mint);border-bottom:1.5px solid var(--mint);position:absolute}
 .ace-hud-ticks > i::after{bottom:0;right:0;border-right:1.5px solid var(--mint);border-bottom:1.5px solid var(--mint);position:absolute}
 .ace-hud-ticks > i{position:absolute;inset:0}
-.ace-top-content{position:relative;z-index:5;padding:72px clamp(28px,4.5vw,72px) 18px;max-width:1440px;width:100%;margin:0 auto}
-.ace-headline{font-weight:900;text-transform:uppercase;letter-spacing:-.025em;line-height:.94;font-size:clamp(30px,4.2vw,58px);color:#fff;margin:0;text-shadow:0 2px 22px rgba(0,0,0,.45);max-width:780px}
+
+.ace-text-side{position:relative;z-index:5;display:flex;flex-direction:column;justify-content:space-between;padding:90px clamp(28px,3vw,56px) 36px;gap:24px;min-width:0}
+.ace-headline{font-weight:900;text-transform:uppercase;letter-spacing:-.025em;line-height:.92;font-size:clamp(34px,4.2vw,72px);color:#fff;margin:0;text-shadow:0 2px 22px rgba(0,0,0,.45)}
 .ace-headline .ace-stroke{-webkit-text-stroke:1.5px #fff;color:transparent;font-weight:700}
 .ace-headline .ace-mint{color:var(--mint)}
-.ace-bottom-content{position:relative;z-index:5;margin-top:auto;padding:14px clamp(28px,4.5vw,72px) 20px;max-width:1440px;width:100%;margin-left:auto;margin-right:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap}
-.ace-bottom-panel{background:transparent;padding:0;max-width:560px;display:flex;flex-direction:column;gap:12px;position:relative}
-.ace-chips{display:flex;flex-wrap:wrap;gap:6px;position:relative;z-index:1}
+.ace-eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--mint);font-weight:700;display:inline-flex;align-items:center;gap:8px}
+.ace-eyebrow::before{content:"";width:24px;height:1px;background:var(--mint)}
+
+.ace-bottom-panel{display:flex;flex-direction:column;gap:14px;position:relative}
+.ace-chips{display:flex;flex-wrap:wrap;gap:6px}
 .ace-chip{display:inline-flex;align-items:center;gap:7px;padding:5px 11px 5px 9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);border-radius:999px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.02em;color:rgba(255,255,255,.9);white-space:nowrap}
 .ace-chip .ace-dot-m{width:6px;height:6px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 3px rgba(173,210,125,.16);flex-shrink:0}
-.ace-cta-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:relative;z-index:1;margin-top:2px}
-.ace-cta{display:inline-flex;align-items:center;gap:12px;padding:4px 4px 4px 22px;border-radius:999px;background:var(--mint);color:#0a0a0a;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;transition:transform .25s cubic-bezier(.2,.8,.2,1);white-space:nowrap;text-decoration:none;box-shadow:inset 0 2px 3px rgba(0,0,0,.25),inset 0 -1px 2px rgba(255,255,255,.35);position:relative}
+.ace-cta-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:4px}
+.ace-cta{display:inline-flex;align-items:center;gap:12px;padding:4px 4px 4px 22px;border-radius:999px;background:var(--mint);color:#0a0a0a;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;transition:transform .25s cubic-bezier(.2,.8,.2,1);white-space:nowrap;text-decoration:none;box-shadow:inset 0 2px 3px rgba(0,0,0,.25),inset 0 -1px 2px rgba(255,255,255,.35)}
 .ace-cta:hover{transform:translateY(-1px)}
 .ace-cta .ace-cta-arrow{width:32px;height:32px;border-radius:50%;background:radial-gradient(circle at 50% 28%,#1d1d1d 0%,#050505 72%);color:#fff;display:flex;align-items:center;justify-content:center;transition:transform .3s;box-shadow:inset 0 3px 4px rgba(0,0,0,.9),inset 0 -1px 2px rgba(255,255,255,.08),0 0 0 1px rgba(0,0,0,.3)}
 .ace-cta:hover .ace-cta-arrow{transform:rotate(-45deg)}
 .ace-cta .ace-cta-arrow svg{width:13px;height:13px;stroke:#fff;stroke-width:2.2;fill:none}
-.ace-dots{display:flex;gap:8px;align-items:center;padding-bottom:8px}
+.ace-dots{display:flex;gap:8px;align-items:center}
 .ace-dot{width:24px;height:3px;border-radius:2px;border:0;background:rgba(255,255,255,.32);cursor:pointer;padding:0;transition:all .3s}
 .ace-dot:hover{background:rgba(255,255,255,.55)}
 .ace-dot.active{background:var(--mint);width:40px}
-@media (max-width:760px){
-  .hero-ace{min-height:100svh;margin:-64px 0 18px}
-  .ace-slide.active img{animation:none}
-  .ace-hud-ticks{display:none}
-  .ace-top-content{padding:72px 18px 10px}
-  .ace-bottom-content{padding:10px 14px 14px;flex-direction:column;align-items:stretch;gap:10px}
-  .ace-bottom-panel{max-width:none}
-  .ace-headline{font-size:clamp(28px,9vw,40px)}
+
+/* Photo side — full photo visible (object-fit:contain) */
+.ace-photo-side{position:relative;display:flex;align-items:center;justify-content:center;padding:60px clamp(20px,3vw,48px) 36px;min-height:520px;overflow:hidden}
+.ace-photo-side::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(20,22,28,.6) 0%,rgba(10,10,10,.2) 100%);pointer-events:none}
+.ace-photo-frame{position:relative;width:100%;height:100%;max-width:560px;max-height:88%;display:flex;align-items:center;justify-content:center}
+.ace-slide{position:absolute;inset:0;opacity:0;transition:opacity 1s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;justify-content:center}
+.ace-slide.active{opacity:1;z-index:2}
+.ace-slide picture{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+.ace-slide img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06)}
+
+@media (max-width:900px){
+  .hero-ace{grid-template-columns:1fr;grid-template-rows:auto auto;min-height:auto;margin:-64px 0 18px}
+  .ace-photo-side{order:-1;min-height:0;padding:80px 20px 12px;aspect-ratio:auto}
+  .ace-photo-frame{max-width:none;max-height:60vh;height:60vh}
+  .ace-slide img{max-height:60vh}
+  .ace-text-side{padding:24px clamp(18px,5vw,28px) 36px;gap:18px}
+  .ace-headline{font-size:clamp(32px,8vw,52px)}
+  .ace-hud-ticks{inset:8px}
+}
+@media (max-width:540px){
+  .ace-photo-frame{height:55vh;max-height:55vh}
+  .ace-slide img{max-height:55vh}
+  .ace-headline{font-size:clamp(28px,9.5vw,42px)}
 }
 
 /* ====== HERO (legacy two-column — kept hidden as fallback) ====== */
@@ -262,17 +273,42 @@ input,select,textarea{font:inherit;color:inherit}
 .grid-empty{grid-column:1/-1;padding:60px 20px;text-align:center;color:var(--ink-60);font-family:var(--font-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
 
 /* ====== SIZE GRID SECTION ====== */
-.sizegrid-sec{padding:90px 0;background:var(--bg-alt);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.sizegrid-sec .wide{display:grid;grid-template-columns:1fr 1.4fr;gap:48px;align-items:center}
-.sg-head h2{font-size:clamp(40px,6vw,84px);font-weight:900;line-height:.9;letter-spacing:-.035em;text-transform:uppercase}
-.sg-head h2 em{font-style:normal;color:var(--warm-grey);font-weight:500}
-.sg-head p{margin-top:18px;font-size:14.5px;color:var(--ink-60);line-height:1.65;max-width:460px}
-.sg-head p strong{color:var(--ink);font-weight:700}
-.sg-photo{border-radius:18px;overflow:hidden;background:#fff;border:1px solid var(--line);aspect-ratio:1/1;display:flex;align-items:center;justify-content:center}
-.sg-photo img{width:100%;height:100%;object-fit:contain;display:block}
+.sizegrid-sec{padding:100px 0;background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+.sizegrid-sec::before{content:"";position:absolute;inset:0;background:radial-gradient(50% 60% at 0% 50%,var(--bg-alt) 0%,transparent 60%);pointer-events:none}
+.sizegrid-sec .wide{position:relative;display:grid;grid-template-columns:1fr 1.15fr;gap:60px;align-items:center}
+.sg-text{display:flex;flex-direction:column;gap:20px;position:relative;z-index:2}
+.sg-eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--warm-grey);font-weight:700;display:inline-flex;align-items:center;gap:8px}
+.sg-eyebrow::before{content:"";width:24px;height:1px;background:var(--warm-grey)}
+.sg-h2{font-size:clamp(38px,5.5vw,76px);font-weight:900;line-height:.92;letter-spacing:-.035em;text-transform:uppercase}
+.sg-h2 em{font-style:normal;color:var(--warm-grey);font-weight:500}
+.sg-desc{font-size:14.5px;color:var(--ink-60);line-height:1.65;max-width:480px}
+.sg-desc strong{color:var(--ink);font-weight:700}
+.sg-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:6px}
+.sg-stat{background:var(--bg);padding:16px 12px;text-align:center;display:flex;flex-direction:column;gap:4px}
+.sg-stat b{font-size:24px;font-weight:900;letter-spacing:-.02em;line-height:1;color:var(--ink)}
+.sg-stat b sup{font-size:11px;font-weight:600;color:var(--warm-grey);margin-left:1px}
+.sg-stat span{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;color:var(--ink-60);text-transform:uppercase}
+.sg-hints{display:flex;flex-direction:column;gap:6px;padding:14px 0;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line)}
+.sg-hint{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--ink-60);gap:14px}
+.sg-hint b{font-family:var(--font-mono);font-size:11px;color:var(--ink);font-weight:700;letter-spacing:.04em}
+.sg-hint .v{font-weight:700;color:var(--ink-80)}
+.sg-badge-inline{display:inline-flex;align-items:center;gap:8px;background:var(--mint);padding:5px 10px;border-radius:999px;font-family:var(--font-mono);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);align-self:flex-start}
+
+.sg-photo-wrap{position:relative;z-index:2;border-radius:20px;overflow:hidden;background:linear-gradient(180deg,#f6f5f0 0%,var(--bg-alt) 100%);border:1px solid var(--line);box-shadow:0 18px 40px rgba(0,0,0,.04)}
+.sg-photo-wrap::after{content:"L · OVERSIZED FIT";position:absolute;top:16px;right:16px;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;font-weight:700;padding:6px 12px;background:var(--ink);color:#fff;border-radius:999px;z-index:3}
+.sg-photo-wrap img{width:100%;height:auto;display:block}
+
 @media (max-width:900px){
-  .sizegrid-sec .wide{grid-template-columns:1fr;gap:24px}
-  .sg-photo{aspect-ratio:auto;max-height:80vh}
+  .sizegrid-sec{padding:64px 0}
+  .sizegrid-sec .wide{grid-template-columns:1fr;gap:28px}
+  .sg-photo-wrap{order:-1}
+  .sg-stats{grid-template-columns:repeat(4,1fr)}
+  .sg-stat{padding:12px 8px}
+  .sg-stat b{font-size:20px}
+}
+@media (max-width:540px){
+  .sg-stat b{font-size:18px}
+  .sg-stat span{font-size:9px}
 }
 
 /* ====== TECH ====== */
@@ -522,57 +558,28 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
   <a href="index.html">← Кросівки</a>
 </div>
 
-<!-- HERO ACE — full-bleed photo (same style as index.html) -->
+<!-- HERO ACE — split layout (text + full photo) -->
 <section class="hero hero-ace">
-  <div class="ace-bg" id="aceHeroBg">
-    <div class="ace-slide active" data-idx="1">
-      <picture>
-        <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-1-mob.webp">
-        <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-1-pc.webp">
-        <img src="banners/tee-hero-1-pc.webp" alt="ULTERA TEES — кадр 1" decoding="async" fetchpriority="high">
-      </picture>
-    </div>
-    <div class="ace-slide" data-idx="2">
-      <picture>
-        <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-2-mob.webp">
-        <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-2-pc.webp">
-        <img src="banners/tee-hero-2-pc.webp" alt="ULTERA TEES — кадр 2" loading="lazy" decoding="async">
-      </picture>
-    </div>
-    <div class="ace-slide" data-idx="3">
-      <picture>
-        <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-3-mob.webp">
-        <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-3-pc.webp">
-        <img src="banners/tee-hero-3-pc.webp" alt="ULTERA TEES — кадр 3" loading="lazy" decoding="async">
-      </picture>
-    </div>
-    <div class="ace-slide" data-idx="4">
-      <picture>
-        <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-4-mob.webp">
-        <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-4-pc.webp">
-        <img src="banners/tee-hero-4-pc.webp" alt="ULTERA TEES — кадр 4" loading="lazy" decoding="async">
-      </picture>
-    </div>
-  </div>
+  <div class="ace-bg-deco"></div>
   <svg class="ace-grid-svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
     <defs>
       <pattern id="aceCross" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
         <path d="M14 10 V18 M10 14 H18" stroke="#dff6cf" stroke-width="1.1" stroke-linecap="round"/>
       </pattern>
     </defs>
-    <rect width="100%" height="100%" fill="url(#aceCross)" opacity=".32"/>
+    <rect width="100%" height="100%" fill="url(#aceCross)" opacity=".22"/>
   </svg>
   <div class="ace-hud-ticks" aria-hidden="true"><i></i></div>
 
-  <div class="ace-top-content">
-    <h1 class="ace-headline">
-      <span class="ace-stroke">Оверсайз</span> <span class="ace-stroke">футболки</span><br>
-      з преміум <span class="ace-mint">бавовни</span>,<br>
-      виготовлені вручну.
-    </h1>
-  </div>
-
-  <div class="ace-bottom-content">
+  <div class="ace-text-side">
+    <div>
+      <div class="ace-eyebrow">Drop 01 · SS26 · Kharkiv</div>
+      <h1 class="ace-headline" style="margin-top:14px">
+        <span class="ace-stroke">Оверсайз</span> <span class="ace-stroke">футболки</span><br>
+        з преміум <span class="ace-mint">бавовни</span>,<br>
+        виготовлені вручну.
+      </h1>
+    </div>
     <div class="ace-bottom-panel">
       <div class="ace-chips">
         <span class="ace-chip"><i class="ace-dot-m"></i>Оплата при отриманні</span>
@@ -585,13 +592,46 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
           Обрати футболку
           <span class="ace-cta-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
         </a>
+        <div class="ace-dots" id="aceDots" aria-label="Слайди головної">
+          <button class="ace-dot active" data-idx="1" aria-label="Слайд 1"></button>
+          <button class="ace-dot" data-idx="2" aria-label="Слайд 2"></button>
+          <button class="ace-dot" data-idx="3" aria-label="Слайд 3"></button>
+          <button class="ace-dot" data-idx="4" aria-label="Слайд 4"></button>
+        </div>
       </div>
     </div>
-    <div class="ace-dots" id="aceDots" aria-label="Слайди головної">
-      <button class="ace-dot active" data-idx="1" aria-label="Слайд 1"></button>
-      <button class="ace-dot" data-idx="2" aria-label="Слайд 2"></button>
-      <button class="ace-dot" data-idx="3" aria-label="Слайд 3"></button>
-      <button class="ace-dot" data-idx="4" aria-label="Слайд 4"></button>
+  </div>
+
+  <div class="ace-photo-side">
+    <div class="ace-photo-frame" id="aceHeroBg">
+      <div class="ace-slide active" data-idx="1">
+        <picture>
+          <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-1-mob.webp">
+          <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-1-pc.webp">
+          <img src="banners/tee-hero-1-pc.webp" alt="ULTERA TEES — URBAN PROTOCOL 02" decoding="async" fetchpriority="high">
+        </picture>
+      </div>
+      <div class="ace-slide" data-idx="2">
+        <picture>
+          <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-2-mob.webp">
+          <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-2-pc.webp">
+          <img src="banners/tee-hero-2-pc.webp" alt="ULTERA TEES — HUNK3 01" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <div class="ace-slide" data-idx="3">
+        <picture>
+          <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-3-mob.webp">
+          <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-3-pc.webp">
+          <img src="banners/tee-hero-3-pc.webp" alt="ULTERA TEES — AGANTA 03" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <div class="ace-slide" data-idx="4">
+        <picture>
+          <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-4-mob.webp">
+          <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-4-pc.webp">
+          <img src="banners/tee-hero-4-pc.webp" alt="ULTERA TEES — SHIFT 04" loading="lazy" decoding="async">
+        </picture>
+      </div>
     </div>
   </div>
 </section>
@@ -632,14 +672,27 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
   </div>
 </section>
 
-<!-- SIZE GRID SECTION — "один розмір на 3х зростах" -->
+<!-- SIZE GRID SECTION -->
 <section class="sizegrid-sec" id="sizegrid">
   <div class="wide">
-    <div class="sg-head">
-      <h2>Один<br><em>розмір.</em></h2>
-      <p><strong>L · оверсайз.</strong> Як виглядає на трьох різних зростах — 165-175 см, 176-185 см і 186-195 см. Однаковий силует, дроп-шолдер, подовжений крій. Сидить вільно, по фасону сучасного oversized tee.</p>
+    <div class="sg-text">
+      <span class="sg-eyebrow">Fit Guide · Oversized</span>
+      <h2 class="sg-h2">Один<br><em>розмір.</em></h2>
+      <p class="sg-desc"><strong>L · оверсайз — на всі зрости від 165 до 195 см.</strong> Дроп-шолдер, подовжений силует. Сидить вільно, по фасону сучасного oversized tee.</p>
+      <div class="sg-badge-inline">📐 Mірки розміру L</div>
+      <div class="sg-stats">
+        <div class="sg-stat"><b>122<sup>см</sup></b><span>груди</span></div>
+        <div class="sg-stat"><b>74<sup>см</sup></b><span>довжина</span></div>
+        <div class="sg-stat"><b>58<sup>см</sup></b><span>плече</span></div>
+        <div class="sg-stat"><b>24<sup>см</sup></b><span>рукав</span></div>
+      </div>
+      <div class="sg-hints">
+        <div class="sg-hint"><b>Зріст 165–175 см</b><span class="v">Помірний оверсайз · до стегон</span></div>
+        <div class="sg-hint"><b>Зріст 176–185 см</b><span class="v">Класичний оверсайз · ідеальна посадка</span></div>
+        <div class="sg-hint"><b>Зріст 186–195 см</b><span class="v">Comfort fit · по фігурі</span></div>
+      </div>
     </div>
-    <div class="sg-photo">
+    <div class="sg-photo-wrap">
       <img src="tshirts-cards/ULTERA-02/size_grid.webp" alt="ULTERA TEES — розмір L на трьох зростах" loading="lazy" decoding="async">
     </div>
   </div>
@@ -1454,7 +1507,7 @@ buildFeatured();
 buildGrid();
 bindChips();
 updateCartBadge();
-console.log('ULTERA TEES™ DROP 01 · models:', DATA.length);
+console.log('ULTERA TEES Drop 01 models:', DATA.length);
 </script>
 </body>
 </html>
