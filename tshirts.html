@@ -1664,4 +1664,21 @@ bindChips();
 updateCartBadge();
 
 /* ---------- DEEP LINK ?p=tee-XXX (for FB catalog feed) ---------- */
-(function()
+(function(){
+  try{
+    const qs = new URLSearchParams(location.search);
+    const pid = qs.get('p');
+    if(!pid) return;
+    const product = DATA.find(x => x.uid === pid);
+    if(!product) return;
+    setTimeout(() => {
+      openModal(product);
+      try{ if(typeof ulteraFbq==='function') ulteraFbq('ViewContent', {content_ids:[pid], content_type:'product', content_name:product.name, value:product.price, currency:'UAH'}); }catch(_){}
+    }, 300);
+  }catch(e){ console.warn('deep-link error:', e); }
+})();
+
+console.log('ULTERA TEES Drop 01 models:', DATA.length);
+</script>
+</body>
+</html>
