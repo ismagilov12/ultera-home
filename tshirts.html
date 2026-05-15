@@ -246,8 +246,9 @@ input,select,textarea{font:inherit;color:inherit}
   .feat-photo{padding:14px}
   .feat-title{font-size:clamp(34px,9vw,52px)}
   .feat-specs{grid-template-columns:1fr 1fr;gap:0}
-  .feat-thumbs{justify-content:flex-start}
-  .feat-thumb{width:48px;height:48px}
+  /* Lift thumbnails to top of mid-block so they sit right under main photo */
+  .feat-mid .feat-thumbs{order:-1;margin-top:0;margin-bottom:10px;justify-content:flex-start;padding-bottom:12px;border-bottom:1px solid var(--line)}
+  .feat-thumb{width:54px;height:54px}
   .feat-bottom{flex-direction:column;align-items:stretch;gap:10px}
   .feat-discover{justify-content:center;text-align:center;width:100%}
 }
@@ -901,9 +902,90 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
 
 <script id="TEE_DATA" type="application/json">[{"uid":"tee-001","slug":"HUNK3-01","sku":"ULT-TEE-001","name":"HUNK3 . 01","print":"BOUNCE TECH","desc":"Підпис серії · кросовок-принт BOUNCE TECH на крем-білому полотні.","group":"lifestyle","color":"white","color_ua":"Крем","color_hex":"#f4f3ee","price":1490,"old_price":1790,"photos":["tshirts-cards/HUNK3-01/01.webp","tshirts-cards/HUNK3-01/02.webp","tshirts-cards/HUNK3-01/03.webp","tshirts-cards/HUNK3-01/04.webp","tshirts-cards/HUNK3-01/05.webp","tshirts-cards/HUNK3-01/06.webp","tshirts-cards/HUNK3-01/07.webp","tshirts-cards/HUNK3-01/08.webp","tshirts-cards/HUNK3-01/09.webp","tshirts-cards/HUNK3-01/10.webp","tshirts-cards/HUNK3-01/11.webp","tshirts-cards/HUNK3-01/12.webp"]},{"uid":"tee-002","slug":"ULTERA-02","sku":"ULT-TEE-002","name":"ULTERA . 02","print":"ULTERA лого","desc":"Крупний слоупед-лого ULTERA на спині. Чиста чорна, максимальний оверсайз.","group":"lifestyle","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/ULTERA-02/01.webp","tshirts-cards/ULTERA-02/size_grid.webp","tshirts-cards/ULTERA-02/02.webp","tshirts-cards/ULTERA-02/03.webp","tshirts-cards/ULTERA-02/04.webp","tshirts-cards/ULTERA-02/05.webp","tshirts-cards/ULTERA-02/06.webp","tshirts-cards/ULTERA-02/07.webp","tshirts-cards/ULTERA-02/08.webp","tshirts-cards/ULTERA-02/09.webp","tshirts-cards/ULTERA-02/10.webp","tshirts-cards/ULTERA-02/11.webp","tshirts-cards/ULTERA-02/12.webp","tshirts-cards/ULTERA-02/13.webp","tshirts-cards/ULTERA-02/14.webp","tshirts-cards/ULTERA-02/15.webp","tshirts-cards/ULTERA-02/16.webp","tshirts-cards/ULTERA-02/17.webp","tshirts-cards/ULTERA-02/18.webp","tshirts-cards/ULTERA-02/19.webp","tshirts-cards/ULTERA-02/20.webp","tshirts-cards/ULTERA-02/21.webp"]},{"uid":"tee-003","slug":"AGANTA-03","sku":"ULT-TEE-003","name":"AGANTA . 03","print":"AGANTA · UTILITY ARCHIVE","desc":"AGANTA · UTILITY ARCHIVE — багатошарова типографіка на stone-сірому.","group":"lifestyle","color":"grey","color_ua":"Stone","color_hex":"#aaaba2","price":1490,"old_price":1790,"photos":["tshirts-cards/AGANTA-03/01.webp","tshirts-cards/AGANTA-03/size_grid.webp","tshirts-cards/AGANTA-03/02.webp","tshirts-cards/AGANTA-03/03.webp","tshirts-cards/AGANTA-03/04.webp","tshirts-cards/AGANTA-03/05.webp","tshirts-cards/AGANTA-03/06.webp","tshirts-cards/AGANTA-03/07.webp","tshirts-cards/AGANTA-03/08.webp","tshirts-cards/AGANTA-03/09.webp","tshirts-cards/AGANTA-03/10.webp","tshirts-cards/AGANTA-03/11.webp","tshirts-cards/AGANTA-03/12.webp","tshirts-cards/AGANTA-03/13.webp","tshirts-cards/AGANTA-03/14.webp","tshirts-cards/AGANTA-03/15.webp","tshirts-cards/AGANTA-03/16.webp"]},{"uid":"tee-004","slug":"SHIFT-04","sku":"ULT-TEE-004","name":"SHIFT . 04","print":"SHIFT (жовтий)","desc":"Великий жовтий «SHIFT» на спині. Контрастний друк на чорному.","group":"lifestyle","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/SHIFT-04/01.webp","tshirts-cards/SHIFT-04/size_grid.webp","tshirts-cards/SHIFT-04/02.webp","tshirts-cards/SHIFT-04/03.webp","tshirts-cards/SHIFT-04/04.webp","tshirts-cards/SHIFT-04/05.webp","tshirts-cards/SHIFT-04/06.webp","tshirts-cards/SHIFT-04/07.webp","tshirts-cards/SHIFT-04/08.webp","tshirts-cards/SHIFT-04/09.webp","tshirts-cards/SHIFT-04/10.webp","tshirts-cards/SHIFT-04/11.webp"]},{"uid":"tee-005","slug":"ROUTE-05","sku":"ULT-TEE-005","name":"ROUTE . 05","print":"ROUTE SPEC RS-14","desc":"ROUTE SPEC RS-14 — гоночний принт у червоному. Streetwear з характером.","group":"lifestyle","color":"red","color_ua":"Червоний","color_hex":"#c53a2c","price":1490,"old_price":1790,"photos":["tshirts-cards/ROUTE-05/01.webp","tshirts-cards/ROUTE-05/size_grid.webp","tshirts-cards/ROUTE-05/02.webp","tshirts-cards/ROUTE-05/03.webp","tshirts-cards/ROUTE-05/04.webp","tshirts-cards/ROUTE-05/05.webp","tshirts-cards/ROUTE-05/06.webp","tshirts-cards/ROUTE-05/07.webp","tshirts-cards/ROUTE-05/08.webp","tshirts-cards/ROUTE-05/09.webp"]},{"uid":"tee-006","slug":"URBAN-06","sku":"ULT-TEE-006","name":"URBAN . 06","print":"URBAN PROTOCOL 02","desc":"URBAN PROTOCOL 02 — структурна типографіка на чистому білому.","group":"lifestyle","color":"white","color_ua":"Білий","color_hex":"#f4f3ee","price":1490,"old_price":1790,"photos":["tshirts-cards/URBAN-06/01.webp","tshirts-cards/URBAN-06/02.webp","tshirts-cards/URBAN-06/03.webp","tshirts-cards/URBAN-06/04.webp","tshirts-cards/URBAN-06/05.webp","tshirts-cards/URBAN-06/06.webp","tshirts-cards/URBAN-06/07.webp","tshirts-cards/URBAN-06/08.webp","tshirts-cards/URBAN-06/09.webp","tshirts-cards/URBAN-06/10.webp","tshirts-cards/URBAN-06/11.webp"]},{"uid":"tee-007","slug":"ARCHIVE-07","sku":"ULT-TEE-007","name":"ARCHIVE . 07","print":"UTILITY ARCHIVE 17","desc":"UTILITY ARCHIVE 17 — мінімальний tech-друк на білому.","group":"lifestyle","color":"white","color_ua":"Білий","color_hex":"#f4f3ee","price":1490,"old_price":1790,"photos":["tshirts-cards/ARCHIVE-07/01.webp","tshirts-cards/ARCHIVE-07/02.webp","tshirts-cards/ARCHIVE-07/03.webp","tshirts-cards/ARCHIVE-07/04.webp","tshirts-cards/ARCHIVE-07/05.webp","tshirts-cards/ARCHIVE-07/06.webp","tshirts-cards/ARCHIVE-07/07.webp","tshirts-cards/ARCHIVE-07/08.webp","tshirts-cards/ARCHIVE-07/09.webp","tshirts-cards/ARCHIVE-07/10.webp","tshirts-cards/ARCHIVE-07/11.webp"]},{"uid":"tee-008","slug":"BOUNCE-08","sku":"ULT-TEE-008","name":"BOUNCE . 08","print":"BOUNCE FORM","desc":"BOUNCE FORM з кросовком-принтом на графіті.","group":"lifestyle","color":"graphite","color_ua":"Графіт","color_hex":"#3b3b3a","price":1490,"old_price":1790,"photos":["tshirts-cards/BOUNCE-08/01.webp","tshirts-cards/BOUNCE-08/size_grid.webp","tshirts-cards/BOUNCE-08/02.webp","tshirts-cards/BOUNCE-08/03.webp","tshirts-cards/BOUNCE-08/04.webp","tshirts-cards/BOUNCE-08/05.webp"]},{"uid":"tee-009","slug":"DISTANCE-09","sku":"ULT-TEE-009","name":"DISTANCE . 09","print":"DISTANCE PROTOCOL 10","desc":"DISTANCE PROTOCOL 10 — м'який рожевий + tech-типографіка.","group":"lifestyle","color":"pink","color_ua":"Рожевий","color_hex":"#ffc8a5","price":1490,"old_price":1790,"photos":["tshirts-cards/DISTANCE-09/01.webp","tshirts-cards/DISTANCE-09/size_grid.webp","tshirts-cards/DISTANCE-09/02.webp","tshirts-cards/DISTANCE-09/03.webp","tshirts-cards/DISTANCE-09/04.webp","tshirts-cards/DISTANCE-09/05.webp","tshirts-cards/DISTANCE-09/06.webp","tshirts-cards/DISTANCE-09/07.webp","tshirts-cards/DISTANCE-09/08.webp","tshirts-cards/DISTANCE-09/09.webp","tshirts-cards/DISTANCE-09/10.webp"]},{"uid":"tee-010","slug":"VECTOR-10","sku":"ULT-TEE-010","name":"VECTOR . 10","print":"FIELD VECTOR","desc":"FIELD VECTOR — сірий + векторна графіка. Спокійно, технологічно.","group":"lifestyle","color":"grey","color_ua":"Сірий","color_hex":"#aaaba2","price":1490,"old_price":1790,"photos":["tshirts-cards/VECTOR-10/01.webp","tshirts-cards/VECTOR-10/size_grid.webp","tshirts-cards/VECTOR-10/02.webp","tshirts-cards/VECTOR-10/03.webp","tshirts-cards/VECTOR-10/04.webp","tshirts-cards/VECTOR-10/05.webp","tshirts-cards/VECTOR-10/06.webp","tshirts-cards/VECTOR-10/07.webp","tshirts-cards/VECTOR-10/08.webp","tshirts-cards/VECTOR-10/09.webp","tshirts-cards/VECTOR-10/10.webp","tshirts-cards/VECTOR-10/11.webp"]},{"uid":"tee-011","slug":"WAVE-11","sku":"ULT-TEE-011","name":"WAVE . 11","print":"WAVE2","desc":"WAVE2 на оливі — динамічний хвильовий принт.","group":"concept","color":"olive","color_ua":"Оливка","color_hex":"#6c7250","price":1490,"old_price":1790,"photos":["tshirts-cards/WAVE-11/01.webp"]},{"uid":"tee-012","slug":"SNKRS-12","sku":"ULT-TEE-012","name":"SNKRS . 12","print":"SNKRS","desc":"SNKRS — мінімальний sneaker-друк на чорному.","group":"concept","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/SNKRS-12/01.webp"]},{"uid":"tee-013","slug":"ENGINE-13","sku":"ULT-TEE-013","name":"ENGINE . 13","print":"ENGINEERED","desc":"ENGINEERED — інженерна типографіка на кремовому.","group":"concept","color":"cream","color_ua":"Крем","color_hex":"#e8dec5","price":1490,"old_price":1790,"photos":["tshirts-cards/ENGINE-13/01.webp"]},{"uid":"tee-014","slug":"UTILITY-14","sku":"ULT-TEE-014","name":"UTILITY . 14","print":"UTILITY","desc":"UTILITY — лаконічний друк на чорному.","group":"concept","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/UTILITY-14/01.webp"]},{"uid":"tee-015","slug":"MCODE-15","sku":"ULT-TEE-015","name":"MCODE . 15","print":"MATERIAL CODE","desc":"MATERIAL CODE — кодова система на кремовому.","group":"concept","color":"cream","color_ua":"Крем","color_hex":"#e8dec5","price":1490,"old_price":1790,"photos":["tshirts-cards/MCODE-15/01.webp"]},{"uid":"tee-016","slug":"GRID-16","sku":"ULT-TEE-016","name":"GRID . 16","print":"TRACTION GRID","desc":"TRACTION GRID — графічна сітка на чорному.","group":"concept","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/GRID-16/01.webp"]},{"uid":"tee-017","slug":"MOTION-17","sku":"ULT-TEE-017","name":"MOTION . 17","print":"MOTION INDEX 03","desc":"MOTION INDEX 03 — індексна система на кремі.","group":"concept","color":"cream","color_ua":"Крем","color_hex":"#e8dec5","price":1490,"old_price":1790,"photos":["tshirts-cards/MOTION-17/01.webp"]},{"uid":"tee-018","slug":"SIGNAL-18","sku":"ULT-TEE-018","name":"SIGNAL . 18","print":"FIELD SIGNAL","desc":"FIELD SIGNAL — польовий сигнал на оливі.","group":"concept","color":"olive","color_ua":"Оливка","color_hex":"#6c7250","price":1490,"old_price":1790,"photos":["tshirts-cards/SIGNAL-18/01.webp"]},{"uid":"tee-019","slug":"UNIT-19","sku":"ULT-TEE-019","name":"UNIT . 19","print":"UNIT 04","desc":"Крупна «04» — числовий принт на графіті.","group":"concept","color":"graphite","color_ua":"Графіт","color_hex":"#3b3b3a","price":1490,"old_price":1790,"photos":["tshirts-cards/UNIT-19/01.webp"]},{"uid":"tee-020","slug":"SPEC-20","sku":"ULT-TEE-020","name":"SPEC . 20","print":"SPEC","desc":"SPEC — специфікаційний типографічний друк на кремовому.","group":"concept","color":"cream","color_ua":"Крем","color_hex":"#e8dec5","price":1490,"old_price":1790,"photos":["tshirts-cards/SPEC-20/01.webp"]},{"uid":"tee-021","slug":"VECTOR-21","sku":"ULT-TEE-021","name":"VECTOR . 21","print":"VECTOR","desc":"VECTOR — векторна сітка на чорному.","group":"concept","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/VECTOR-21/01.webp"]},{"uid":"tee-022","slug":"ARCHIVE-22","sku":"ULT-TEE-022","name":"ARCHIVE . 22","print":"ARCHIVE","desc":"ARCHIVE — архівний штамп на кремовому.","group":"concept","color":"cream","color_ua":"Крем","color_hex":"#e8dec5","price":1490,"old_price":1790,"photos":["tshirts-cards/ARCHIVE-22/01.webp"]},{"uid":"tee-023","slug":"MODULAR-23","sku":"ULT-TEE-023","name":"MODULAR . 23","print":"MODULAR RUN","desc":"MODULAR RUN — модульна графіка на оливі.","group":"concept","color":"olive","color_ua":"Оливка","color_hex":"#6c7250","price":1490,"old_price":1790,"photos":["tshirts-cards/MODULAR-23/01.webp"]},{"uid":"tee-024","slug":"SYSTEM-24","sku":"ULT-TEE-024","name":"SYSTEM . 24","print":"SYSTEM 03","desc":"SYSTEM 03 — системний принт на чорному.","group":"concept","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/SYSTEM-24/01.webp"]},{"uid":"tee-025","slug":"CORE-25","sku":"ULT-TEE-025","name":"CORE . 25","print":"CORE ENGINE 11","desc":"CORE ENGINE 11 — двигун-графіка на чорному.","group":"concept","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/CORE-25/01.webp"]},{"uid":"tee-026","slug":"SOLE-26","sku":"ULT-TEE-026","name":"SOLE . 26","print":"SOLE SIGNAL","desc":"SOLE SIGNAL — підошва-сигнал на графіті.","group":"concept","color":"graphite","color_ua":"Графіт","color_hex":"#3b3b3a","price":1490,"old_price":1790,"photos":["tshirts-cards/SOLE-26/01.webp"]},{"uid":"tee-027","slug":"PULSE-27","sku":"ULT-TEE-027","name":"PULSE . 27","print":"PULSE 05","desc":"PULSE 05 — пульс-графіка на рожевому.","group":"concept","color":"pink","color_ua":"Рожевий","color_hex":"#ffc8a5","price":1490,"old_price":1790,"photos":["tshirts-cards/PULSE-27/01.webp"]},{"uid":"tee-028","slug":"MINDEX-28","sku":"ULT-TEE-028","name":"MINDEX . 28","print":"MATERIAL INDEX","desc":"MATERIAL INDEX — матеріальний індекс на чорному.","group":"concept","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/MINDEX-28/01.webp"]},{"uid":"tee-029","slug":"FRAME-29","sku":"ULT-TEE-029","name":"FRAME . 29","print":"MOTION FRAME 06","desc":"MOTION FRAME 06 — фрейм руху на рожевому.","group":"concept","color":"pink","color_ua":"Рожевий","color_hex":"#ffc8a5","price":1490,"old_price":1790,"photos":["tshirts-cards/FRAME-29/01.webp"]},{"uid":"tee-030","slug":"TCODE-30","sku":"ULT-TEE-030","name":"TCODE . 30","print":"TRACTION CODE","desc":"TRACTION CODE — код зчеплення на червоному.","group":"concept","color":"red","color_ua":"Червоний","color_hex":"#c53a2c","price":1490,"old_price":1790,"photos":["tshirts-cards/TCODE-30/01.webp","tshirts-cards/TCODE-30/size_grid.webp"]},{"uid":"tee-031","slug":"PATH-31","sku":"ULT-TEE-031","name":"PATH . 31","print":"GRID PATH","desc":"GRID PATH — шлях у сітці на чорному.","group":"concept","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/PATH-31/01.webp"]},{"uid":"tee-032","slug":"MODULE-32","sku":"ULT-TEE-032","name":"MODULE . 32","print":"CITY MODULE","desc":"CITY MODULE — міський модуль на сірому.","group":"concept","color":"grey","color_ua":"Сірий","color_hex":"#aaaba2","price":1490,"old_price":1790,"photos":["tshirts-cards/MODULE-32/01.webp"]},{"uid":"tee-033","slug":"FLOW-33","sku":"ULT-TEE-033","name":"FLOW . 33","print":"FLOW DIAGRAM","desc":"FLOW DIAGRAM — діаграма потоку на рожевому.","group":"concept","color":"pink","color_ua":"Рожевий","color_hex":"#ffc8a5","price":1490,"old_price":1790,"photos":["tshirts-cards/FLOW-33/01.webp"]},{"uid":"tee-034","slug":"NUMBER-34","sku":"ULT-TEE-034","name":"NUMBER . 34","print":"NUMBER UNIT 24","desc":"NUMBER UNIT 24 — крупна «24» на червоному.","group":"concept","color":"red","color_ua":"Червоний","color_hex":"#c53a2c","price":1490,"old_price":1790,"photos":["tshirts-cards/NUMBER-34/01.webp","tshirts-cards/NUMBER-34/size_grid.webp"]},{"uid":"tee-035","slug":"EDGE-35","sku":"ULT-TEE-035","name":"EDGE . 35","print":"EDGE SYSTEM","desc":"EDGE SYSTEM — гранична система на чорному.","group":"concept","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/EDGE-35/01.webp"]},{"uid":"tee-036","slug":"BLUEPRINT-36","sku":"ULT-TEE-036","name":"BLUEPRINT . 36","print":"MOTION BLUEPRINT","desc":"MOTION BLUEPRINT — креслення руху на білому.","group":"concept","color":"white","color_ua":"Білий","color_hex":"#f4f3ee","price":1490,"old_price":1790,"photos":["tshirts-cards/BLUEPRINT-36/01.webp"]},{"uid":"tee-037","slug":"COLUMN-37","sku":"ULT-TEE-037","name":"COLUMN . 37","print":"SIGNAL COLUMN","desc":"SIGNAL COLUMN — колона сигналу на сірому.","group":"concept","color":"grey","color_ua":"Сірий","color_hex":"#aaaba2","price":1490,"old_price":1790,"photos":["tshirts-cards/COLUMN-37/01.webp"]},{"uid":"tee-038","slug":"MAP-38","sku":"ULT-TEE-038","name":"MAP . 38","print":"MATERIAL MAP","desc":"MATERIAL MAP — мапа матеріалів на чорному.","group":"concept","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/MAP-38/01.webp"]},{"uid":"tee-039","slug":"SARCH-39","sku":"ULT-TEE-039","name":"SARCH . 39","print":"SIGNAL ARCHIVE","desc":"SIGNAL ARCHIVE — архів сигналів на рожевому.","group":"concept","color":"pink","color_ua":"Рожевий","color_hex":"#ffc8a5","price":1490,"old_price":1790,"photos":["tshirts-cards/SARCH-39/01.webp"]},{"uid":"tee-040","slug":"BLOCK-40","sku":"ULT-TEE-040","name":"BLOCK . 40","print":"BLOCK 24","desc":"Крупна «24» — блоковий принт на графіті.","group":"concept","color":"graphite","color_ua":"Графіт","color_hex":"#3b3b3a","price":1490,"old_price":1790,"photos":["tshirts-cards/BLOCK-40/01.webp","tshirts-cards/BLOCK-40/02.webp"]},{"uid":"tee-041","slug":"INDEX-41","sku":"ULT-TEE-041","name":"INDEX . 41","print":"CITY INDEX","desc":"CITY INDEX — міський індекс на білому.","group":"concept","color":"white","color_ua":"Білий","color_hex":"#f4f3ee","price":1490,"old_price":1790,"photos":["tshirts-cards/INDEX-41/01.webp"]},{"uid":"tee-042","slug":"ORBIT-42","sku":"ULT-TEE-042","name":"ORBIT . 42","print":"ORBIT MARK","desc":"ORBIT MARK — орбітальний знак на рожевому.","group":"concept","color":"pink","color_ua":"Рожевий","color_hex":"#ffc8a5","price":1490,"old_price":1790,"photos":["tshirts-cards/ORBIT-42/01.webp"]},{"uid":"tee-043","slug":"UBLOCK-43","sku":"ULT-TEE-043","name":"UBLOCK . 43","print":"UNIT BLOCK 05","desc":"UNIT BLOCK 05 — блок-юніт на червоному.","group":"concept","color":"red","color_ua":"Червоний","color_hex":"#c53a2c","price":1490,"old_price":1790,"photos":["tshirts-cards/UBLOCK-43/01.webp"]},{"uid":"tee-044","slug":"CIPHER-44","sku":"ULT-TEE-044","name":"CIPHER . 44","print":"CIPHER","desc":"Дрібний tech-принт на чорному. Шифр для своїх.","group":"concept","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/CIPHER-44/01.webp"]},{"uid":"tee-045","slug":"PROBE-45","sku":"ULT-TEE-045","name":"PROBE . 45","print":"PROBE","desc":"Дрібний tech-принт на сірому. Зондуюча мінімалістика.","group":"concept","color":"grey","color_ua":"Сірий","color_hex":"#aaaba2","price":1490,"old_price":1790,"photos":["tshirts-cards/PROBE-45/01.webp","tshirts-cards/PROBE-45/size_grid.webp"]},{"uid":"tee-046","slug":"FORM-46","sku":"ULT-TEE-046","name":"FORM . 46","print":"FORM","desc":"FORM — мінімальна форма на рожевому.","group":"concept","color":"pink","color_ua":"Рожевий","color_hex":"#ffc8a5","price":1490,"old_price":1790,"photos":["tshirts-cards/FORM-46/01.webp"]},{"uid":"tee-047","slug":"NODE-47","sku":"ULT-TEE-047","name":"NODE . 47","print":"FUNC FORM","desc":"FUNC FORM — функціональна форма на чорному.","group":"concept","color":"ink","color_ua":"Чорний","color_hex":"#0e0e0e","price":1490,"old_price":1790,"photos":["tshirts-cards/NODE-47/01.webp"]}]</script>
 <script>
-const DATA = JSON.parse(document.getElementById('TEE_DATA').textContent);
+/* ---------- LIVE DATA from Supabase (admin changes → instant on site) ---------- */
+const SB_URL = 'https://fsihlzzjewhxpogvjapu.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU';
+
+async function sbFetch(path){
+  const r = await fetch(SB_URL + '/rest/v1/' + path, {
+    headers: {'apikey': SB_ANON, 'Authorization': 'Bearer ' + SB_ANON}
+  });
+  if(!r.ok) throw new Error('Supabase ' + r.status);
+  return r.json();
+}
+
+const FALLBACK_DATA = JSON.parse(document.getElementById('TEE_DATA').textContent);
+let DATA = FALLBACK_DATA;
 let activeFilter = 'all';
 let modalCtx = null;
+
+// Color mapping for swatch CSS
+const COLOR_MAP = {
+  ink:'#0e0e0e', white:'#f4f3ee', grey:'#aaaba2', graphite:'#3b3b3a',
+  cream:'#e8dec5', olive:'#6c7250', pink:'#ffc8a5', red:'#c53a2c'
+};
+function colorKeyFromHex(hex){
+  const h = (hex||'').toLowerCase();
+  for(const [k,v] of Object.entries(COLOR_MAP)) if(v.toLowerCase()===h) return k;
+  return 'ink';
+}
+function groupFromCategory(cat){
+  const c = String(cat||'').toLowerCase();
+  if(c.includes('lifestyle')) return 'lifestyle';
+  if(c.includes('concept')) return 'concept';
+  return 'lifestyle';
+}
+
+async function bootstrapFromSupabase(){
+  try{
+    const [products, media] = await Promise.all([
+      sbFetch('ulhome_products?select=*&family=eq.Tees&published=eq.true&order=sort_order.asc'),
+      sbFetch('ulhome_product_media?select=product_id,url,type,sort_order&order=sort_order.asc')
+    ]);
+    if(!Array.isArray(products) || products.length === 0){
+      console.warn('[tees] no published products — falling back to embedded JSON');
+      return;
+    }
+    // Group media by product_id
+    const mediaByProduct = {};
+    for(const m of media){
+      if(m.type !== 'photo') continue;
+      if(!mediaByProduct[m.product_id]) mediaByProduct[m.product_id] = [];
+      mediaByProduct[m.product_id].push(m.url);
+    }
+    // Build DATA from DB
+    const built = products.map(p => {
+      const photos = (mediaByProduct[p.id] || []).map(u => u.startsWith('/') ? u.slice(1) : u);
+      // Fallback: if no media in DB → use cover photo
+      if(!photos.length && p.photo){
+        const cover = p.photo.startsWith('/') ? p.photo.slice(1) : p.photo;
+        photos.push(cover);
+      }
+      const slug = (p.category||'').split(';').slice(-1)[0] || p.title || '';
+      // Find original slug from fallback by uid match
+      const fbk = FALLBACK_DATA.find(x => x.uid === p.uid);
+      return {
+        uid: p.uid,
+        slug: fbk ? fbk.slug : (p.title||'').replace('ULTERA Tees™ — ','').replace(' · ','-'),
+        sku: 'ULT-' + (p.uid||'').toUpperCase(),
+        name: (p.title||'').replace('ULTERA Tees™ — ','') || (fbk && fbk.name) || p.uid,
+        print: (fbk && fbk.print) || '',
+        desc: p.desc_short || (fbk && fbk.desc) || '',
+        group: groupFromCategory(p.category),
+        color: colorKeyFromHex(p.color_hex),
+        color_ua: p.color_name || 'Колір',
+        color_hex: p.color_hex || '#0e0e0e',
+        price: Number(p.price)||1490,
+        old_price: Number(p.price_old)||1790,
+        photos: photos
+      };
+    });
+    DATA = built;
+    console.log('[tees] live bootstrap OK ·', DATA.length, 'products from Supabase');
+  }catch(e){
+    console.warn('[tees] live bootstrap failed — using embedded fallback:', e.message);
+  }
+}
 
 /* ---------- CART ---------- */
 const CART = {
@@ -1659,9 +1741,11 @@ function toast(msg, ic){
 
 /* ---------- INIT ---------- */
 bindHeroAce();
-buildGrid();
 bindChips();
 updateCartBadge();
+// Show grid with embedded fallback FIRST (zero flicker), then refresh from Supabase
+buildGrid();
+bootstrapFromSupabase().then(() => buildGrid()).catch(()=>{});
 
 /* ---------- DEEP LINK ?p=tee-XXX (for FB catalog feed) ---------- */
 (function(){
