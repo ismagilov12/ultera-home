@@ -96,10 +96,17 @@ input,select,textarea{font:inherit;color:inherit}
 .mobile-menu.show{display:flex}
 .mobile-menu a{font-size:24px;font-weight:800;text-transform:uppercase;padding:18px 0;border-bottom:1px solid var(--line);letter-spacing:-.01em}
 
-/* ====== HERO ACE — split layout (text + full photo) ====== */
-.hero-ace{position:relative;overflow:hidden;color:#fff;background:#0a0a0a;min-height:min(720px,92vh);display:grid;grid-template-columns:1.05fr 1fr;padding:0;margin:-72px 0 18px}
-.ace-bg-deco{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(120% 80% at 12% 40%,rgba(20,22,28,1) 0%,#0a0a0a 60%)}
-.ace-grid-svg{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.35}
+/* ====== HERO ACE — full-bleed photo (text overlays the bg) ====== */
+.hero-ace{position:relative;overflow:hidden;color:#fff;background:#0a0a0a;min-height:min(780px,96vh);display:flex;flex-direction:column;padding:0;margin:-72px 0 18px}
+.ace-bg{position:absolute;inset:0;z-index:0;background:#0a0a0a;overflow:hidden;contain:paint}
+.ace-slide{position:absolute;inset:0;opacity:0;transition:opacity 1s cubic-bezier(.4,0,.2,1)}
+.ace-slide.active{opacity:1}
+.ace-slide picture,.ace-slide img{width:100%;height:100%;display:block}
+.ace-slide img{object-fit:cover;object-position:center 50%;transform:translateZ(0)}
+.ace-slide.active img{animation:aceZoom 14s ease-in-out infinite alternate}
+@keyframes aceZoom{0%{transform:scale(1) translateZ(0)}100%{transform:scale(1.05) translateZ(0)}}
+.ace-bg::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(140% 60% at 50% 100%,rgba(10,10,10,.55),transparent 60%),linear-gradient(180deg,rgba(10,10,10,.55) 0%,rgba(10,10,10,.12) 30%,rgba(10,10,10,.12) 55%,rgba(10,10,10,.78) 100%)}
+.ace-grid-svg{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.55}
 .ace-hud-ticks{position:absolute;inset:14px;z-index:3;pointer-events:none}
 .ace-hud-ticks::before,.ace-hud-ticks::after,.ace-hud-ticks > i::before,.ace-hud-ticks > i::after{content:"";position:absolute;width:18px;height:18px}
 .ace-hud-ticks::before{top:0;left:0;border-left:1.5px solid var(--mint);border-top:1.5px solid var(--mint)}
@@ -108,50 +115,37 @@ input,select,textarea{font:inherit;color:inherit}
 .ace-hud-ticks > i::after{bottom:0;right:0;border-right:1.5px solid var(--mint);border-bottom:1.5px solid var(--mint);position:absolute}
 .ace-hud-ticks > i{position:absolute;inset:0}
 
-.ace-text-side{position:relative;z-index:5;display:flex;flex-direction:column;justify-content:space-between;padding:90px clamp(28px,3vw,56px) 36px;gap:24px;min-width:0}
-.ace-headline{font-weight:900;text-transform:uppercase;letter-spacing:-.025em;line-height:.92;font-size:clamp(34px,4.2vw,72px);color:#fff;margin:0;text-shadow:0 2px 22px rgba(0,0,0,.45)}
+.ace-top-content{position:relative;z-index:5;padding:72px clamp(28px,4.5vw,72px) 18px;max-width:1440px;width:100%;margin:0 auto}
+.ace-headline{font-weight:900;text-transform:uppercase;letter-spacing:-.025em;line-height:.94;font-size:clamp(30px,4.2vw,58px);color:#fff;margin:0;text-shadow:0 2px 22px rgba(0,0,0,.45);max-width:780px}
 .ace-headline .ace-stroke{-webkit-text-stroke:1.5px #fff;color:transparent;font-weight:700}
 .ace-headline .ace-mint{color:var(--mint)}
-.ace-eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--mint);font-weight:700;display:inline-flex;align-items:center;gap:8px}
-.ace-eyebrow::before{content:"";width:24px;height:1px;background:var(--mint)}
 
-.ace-bottom-panel{display:flex;flex-direction:column;gap:14px;position:relative}
+.ace-bottom-content{position:relative;z-index:5;margin-top:auto;padding:14px clamp(28px,4.5vw,72px) 20px;max-width:1440px;width:100%;margin-left:auto;margin-right:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.ace-bottom-panel{background:transparent;padding:0;max-width:560px;display:flex;flex-direction:column;gap:12px;position:relative}
 .ace-chips{display:flex;flex-wrap:wrap;gap:6px}
 .ace-chip{display:inline-flex;align-items:center;gap:7px;padding:5px 11px 5px 9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);border-radius:999px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.02em;color:rgba(255,255,255,.9);white-space:nowrap}
 .ace-chip .ace-dot-m{width:6px;height:6px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 3px rgba(173,210,125,.16);flex-shrink:0}
-.ace-cta-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:4px}
+.ace-cta-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:relative;z-index:1;margin-top:2px}
 .ace-cta{display:inline-flex;align-items:center;gap:12px;padding:4px 4px 4px 22px;border-radius:999px;background:var(--mint);color:#0a0a0a;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;transition:transform .25s cubic-bezier(.2,.8,.2,1);white-space:nowrap;text-decoration:none;box-shadow:inset 0 2px 3px rgba(0,0,0,.25),inset 0 -1px 2px rgba(255,255,255,.35)}
 .ace-cta:hover{transform:translateY(-1px)}
 .ace-cta .ace-cta-arrow{width:32px;height:32px;border-radius:50%;background:radial-gradient(circle at 50% 28%,#1d1d1d 0%,#050505 72%);color:#fff;display:flex;align-items:center;justify-content:center;transition:transform .3s;box-shadow:inset 0 3px 4px rgba(0,0,0,.9),inset 0 -1px 2px rgba(255,255,255,.08),0 0 0 1px rgba(0,0,0,.3)}
 .ace-cta:hover .ace-cta-arrow{transform:rotate(-45deg)}
 .ace-cta .ace-cta-arrow svg{width:13px;height:13px;stroke:#fff;stroke-width:2.2;fill:none}
-.ace-dots{display:flex;gap:8px;align-items:center}
+.ace-dots{display:flex;gap:8px;align-items:center;padding-bottom:8px}
 .ace-dot{width:24px;height:3px;border-radius:2px;border:0;background:rgba(255,255,255,.32);cursor:pointer;padding:0;transition:all .3s}
 .ace-dot:hover{background:rgba(255,255,255,.55)}
 .ace-dot.active{background:var(--mint);width:40px}
 
-/* Photo side — full photo visible (object-fit:contain) */
-.ace-photo-side{position:relative;display:flex;align-items:center;justify-content:center;padding:60px clamp(20px,3vw,48px) 36px;min-height:520px;overflow:hidden}
-.ace-photo-side::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(20,22,28,.6) 0%,rgba(10,10,10,.2) 100%);pointer-events:none}
-.ace-photo-frame{position:relative;width:100%;height:100%;max-width:560px;max-height:88%;display:flex;align-items:center;justify-content:center}
-.ace-slide{position:absolute;inset:0;opacity:0;transition:opacity 1s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;justify-content:center}
-.ace-slide.active{opacity:1;z-index:2}
-.ace-slide picture{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
-.ace-slide img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06)}
-
-@media (max-width:900px){
-  .hero-ace{grid-template-columns:1fr;grid-template-rows:auto auto;min-height:auto;margin:-64px 0 18px}
-  .ace-photo-side{order:-1;min-height:0;padding:80px 20px 12px;aspect-ratio:auto}
-  .ace-photo-frame{max-width:none;max-height:60vh;height:60vh}
-  .ace-slide img{max-height:60vh}
-  .ace-text-side{padding:24px clamp(18px,5vw,28px) 36px;gap:18px}
-  .ace-headline{font-size:clamp(32px,8vw,52px)}
-  .ace-hud-ticks{inset:8px}
-}
-@media (max-width:540px){
-  .ace-photo-frame{height:55vh;max-height:55vh}
-  .ace-slide img{max-height:55vh}
-  .ace-headline{font-size:clamp(28px,9.5vw,42px)}
+@media (max-width:760px){
+  .hero-ace{min-height:100svh;margin:-64px 0 18px}
+  .ace-slide.active img{animation:none}
+  .ace-hud-ticks{display:none}
+  .ace-top-content{padding:72px 18px 10px}
+  .ace-bottom-content{padding:10px 14px 14px;flex-direction:column;align-items:stretch;gap:10px}
+  .ace-bottom-panel{max-width:none}
+  .ace-headline{font-size:clamp(28px,9vw,40px)}
+  /* Mobile: position photo with slight bias to show face */
+  .ace-slide img{object-position:center 30%}
 }
 
 /* ====== HERO (legacy two-column — kept hidden as fallback) ====== */
@@ -558,28 +552,57 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
   <a href="index.html">← Кросівки</a>
 </div>
 
-<!-- HERO ACE — split layout (text + full photo) -->
+<!-- HERO ACE — full-bleed photo (text overlays bg) -->
 <section class="hero hero-ace">
-  <div class="ace-bg-deco"></div>
+  <div class="ace-bg" id="aceHeroBg">
+    <div class="ace-slide active" data-idx="1">
+      <picture>
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-1-mob.webp">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-1-pc.webp">
+        <img src="banners/tee-hero-1-pc.webp" alt="ULTERA TEES — URBAN PROTOCOL 02" decoding="async" fetchpriority="high">
+      </picture>
+    </div>
+    <div class="ace-slide" data-idx="2">
+      <picture>
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-2-mob.webp">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-2-pc.webp">
+        <img src="banners/tee-hero-2-pc.webp" alt="ULTERA TEES — HUNK3 01" loading="lazy" decoding="async">
+      </picture>
+    </div>
+    <div class="ace-slide" data-idx="3">
+      <picture>
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-3-mob.webp">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-3-pc.webp">
+        <img src="banners/tee-hero-3-pc.webp" alt="ULTERA TEES — AGANTA 03" loading="lazy" decoding="async">
+      </picture>
+    </div>
+    <div class="ace-slide" data-idx="4">
+      <picture>
+        <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-4-mob.webp">
+        <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-4-pc.webp">
+        <img src="banners/tee-hero-4-pc.webp" alt="ULTERA TEES — SHIFT 04" loading="lazy" decoding="async">
+      </picture>
+    </div>
+  </div>
   <svg class="ace-grid-svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
     <defs>
       <pattern id="aceCross" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
         <path d="M14 10 V18 M10 14 H18" stroke="#dff6cf" stroke-width="1.1" stroke-linecap="round"/>
       </pattern>
     </defs>
-    <rect width="100%" height="100%" fill="url(#aceCross)" opacity=".22"/>
+    <rect width="100%" height="100%" fill="url(#aceCross)" opacity=".32"/>
   </svg>
   <div class="ace-hud-ticks" aria-hidden="true"><i></i></div>
 
-  <div class="ace-text-side">
-    <div>
-      <div class="ace-eyebrow">Drop 01 · SS26 · Kharkiv</div>
-      <h1 class="ace-headline" style="margin-top:14px">
-        <span class="ace-stroke">Оверсайз</span> <span class="ace-stroke">футболки</span><br>
-        з преміум <span class="ace-mint">бавовни</span>,<br>
-        виготовлені вручну.
-      </h1>
-    </div>
+  <div class="ace-top-content">
+    <h1 class="ace-headline">
+      <span class="ace-stroke">Оверсайз</span> <span class="ace-stroke">футболки</span><br>
+      з преміум <span class="ace-mint">бавовни</span>,<br>
+      виготовлені вручну.
+    </h1>
+  </div>
+
+  <div class="ace-bottom-content">
     <div class="ace-bottom-panel">
       <div class="ace-chips">
         <span class="ace-chip"><i class="ace-dot-m"></i>Оплата при отриманні</span>
@@ -592,46 +615,13 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
           Обрати футболку
           <span class="ace-cta-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
         </a>
-        <div class="ace-dots" id="aceDots" aria-label="Слайди головної">
-          <button class="ace-dot active" data-idx="1" aria-label="Слайд 1"></button>
-          <button class="ace-dot" data-idx="2" aria-label="Слайд 2"></button>
-          <button class="ace-dot" data-idx="3" aria-label="Слайд 3"></button>
-          <button class="ace-dot" data-idx="4" aria-label="Слайд 4"></button>
-        </div>
       </div>
     </div>
-  </div>
-
-  <div class="ace-photo-side">
-    <div class="ace-photo-frame" id="aceHeroBg">
-      <div class="ace-slide active" data-idx="1">
-        <picture>
-          <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-1-mob.webp">
-          <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-1-pc.webp">
-          <img src="banners/tee-hero-1-pc.webp" alt="ULTERA TEES — URBAN PROTOCOL 02" decoding="async" fetchpriority="high">
-        </picture>
-      </div>
-      <div class="ace-slide" data-idx="2">
-        <picture>
-          <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-2-mob.webp">
-          <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-2-pc.webp">
-          <img src="banners/tee-hero-2-pc.webp" alt="ULTERA TEES — HUNK3 01" loading="lazy" decoding="async">
-        </picture>
-      </div>
-      <div class="ace-slide" data-idx="3">
-        <picture>
-          <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-3-mob.webp">
-          <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-3-pc.webp">
-          <img src="banners/tee-hero-3-pc.webp" alt="ULTERA TEES — AGANTA 03" loading="lazy" decoding="async">
-        </picture>
-      </div>
-      <div class="ace-slide" data-idx="4">
-        <picture>
-          <source media="(max-width:760px)" type="image/webp" srcset="banners/tee-hero-4-mob.webp">
-          <source media="(min-width:761px)" type="image/webp" srcset="banners/tee-hero-4-pc.webp">
-          <img src="banners/tee-hero-4-pc.webp" alt="ULTERA TEES — SHIFT 04" loading="lazy" decoding="async">
-        </picture>
-      </div>
+    <div class="ace-dots" id="aceDots" aria-label="Слайди головної">
+      <button class="ace-dot active" data-idx="1" aria-label="Слайд 1"></button>
+      <button class="ace-dot" data-idx="2" aria-label="Слайд 2"></button>
+      <button class="ace-dot" data-idx="3" aria-label="Слайд 3"></button>
+      <button class="ace-dot" data-idx="4" aria-label="Слайд 4"></button>
     </div>
   </div>
 </section>
