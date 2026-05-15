@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ULTERA · Адмінка</title>
+<title>ULTERA TEES™ · Адмінка</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -297,6 +297,12 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 </head>
 <body>
 
+<div id="tees-scope-banner" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--ink);color:#fff;padding:6px 16px;text-align:center;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;font-weight:700;border-bottom:2px solid var(--mint)">
+  <span style="color:var(--mint)">●</span> TEES™ ADMIN — філтрується по family=Tees · <a href="admin.html" style="color:var(--mint);text-decoration:underline;margin-left:8px">← повна адмінка</a>
+</div>
+<style>body{padding-top:30px}.app{margin-top:0}</style>
+
+
 <div id="auth" class="auth-wrap">
   <div class="auth-box">
     <h1><b>ULTERA</b> admin</h1>
@@ -320,7 +326,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 
 <div id="app" class="app" style="display:none">
   <aside class="side">
-    <div class="logo">ULTERA<span>ADMIN</span></div>
+    <div class="logo">ULTERA<span style="background:var(--mint);color:var(--ink)">TEES™</span></div>
     <nav class="nav" id="nav">
       <a data-page="products" class="active">
         <svg viewBox="0 0 24 24"><path d="M20 7L12 3L4 7M20 7v10l-8 4-8-4V7M20 7l-8 4M4 7l8 4M12 11v10"/></svg>
@@ -342,10 +348,6 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Адміни
       </a>
-      <a href="admin-tees.html" style="margin-top:12px;border-top:1px solid var(--line);padding-top:14px;color:var(--ink)" title="TEES™ Admin">
-        <svg viewBox="0 0 24 24"><path d="M3 7l4-4h10l4 4v3a3 3 0 0 1-3 3v8a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-8a3 3 0 0 1-3-3V7z"/></svg>
-        <span style="display:inline-flex;align-items:center;gap:6px"><b style="background:var(--mint);color:var(--ink);padding:1px 6px;border-radius:3px;font-size:9.5px;font-weight:800;letter-spacing:.06em">TEES™</b><span style="font-size:13px">Адмінка</span></span>
-      </a>
     </nav>
     <div class="foot">
       <div class="email" id="user-email"></div>
@@ -358,11 +360,11 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
     <div class="page" id="page-products">
       <div class="page-head">
         <div>
-          <h1>Товари</h1>
+          <h1>Tees · Товари</h1>
           <div class="meta"><span id="prod-count">0</span> моделей · <span id="fam-count">0</span> сімей</div>
         </div>
         <button class="btn ghost" id="csv-import-btn" style="margin-right:8px"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>CSV SKU</button>
-        <button class="btn ghost" id="shape-sync" type="button" style="margin-right:8px" title="Upsert 5 SHAPE variants"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg>Sync SHAPE</button><button class="btn primary" id="prod-add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Додати товар</button>
+        <button class="btn ghost" id="shape-sync" type="button" style="display:none" style="margin-right:8px" title="Upsert 5 SHAPE variants"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg>Sync SHAPE</button><button class="btn primary" id="prod-add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Додати товар</button>
       </div>
       <div class="prod-toolbar">
         <input type="search" id="prod-search" placeholder="Пошук за назвою, кольором, SKU…">
@@ -965,7 +967,7 @@ document.getElementById('nav').addEventListener('click', e=>{
 /* ==================== PRODUCTS ==================== */
 async function loadProducts(){
   try {
-    PRODUCTS = await rest('ulhome_products?select=*&order=family.asc,sort_order.asc') || [];
+    PRODUCTS = await rest('ulhome_products?select=*&family=eq.Tees&order=sort_order.asc') || [];
     const media = await rest('ulhome_product_media?select=*&order=sort_order.asc') || [];
     MEDIA_BY_PRODUCT = {};
     media.forEach(m => { (MEDIA_BY_PRODUCT[m.product_id]=MEDIA_BY_PRODUCT[m.product_id]||[]).push(m); });
@@ -1565,11 +1567,29 @@ function renderOrdersList(){
     tbl.appendChild(row);
   });
 }
+
+/* ============ TEES SCOPE — admin-tees.html only ============ */
+window.__TEES_ADMIN__ = true;
+const TEES_SCOPE = true;
+function isTeesOrder(order){
+  if (!order || !Array.isArray(order.items)) return false;
+  return order.items.some(it =>
+    (String(it.uid||'').startsWith('tee-')) ||
+    (String(it.family||'').toLowerCase() === 'tees')
+  );
+}
+function filterTeesOrders(list){
+  if (!TEES_SCOPE) return list;
+  return (list||[]).filter(isTeesOrder);
+}
+/* ============ /TEES SCOPE ============ */
+
 async function loadOrders(){
   var tbl = document.getElementById('ord-table');
   if (!tbl) return;
   try {
     var data = await rest('ulhome_orders?select=*&order=created_at.desc');
+    if (typeof filterTeesOrders === 'function') data = filterTeesOrders(data || []);
     ORDERS_STATE.all = Array.isArray(data) ? data : [];
     updateOrderFilterCounts();
     renderOrdersList();
@@ -2015,7 +2035,7 @@ async function loadAnalytics(){
     // Single RPC call replaces two analytics_events SELECTs that were capped at
     // ~1000 rows by PostgREST (breaking "Переходи" KPI when events > 1000).
     const [orders, summary, sourcesDaily] = await Promise.all([
-      rest('ulhome_orders?select=id,number,customer_name,payment_method,payment_status,items,total,status,created_at&order=created_at.desc&limit=1000' + filterOrders),
+      rest('ulhome_orders?select=id,number,customer_name,payment_method,payment_status,items,total,status,created_at&order=created_at.desc&limit=1000' + filterOrders).then(d => (typeof filterTeesOrders === 'function' ? filterTeesOrders(d||[]) : (d||[]))),
       rest('rpc/ulhome_analytics_summary', { method:'POST', body: JSON.stringify({ since_iso: sinceIso }) }),
       rest('rpc/ulhome_analytics_sources_daily', { method:'POST', body: JSON.stringify({ since_iso: sinceIso, top_n: 8 }) })
     ]);
