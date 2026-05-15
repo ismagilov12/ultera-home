@@ -557,6 +557,26 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
   .tech-grid{grid-template-columns:1fr}
   .foot-top{grid-template-columns:1fr}
 }
+
+/* === Color swatches (color families) === */
+.feat-swatches{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.feat-swatch{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.6);cursor:pointer;padding:0;outline:2px solid transparent;outline-offset:2px;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.feat-swatch:hover{transform:scale(1.12)}
+.feat-swatch.active{outline-color:#0e0e0e}
+.card-swatches{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.card-swatch{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(0,0,0,.15);cursor:pointer;padding:0;outline:1.5px solid transparent;outline-offset:1.5px;transition:all .15s}
+.card-swatch:hover{transform:scale(1.15)}
+.card-swatch.active{outline-color:#0e0e0e}
+@media (max-width: 720px){
+  .feat-swatches{margin-top:10px;gap:6px}
+  .feat-swatch{width:22px;height:22px}
+}
+.m-swatches{display:flex;gap:8px;margin:10px 0 6px;flex-wrap:wrap}
+.m-swatch{width:26px;height:26px;border-radius:50%;border:2px solid #fff;cursor:pointer;padding:0;outline:2px solid transparent;outline-offset:2px;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.m-swatch:hover{transform:scale(1.1)}
+.m-swatch.active{outline-color:#0e0e0e}
+.m-swatch-label{font-size:11px;color:var(--ink-60);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase;font-family:var(--font-mono,monospace)}
+
 </style>
 </head>
 <body>
@@ -828,6 +848,8 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
       <div class="modal-print" id="m_print">—</div>
       <div class="modal-sku" id="m_sku">SKU: —</div>
       <p id="m_desc" style="font-size:13.5px;color:var(--ink-60);line-height:1.55;margin-bottom:14px;display:none"></p>
+      <div class="m-swatch-label" id="m_swatch_label" style="display:none">Доступні кольори</div>
+      <div class="m-swatches" id="m_swatches" style="display:none"></div>
       <div class="modal-price">
         <span class="cur" id="m_price">—</span>
         <span class="was" id="m_was">—</span>
@@ -925,6 +947,7 @@ async function sbFetch(path){
 
 const FALLBACK_DATA = JSON.parse(document.getElementById('TEE_DATA').textContent);
 let DATA = FALLBACK_DATA;
+let DATA_ALL = FALLBACK_DATA;
 let activeFilter = 'all';
 let modalCtx = null;
 
@@ -981,6 +1004,8 @@ async function bootstrapFromSupabase(){
       const videos = (videosByProduct[p.id] || []).map(u => u.startsWith('/') ? u.slice(1) : u);
       return {
         uid: p.uid,
+        id: p.id,
+        parent_id: p.parent_id || null,
         slug: fbk ? fbk.slug : (p.title||'').replace('ULTERA Tees™ — ','').replace(' · ','-'),
         sku: 'ULT-' + (p.uid||'').toUpperCase(),
         name: (p.title||'').replace('ULTERA Tees™ — ','') || (fbk && fbk.name) || p.uid,
@@ -996,8 +1021,26 @@ async function bootstrapFromSupabase(){
         videos: videos
       };
     });
-    DATA = built;
-    console.log('[tees] live bootstrap OK ·', DATA.length, 'products from Supabase');
+    // Group into color families (parent + children)
+    const familyMap = {};
+    built.forEach(p => {
+      const familyId = p.parent_id || p.id;
+      if(!familyMap[familyId]) familyMap[familyId] = { variants: [] };
+      familyMap[familyId].variants.push(p);
+    });
+    Object.values(familyMap).forEach(f => {
+      // parent (no parent_id) first
+      f.variants.sort((a,b) => (a.parent_id ? 1 : 0) - (b.parent_id ? 1 : 0));
+      f.parent = f.variants[0];
+    });
+    built.forEach(p => {
+      const familyId = p.parent_id || p.id;
+      p.variants = familyMap[familyId].variants;
+    });
+    // Grid shows parents only; children accessible via swatches
+    DATA = built.filter(p => !p.parent_id);
+    DATA_ALL = built;
+    console.log('[tees] live bootstrap OK · grid:', DATA.length, '· variants:', built.length);
   }catch(e){
     console.warn('[tees] live bootstrap failed — using embedded fallback:', e.message);
   }
@@ -1103,8 +1146,20 @@ function buildCard(p){
     '<div class="card-name">'+p.name+'</div>'+
     '<div class="card-sku">'+p.sku+' · '+p.print+'</div>'+
     '<div class="card-desc">Щільна бавовняна футболка преміум якості</div>'+
-    '<div class="card-row"><div class="card-row-l"><span class="card-dot" style="background:'+p.color_hex+'"></span>'+p.color_ua+'</div><div class="card-price"><s>'+priceFmt(p.old_price)+'</s>'+priceFmt(p.price)+'</div></div>';
-  card.onclick = () => openModal(p);
+    '<div class="card-row"><div class="card-row-l"><span class="card-dot" style="background:'+p.color_hex+'"></span>'+p.color_ua+'</div><div class="card-price"><s>'+priceFmt(p.old_price)+'</s>'+priceFmt(p.price)+'</div></div>'+
+    ((p.variants && p.variants.length>1) ? '<div class="card-swatches"></div>' : '');
+  if(p.variants && p.variants.length>1){
+    const sw = card.querySelector('.card-swatches');
+    p.variants.forEach(v => {
+      const btn = document.createElement('button');
+      btn.className = 'card-swatch' + (v.uid === p.uid ? ' active' : '');
+      btn.style.background = v.color_hex || '#999';
+      btn.title = v.color_ua || '';
+      btn.onclick = (ev) => { ev.stopPropagation(); openModal(v); };
+      sw.appendChild(btn);
+    });
+  }
+  card.onclick = (e) => { if(!e.target.closest('.card-swatch')) openModal(p); };
   return card;
 }
 
@@ -1130,6 +1185,7 @@ function buildLifestyleFeatCard(p, idx){
           '<div class="feat-spec"><span class="k">Щільність</span><span class="v">240 gsm</span></div>'+
         '</div>'+
         (photos.length>1 ? '<div class="feat-thumbs"></div>' : '')+
+        ((p.variants && p.variants.length>1) ? '<div class="feat-swatches" data-uid="'+p.uid+'"></div>' : '')+
       '</div>'+
       '<div class="feat-bottom">'+
         '<button class="feat-discover">Дивитись модель <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>'+
@@ -1137,7 +1193,20 @@ function buildLifestyleFeatCard(p, idx){
       '</div>'+
     '</div>'+
     '<div class="feat-right"><div class="feat-photo active"><img src="'+photos[0]+'" alt="'+p.name+'" loading="'+(idx<2?'eager':'lazy')+'" decoding="async"></div></div>';
-  card.onclick = () => openModal(p);
+  card.onclick = (e) => { if(!e.target.closest('.feat-swatch')) openModal(p); };
+  // Color swatches (color families)
+  const sw = card.querySelector('.feat-swatches');
+  if(sw && p.variants && p.variants.length>1){
+    p.variants.forEach((v) => {
+      const btn = document.createElement('button');
+      btn.className = 'feat-swatch' + (v.uid === p.uid ? ' active' : '');
+      btn.style.background = v.color_hex || '#999';
+      btn.setAttribute('aria-label', v.color_ua || '');
+      btn.title = v.color_ua || '';
+      btn.onclick = (ev) => { ev.stopPropagation(); openModal(v); };
+      sw.appendChild(btn);
+    });
+  }
   // Thumbs (cycle photos)
   const tw = card.querySelector('.feat-thumbs');
   const fr = card.querySelector('.feat-right');
@@ -1295,6 +1364,27 @@ function openModal(p){
   document.getElementById('m_brand').textContent = 'ULTERA TEES™ · '+p.group.toUpperCase();
   const md = document.getElementById('m_desc');
   if(p.desc){ md.textContent = p.desc; md.style.display = ''; } else { md.style.display = 'none'; }
+  // Color swatches (if part of family)
+  const swc = document.getElementById('m_swatches');
+  const swcLbl = document.getElementById('m_swatch_label');
+  if(swc){
+    swc.innerHTML = '';
+    if(p.variants && p.variants.length > 1){
+      p.variants.forEach(v => {
+        const b = document.createElement('button');
+        b.className = 'm-swatch' + (v.uid === p.uid ? ' active' : '');
+        b.style.background = v.color_hex || '#999';
+        b.title = v.color_ua || '';
+        b.onclick = () => { closeModal(); setTimeout(()=> openModal(v), 50); };
+        swc.appendChild(b);
+      });
+      swc.style.display = '';
+      swcLbl.style.display = '';
+    } else {
+      swc.style.display = 'none';
+      swcLbl.style.display = 'none';
+    }
+  }
   // Video toggle: show button if product has videos
   const vbtn = document.getElementById('m_video_btn');
   const vEl = document.getElementById('m_video');
