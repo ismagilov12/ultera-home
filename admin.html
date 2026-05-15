@@ -965,7 +965,7 @@ document.getElementById('nav').addEventListener('click', e=>{
 /* ==================== PRODUCTS ==================== */
 async function loadProducts(){
   try {
-    PRODUCTS = await rest('ulhome_products?select=*&order=family.asc,sort_order.asc') || [];
+    PRODUCTS = await rest('ulhome_products?select=*&family=neq.Tees&order=family.asc,sort_order.asc') || [];
     const media = await rest('ulhome_product_media?select=*&order=sort_order.asc') || [];
     MEDIA_BY_PRODUCT = {};
     media.forEach(m => { (MEDIA_BY_PRODUCT[m.product_id]=MEDIA_BY_PRODUCT[m.product_id]||[]).push(m); });
@@ -1565,11 +1565,27 @@ function renderOrdersList(){
     tbl.appendChild(row);
   });
 }
+
+/* ============ NON-TEES SCOPE — admin.html only (excludes tees from main admin) ============ */
+function isTeesOrder(order){
+  if (!order || !Array.isArray(order.items)) return false;
+  return order.items.length > 0 && order.items.every(it =>
+    (String(it.uid||'').startsWith('tee-')) ||
+    (String(it.family||'').toLowerCase() === 'tees')
+  );
+}
+function filterOutTeesOrders(list){
+  // Keep orders that are NOT pure-tees (i.e., still relevant for sneakers admin)
+  return (list||[]).filter(o => !isTeesOrder(o));
+}
+/* ============ /NON-TEES SCOPE ============ */
+
 async function loadOrders(){
   var tbl = document.getElementById('ord-table');
   if (!tbl) return;
   try {
     var data = await rest('ulhome_orders?select=*&order=created_at.desc');
+    if (typeof filterOutTeesOrders === 'function') data = filterOutTeesOrders(data || []);
     ORDERS_STATE.all = Array.isArray(data) ? data : [];
     updateOrderFilterCounts();
     renderOrdersList();
@@ -2015,7 +2031,7 @@ async function loadAnalytics(){
     // Single RPC call replaces two analytics_events SELECTs that were capped at
     // ~1000 rows by PostgREST (breaking "Переходи" KPI when events > 1000).
     const [orders, summary, sourcesDaily] = await Promise.all([
-      rest('ulhome_orders?select=id,number,customer_name,payment_method,payment_status,items,total,status,created_at&order=created_at.desc&limit=1000' + filterOrders),
+      rest('ulhome_orders?select=id,number,customer_name,payment_method,payment_status,items,total,status,created_at&order=created_at.desc&limit=1000' + filterOrders).then(d => (typeof filterOutTeesOrders === 'function' ? filterOutTeesOrders(d||[]) : (d||[]))),
       rest('rpc/ulhome_analytics_summary', { method:'POST', body: JSON.stringify({ since_iso: sinceIso }) }),
       rest('rpc/ulhome_analytics_sources_daily', { method:'POST', body: JSON.stringify({ since_iso: sinceIso, top_n: 8 }) })
     ]);
