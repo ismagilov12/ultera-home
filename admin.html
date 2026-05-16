@@ -248,9 +248,18 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 }
 
 /* ==================== ANALYTICS ==================== */
-.period-tabs{display:inline-flex;gap:4px;background:#f5f5f0;padding:4px;border-radius:10px}
+.period-wrap{display:flex;flex-direction:column;gap:8px;align-items:flex-end;position:relative}
+.period-tabs{display:inline-flex;gap:4px;background:#f5f5f0;padding:4px;border-radius:10px;flex-wrap:wrap}
 .period-tabs button{border:0;background:transparent;padding:8px 14px;border-radius:8px;cursor:pointer;font:500 13px/1 Inter,system-ui;color:#0e0e0e99}
 .period-tabs button.active{background:#0e0e0e;color:#fff}
+.period-custom-pop{display:flex;gap:8px;align-items:center;padding:10px 12px;background:#fff;border:1px solid #e4e3dc;border-radius:10px;box-shadow:0 8px 22px rgba(14,14,14,.10);position:absolute;top:100%;right:0;margin-top:6px;z-index:50;flex-wrap:wrap}
+.period-custom-pop[hidden]{display:none}
+.period-custom-pop label{display:flex;align-items:center;gap:6px;font:500 12.5px Inter,system-ui;color:#0e0e0e99}
+.period-custom-pop input[type="date"]{border:1px solid #e4e3dc;border-radius:7px;padding:6px 8px;font:500 13px Inter,system-ui;background:#fafaf6;color:#0e0e0e}
+.period-custom-pop button{border:0;background:#0e0e0e;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font:500 12.5px Inter,system-ui}
+.period-custom-pop button.ghost{background:#f5f5f0;color:#0e0e0e}
+.period-custom-pop .err{color:#b1322e;font-size:12px;width:100%;display:none}
+.period-custom-pop.invalid .err{display:block}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:20px 0}
 .kpi-card{background:#fff;border:1.5px solid #ebebe6;border-radius:14px;padding:16px}
 .kpi-card .l{font:500 11px/1 JetBrains Mono,monospace;color:#0e0e0e70;text-transform:uppercase;letter-spacing:.06em}
@@ -462,12 +471,21 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
     <div class="page" id="page-analytics" style="display:none">
       <div class="page-head" style="justify-content:space-between">
         <h1>Аналітика</h1>
-        <div class="period-tabs" id="ana-tabs">
-          <button data-period="today">Сьогодні</button>
-          <button data-period="7d" class="active">7 днів</button>
-          <button data-period="30d">30 днів</button>
-          <button data-period="90d">90 днів</button>
-          <button data-period="all">Все</button>
+        <div class="period-wrap">
+          <div class="period-tabs" id="ana-tabs">
+            <button data-period="today">Сьогодні</button>
+            <button data-period="7d" class="active">7 днів</button>
+            <button data-period="30d">30 днів</button>
+            <button data-period="90d">90 днів</button>
+            <button data-period="custom" id="btn-period-custom">Період…</button>
+          </div>
+          <div id="period-custom-pop" class="period-custom-pop" hidden>
+            <label>З <input type="date" id="period-from"></label>
+            <label>По <input type="date" id="period-to"></label>
+            <button type="button" id="period-apply">Застосувати</button>
+            <button type="button" id="period-cancel" class="ghost">Скасувати</button>
+            <span class="err" id="period-err">Невірний діапазон</span>
+          </div>
         </div>
       </div>
 
@@ -1991,7 +2009,9 @@ document.querySelector('[data-page="orders"]').addEventListener('click', loadOrd
 
 /* ==================== ANALYTICS ==================== */
 const ANA = {
-  period: '7d',                  // '7d' | '30d' | '90d' | 'all'
+  period: '7d',                  // 'today' | '7d' | '30d' | '90d' | 'custom'
+  customStart: null,             // ISO string when period === 'custom' (start of day)
+  customEnd: null,               // ISO string when period === 'custom' (end of day)
   data: null,
   charts: {},                    // Chart.js instances
   sort: { key:'k', dir:'desc' }, // daily table sort (default: newest first)
@@ -2004,16 +2024,26 @@ function periodToMs(p){
   if(p==='7d') return 7*d;
   if(p==='30d') return 30*d;
   if(p==='90d') return 90*d;
-  return null; // 'all'
+  if(p==='custom' && ANA.customStart && ANA.customEnd){
+    const a = new Date(ANA.customStart).getTime();
+    const b = new Date(ANA.customEnd).getTime();
+    return Math.max(d, (b - a) + d);
+  }
+  return null;
 }
 function periodSinceIso(p){
   if (p === 'today'){
     const t = new Date(); t.setHours(0,0,0,0);
     return t.toISOString();
   }
+  if (p === 'custom' && ANA.customStart) return ANA.customStart;
   const ms = periodToMs(p);
   if(ms == null) return null;
   return new Date(Date.now() - ms).toISOString();
+}
+function periodUntilIso(p){
+  if (p === 'custom' && ANA.customEnd) return ANA.customEnd;
+  return null;
 }
 function fmtMoney(n){ return (Math.round(Number(n)||0)).toLocaleString('uk-UA') + ' ₴'; }
 function fmtInt(n){ return (Math.round(Number(n)||0)).toLocaleString('uk-UA'); }
@@ -2026,7 +2056,9 @@ function dayKey(iso){
 async function loadAnalytics(){
   try {
     const sinceIso = periodSinceIso(ANA.period);
-    const filterOrders = sinceIso ? '&created_at=gte.' + encodeURIComponent(sinceIso) : '';
+    const untilIso = periodUntilIso(ANA.period);
+    let filterOrders = sinceIso ? '&created_at=gte.' + encodeURIComponent(sinceIso) : '';
+    if (untilIso) filterOrders += '&created_at=lte.' + encodeURIComponent(untilIso);
 
     // Single RPC call replaces two analytics_events SELECTs that were capped at
     // ~1000 rows by PostgREST (breaking "Переходи" KPI when events > 1000).
@@ -2068,7 +2100,13 @@ async function loadAnalytics(){
     renderSourcesDaily();
   } catch(e){
     console.error('analytics err', e);
-    toast('Помилка аналітики: '+e.message, 'err');
+    var msg = String(e && e.message || e);
+    if (/57014|statement timeout|canceling statement/i.test(msg)){
+      msg = 'Запит за обраний період надто широкий — Supabase скасував його по таймауту. Виберіть коротший діапазон (наприклад, до 90 днів) у календарі.';
+    } else {
+      msg = 'Помилка аналітики: ' + msg;
+    }
+    toast(msg, 'err');
   }
 }
 
@@ -2116,16 +2154,20 @@ function renderOrdersChart(){
     days[k].rev += Number(o.total)||0;
   });
   // fill missing days for period
-  const ms = periodToMs(ANA.period) || 30*86400000;
-  const today = new Date(); today.setHours(23,59,59,999);
-  const points = [];
-  let start;
-  if (ANA.period === 'today'){
+  let start, end;
+  if (ANA.period === 'custom' && ANA.customStart && ANA.customEnd){
+    start = new Date(ANA.customStart); start.setHours(0,0,0,0);
+    end   = new Date(ANA.customEnd);   end.setHours(23,59,59,999);
+  } else if (ANA.period === 'today'){
     start = new Date(); start.setHours(0,0,0,0);
+    end   = new Date(); end.setHours(23,59,59,999);
   } else {
-    start = new Date(today.getTime() - ms);
+    const ms = periodToMs(ANA.period) || 30*86400000;
+    end   = new Date(); end.setHours(23,59,59,999);
+    start = new Date(end.getTime() - ms);
   }
-  for(let t = new Date(start); t <= today; t.setDate(t.getDate()+1)){
+  const points = [];
+  for(let t = new Date(start); t <= end; t.setDate(t.getDate()+1)){
     const k = dayKey(t);
     points.push({ k, cnt: (days[k]&&days[k].cnt)||0, rev: (days[k]&&days[k].rev)||0 });
   }
@@ -2298,12 +2340,18 @@ function renderDailyTable(){
     ordDay[k].rev += Number(o.total)||0;
   });
 
-  // Build last N days (all for period='all' capped at 30d view by default)
-  const ms = periodToMs(ANA.period) || 30*86400000;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const start = new Date(today.getTime() - (ms - 86400000));
+  // Build N days inside selected period
+  let firstDay, lastDay;
+  if (ANA.period === 'custom' && ANA.customStart && ANA.customEnd){
+    firstDay = new Date(ANA.customStart); firstDay.setHours(0,0,0,0);
+    lastDay  = new Date(ANA.customEnd);   lastDay.setHours(0,0,0,0);
+  } else {
+    const ms = periodToMs(ANA.period) || 30*86400000;
+    lastDay  = new Date(); lastDay.setHours(0,0,0,0);
+    firstDay = new Date(lastDay.getTime() - (ms - 86400000));
+  }
   const rows = [];
-  for(let t = new Date(today); t >= start; t.setDate(t.getDate()-1)){
+  for(let t = new Date(lastDay); t >= firstDay; t.setDate(t.getDate()-1)){
     const k = dayKey(t);
     const pv  = pvDay[k] || 0;
     const cnt = (ordDay[k] && ordDay[k].cnt) || 0;
@@ -2322,6 +2370,12 @@ function renderSourcesDaily(){
   var wrap = document.getElementById('sources-daily-wrap');
   if(!wrap) return;
   var rows = (ANA.data && ANA.data.sourcesDaily) || [];
+  // For custom range — strip days that fall outside [customStart, customEnd]
+  if (ANA.period === 'custom' && ANA.customStart && ANA.customEnd){
+    var fromKey = dayKey(new Date(ANA.customStart));
+    var toKey   = dayKey(new Date(ANA.customEnd));
+    rows = rows.filter(function(d){ var k = String(d.day||''); return k >= fromKey && k <= toKey; });
+  }
   if(!rows.length){ wrap.innerHTML = '<div style="color:#0e0e0e80;font-size:12.5px;padding:8px 0">Немає даних</div>'; return; }
   var esc = (typeof escapeHtml === 'function') ? escapeHtml : function(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]; }); };
   wrap.innerHTML = rows.map(function(d, i){
@@ -2451,16 +2505,101 @@ else wireDailySort();
 // Event wiring
 (function(){
   const tabs = document.getElementById('ana-tabs');
+  const pop  = document.getElementById('period-custom-pop');
+  const inFrom = document.getElementById('period-from');
+  const inTo   = document.getElementById('period-to');
+  const btnApply  = document.getElementById('period-apply');
+  const btnCancel = document.getElementById('period-cancel');
+  const btnCustom = document.getElementById('btn-period-custom');
+
+  function fmtDateInput(d){
+    return d.getFullYear() + '-' +
+           String(d.getMonth()+1).padStart(2,'0') + '-' +
+           String(d.getDate()).padStart(2,'0');
+  }
+  function openCustomPop(){
+    if(!pop) return;
+    if (inFrom && !inFrom.value){
+      const d = new Date(); d.setDate(d.getDate()-29);
+      inFrom.value = fmtDateInput(d);
+    }
+    if (inTo && !inTo.value){
+      inTo.value = fmtDateInput(new Date());
+    }
+    pop.hidden = false;
+  }
+  function closeCustomPop(){
+    if(!pop) return;
+    pop.hidden = true;
+    pop.classList.remove('invalid');
+  }
+
+  // Restore saved custom range from localStorage
+  try {
+    const saved = JSON.parse(localStorage.getItem('ANA_CUSTOM_RANGE') || 'null');
+    if (saved && saved.from && saved.to){
+      if (inFrom) inFrom.value = saved.from;
+      if (inTo)   inTo.value   = saved.to;
+    }
+  } catch(_){ /* ignore */ }
+
   if(tabs){
     tabs.addEventListener('click', async (e)=>{
       const btn = e.target.closest('button[data-period]');
       if(!btn) return;
+      const p = btn.dataset.period;
+      if (p === 'custom'){
+        if (pop && pop.hidden) openCustomPop();
+        else closeCustomPop();
+        return;
+      }
       tabs.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
-      ANA.period = btn.dataset.period;
+      closeCustomPop();
+      ANA.period = p;
+      ANA.customStart = null;
+      ANA.customEnd   = null;
+      if (btnCustom) btnCustom.textContent = 'Період…';
       await loadAnalytics();
     });
   }
+
+  if (btnApply){
+    btnApply.addEventListener('click', async ()=>{
+      const fromStr = inFrom ? inFrom.value : '';
+      const toStr   = inTo   ? inTo.value   : '';
+      if (!fromStr || !toStr){ pop.classList.add('invalid'); return; }
+      const fromD = new Date(fromStr + 'T00:00:00');
+      const toD   = new Date(toStr   + 'T23:59:59.999');
+      if (isNaN(fromD.getTime()) || isNaN(toD.getTime()) || fromD > toD){
+        pop.classList.add('invalid'); return;
+      }
+      pop.classList.remove('invalid');
+      ANA.period = 'custom';
+      ANA.customStart = fromD.toISOString();
+      ANA.customEnd   = toD.toISOString();
+      try { localStorage.setItem('ANA_CUSTOM_RANGE', JSON.stringify({ from: fromStr, to: toStr })); } catch(_){}
+      tabs.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+      if (btnCustom){
+        const span = fromStr.slice(5).replace('-','.') + '–' + toStr.slice(5).replace('-','.');
+        btnCustom.textContent = span;
+        btnCustom.classList.add('active');
+      }
+      closeCustomPop();
+      await loadAnalytics();
+    });
+  }
+  if (btnCancel){
+    btnCancel.addEventListener('click', ()=>{ closeCustomPop(); });
+  }
+  // Close popup on outside click
+  document.addEventListener('click', (e)=>{
+    if (!pop || pop.hidden) return;
+    if (pop.contains(e.target)) return;
+    if (btnCustom && btnCustom.contains(e.target)) return;
+    closeCustomPop();
+  });
+
   // Trigger loadAnalytics when switching to analytics page
   const anaLink = document.querySelector('[data-page="analytics"]');
   if(anaLink) anaLink.addEventListener('click', ()=>{ setTimeout(loadAnalytics, 40); });
