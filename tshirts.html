@@ -1152,6 +1152,7 @@ function buildCard(p){
     '<div class="card-desc">Щільна бавовняна футболка преміум якості</div>'+
     '<div class="card-row"><div class="card-row-l"><span class="card-dot" style="background:'+p.color_hex+'"></span>'+p.color_ua+'</div><div class="card-price"><s>'+priceFmt(p.old_price)+'</s>'+priceFmt(p.price)+'</div></div>'+
     ((p.variants && p.variants.length>1) ? '<div class="card-swatches"></div>' : '');
+  let _curVar = p;
   if(p.variants && p.variants.length>1){
     const sw = card.querySelector('.card-swatches');
     p.variants.forEach(v => {
@@ -1159,11 +1160,25 @@ function buildCard(p){
       btn.className = 'card-swatch' + (v.uid === p.uid ? ' active' : '');
       btn.style.background = v.color_hex || '#999';
       btn.title = v.color_ua || '';
-      btn.onclick = (ev) => { ev.stopPropagation(); openModal(v); };
+      btn.onclick = (ev) => {
+        ev.stopPropagation();
+        if(v.uid === _curVar.uid) return;
+        _curVar = v;
+        const img = card.querySelector('.card-img img');
+        if(img){ img.src = v.photos[0] || ''; img.alt = v.name; }
+        const nm = card.querySelector('.card-name'); if(nm) nm.textContent = v.name;
+        const sku = card.querySelector('.card-sku'); if(sku) sku.textContent = v.sku + ' · ' + v.print;
+        const cl = card.querySelector('.card-row-l');
+        if(cl) cl.innerHTML = '<span class="card-dot" style="background:'+v.color_hex+'"></span>'+v.color_ua;
+        const pr = card.querySelector('.card-price');
+        if(pr) pr.innerHTML = '<s>'+priceFmt(v.old_price)+'</s>'+priceFmt(v.price);
+        card.querySelectorAll('.card-swatch').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      };
       sw.appendChild(btn);
     });
   }
-  card.onclick = (e) => { if(!e.target.closest('.card-swatch')) openModal(p); };
+  card.onclick = (e) => { if(!e.target.closest('.card-swatch')) openModal(_curVar); };
   return card;
 }
 
@@ -1197,8 +1212,9 @@ function buildLifestyleFeatCard(p, idx){
       '</div>'+
     '</div>'+
     '<div class="feat-right"><div class="feat-photo active"><img src="'+photos[0]+'" alt="'+p.name+'" loading="'+(idx<2?'eager':'lazy')+'" decoding="async"></div></div>';
-  card.onclick = (e) => { if(!e.target.closest('.feat-swatch')) openModal(p); };
-  // Color swatches (color families)
+  let _curFeat = p;
+  card.onclick = (e) => { if(!e.target.closest('.feat-swatch')) openModal(_curFeat); };
+  // Color swatches (color families) — in-place variant swap
   const sw = card.querySelector('.feat-swatches');
   if(sw && p.variants && p.variants.length>1){
     p.variants.forEach((v) => {
@@ -1207,7 +1223,41 @@ function buildLifestyleFeatCard(p, idx){
       btn.style.background = v.color_hex || '#999';
       btn.setAttribute('aria-label', v.color_ua || '');
       btn.title = v.color_ua || '';
-      btn.onclick = (ev) => { ev.stopPropagation(); openModal(v); };
+      btn.onclick = (ev) => {
+        ev.stopPropagation();
+        if(v.uid === _curFeat.uid) return;
+        _curFeat = v;
+        const vphotos = (v.photos||[]).slice(0,6);
+        const fr2 = card.querySelector('.feat-right');
+        if(fr2) fr2.innerHTML = '<div class="feat-photo active"><img src="'+(vphotos[0]||'')+'" alt="'+v.name+'" decoding="async"></div>';
+        const colorSpec = card.querySelector('.feat-spec:nth-child(1) .v'); if(colorSpec) colorSpec.textContent = v.color_ua;
+        const printSpec = card.querySelector('.feat-spec:nth-child(2) .v'); if(printSpec) printSpec.textContent = v.print;
+        const ftag = card.querySelector('.feat-tagline'); if(ftag) ftag.textContent = v.print;
+        const fprice = card.querySelector('.feat-price');
+        if(fprice) fprice.innerHTML = '<s>'+priceFmt(v.old_price)+'</s><span class="cur">'+priceFmt(v.price)+'</span>';
+        // rebuild thumbs
+        const tw2 = card.querySelector('.feat-thumbs');
+        if(tw2){
+          tw2.innerHTML = '';
+          if(vphotos.length>1){
+            vphotos.forEach((src, i) => {
+              const tb = document.createElement('button');
+              tb.className = 'feat-thumb' + (i===0?' active':'');
+              tb.innerHTML = '<img src="'+src+'" alt="" loading="lazy">';
+              tb.onclick = (e2) => {
+                e2.stopPropagation();
+                tw2.querySelectorAll('.feat-thumb').forEach(b => b.classList.remove('active'));
+                tb.classList.add('active');
+                const frx = card.querySelector('.feat-right');
+                if(frx) frx.innerHTML = '<div class="feat-photo active"><img src="'+src+'" alt="" decoding="async"></div>';
+              };
+              tw2.appendChild(tb);
+            });
+          }
+        }
+        card.querySelectorAll('.feat-swatch').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      };
       sw.appendChild(btn);
     });
   }
@@ -1358,6 +1408,13 @@ function bindChips(){
 /* ---------- MODAL ---------- */
 function openModal(p){
   modalCtx = { product: p, photoIdx: 0 };
+  // reset video carry-over from previous (re)open
+  const _rIfr = document.getElementById('m_video_iframe');
+  if(_rIfr){ _rIfr.src = ''; _rIfr.style.display = 'none'; }
+  const _rWm  = document.getElementById('m_video_wm_cover');
+  if(_rWm) _rWm.style.display = 'none';
+  const _rImg = document.getElementById('m_img');
+  if(_rImg) _rImg.style.display = '';
   const M = document.getElementById('modal');
   document.getElementById('m_title').textContent = p.name;
   document.getElementById('m_print').textContent = p.print;
@@ -1379,7 +1436,7 @@ function openModal(p){
         b.className = 'm-swatch' + (v.uid === p.uid ? ' active' : '');
         b.style.background = v.color_hex || '#999';
         b.title = v.color_ua || '';
-        b.onclick = () => { closeModal(); setTimeout(()=> openModal(v), 50); };
+        b.onclick = () => { openModal(v); };
         swc.appendChild(b);
       });
       swc.style.display = '';
