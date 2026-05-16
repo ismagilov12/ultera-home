@@ -410,7 +410,10 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
 .m-counter-pill{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(14,14,14,.55);color:#fff;font-family:var(--font-mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;z-index:5;letter-spacing:.08em;backdrop-filter:blur(8px)}
 .m-video-toggle{position:absolute;top:14px;left:14px;z-index:6;display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;border-radius:999px;background:rgba(14,14,14,.6);backdrop-filter:blur(10px);color:#fff;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.08em;cursor:pointer;transition:all .2s}
 .m-video-toggle:hover{background:rgba(14,14,14,.85)}
-.m-video-toggle svg{width:14px;height:14px;color:var(--mint);background:rgba(255,255,255,.15);border-radius:50%;padding:3px}
+.m-video-toggle svg{width:16px;height:16px;color:#0a0a0a;background:#c8ff00;border-radius:50%;padding:3px;box-shadow:0 0 0 1px rgba(255,255,255,.18)}
+.m-vid-wm{position:absolute;right:10px;bottom:10px;z-index:7;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:rgba(14,14,14,.62);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);color:#fff;font-family:var(--font-mono);font-size:11px;font-weight:800;letter-spacing:.22em;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.08)}
+.m-vid-wm::before{content:"";width:6px;height:6px;border-radius:50%;background:#c8ff00;box-shadow:0 0 6px #c8ff00}
+
 .modal-strip{grid-column:1/2;grid-row:2/3;display:flex;gap:6px;padding:8px;background:var(--bg-alt);border-top:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
 .modal-strip::-webkit-scrollbar{display:none}
 .modal-strip button{width:64px;height:64px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#fff;border:1.5px solid transparent;transition:border-color .2s;cursor:pointer;padding:0}
@@ -840,6 +843,7 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
         <span id="m_video_label">ВІДЕО</span>
       </button>
       <div class="m-counter-pill"><b id="m_cur">1</b> / <span id="m_tot">1</span></div>
+      <div id="m_video_wm_cover" class="m-vid-wm" style="display:none">ULTERA</div>
     </div>
     <div class="modal-strip" id="m_strip"></div>
     <div class="modal-body">
@@ -1427,6 +1431,8 @@ function closeModal(){
   if(ifr){ ifr.src=''; ifr.style.display='none'; }
   const img = document.getElementById('m_img');
   if(img) img.style.display = '';
+  const wmC = document.getElementById('m_video_wm_cover');
+  if(wmC) wmC.style.display = 'none';
   modalCtx = null;
 }
 function ytIdFromUrl(u){
@@ -1444,6 +1450,20 @@ function ytIdFromUrl(u){
   return null;
 }
 function isYouTubeUrl(u){ return /youtu\.?be/i.test(u || ''); }
+function _exitVideoMode(){
+  if(!modalCtx) return;
+  const vEl = document.getElementById('m_video');
+  const ifr = document.getElementById('m_video_iframe');
+  const img = document.getElementById('m_img');
+  const lbl = document.getElementById('m_video_label');
+  const wm  = document.getElementById('m_video_wm_cover');
+  if(vEl){ try{ vEl.pause(); }catch(_){} vEl.style.display='none'; vEl.removeAttribute('src'); try{ vEl.load(); }catch(_){} }
+  if(ifr){ ifr.src=''; ifr.style.display='none'; }
+  if(img) img.style.display='';
+  if(lbl) lbl.textContent='ВІДЕО';
+  if(wm)  wm.style.display='none';
+  modalCtx.videoMode = false;
+}
 function toggleModalVideo(){
   if(!modalCtx || !modalCtx.videos || !modalCtx.videos.length) return;
   const vEl = document.getElementById('m_video');
@@ -1474,17 +1494,20 @@ function toggleModalVideo(){
       vEl.play().catch(()=>{});
     }
     lbl.textContent = 'ФОТО';
+    var _wm = document.getElementById('m_video_wm_cover'); if(_wm) _wm.style.display='';
   } else {
     vEl.pause();
     vEl.style.display = 'none';
     ifr.src = '';
     ifr.style.display = 'none';
     img.style.display = '';
+    var _wm2 = document.getElementById('m_video_wm_cover'); if(_wm2) _wm2.style.display='none';
     lbl.textContent = 'ВІДЕО';
   }
 }
 function setModalPhoto(i){
   if(!modalCtx) return;
+  if(modalCtx.videoMode) _exitVideoMode();
   const p = modalCtx.product;
   if(!p.photos.length) return;
   i = ((i % p.photos.length) + p.photos.length) % p.photos.length;
