@@ -1,26 +1,10 @@
-// api/tryon.js — AI Virtual Try-On (gpt-image-1) v3 · 2026-05-17
+// api/tryon.js — AI Virtual Try-On (gpt-image-1) v4 · 2026-05-17
 //
-// DIPTYCH MODE — одна генерація = одне фото з ракурсами front+back side-by-side.
-//
-// POST {tshirt_id, model_id?, photo_b64?, gender?, height?, weight?}
-//   - параметр view не використовується; завжди генерується combined
-//   - cache key: (model_id, tshirt_id, view='combined') OR (photo_hash, tshirt_id, view='combined')
-//
-// Все, що передається у gpt-image-1 як image[]:
-//   #1  — preset model (типаж) фото (обовʼязково)
-//   #2  — фото клієнта (опціонально, для face composing)
-//   #3..N — фото футболки (1-2 шт із product_media — фронт/спина якщо є)
-//
-// Output: 1536×1024 landscape (diptych) — left half: front view, right half: back view.
-//
-// Env:
-//   OPENAI_API_KEY (req)
-//   OPENAI_IMAGE_MODEL  ('gpt-image-1')
-//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (req)
-//   TRYON_QUALITY ('medium')
-//   TRYON_TSHIRT_CHEST_CM (64), TRYON_TSHIRT_LENGTH_CM (73)
-//   TRYON_RATE_LIMIT_PER_MIN (5)
-//   PUBLIC_BASE_URL
+// Зміни v4:
+//   • Підтримка ulhome_tryon_models.is_icon — якщо true (іконка/силует),
+//     модельне фото НЕ передається у gpt-image-1; AI генерує тіло
+//     із текстового опису (gender/build/height/weight) + user photo (якщо є)
+//   • Все інше — як v3 diptych (front+back в одному фото 1536x1024)
 
 import crypto from 'node:crypto';
 
@@ -112,9 +96,9 @@ function absolutizePhoto(path) {
   return base + p;
 }
 
-// ---------- PROMPT (diptych v3) ----------
+// ---------- PROMPT ----------
 function buildPromptDiptych(opts) {
-  const { gender, build, height, weight, colorName, family, slug, hasUploadFace, teeRefCount } = opts;
+  const { gender, build, height, weight, colorName, family, slug, hasUploadFace, teeRefCount, hasModelImage } = opts;
 
   const chest  = Number(process.env.TRYON_TSHIRT_CHEST_CM  || 64);
   const length = Number(process.env.TRYON_TSHIRT_LENGTH_CM || 73);
@@ -137,13 +121,36 @@ function buildPromptDiptych(opts) {
   }
   const subj = gender === 'female' ? 'woman' : 'man';
 
+  // BODY block — different depending on whether we have a real body image
+  const bodyBlock = hasModelImage
+    ? [
+        `═══ BODY (image #1) ═══`,
+        `Preserve from image #1 EXACTLY:`,
+        `• body shape, proportions, build, stance, gender`,
+        `• face features, hair, skin tone, age (unless overridden by composing rule below)`
+      ].join('\n')
+    : [
+        `═══ BODY (from description) ═══`,
+        `Generate a photoreal ${subj} with these characteristics:`,
+        `• gender: ${gender || 'male'}`,
+        `• build: ${build || 'average'}`,
+        `• height: ${height || 178} cm`,
+        `• weight: ${weight || 75} kg`,
+        `• ethnicity: Caucasian, age 22–30, neutral confident expression`,
+        `• short natural hair (or feminine hair for women), no heavy makeup`,
+        `• realistic body proportions matching height/weight (BMI-appropriate)`,
+        `• stance: standing straight, weight slightly on one leg, hands relaxed`
+      ].join('\n');
+
   const composing = hasUploadFace
-    ? `An additional PERSON REFERENCE is provided (image #2). Use it as a guide for FACE, hair colour/style, skin tone — but keep BODY shape/proportions strictly from image #1 (the body-type reference). Do NOT invent a different body.`
+    ? (hasModelImage
+        ? `An additional PERSON REFERENCE is provided (image #2). Use it as a guide for FACE, hair, skin tone — but keep BODY shape strictly from image #1.`
+        : `A PERSON REFERENCE PHOTO is provided (image #1). Use it as a guide for FACE, hair, skin tone — but adjust BODY shape to match the description above (height/weight/build).`)
     : '';
 
   const teeRefHint = (teeRefCount >= 2)
-    ? `T-shirt references are provided as TWO or more images (last two of the input set): one shows the FRONT side, another shows the BACK side of the same t-shirt. Identify which is which from the visible graphic placement.`
-    : `Only ONE t-shirt reference is provided. Use it as the source of truth for the side it shows; if it shows the back (most ULTERA tees are back-print), keep the front plain.`;
+    ? `T-shirt references: TWO or more images at the end of the input. One shows the FRONT, another the BACK of the same t-shirt. Identify which is which from the visible graphic placement.`
+    : `T-shirt reference: ONE image at the end. Use it as the source of truth for the side it shows; if it shows the back (most ULTERA tees are back-print), keep the front plain.`;
 
   return [
     `ULTERA TEES — Virtual Try-On (diptych output).`,
@@ -152,29 +159,23 @@ function buildPromptDiptych(opts) {
     `Produce ONE single image that is a DIPTYCH (two equal halves side-by-side):`,
     `• LEFT HALF: the model standing facing the camera, FRONT view of the t-shirt visible.`,
     `• RIGHT HALF: the same model with their back to the camera, BACK view of the t-shirt visible.`,
-    `It must look like two photos from the same studio session — identical lighting, identical background, identical person, identical t-shirt.`,
+    `Both halves: same studio, same lighting, same person, same t-shirt.`,
     ``,
-    `═══ BODY (image #1) ═══`,
-    `Preserve from image #1 EXACTLY:`,
-    `• body shape, proportions, build, stance, gender`,
-    `• face features, hair, skin tone, age (unless overridden by composing rule below)`,
-    `• overall vibe and ethnicity`,
+    bodyBlock,
     ``,
     composing,
     ``,
-    `═══ GARMENT (last image references) ═══`,
+    `═══ GARMENT REFERENCE ═══`,
     teeRefHint,
     `REPLICATE the t-shirt EXACTLY:`,
-    `• Print / graphic / text — same letters, glyphs, numbers, character shapes (do NOT invent or rewrite — copy character by character)`,
-    `• Print placement, scale, colours, line weights, spacing`,
-    `• T-shirt colour (${colorName || 'as shown'}) and fabric texture`,
-    `• Logo position, no extra text added anywhere`,
+    `• print/graphic/text — same letters, glyphs, numbers (do NOT invent or rewrite — copy character by character)`,
+    `• print placement, scale, colours, line weights, spacing`,
+    `• t-shirt colour (${colorName || 'as shown'}) and fabric texture`,
+    `• logo position, no extra text anywhere`,
     ``,
     `═══ T-SHIRT PHYSICAL SPECS ═══`,
     `• Oversized fit, drop-shoulder, 100% cotton 240 gsm`,
-    `• Flat measurements (size L):`,
-    `  – chest width: ${chest} cm (full circumference ~${circ} cm)`,
-    `  – body length: ${length} cm collar-to-hem`,
+    `• Flat measurements (size L): chest width ${chest} cm (circumference ~${circ} cm), body length ${length} cm`,
     `• On this ${subj} (height ${height || '~178'} cm, weight ${weight || '~75'} kg, build ${build || 'average'}):`,
     `  – hem falls ${hem}`,
     `  – sleeves drop ~5 cm past natural shoulder seam`,
@@ -182,12 +183,10 @@ function buildPromptDiptych(opts) {
     ``,
     `═══ COMPOSITION ═══`,
     `• Format: 1536×1024 landscape, two figures side by side, equal width per half`,
-    `• Both figures are FULL BODY visible from head to mid-thigh, centered in their half`,
-    `• Subtle thin vertical seam between halves OR seamless background — no text labels, no captions, no "FRONT"/"BACK" annotations on the image`,
+    `• Both figures FULL BODY visible from head to mid-thigh, centered in their half`,
     `• Background: clean studio cyclorama, warm beige (#f1ede4 → #ebe6d9) gradient, soft natural daylight from front-left, gentle ground shadow under each figure`,
-    `• Sharp focus on the t-shirt graphic in both halves`,
-    `• Realistic fabric drape and folds`,
-    `• ABSOLUTELY NO added text, watermark, tag, label, logo other than the original t-shirt print`,
+    `• PHOTOREALISTIC magazine-quality editorial fashion photography`,
+    `• ABSOLUTELY NO added text, watermark, tag, label, "FRONT"/"BACK" annotations, logo other than the original t-shirt print`,
     ``,
     `Collection: ULTERA TEES${family ? ' ' + family : ''}${slug ? ' · ' + slug : ''}.`
   ].filter(Boolean).join('\n');
@@ -198,20 +197,38 @@ async function callGptImageEdit({ refImages, prompt, quality, model }) {
   fd.append('model', model || 'gpt-image-1');
   fd.append('prompt', prompt);
   fd.append('n', '1');
-  fd.append('size', '1536x1024');   // landscape diptych
+  fd.append('size', '1536x1024');
   fd.append('quality', quality || 'medium');
-  refImages.forEach((b, idx) => {
-    fd.append('image[]', bytesToFile(b, 'ref-' + idx + '.png', 'image/png'));
-  });
+  refImages.forEach((b, idx) => fd.append('image[]', bytesToFile(b, 'ref-' + idx + '.png', 'image/png')));
   const r = await fetch('https://api.openai.com/v1/images/edits', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY },
     body: fd
   });
-  if (!r.ok) {
-    const txt = await r.text();
-    throw new Error('OpenAI edits failed: ' + r.status + ' ' + txt.slice(0, 400));
-  }
+  if (!r.ok) { const txt = await r.text(); throw new Error('OpenAI edits failed: ' + r.status + ' ' + txt.slice(0, 400)); }
+  const j = await r.json();
+  const b64 = j?.data?.[0]?.b64_json;
+  if (!b64) throw new Error('OpenAI: no image returned');
+  return Buffer.from(b64, 'base64');
+}
+
+// generations endpoint — для випадку коли немає референсного зображення взагалі
+async function callGptImageGenerate({ prompt, quality, model }) {
+  const r = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: model || 'gpt-image-1',
+      prompt,
+      n: 1,
+      size: '1536x1024',
+      quality: quality || 'medium'
+    })
+  });
+  if (!r.ok) { const txt = await r.text(); throw new Error('OpenAI generate failed: ' + r.status + ' ' + txt.slice(0, 400)); }
   const j = await r.json();
   const b64 = j?.data?.[0]?.b64_json;
   if (!b64) throw new Error('OpenAI: no image returned');
@@ -237,7 +254,7 @@ export default async function handler(req, res) {
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const { tshirt_id, model_id, photo_b64, gender: genderIn, height: heightIn, weight: weightIn } = body;
-    const view = 'combined';   // завжди
+    const view = 'combined';
 
     if (!tshirt_id) return res.status(400).json({ error: 'tshirt_id required' });
     if (!model_id && !photo_b64) return res.status(400).json({ error: 'model_id or photo_b64 required' });
@@ -252,30 +269,27 @@ export default async function handler(req, res) {
 
     // === 2. Model source ===
     let modelMeta = null, modelBytes = null, uploadBytes = null, photoHash = null, cacheKey = null;
+    let useModelImageAsRef = false;
 
     if (model_id) {
       modelMeta = await sbSelectOne(
         'ulhome_tryon_models',
-        `id=eq.${encodeURIComponent(model_id)}&select=id,slug,gender,build,height_cm,weight_kg,image_url,published`
+        `id=eq.${encodeURIComponent(model_id)}&select=id,slug,gender,build,height_cm,weight_kg,image_url,published,is_icon`
       );
       if (!modelMeta || !modelMeta.published) return res.status(404).json({ error: 'model not found' });
       cacheKey = `model_id=eq.${modelMeta.id}&tshirt_id=eq.${tshirt.id}&view=eq.${view}`;
+      useModelImageAsRef = !modelMeta.is_icon;
     }
     if (photo_b64) {
       const m = /^data:image\/(png|jpe?g|webp);base64,(.+)$/i.exec(photo_b64);
       if (!m) return res.status(400).json({ error: 'photo_b64 must be data:image/...;base64,...' });
       const ub = Buffer.from(m[2], 'base64');
       if (ub.length > 8 * 1024 * 1024) return res.status(413).json({ error: 'photo too large (max 8MB)' });
-      if (modelMeta) {
-        uploadBytes = ub;
-      } else {
-        modelBytes = ub;
-        photoHash  = sha256Hex(ub);
-        cacheKey   = `photo_hash=eq.${photoHash}&tshirt_id=eq.${tshirt.id}&view=eq.${view}`;
-      }
+      if (modelMeta) uploadBytes = ub;
+      else { modelBytes = ub; photoHash = sha256Hex(ub); cacheKey = `photo_hash=eq.${photoHash}&tshirt_id=eq.${tshirt.id}&view=eq.${view}`; }
     }
 
-    // === 3. Cache check (тільки якщо немає uploadBytes, бо composing — це унікально per session) ===
+    // === 3. Cache ===
     if (cacheKey && !uploadBytes) {
       const cached = await sbSelectOne('ulhome_tryon_cache', cacheKey + '&select=id,result_url,view');
       if (cached) {
@@ -287,32 +301,38 @@ export default async function handler(req, res) {
       }
     }
 
-    // === 4. Зібрати референси ===
-    if (modelMeta && !modelBytes) modelBytes = await fetchAsBytes(modelMeta.image_url);
-    const refImages = [modelBytes];
+    // === 4. Збираємо референси ===
+    const refImages = [];
+    let hasModelImage = false;
+    if (modelMeta && useModelImageAsRef) {
+      modelBytes = await fetchAsBytes(modelMeta.image_url);
+      refImages.push(modelBytes);
+      hasModelImage = true;
+    }
     if (uploadBytes) refImages.push(uploadBytes);
+    if (!modelMeta && modelBytes) {  // upload-only mode: photo_b64 без model_id
+      refImages.push(modelBytes);
+      hasModelImage = true;
+    }
 
-    // T-shirt photos: спершу з product_media (до 2 — фронт+спина), інакше primary
+    // === 5. T-shirt photos ===
     const media = await sbSelect(
       'ulhome_product_media',
       `product_id=eq.${encodeURIComponent(tshirt.id)}&select=url,sort_order&order=sort_order.asc&limit=4`
     );
     const teeUrls = [];
-    if (Array.isArray(media) && media.length) {
-      media.forEach(m => { if (m && m.url && !/size_grid/i.test(m.url)) teeUrls.push(m.url); });
-    }
+    if (Array.isArray(media) && media.length) media.forEach(m => { if (m && m.url && !/size_grid/i.test(m.url)) teeUrls.push(m.url); });
     if (!teeUrls.length && tshirt.photo) teeUrls.push(tshirt.photo);
     const seen = new Set();
     const teeUrlsClean = teeUrls.filter(u => { if (seen.has(u)) return false; seen.add(u); return true; }).slice(0, 2);
-
     for (const u of teeUrlsClean) {
       try { refImages.push(await fetchAsBytes(absolutizePhoto(u))); }
       catch (e) { console.warn('skip tee photo', u, e.message); }
     }
-    const teeRefCount = refImages.length - 1 - (uploadBytes ? 1 : 0);
+    const teeRefCount = teeUrlsClean.length;
     if (teeRefCount < 1) return res.status(422).json({ error: 'no tee photos available' });
 
-    // === 5. Prompt ===
+    // === 6. Prompt ===
     const prompt = buildPromptDiptych({
       gender: modelMeta?.gender || genderIn || 'male',
       build:  modelMeta?.build  || 'average',
@@ -322,21 +342,29 @@ export default async function handler(req, res) {
       family: tshirt.family,
       slug: tshirt.uid,
       hasUploadFace: !!uploadBytes,
+      hasModelImage,
       teeRefCount
     });
 
-    // === 6. OpenAI ===
+    // === 7. OpenAI ===
     const quality = process.env.TRYON_QUALITY || 'medium';
     const model = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
-    const resultBytes = await callGptImageEdit({ refImages, prompt, quality, model });
+    let resultBytes;
+    if (refImages.length >= 1) {
+      // Якщо є хоч одне фото (футболка обовʼязково), використовуємо edits endpoint
+      resultBytes = await callGptImageEdit({ refImages, prompt, quality, model });
+    } else {
+      // (не повинно статись — футболка завжди є)
+      resultBytes = await callGptImageGenerate({ prompt, quality, model });
+    }
 
-    // === 7. Save to storage ===
+    // === 8. Save ===
     const stamp = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
     const tag = modelMeta ? modelMeta.slug : ('user-' + (photoHash || 'anon').slice(0, 12));
     const path = `${tshirt.uid}/combined-${tag}-${stamp}.png`;
     const resultUrl = await sbStorageUpload('tryon-results', path, resultBytes, 'image/png');
 
-    // === 8. Cache ===
+    // === 9. Cache ===
     if (cacheKey && !uploadBytes) {
       try {
         await sbInsert('ulhome_tryon_cache', {
@@ -353,8 +381,7 @@ export default async function handler(req, res) {
         const again = await sbSelectOne('ulhome_tryon_cache', cacheKey + '&select=id,result_url');
         if (again) {
           return res.status(200).json({
-            ok: true, cached: true, view,
-            result_url: again.result_url,
+            ok: true, cached: true, view, result_url: again.result_url,
             tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name }
           });
         }
@@ -363,13 +390,12 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({
-      ok: true, cached: false, view,
-      result_url: resultUrl,
+      ok: true, cached: false, view, result_url: resultUrl,
       tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name }
     });
 
   } catch (e) {
-    console.error('tryon v3 diptych error', e);
+    console.error('tryon v4 error', e);
     return res.status(500).json({ error: String(e?.message || e) });
   }
 }
