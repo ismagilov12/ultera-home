@@ -449,6 +449,126 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
 .cta-tryon-pill{position:absolute;top:14px;left:14px;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(6px);padding:7px 12px;border-radius:999px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--ink);text-transform:uppercase;display:flex;align-items:center;gap:6px;border:1px solid var(--line);cursor:pointer;transition:.2s}
 .cta-tryon-pill:hover{background:#fff;border-color:var(--ink);transform:translateY(-1px)}
 
+/* === V2_CSS TRYON OVERLAY === */
+.to-overlay{position:fixed;inset:0;background:rgba(14,14,14,.78);display:none;z-index:200;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:24px;align-items:center;justify-content:center}
+.to-overlay.open{display:flex}
+.to-dialog{background:var(--bg);width:100%;max-width:1080px;max-height:94vh;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;animation:modalIn .3s cubic-bezier(.16,1,.3,1);position:relative}
+.to-close{position:absolute;top:14px;right:14px;width:42px;height:42px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;z-index:50;font-size:18px;box-shadow:0 4px 12px rgba(0,0,0,.15);cursor:pointer;transition:.2s}
+.to-close:hover{background:var(--ink);color:#fff;transform:rotate(90deg)}
+.to-head{padding:22px 28px 0;flex-shrink:0}
+.to-head h2{font-size:24px;font-weight:900;text-transform:uppercase;letter-spacing:-.015em;line-height:1.05}
+.to-head .sub{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-60);text-transform:uppercase;margin-top:4px}
+.to-body{flex:1;overflow-y:auto;padding:18px 28px 8px;-webkit-overflow-scrolling:touch}
+.to-foot{padding:14px 28px 22px;border-top:1px solid var(--line);background:var(--bg);flex-shrink:0;display:flex;gap:10px;align-items:center;justify-content:space-between}
+
+.to-section{margin-bottom:22px}
+.to-section h3{font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--ink);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.to-section h3 .cnt{margin-left:auto;background:var(--bg-alt);padding:3px 9px;border-radius:999px;font-size:10px}
+.to-section h3 .cnt b{color:var(--ink);font-weight:800}
+
+.to-tabs{display:inline-flex;background:var(--bg-alt);border-radius:999px;padding:3px;gap:3px;margin-bottom:12px}
+.to-tab{font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:7px 16px;border-radius:999px;color:var(--ink-60);cursor:pointer;transition:.2s;font-weight:700}
+.to-tab.active{background:var(--ink);color:#fff}
+
+.to-models{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.to-model{cursor:pointer;border-radius:12px;overflow:hidden;background:var(--bg-alt);transition:.2s;border:2px solid transparent;position:relative}
+.to-model:hover{transform:translateY(-2px)}
+.to-model.active{border-color:var(--ink);box-shadow:0 6px 16px rgba(0,0,0,.12)}
+.to-model .ph{aspect-ratio:2/3;background:#fff;overflow:hidden}
+.to-model .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.to-model .ph.empty{display:flex;align-items:center;justify-content:center;color:var(--ink-40);font-family:var(--font-mono);font-size:9px;text-align:center;padding:8px}
+.to-model .meta{padding:5px 7px 7px}
+.to-model .ttl{font-size:10px;font-weight:700;line-height:1.15;margin-bottom:2px}
+.to-model .sub2{font-family:var(--font-mono);font-size:8.5px;color:var(--ink-60);letter-spacing:.04em;text-transform:uppercase}
+
+.to-gender-tabs{display:inline-flex;margin-bottom:10px;background:var(--bg-alt);border-radius:999px;padding:3px}
+.to-gender-tabs button{font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;border-radius:999px;color:var(--ink-60);cursor:pointer;font-weight:700;transition:.2s}
+.to-gender-tabs button.active{background:var(--ink);color:#fff}
+
+.to-upload{border:2px dashed var(--line);border-radius:14px;padding:28px 18px;text-align:center;cursor:pointer;transition:.2s;background:var(--bg-alt);display:block}
+.to-upload:hover{border-color:var(--ink);background:#fff}
+.to-upload .ic{font-size:36px;color:var(--ink-40);margin-bottom:8px}
+.to-upload h4{font-size:14px;font-weight:700;margin-bottom:4px}
+.to-upload p{color:var(--ink-60);font-size:12px;max-width:42ch;margin:0 auto}
+.to-upload input[type=file]{display:none}
+.to-upload .preview{max-width:160px;max-height:220px;margin:0 auto 8px;border-radius:10px;overflow:hidden}
+.to-upload .preview img{width:100%;height:auto;display:block}
+.to-uparams{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.to-uparams label{display:block;font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--ink-60);text-transform:uppercase;margin-bottom:4px}
+.to-uparams input,.to-uparams select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13px}
+.to-uparams input:focus,.to-uparams select:focus{outline:none;border-color:var(--ink)}
+
+.to-tees{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.to-tees::-webkit-scrollbar{height:6px}
+.to-tees::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.to-tee{flex-shrink:0;width:110px;cursor:pointer;border-radius:12px;overflow:hidden;background:var(--bg-alt);transition:.2s;border:2px solid transparent;position:relative}
+.to-tee:hover{transform:translateY(-2px)}
+.to-tee.selected{border-color:var(--mint);box-shadow:0 6px 16px rgba(120,200,80,.18)}
+.to-tee .ph{aspect-ratio:3/4;background:#fff;overflow:hidden}
+.to-tee .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.to-tee .meta{padding:5px 7px 7px}
+.to-tee .ttl{font-size:10px;font-weight:700;line-height:1.15;margin-bottom:2px;text-transform:uppercase;letter-spacing:-.005em}
+.to-tee .clr{font-family:var(--font-mono);font-size:8.5px;color:var(--ink-60);letter-spacing:.04em}
+.to-tee .check{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:var(--mint);color:var(--ink);display:none;align-items:center;justify-content:center;font-size:12px;font-weight:800;border:1.5px solid var(--ink)}
+.to-tee.selected .check{display:flex}
+
+.to-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 26px;border-radius:999px;font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;background:var(--ink);color:#fff;border:0;transition:.2s}
+.to-cta:hover:not(:disabled){background:var(--ink-80);transform:translateY(-2px)}
+.to-cta:disabled{background:var(--ink-40);cursor:not-allowed}
+.to-cta-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);padding:12px 22px}
+.to-cta-ghost:hover{border-color:var(--ink);background:var(--bg-alt)}
+
+.to-status{font-family:var(--font-mono);font-size:11px;color:var(--ink-60);letter-spacing:.04em}
+.to-status b{color:var(--ink)}
+
+/* RESULT carousel */
+.to-result{padding:8px}
+.to-carousel{position:relative;background:var(--bg-alt);border-radius:18px;overflow:hidden;aspect-ratio:2/3;max-height:65vh;margin:0 auto;display:flex;align-items:center;justify-content:center}
+.to-carousel .slides{display:flex;transition:transform .35s cubic-bezier(.2,.8,.2,1);width:100%;height:100%;will-change:transform}
+.to-slide{flex-shrink:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;background:#fff}
+.to-slide img{width:100%;height:100%;object-fit:contain;display:block}
+.to-slide.loading{background:linear-gradient(110deg,var(--bg-alt) 8%,#fff 18%,var(--bg-alt) 33%);background-size:200% 100%;animation:shimmer 1.6s linear infinite;display:flex;align-items:center;justify-content:center}
+.to-slide.loading::after{content:"AI малює…";font-family:var(--font-mono);font-size:11px;color:var(--ink-60);letter-spacing:.08em}
+.to-slide.error{display:flex;align-items:center;justify-content:center;flex-direction:column;color:var(--ink-60);padding:18px;text-align:center;font-size:13px;background:#fef2f2}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.to-cnav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;cursor:pointer;border:0;font-size:18px;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,.18);transition:.2s}
+.to-cnav:hover{background:#fff;transform:translateY(-50%) scale(1.05)}
+.to-cnav.prev{left:14px}
+.to-cnav.next{right:14px}
+.to-cnav:disabled{opacity:.35;cursor:not-allowed}
+.to-dots{display:flex;gap:6px;justify-content:center;margin-top:14px}
+.to-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-40);cursor:pointer;transition:.2s;border:0;padding:0}
+.to-dot.active{background:var(--ink);transform:scale(1.3)}
+.to-rinfo{margin-top:14px;display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap;padding:0 4px}
+.to-rinfo .t{font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:-.01em}
+.to-rinfo .p{font-family:var(--font-mono);font-size:13px;font-weight:700}
+.to-rinfo .actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* CARD pill «+ примірочна» */
+.card-tryon-add{position:absolute;top:12px;left:12px;z-index:5;background:rgba(255,255,255,.94);backdrop-filter:blur(6px);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;cursor:pointer;border:1px solid var(--line);transition:.2s;opacity:0;transform:scale(.85)}
+.card:hover .card-tryon-add{opacity:1;transform:scale(1)}
+.card-tryon-add:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+.card-tryon-add.in{background:var(--mint);border-color:var(--ink);opacity:1;transform:scale(1)}
+@media (hover:none){.card-tryon-add{opacity:1;transform:scale(1)}}
+
+/* Header chip «🪞 N» */
+.hdr-tryon-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;background:var(--bg-alt);font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--ink);text-transform:uppercase;cursor:pointer;border:0;transition:.2s}
+.hdr-tryon-chip:hover{background:var(--ink);color:#fff}
+.hdr-tryon-chip.has{background:var(--mint)}
+.hdr-tryon-chip .n{background:var(--ink);color:#fff;border-radius:999px;padding:1px 7px;font-size:10px;min-width:18px;text-align:center}
+.hdr-tryon-chip.has:hover{background:var(--ink);color:#fff}
+
+@media (max-width:760px){
+  .to-dialog{max-height:100vh;border-radius:0;height:100vh;max-width:100%}
+  .to-overlay{padding:0}
+  .to-head{padding:18px 18px 0}
+  .to-body{padding:14px 18px 8px}
+  .to-foot{padding:12px 18px calc(12px + var(--safe))}
+  .to-uparams{grid-template-columns:1fr 1fr}
+  .to-rinfo{flex-direction:column;align-items:stretch}
+}
+
+
 
 /* ====== CART DRAWER ====== */
 .cart-drawer{position:fixed;inset:0;z-index:120;pointer-events:none}
@@ -618,6 +738,7 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
     </nav>
     <div class="hdr-r">
       <div class="lang mono"><b>UA</b> · EN</div>
+      <button class="hdr-tryon-chip" id="hdrTryonChip" onclick="openTryonOverlay(false)" title="AI Примірочна"><!-- V2_HDR_CHIP -->🪞<span class="n" id="hdrTryonN">0</span></button>
       <button class="cart-pill" onclick="openCart()">
         <span class="dot"></span>КОШИК <span id="cartCount">0</span>
       </button>
@@ -881,7 +1002,7 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
         <button class="cta-add" onclick="addToCart()">Додати в кошик</button>
         <button class="cta-buy" onclick="buyNow()">Купити в 1 клік</button>
       </div>
-      <button class="cta-tryon" onclick="openTryon()" type="button"><span class="ic">🪞</span> Приміряти онлайн (AI)</button>
+      <button class="cta-tryon" onclick="openTryonOverlay(true)" type="button"><span class="ic">🪞</span> Приміряти онлайн (AI)</button>
       <!-- /TRYON BUTTON -->
     </div>
   </div>
@@ -2035,18 +2156,521 @@ bootstrapFromSupabase().then(() => buildGrid()).catch(()=>{});
 
 console.log('ULTERA TEES Drop 01 models:', DATA.length);
 
-function openTryon(){
-  try{
-    var p = (typeof modalCtx === 'object' && modalCtx && modalCtx.product) ? modalCtx.product : null;
-    var uid = p && p.uid ? p.uid : '';
-    var url = 'tryon.html' + (uid ? ('?tee=' + encodeURIComponent(uid)) : '');
-    if(typeof ulteraFbq === 'function'){
-      ulteraFbq('InitiateCheckout', {content_ids:[uid], content_type:'tryon', content_name: p && p.name});
+
+
+
+/* === V2_JS TRYON OVERLAY === */
+(function(){
+  const SB_URL = 'https://fsihlzzjewhxpogvjapu.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU';
+  const LS_KEY = 'ulhome_tryon_basket';
+  const MAX = 5;
+
+  const ST = window.tryOn = {
+    open: false,
+    mode: 'preset',           // 'preset' | 'upload'
+    model: null,              // {id, slug, gender, build, height_cm, weight_kg, image_url, title}
+    upload: null,             // {dataUrl} | null
+    models: [],
+    filterGender: 'all',
+    basket: [],               // [uid, uid, ...]
+    results: [],              // [{uid, name, price, status:'pending'|'ok'|'err', url, err}]
+    slideIdx: 0,
+    running: false,
+    sbAcid: null
+  };
+
+  function getDataAll(){
+    return (typeof DATA_ALL !== 'undefined' && DATA_ALL) ? DATA_ALL : (typeof DATA !== 'undefined' ? DATA : []);
+  }
+  function findProd(uid){ return getDataAll().find(p => p.uid === uid) || null; }
+  function priceFmt(v){ try{ return Number(v||0).toLocaleString('uk-UA').replace(/,/g,' ')+' ₴'; }catch(e){ return v+' ₴'; } }
+
+  // ----- basket persistence -----
+  function loadBasket(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(raw){ const arr = JSON.parse(raw); if(Array.isArray(arr)) ST.basket = arr.slice(0, MAX); }
+    }catch(e){}
+  }
+  function saveBasket(){
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(ST.basket)); }catch(e){}
+  }
+  function refreshHdrChip(){
+    const chip = document.getElementById('hdrTryonChip');
+    const n = document.getElementById('hdrTryonN');
+    if(!chip || !n) return;
+    n.textContent = ST.basket.length;
+    chip.classList.toggle('has', ST.basket.length > 0);
+  }
+  function refreshCardPills(){
+    document.querySelectorAll('.card-tryon-add[data-uid]').forEach(el => {
+      el.classList.toggle('in', ST.basket.indexOf(el.dataset.uid) >= 0);
+      el.textContent = ST.basket.indexOf(el.dataset.uid) >= 0 ? '✓' : '＋';
+      el.title = ST.basket.indexOf(el.dataset.uid) >= 0 ? 'В примірочній · клік щоб прибрати' : 'Додати в примірочну';
+    });
+  }
+  function addToBasket(uid, silent){
+    if(!uid) return false;
+    if(ST.basket.indexOf(uid) >= 0) return true;
+    if(ST.basket.length >= MAX){
+      if(!silent) alert('Максимум '+MAX+' футболок у примірочній. Видали одну зі стрічки в овер­леї.');
+      return false;
     }
-    location.href = url;
-  } catch(e){ location.href = 'tryon.html'; }
-}
+    ST.basket.push(uid);
+    saveBasket();
+    refreshHdrChip();
+    refreshCardPills();
+    renderTeesStrip();
+    refreshFooter();
+    return true;
+  }
+  function rmFromBasket(uid){
+    const i = ST.basket.indexOf(uid);
+    if(i < 0) return;
+    ST.basket.splice(i, 1);
+    saveBasket();
+    refreshHdrChip();
+    refreshCardPills();
+    renderTeesStrip();
+    refreshFooter();
+  }
+  function toggleBasket(uid){
+    if(ST.basket.indexOf(uid) >= 0) rmFromBasket(uid);
+    else addToBasket(uid);
+  }
+
+  // ----- models from Supabase -----
+  async function loadModels(){
+    if(ST.models.length) return;
+    try{
+      const r = await fetch(SB_URL + '/rest/v1/ulhome_tryon_models?select=id,slug,gender,build,height_cm,weight_kg,title,image_url&published=eq.true&order=sort_order.asc', {
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+      });
+      if(r.ok) ST.models = await r.json();
+    }catch(e){ console.warn('models load err', e); }
+  }
+
+  // ----- render -----
+  function renderModels(){
+    const grid = document.getElementById('toModels');
+    if(!grid) return;
+    const list = ST.filterGender === 'all' ? ST.models : ST.models.filter(m => m.gender === ST.filterGender);
+    if(!list.length){
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--ink-40);font-family:var(--font-mono);font-size:11px">типажі ще не згенеровано</div>';
+      return;
+    }
+    grid.innerHTML = list.map(m => {
+      const isAct = ST.model && ST.model.id === m.id;
+      const phHtml = m.image_url ? '<img src="'+m.image_url+'" loading="lazy" alt="'+m.title+'">' : '<span>без фото</span>';
+      const phCls  = m.image_url ? 'ph' : 'ph empty';
+      return '<div class="to-model '+(isAct?'active':'')+'" data-mid="'+m.id+'" onclick="window.tryOn._pickModel(\''+m.id+'\')">'
+        + '<div class="'+phCls+'">'+phHtml+'</div>'
+        + '<div class="meta"><div class="ttl">'+m.title+'</div><div class="sub2">'+(m.gender==='male'?'ч':'ж')+' · '+m.height_cm+'/'+m.weight_kg+'</div></div>'
+        + '</div>';
+    }).join('');
+  }
+  function renderTeesStrip(){
+    const strip = document.getElementById('toTees');
+    if(!strip) return;
+    const all = getDataAll();
+    if(!all.length){
+      strip.innerHTML = '<div style="padding:18px;color:var(--ink-40);font-family:var(--font-mono);font-size:11px">каталог порожній</div>';
+      return;
+    }
+    // Сортуємо: спочатку обрані, потім решта
+    const sorted = all.slice().sort((a,b) => {
+      const ai = ST.basket.indexOf(a.uid), bi = ST.basket.indexOf(b.uid);
+      if(ai>=0 && bi<0) return -1;
+      if(bi>=0 && ai<0) return 1;
+      return 0;
+    });
+    strip.innerHTML = sorted.map(p => {
+      const sel = ST.basket.indexOf(p.uid) >= 0;
+      return '<div class="to-tee '+(sel?'selected':'')+'" data-uid="'+p.uid+'" onclick="window.tryOn._toggleBasket(\''+p.uid+'\')">'
+        + '<div class="ph"><img src="'+(p.photos && p.photos[0]||'')+'" loading="lazy" alt="'+p.name+'"></div>'
+        + '<div class="check">✓</div>'
+        + '<div class="meta"><div class="ttl">'+p.name+'</div><div class="clr">'+(p.color_ua||'')+'</div></div>'
+        + '</div>';
+    }).join('');
+  }
+  function refreshFooter(){
+    const n = ST.basket.length;
+    const lbl = document.getElementById('toBasketN');
+    if(lbl) lbl.textContent = n;
+    const btn = document.getElementById('toRun');
+    if(btn){
+      btn.textContent = '🪞 приміряти ('+n+')';
+      const hasMd = ST.mode === 'preset' ? !!ST.model : !!(ST.upload && ST.upload.dataUrl);
+      btn.disabled = (!hasMd || n === 0 || ST.running);
+    }
+    const modelLbl = document.getElementById('toModelLabel');
+    if(modelLbl){
+      if(ST.mode === 'preset' && ST.model) modelLbl.textContent = ST.model.title;
+      else if(ST.mode === 'upload' && ST.upload && ST.upload.dataUrl) modelLbl.textContent = 'моє фото';
+      else modelLbl.textContent = 'не обрано';
+    }
+  }
+
+  // ----- actions -----
+  window.tryOn._pickModel = function(id){
+    ST.model = ST.models.find(m => m.id === id) || null;
+    renderModels();
+    refreshFooter();
+  };
+  window.tryOn._toggleBasket = function(uid){ toggleBasket(uid); };
+
+  window.toSwitchTab = function(tab){
+    ST.mode = tab;
+    document.querySelectorAll('[data-to-tab]').forEach(b => b.classList.toggle('active', b.dataset.toTab === tab));
+    document.getElementById('toTabPreset').style.display = (tab === 'preset') ? '' : 'none';
+    document.getElementById('toTabUpload').style.display = (tab === 'upload') ? '' : 'none';
+    refreshFooter();
+  };
+  window.toFilterGender = function(g){
+    ST.filterGender = g;
+    document.querySelectorAll('[data-tg]').forEach(b => b.classList.toggle('active', b.dataset.tg === g));
+    renderModels();
+  };
+  window.toClearUpload = function(){
+    ST.upload = null;
+    const fp = document.getElementById('toFilePick'); if(fp) fp.value = '';
+    document.getElementById('toUploadEmpty').style.display = '';
+    document.getElementById('toUploadFilled').style.display = 'none';
+    refreshFooter();
+  };
+  document.addEventListener('change', function(e){
+    if(e.target && e.target.id === 'toFilePick'){
+      const f = e.target.files && e.target.files[0];
+      if(!f) return;
+      if(f.size > 8*1024*1024){ alert('Файл більше 8 МБ'); return; }
+      const r = new FileReader();
+      r.onload = function(){
+        ST.upload = { dataUrl: r.result };
+        document.getElementById('toUploadPreview').src = r.result;
+        document.getElementById('toUploadEmpty').style.display = 'none';
+        document.getElementById('toUploadFilled').style.display = '';
+        refreshFooter();
+      };
+      r.readAsDataURL(f);
+    }
+  });
+
+  // ----- open/close -----
+  window.openTryonOverlay = function(preselectCurrent){
+    // Якщо викликано з модалки товара — додаємо поточний товар у кошик
+    if(preselectCurrent && typeof modalCtx !== 'undefined' && modalCtx && modalCtx.product){
+      addToBasket(modalCtx.product.uid, true);
+      // одночасно закриємо модалку товара щоб не накладалися
+      try{ closeModal(); }catch(e){}
+    }
+    document.getElementById('toOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    ST.open = true;
+    // показуємо setup, ховаємо result
+    document.getElementById('toSetup').style.display = '';
+    document.getElementById('toResult').style.display = 'none';
+    loadModels().then(renderModels);
+    renderTeesStrip();
+    refreshFooter();
+    try{ if(typeof ulteraFbq === 'function') ulteraFbq('InitiateCheckout', {content_type:'tryon_overlay'}); }catch(e){}
+  };
+  window.closeTryonOverlay = function(){
+    document.getElementById('toOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+    ST.open = false;
+  };
+
+  // ESC ↓
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && ST.open) closeTryonOverlay();
+  });
+
+  // ----- run try-on (sequential) -----
+  window.toRun = async function(){
+    if(ST.running) return;
+    if(!ST.basket.length) return;
+    const hasMd = ST.mode === 'preset' ? !!ST.model : !!(ST.upload && ST.upload.dataUrl);
+    if(!hasMd) return;
+
+    ST.running = true;
+    ST.results = ST.basket.map(uid => {
+      const p = findProd(uid);
+      return { uid:uid, name: p ? p.name : uid, price: p ? p.price : 0, status:'pending', url:null, err:null };
+    });
+    ST.slideIdx = 0;
+    document.getElementById('toSetup').style.display = 'none';
+    document.getElementById('toResult').style.display = '';
+    renderCarousel();
+    refreshFooter();
+
+    for(let i=0; i<ST.basket.length; i++){
+      const uid = ST.basket[i];
+      const prod = findProd(uid);
+      if(!prod){ ST.results[i].status = 'err'; ST.results[i].err = 'товар не знайдено'; updateSlide(i); continue; }
+      // Шукаємо id у Supabase — потрібен для /api/tryon. Спробуємо знайти за uid.
+      let tshirt_id = null;
+      try{
+        const r = await fetch(SB_URL + '/rest/v1/ulhome_products?select=id&uid=eq.' + encodeURIComponent(uid) + '&limit=1', {
+          headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+        });
+        if(r.ok){ const arr = await r.json(); tshirt_id = arr[0] && arr[0].id; }
+      }catch(e){}
+      if(!tshirt_id){ ST.results[i].status='err'; ST.results[i].err='БД не знайшла товар (uid)'; updateSlide(i); continue; }
+
+      const body = { tshirt_id: tshirt_id };
+      if(ST.mode === 'preset'){
+        body.model_id = ST.model.id;
+      } else {
+        body.photo_b64 = ST.upload.dataUrl;
+        body.gender = document.getElementById('toUGender').value || 'male';
+        const h = +document.getElementById('toUHeight').value || 0;
+        const w = +document.getElementById('toUWeight').value || 0;
+        if(h) body.height = h;
+        if(w) body.weight = w;
+      }
+      try{
+        const r2 = await fetch('/api/tryon', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+        const j = await r2.json();
+        if(r2.ok && j.result_url){
+          ST.results[i].status = 'ok';
+          ST.results[i].url = j.result_url;
+        } else {
+          ST.results[i].status = 'err';
+          ST.results[i].err = j.error || ('HTTP ' + r2.status);
+        }
+      }catch(e){
+        ST.results[i].status = 'err';
+        ST.results[i].err = String(e && e.message || e);
+      }
+      updateSlide(i);
+      toUpdateStatus(i+1);
+    }
+    ST.running = false;
+    refreshFooter();
+    toUpdateStatus(ST.basket.length, true);
+  };
+
+  function toUpdateStatus(done, finished){
+    const el = document.getElementById('toStatus');
+    if(!el) return;
+    if(finished) el.innerHTML = '<b>Готово.</b>';
+    else         el.innerHTML = 'обробка <b>'+done+'/'+ST.basket.length+'</b>…';
+  }
+
+  function renderCarousel(){
+    const slides = document.getElementById('toSlides');
+    const dots = document.getElementById('toDots');
+    if(!slides || !dots) return;
+    slides.innerHTML = ST.results.map((r,i) => {
+      if(r.status === 'pending') return '<div class="to-slide loading" data-i="'+i+'"></div>';
+      if(r.status === 'err')     return '<div class="to-slide error" data-i="'+i+'"><div>❌ '+r.name+'</div><div style="font-family:var(--font-mono);font-size:10px;margin-top:6px">'+(r.err||'помилка')+'</div></div>';
+      return '<div class="to-slide" data-i="'+i+'"><img src="'+r.url+'" alt="'+r.name+'"></div>';
+    }).join('');
+    dots.innerHTML = ST.results.map((_,i) => '<button class="to-dot '+(i===ST.slideIdx?'active':'')+'" onclick="window.tryOn._goSlide('+i+')"></button>').join('');
+    applySlideTransform();
+    refreshSlideInfo();
+  }
+  function updateSlide(i){
+    // оновити один слайд (після завершення)
+    const node = document.querySelector('.to-slide[data-i="'+i+'"]');
+    if(!node) return renderCarousel();
+    const r = ST.results[i];
+    if(r.status === 'ok'){
+      node.className = 'to-slide';
+      node.innerHTML = '<img src="'+r.url+'" alt="'+r.name+'">';
+    } else if(r.status === 'err'){
+      node.className = 'to-slide error';
+      node.innerHTML = '<div>❌ '+r.name+'</div><div style="font-family:var(--font-mono);font-size:10px;margin-top:6px">'+(r.err||'')+'</div>';
+    }
+    refreshSlideInfo();
+  }
+  function applySlideTransform(){
+    const slides = document.getElementById('toSlides');
+    if(slides) slides.style.transform = 'translateX(' + (-ST.slideIdx*100) + '%)';
+    const prev = document.getElementById('toPrev'); if(prev) prev.disabled = ST.slideIdx <= 0;
+    const next = document.getElementById('toNext'); if(next) next.disabled = ST.slideIdx >= ST.results.length-1;
+    document.querySelectorAll('.to-dot').forEach((d,i) => d.classList.toggle('active', i===ST.slideIdx));
+  }
+  function refreshSlideInfo(){
+    const r = ST.results[ST.slideIdx];
+    if(!r) return;
+    const t = document.getElementById('toRTitle'); if(t) t.textContent = r.name;
+    const p = document.getElementById('toRPrice'); if(p) p.textContent = priceFmt(r.price);
+    const buy = document.getElementById('toRBuy'); if(buy) buy.href = 'tshirts.html#' + (r.uid||'');
+    const dl = document.getElementById('toRDl'); if(dl) dl.href = r.url || '#';
+  }
+  window.toGoSlide = function(delta){
+    const ni = ST.slideIdx + delta;
+    if(ni < 0 || ni >= ST.results.length) return;
+    ST.slideIdx = ni;
+    applySlideTransform();
+    refreshSlideInfo();
+  };
+  window.tryOn._goSlide = function(i){
+    if(i < 0 || i >= ST.results.length) return;
+    ST.slideIdx = i;
+    applySlideTransform();
+    refreshSlideInfo();
+  };
+
+  // swipe support
+  let _tx0=null, _ty0=null;
+  document.addEventListener('touchstart', function(e){
+    if(!ST.open) return;
+    if(!e.target.closest('#toResult')) return;
+    _tx0 = e.touches[0].clientX; _ty0 = e.touches[0].clientY;
+  }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    if(_tx0 === null) return;
+    const dx = (e.changedTouches[0].clientX - _tx0);
+    const dy = Math.abs(e.changedTouches[0].clientY - _ty0);
+    if(dy < 40 && Math.abs(dx) > 50){
+      if(dx < 0) toGoSlide(1); else toGoSlide(-1);
+    }
+    _tx0 = null;
+  }, {passive:true});
+
+  // ----- card pills hook -----
+  window.__attachCardTryonPills = function(){
+    document.querySelectorAll('.card-img').forEach(box => {
+      if(box.querySelector('.card-tryon-add')) return;
+      const card = box.closest('.card');
+      // знайти uid: спираємось на onclick картки → openModal(prod) — uid немає у DOM. Тому додаємо data-attr через MutationObserver-style зворотний резерв.
+    });
+  };
+  // Інтеграція в buildCard: monkey-patch через MutationObserver — додаємо pill вже після того, як буде вставлена картка
+  function injectPills(){
+    document.querySelectorAll('.card .card-img').forEach(box => {
+      if(box.querySelector('.card-tryon-add')) return;
+      // Спробуємо отримати uid: знайдемо текст у .card-sku ("ULT-TEE-001 · ...") — мапнемо на DATA
+      const card = box.closest('.card');
+      const skuEl = card && card.querySelector('.card-sku');
+      if(!skuEl) return;
+      const sku = (skuEl.textContent || '').split('·')[0].trim();
+      const prod = getDataAll().find(x => x.sku === sku);
+      if(!prod) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'card-tryon-add';
+      btn.dataset.uid = prod.uid;
+      btn.textContent = '＋';
+      btn.title = 'Додати в примірочну';
+      btn.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        ev.preventDefault();
+        toggleBasket(prod.uid);
+      });
+      box.appendChild(btn);
+      // Reflect state
+      if(ST.basket.indexOf(prod.uid) >= 0){ btn.classList.add('in'); btn.textContent='✓'; }
+    });
+  }
+  // Запуск після завантаження + MutationObserver на головному гриді
+  function watchGrid(){
+    injectPills();
+    const targets = [document.getElementById('lifestyleGrid'), document.getElementById('conceptGrid'), document.querySelector('main')].filter(Boolean);
+    targets.forEach(t => {
+      const mo = new MutationObserver(() => injectPills());
+      mo.observe(t, {childList:true, subtree:true});
+    });
+  }
+
+  // ----- init -----
+  loadBasket();
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ refreshHdrChip(); refreshCardPills(); watchGrid(); });
+  } else {
+    refreshHdrChip(); refreshCardPills(); watchGrid();
+  }
+})();
 
 </script>
+
+<!-- V2_TRYON_OVERLAY -->
+<div class="to-overlay" id="toOverlay" onclick="if(event.target===this)closeTryonOverlay()">
+  <div class="to-dialog">
+    <button class="to-close" onclick="closeTryonOverlay()">✕</button>
+    <div class="to-head">
+      <h2 id="toHeadTitle">AI Примірочна</h2>
+      <div class="sub" id="toHeadSub">// Обери типаж і до 5 футболок · ~15 сек кожна</div>
+    </div>
+    <div class="to-body" id="toBody">
+      <!-- STEP A: setup -->
+      <div id="toSetup">
+        <div class="to-section">
+          <h3>Хто буде моделлю <span class="cnt"><b id="toModelLabel">не обрано</b></span></h3>
+          <div class="to-tabs">
+            <button class="to-tab active" data-to-tab="preset" onclick="toSwitchTab('preset')">типажі</button>
+            <button class="to-tab" data-to-tab="upload" onclick="toSwitchTab('upload')">моє фото</button>
+          </div>
+          <div id="toTabPreset">
+            <div class="to-gender-tabs">
+              <button class="active" data-tg="all" onclick="toFilterGender('all')">всі</button>
+              <button data-tg="male" onclick="toFilterGender('male')">ч</button>
+              <button data-tg="female" onclick="toFilterGender('female')">ж</button>
+            </div>
+            <div class="to-models" id="toModels">
+              <div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--ink-40);font-family:var(--font-mono);font-size:11px">завантаження типажів…</div>
+            </div>
+          </div>
+          <div id="toTabUpload" style="display:none">
+            <label class="to-upload" id="toUploadZone" for="toFilePick">
+              <div id="toUploadEmpty">
+                <div class="ic">📸</div>
+                <h4>Завантаж своє фото</h4>
+                <p>JPG/PNG до 8 МБ. Краще — у повний зріст, на однотонному фоні.</p>
+              </div>
+              <div id="toUploadFilled" style="display:none">
+                <div class="preview"><img id="toUploadPreview" src="" alt=""></div>
+                <button type="button" class="to-cta to-cta-ghost" style="padding:8px 16px;font-size:11px" onclick="event.preventDefault();toClearUpload()">обрати інше</button>
+              </div>
+              <input type="file" id="toFilePick" accept="image/*">
+            </label>
+            <div class="to-uparams">
+              <div><label>стать</label><select id="toUGender"><option value="male">Чоловік</option><option value="female">Жінка</option></select></div>
+              <div><label>зріст, см</label><input type="number" id="toUHeight" min="140" max="220" placeholder="180"></div>
+              <div><label>вага, кг</label><input type="number" id="toUWeight" min="40" max="180" placeholder="75"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="to-section">
+          <h3>Що міряєш <span class="cnt"><b id="toBasketN">0</b>/5</span></h3>
+          <div class="to-tees" id="toTees">
+            <div style="padding:18px;color:var(--ink-40);font-family:var(--font-mono);font-size:11px">завантаження каталога…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP B: result -->
+      <div id="toResult" class="to-result" style="display:none">
+        <div class="to-carousel">
+          <div class="slides" id="toSlides"></div>
+          <button class="to-cnav prev" id="toPrev" onclick="toGoSlide(-1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <button class="to-cnav next" id="toNext" onclick="toGoSlide(1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>
+        </div>
+        <div class="to-dots" id="toDots"></div>
+        <div class="to-rinfo">
+          <div><div class="t" id="toRTitle">—</div><div class="p" id="toRPrice">—</div></div>
+          <div class="actions">
+            <a class="to-cta" id="toRBuy" href="#">купити цю модель</a>
+            <a class="to-cta to-cta-ghost" id="toRDl" download="ultera-tryon.png">⬇ зберегти</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="to-foot">
+      <button class="to-cta to-cta-ghost" onclick="closeTryonOverlay()" id="toFootClose">закрити</button>
+      <div class="to-status" id="toStatus"></div>
+      <button class="to-cta" id="toRun" disabled onclick="toRun()">🪞 приміряти (0)</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
