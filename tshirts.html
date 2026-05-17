@@ -568,6 +568,17 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
   .to-rinfo{flex-direction:column;align-items:stretch}
 }
 
+
+
+/* === V5_DIPTYCH CSS === */
+.to-result .to-carousel{aspect-ratio:3/2;max-height:none}
+.to-result .to-slide img{object-fit:contain}
+.to-model-tag{position:absolute;top:6px;left:6px;background:var(--mint);color:var(--ink);font-family:var(--font-mono);font-size:8px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:999px;border:1px solid var(--ink);z-index:3}
+@media (max-width:760px){
+  .to-result .to-carousel{aspect-ratio:auto;max-height:60vh}
+  .to-result .to-slide img{object-fit:contain;max-height:60vh;width:auto;margin:0 auto}
+}
+
 /* === V3_OVERLAY_REBUILD === */
 .to-hint{font-family:var(--font-mono);font-size:10px;color:var(--ink-60);letter-spacing:.04em;margin-top:8px;line-height:1.5}
 .to-viewtabs{display:inline-flex;background:var(--bg-alt);border-radius:999px;padding:3px;gap:3px;margin:0 auto 12px;align-self:center}
@@ -2175,7 +2186,10 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
 
 
 
-/* === V3_JS TRYON OVERLAY === */
+
+
+
+/* === V5_DIPTYCH === */
 (function(){
   const SB_URL = 'https://fsihlzzjewhxpogvjapu.supabase.co';
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU';
@@ -2184,93 +2198,88 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
 
   const ST = window.tryOn = {
     open: false,
-    model: null,              // обраний типаж
-    upload: null,             // {dataUrl} | null — опціональне фото
+    model: null,
+    upload: null,
     models: [],
     filterGender: 'all',
-    basket: [],               // [uid, ...]
-    results: [],              // [{uid, name, price, front:{status,url,err}, back:{...}}]
+    basket: [],
+    results: [],          // [{uid, name, price, status:'pending'|'ok'|'err', url, err}]
     slideIdx: 0,
-    currentView: 'front',     // 'front' | 'back'
     running: false
   };
 
-  function getDataAll(){
-    return (typeof DATA_ALL !== 'undefined' && DATA_ALL) ? DATA_ALL : (typeof DATA !== 'undefined' ? DATA : []);
-  }
+  function getDataAll(){ return (typeof DATA_ALL !== 'undefined' && DATA_ALL) ? DATA_ALL : (typeof DATA !== 'undefined' ? DATA : []); }
   function findProd(uid){ return getDataAll().find(p => p.uid === uid) || null; }
   function priceFmt(v){ try{ return Number(v||0).toLocaleString('uk-UA').replace(/,/g,' ')+' ₴'; }catch(e){ return v+' ₴'; } }
 
-  // ---------- basket persistence ----------
+  // ---------- basket ----------
   function loadBasket(){
-    try{
-      const raw = localStorage.getItem(LS_KEY);
-      if(raw){ const arr = JSON.parse(raw); if(Array.isArray(arr)) ST.basket = arr.slice(0, MAX); }
-    }catch(e){}
+    try{ const raw = localStorage.getItem(LS_KEY); if(raw){ const a = JSON.parse(raw); if(Array.isArray(a)) ST.basket = a.slice(0,MAX); } }catch(e){}
   }
-  function saveBasket(){
-    try{ localStorage.setItem(LS_KEY, JSON.stringify(ST.basket)); }catch(e){}
-  }
+  function saveBasket(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(ST.basket)); }catch(e){} }
   function refreshHdrChip(){
-    const chip = document.getElementById('hdrTryonChip');
-    const n = document.getElementById('hdrTryonN');
-    if(!chip || !n) return;
+    const c = document.getElementById('hdrTryonChip'); const n = document.getElementById('hdrTryonN');
+    if(!c || !n) return;
     n.textContent = ST.basket.length;
-    chip.classList.toggle('has', ST.basket.length > 0);
+    c.classList.toggle('has', ST.basket.length > 0);
   }
   function refreshCardPills(){
     document.querySelectorAll('.card-tryon-add[data-uid]').forEach(el => {
       const inn = ST.basket.indexOf(el.dataset.uid) >= 0;
       el.classList.toggle('in', inn);
       el.textContent = inn ? '✓' : '＋';
-      el.title = inn ? 'В примірочній · клік щоб прибрати' : 'Додати в примірочну';
+      el.title = inn ? 'У примірочній · клік щоб прибрати' : 'Додати в примірочну';
     });
   }
   function addToBasket(uid, silent){
     if(!uid) return false;
     if(ST.basket.indexOf(uid) >= 0) return true;
-    if(ST.basket.length >= MAX){
-      if(!silent) alert('Максимум '+MAX+' футболок у примірочній.');
-      return false;
-    }
-    ST.basket.push(uid);
-    saveBasket(); refreshHdrChip(); refreshCardPills(); renderTeesStrip(); refreshFooter();
+    if(ST.basket.length >= MAX){ if(!silent) alert('Максимум '+MAX+' футболок.'); return false; }
+    ST.basket.push(uid); saveBasket(); refreshHdrChip(); refreshCardPills(); renderTeesStrip(); refreshFooter();
     return true;
   }
   function rmFromBasket(uid){
-    const i = ST.basket.indexOf(uid);
-    if(i < 0) return;
-    ST.basket.splice(i, 1);
-    saveBasket(); refreshHdrChip(); refreshCardPills(); renderTeesStrip(); refreshFooter();
+    const i = ST.basket.indexOf(uid); if(i<0) return;
+    ST.basket.splice(i,1); saveBasket(); refreshHdrChip(); refreshCardPills(); renderTeesStrip(); refreshFooter();
   }
-  function toggleBasket(uid){
-    if(ST.basket.indexOf(uid) >= 0) rmFromBasket(uid);
-    else addToBasket(uid);
-  }
+  function toggleBasket(uid){ if(ST.basket.indexOf(uid)>=0) rmFromBasket(uid); else addToBasket(uid); }
 
   // ---------- models ----------
   async function loadModels(){
     if(ST.models.length) return;
     try{
       const r = await fetch(SB_URL + '/rest/v1/ulhome_tryon_models?select=id,slug,gender,build,height_cm,weight_kg,title,image_url&published=eq.true&order=sort_order.asc', {
-        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+        headers:{ 'apikey': SB_KEY, 'Authorization':'Bearer '+SB_KEY }
       });
       if(r.ok) ST.models = await r.json();
-    }catch(e){ console.warn('models load err', e); }
+    }catch(e){ console.warn(e); }
   }
   function renderModels(){
     const grid = document.getElementById('toModels');
     if(!grid) return;
-    const list = ST.filterGender === 'all' ? ST.models : ST.models.filter(m => m.gender === ST.filterGender);
+    let list = ST.filterGender === 'all' ? ST.models : ST.models.filter(m => m.gender === ST.filterGender);
+
+    // Підсвітимо найближчі за зростом/вагою якщо вони введені
+    const h = +(document.getElementById('toHeight')||{}).value || 0;
+    const w = +(document.getElementById('toWeight')||{}).value || 0;
+    if(h && w && list.length){
+      list = list.slice().sort((a,b) => {
+        const da = Math.abs(a.height_cm-h) + Math.abs(a.weight_kg-w)/2;
+        const db = Math.abs(b.height_cm-h) + Math.abs(b.weight_kg-w)/2;
+        return da - db;
+      });
+    }
     if(!list.length){
       grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--ink-40);font-family:var(--font-mono);font-size:11px">типажі ще не згенеровано</div>';
       return;
     }
-    grid.innerHTML = list.map(m => {
+    grid.innerHTML = list.map((m,idx) => {
       const isAct = ST.model && ST.model.id === m.id;
+      const recommend = (h && w && idx === 0 && !isAct) ? '<div class="to-model-tag">найближчий</div>' : '';
       const phHtml = m.image_url ? '<img src="'+m.image_url+'" loading="lazy" alt="'+m.title+'">' : '<span>без фото</span>';
       const phCls  = m.image_url ? 'ph' : 'ph empty';
       return '<div class="to-model '+(isAct?'active':'')+'" data-mid="'+m.id+'" onclick="window.tryOn._pickModel(\''+m.id+'\')">'
+        + recommend
         + '<div class="'+phCls+'">'+phHtml+'</div>'
         + '<div class="meta"><div class="ttl">'+m.title+'</div><div class="sub2">'+(m.gender==='male'?'ч':'ж')+' · '+m.height_cm+'/'+m.weight_kg+'</div></div>'
         + '</div>';
@@ -2286,9 +2295,7 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     }
     const sorted = all.slice().sort((a,b) => {
       const ai = ST.basket.indexOf(a.uid), bi = ST.basket.indexOf(b.uid);
-      if(ai>=0 && bi<0) return -1;
-      if(bi>=0 && ai<0) return 1;
-      return 0;
+      if(ai>=0 && bi<0) return -1; if(bi>=0 && ai<0) return 1; return 0;
     });
     strip.innerHTML = sorted.map(p => {
       const sel = ST.basket.indexOf(p.uid) >= 0;
@@ -2305,26 +2312,24 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     const btn = document.getElementById('toRun');
     if(btn){
       btn.textContent = '🪞 приміряти ('+n+')';
-      const hasModel = !!ST.model;
-      btn.disabled = (!hasModel || n === 0 || ST.running);
+      btn.disabled = (!ST.model || n === 0 || ST.running);
     }
     const ml = document.getElementById('toModelLabel');
     if(ml) ml.textContent = ST.model ? ST.model.title : 'не обрано';
   }
 
-  // ---------- pick model + auto-fill ----------
+  // ---------- pick / filter / inputs ----------
   window.tryOn._pickModel = function(id){
     ST.model = ST.models.find(m => m.id === id) || null;
     if(ST.model){
       const h = document.getElementById('toHeight');
       const w = document.getElementById('toWeight');
       const g = document.getElementById('toGender');
-      if(h && !h.dataset.userEdited) h.value = ST.model.height_cm;
-      if(w && !w.dataset.userEdited) w.value = ST.model.weight_kg;
-      if(g) g.value = ST.model.gender;
+      if(h && !h.dataset.userEdited && !h.value) h.value = ST.model.height_cm;
+      if(w && !w.dataset.userEdited && !w.value) w.value = ST.model.weight_kg;
+      if(g && !g.dataset.userEdited) g.value = ST.model.gender;
     }
-    renderModels();
-    refreshFooter();
+    renderModels(); refreshFooter();
   };
   window.tryOn._toggleBasket = function(uid){ toggleBasket(uid); };
   window.toFilterGender = function(g){
@@ -2333,25 +2338,24 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     renderModels();
   };
 
-  // помічаємо що користувач відредагував поле (щоб auto-fill не перетирав)
   document.addEventListener('input', function(e){
     if(!e.target) return;
-    if(e.target.id === 'toHeight' || e.target.id === 'toWeight'){
+    if(e.target.id === 'toHeight' || e.target.id === 'toWeight' || e.target.id === 'toGender'){
       e.target.dataset.userEdited = '1';
+      if(e.target.id === 'toHeight' || e.target.id === 'toWeight') renderModels();
     }
   });
 
   // ---------- upload ----------
   window.toClearUpload = function(){
     ST.upload = null;
-    const fp = document.getElementById('toFilePick'); if(fp) fp.value = '';
+    const fp = document.getElementById('toFilePick'); if(fp) fp.value='';
     document.getElementById('toUploadEmpty').style.display = '';
     document.getElementById('toUploadFilled').style.display = 'none';
   };
   document.addEventListener('change', function(e){
     if(e.target && e.target.id === 'toFilePick'){
-      const f = e.target.files && e.target.files[0];
-      if(!f) return;
+      const f = e.target.files && e.target.files[0]; if(!f) return;
       if(f.size > 8*1024*1024){ alert('Файл більше 8 МБ'); return; }
       const r = new FileReader();
       r.onload = function(){
@@ -2386,27 +2390,22 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
   };
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && ST.open) closeTryonOverlay(); });
 
-  // ---------- core: run try-on for both views ----------
-  async function callTryon(payload){
-    const r = await fetch('/api/tryon', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    const j = await r.json();
-    if(!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
-    return j;
-  }
-
+  // ---------- run try-on ----------
   async function resolveTshirtId(uid){
     try{
       const r = await fetch(SB_URL + '/rest/v1/ulhome_products?select=id&uid=eq.' + encodeURIComponent(uid) + '&limit=1', {
-        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+        headers:{ 'apikey': SB_KEY, 'Authorization':'Bearer '+SB_KEY }
       });
-      if(r.ok){ const arr = await r.json(); return arr[0] && arr[0].id; }
+      if(r.ok){ const a = await r.json(); return a[0] && a[0].id; }
     }catch(e){}
     return null;
   }
-
+  async function callTryon(payload){
+    const r = await fetch('/api/tryon', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+    return j;
+  }
   window.toRun = async function(){
     if(ST.running) return;
     if(!ST.basket.length || !ST.model) return;
@@ -2418,50 +2417,26 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     ST.running = true;
     ST.results = ST.basket.map(uid => {
       const p = findProd(uid);
-      return { uid, name: p ? p.name : uid, price: p ? p.price : 0,
-               front: {status:'pending', url:null, err:null},
-               back:  {status:'pending', url:null, err:null} };
+      return { uid, name: p ? p.name : uid, price: p ? p.price : 0, status:'pending', url:null, err:null };
     });
     ST.slideIdx = 0;
-    ST.currentView = 'front';
     document.getElementById('toSetup').style.display = 'none';
     document.getElementById('toResult').style.display = '';
-    document.querySelectorAll('[data-vw]').forEach(b => b.classList.toggle('active', b.dataset.vw === 'front'));
     renderCarousel();
     refreshFooter();
 
     for(let i=0; i<ST.basket.length; i++){
       const uid = ST.basket[i];
       const tshirt_id = await resolveTshirtId(uid);
-      if(!tshirt_id){
-        ST.results[i].front.status = 'err'; ST.results[i].front.err = 'БД не знайшла товар';
-        ST.results[i].back.status  = 'err'; ST.results[i].back.err  = 'БД не знайшла товар';
-        updateSlide(i); continue;
-      }
-      const basePayload = {
-        tshirt_id,
-        model_id: ST.model.id,
-        gender, height, weight
-      };
-      if(ST.upload && ST.upload.dataUrl) basePayload.photo_b64 = ST.upload.dataUrl;
-
-      // FRONT
+      if(!tshirt_id){ ST.results[i].status='err'; ST.results[i].err='БД не знайшла товар (uid)'; updateSlide(i); continue; }
+      const payload = { tshirt_id, model_id: ST.model.id, gender, height, weight };
+      if(ST.upload && ST.upload.dataUrl) payload.photo_b64 = ST.upload.dataUrl;
+      toUpdateStatus((i+1)+'/'+ST.basket.length);
       try{
-        toUpdateStatus('front #' + (i+1) + '/' + ST.basket.length);
-        const j = await callTryon(Object.assign({}, basePayload, {view:'front'}));
-        ST.results[i].front = {status:'ok', url:j.result_url, err:null};
+        const j = await callTryon(payload);
+        ST.results[i].status='ok'; ST.results[i].url=j.result_url;
       }catch(e){
-        ST.results[i].front = {status:'err', url:null, err:String(e.message || e)};
-      }
-      updateSlide(i);
-
-      // BACK
-      try{
-        toUpdateStatus('back #' + (i+1) + '/' + ST.basket.length);
-        const j = await callTryon(Object.assign({}, basePayload, {view:'back'}));
-        ST.results[i].back = {status:'ok', url:j.result_url, err:null};
-      }catch(e){
-        ST.results[i].back = {status:'err', url:null, err:String(e.message || e)};
+        ST.results[i].status='err'; ST.results[i].err=String(e.message||e);
       }
       updateSlide(i);
     }
@@ -2469,99 +2444,65 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     toUpdateStatus('готово.', true);
     refreshFooter();
   };
-
   function toUpdateStatus(txt, done){
-    const el = document.getElementById('toStatus');
-    if(!el) return;
-    el.innerHTML = done ? ('<b>' + txt + '</b>') : ('обробка <b>' + txt + '</b>…');
+    const el = document.getElementById('toStatus'); if(!el) return;
+    el.innerHTML = done ? ('<b>'+txt+'</b>') : ('обробка <b>'+txt+'</b>…');
   }
 
   // ---------- carousel ----------
-  function viewSrc(r){
-    const v = r[ST.currentView];
-    return v && v.status === 'ok' ? v.url : null;
-  }
-  function viewState(r){ return r[ST.currentView]; }
   function renderCarousel(){
-    const slides = document.getElementById('toSlides');
-    const dots = document.getElementById('toDots');
+    const slides = document.getElementById('toSlides'); const dots = document.getElementById('toDots');
     if(!slides || !dots) return;
     slides.innerHTML = ST.results.map((r,i) => {
-      const v = viewState(r);
-      if(!v || v.status === 'pending') return '<div class="to-slide loading" data-i="'+i+'"></div>';
-      if(v.status === 'err')           return '<div class="to-slide error" data-i="'+i+'"><div>❌ '+r.name+' ('+ST.currentView+')</div><div style="font-family:var(--font-mono);font-size:10px;margin-top:6px">'+(v.err||'')+'</div></div>';
-      return '<div class="to-slide" data-i="'+i+'"><img src="'+v.url+'" alt="'+r.name+'"></div>';
+      if(r.status === 'pending') return '<div class="to-slide loading" data-i="'+i+'"></div>';
+      if(r.status === 'err')     return '<div class="to-slide error" data-i="'+i+'"><div>❌ '+r.name+'</div><div style="font-family:var(--font-mono);font-size:10px;margin-top:6px">'+(r.err||'')+'</div></div>';
+      return '<div class="to-slide" data-i="'+i+'"><img src="'+r.url+'" alt="'+r.name+'"></div>';
     }).join('');
     dots.innerHTML = ST.results.map((_,i) => '<button class="to-dot '+(i===ST.slideIdx?'active':'')+'" onclick="window.tryOn._goSlide('+i+')"></button>').join('');
-    applySlideTransform();
-    refreshSlideInfo();
+    applySlideTransform(); refreshSlideInfo();
   }
   function updateSlide(i){
-    // оновлюємо тільки якщо це поточний view
     const node = document.querySelector('.to-slide[data-i="'+i+'"]');
     if(!node) return renderCarousel();
     const r = ST.results[i];
-    const v = viewState(r);
-    if(!v || v.status === 'pending'){
-      node.className = 'to-slide loading';
-      node.innerHTML = '';
-    } else if(v.status === 'ok'){
-      node.className = 'to-slide';
-      node.innerHTML = '<img src="'+v.url+'" alt="'+r.name+'">';
-    } else if(v.status === 'err'){
-      node.className = 'to-slide error';
-      node.innerHTML = '<div>❌ '+r.name+' ('+ST.currentView+')</div><div style="font-family:var(--font-mono);font-size:10px;margin-top:6px">'+(v.err||'')+'</div>';
-    }
+    if(r.status === 'ok'){ node.className='to-slide'; node.innerHTML='<img src="'+r.url+'" alt="'+r.name+'">'; }
+    else if(r.status === 'err'){ node.className='to-slide error'; node.innerHTML='<div>❌ '+r.name+'</div><div style="font-family:var(--font-mono);font-size:10px;margin-top:6px">'+(r.err||'')+'</div>'; }
     refreshSlideInfo();
   }
   function applySlideTransform(){
-    const slides = document.getElementById('toSlides');
-    if(slides) slides.style.transform = 'translateX(' + (-ST.slideIdx*100) + '%)';
+    const slides = document.getElementById('toSlides'); if(slides) slides.style.transform = 'translateX('+(-ST.slideIdx*100)+'%)';
     const prev = document.getElementById('toPrev'); if(prev) prev.disabled = ST.slideIdx <= 0;
     const next = document.getElementById('toNext'); if(next) next.disabled = ST.slideIdx >= ST.results.length-1;
     document.querySelectorAll('.to-dot').forEach((d,i) => d.classList.toggle('active', i===ST.slideIdx));
   }
   function refreshSlideInfo(){
-    const r = ST.results[ST.slideIdx];
-    if(!r) return;
+    const r = ST.results[ST.slideIdx]; if(!r) return;
     const t = document.getElementById('toRTitle'); if(t) t.textContent = r.name;
     const p = document.getElementById('toRPrice'); if(p) p.textContent = priceFmt(r.price);
-    const buy = document.getElementById('toRBuy'); if(buy) buy.href = 'tshirts.html#' + (r.uid||'');
-    const dl = document.getElementById('toRDl');
-    const v = viewState(r);
-    if(dl) dl.href = (v && v.url) ? v.url : '#';
+    const buy = document.getElementById('toRBuy'); if(buy) buy.href = 'tshirts.html#'+(r.uid||'');
+    const dl = document.getElementById('toRDl'); if(dl) dl.href = r.url || '#';
   }
-  window.toGoSlide = function(delta){
-    const ni = ST.slideIdx + delta;
-    if(ni < 0 || ni >= ST.results.length) return;
+  window.toGoSlide = function(d){
+    const ni = ST.slideIdx + d; if(ni<0 || ni>=ST.results.length) return;
     ST.slideIdx = ni; applySlideTransform(); refreshSlideInfo();
   };
   window.tryOn._goSlide = function(i){
-    if(i < 0 || i >= ST.results.length) return;
+    if(i<0 || i>=ST.results.length) return;
     ST.slideIdx = i; applySlideTransform(); refreshSlideInfo();
-  };
-  window.toSwitchView = function(v){
-    if(v !== 'front' && v !== 'back') return;
-    ST.currentView = v;
-    document.querySelectorAll('[data-vw]').forEach(b => b.classList.toggle('active', b.dataset.vw === v));
-    renderCarousel();
   };
 
   // swipe
-  let _tx0=null, _ty0=null;
+  let _tx=null, _ty=null;
   document.addEventListener('touchstart', function(e){
-    if(!ST.open) return;
-    if(!e.target.closest('#toResult')) return;
-    _tx0 = e.touches[0].clientX; _ty0 = e.touches[0].clientY;
+    if(!ST.open || !e.target.closest('#toResult')) return;
+    _tx = e.touches[0].clientX; _ty = e.touches[0].clientY;
   }, {passive:true});
   document.addEventListener('touchend', function(e){
-    if(_tx0 === null) return;
-    const dx = (e.changedTouches[0].clientX - _tx0);
-    const dy = Math.abs(e.changedTouches[0].clientY - _ty0);
-    if(dy < 40 && Math.abs(dx) > 50){
-      if(dx < 0) toGoSlide(1); else toGoSlide(-1);
-    }
-    _tx0 = null;
+    if(_tx === null) return;
+    const dx = (e.changedTouches[0].clientX - _tx);
+    const dy = Math.abs(e.changedTouches[0].clientY - _ty);
+    if(dy < 40 && Math.abs(dx) > 50){ if(dx<0) toGoSlide(1); else toGoSlide(-1); }
+    _tx = null;
   }, {passive:true});
 
   // ---------- card pills ----------
@@ -2575,15 +2516,9 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
       const prod = getDataAll().find(x => x.sku === sku);
       if(!prod) return;
       const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'card-tryon-add';
-      btn.dataset.uid = prod.uid;
-      btn.textContent = '＋';
-      btn.title = 'Додати в примірочну';
-      btn.addEventListener('click', function(ev){
-        ev.stopPropagation(); ev.preventDefault();
-        toggleBasket(prod.uid);
-      });
+      btn.type='button'; btn.className='card-tryon-add'; btn.dataset.uid = prod.uid;
+      btn.textContent='＋'; btn.title='Додати в примірочну';
+      btn.addEventListener('click', function(ev){ ev.stopPropagation(); ev.preventDefault(); toggleBasket(prod.uid); });
       box.appendChild(btn);
       if(ST.basket.indexOf(prod.uid) >= 0){ btn.classList.add('in'); btn.textContent='✓'; }
     });
@@ -2591,10 +2526,7 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
   function watchGrid(){
     injectPills();
     const targets = [document.getElementById('lifestyleGrid'), document.getElementById('conceptGrid'), document.querySelector('main')].filter(Boolean);
-    targets.forEach(t => {
-      const mo = new MutationObserver(() => injectPills());
-      mo.observe(t, {childList:true, subtree:true});
-    });
+    targets.forEach(t => { const mo = new MutationObserver(() => injectPills()); mo.observe(t, {childList:true, subtree:true}); });
   }
 
   // ---------- init ----------
@@ -2620,22 +2552,10 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
       <!-- STEP A: setup -->
       <div id="toSetup">
 
-        <!-- 1. Типаж -->
+        <!-- V4_REORDER -->
+        <!-- 1. Зріст і вага -->
         <div class="to-section">
-          <h3>1. Типаж <span class="cnt"><b id="toModelLabel">не обрано</b></span></h3>
-          <div class="to-gender-tabs">
-            <button class="active" data-tg="all" onclick="toFilterGender('all')">всі</button>
-            <button data-tg="male" onclick="toFilterGender('male')">ч</button>
-            <button data-tg="female" onclick="toFilterGender('female')">ж</button>
-          </div>
-          <div class="to-models" id="toModels">
-            <div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--ink-40);font-family:var(--font-mono);font-size:11px">завантаження типажів…</div>
-          </div>
-        </div>
-
-        <!-- 2. Зріст + Вага -->
-        <div class="to-section">
-          <h3>2. Зріст і вага</h3>
+          <h3>1. Зріст і вага</h3>
           <div class="to-uparams">
             <div>
               <label>зріст, см</label>
@@ -2653,17 +2573,31 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
               </select>
             </div>
           </div>
-          <div class="to-hint">Підставимо з типажа. Можеш підкорегувати під себе — це впливає на посадку футболки.</div>
+          <div class="to-hint">Це впливає на посадку футболки. Без даних AI підставить середні значення.</div>
         </div>
 
-        <!-- 3. Моє фото (опціонально) -->
+        <!-- 2. Типаж -->
         <div class="to-section">
-          <h3>3. Моє фото <span class="cnt"><b>опціонально</b></span></h3>
+          <h3>2. Типаж фігури <span class="cnt"><b id="toModelLabel">не обрано</b></span></h3>
+          <div class="to-gender-tabs">
+            <button class="active" data-tg="all" onclick="toFilterGender('all')">всі</button>
+            <button data-tg="male" onclick="toFilterGender('male')">ч</button>
+            <button data-tg="female" onclick="toFilterGender('female')">ж</button>
+          </div>
+          <div class="to-models" id="toModels">
+            <div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--ink-40);font-family:var(--font-mono);font-size:11px">завантаження типажів…</div>
+          </div>
+          <div class="to-hint">Обери схожу на себе фігуру. Якщо ввів зріст/вагу — підсвітимо найближчі.</div>
+        </div>
+
+        <!-- 3. Фото у повний зріст (опц.) -->
+        <div class="to-section">
+          <h3>3. Своє фото у повний зріст <span class="cnt"><b>опціонально</b></span></h3>
           <label class="to-upload" id="toUploadZone" for="toFilePick">
             <div id="toUploadEmpty">
               <div class="ic">📸</div>
-              <h4>Завантаж своє фото (необов'язково)</h4>
-              <p>Якщо хочеш побачити обличчя — додай фото. Інакше використаємо типаж.</p>
+              <h4>Завантаж фото у повний зріст</h4>
+              <p>Якщо хочеш побачити <b>своє обличчя</b> на примірці — додай селфі або фото у повний зріст. Інакше використаємо типаж.</p>
             </div>
             <div id="toUploadFilled" style="display:none">
               <div class="preview"><img id="toUploadPreview" src="" alt=""></div>
@@ -2684,10 +2618,6 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
 
       <!-- STEP B: result -->
       <div id="toResult" class="to-result" style="display:none">
-        <div class="to-viewtabs" id="toViewTabs">
-          <button class="active" data-vw="front" onclick="toSwitchView('front')">спереду</button>
-          <button data-vw="back" onclick="toSwitchView('back')">спина</button>
-        </div>
         <div class="to-carousel">
           <div class="slides" id="toSlides"></div>
           <button class="to-cnav prev" id="toPrev" onclick="toGoSlide(-1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
