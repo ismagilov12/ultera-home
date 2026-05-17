@@ -574,6 +574,70 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
 
 
 
+
+
+/* === V8_GAME === */
+#tgGame{
+  position:absolute;inset:0;display:none;
+  background:linear-gradient(160deg,#f4f3ee 0%,#eae8e1 60%,#dee3e7 100%);
+  border-radius:18px;overflow:hidden;cursor:crosshair;z-index:3;
+  touch-action:manipulation;user-select:none;-webkit-user-select:none;
+}
+#tgGame.show{display:block}
+#tgGame .tg-hud{
+  position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;
+  align-items:flex-start;pointer-events:none;font-family:var(--font-mono);font-size:11px;
+  font-weight:700;letter-spacing:.08em;color:var(--ink);text-transform:uppercase;z-index:5;
+}
+#tgGame .tg-hud-l{background:rgba(255,255,255,.92);padding:6px 12px;border-radius:999px;display:flex;gap:10px;align-items:center}
+#tgGame .tg-hud-l b{font-size:14px;font-weight:900}
+#tgGame .tg-hud-r{text-align:right;font-size:10px;color:var(--ink-60);background:rgba(255,255,255,.92);padding:6px 12px;border-radius:999px}
+#tgGame .tg-hint{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:var(--font-mono);
+  font-size:11px;letter-spacing:.06em;color:var(--ink-60);text-align:center;pointer-events:none;
+  background:rgba(255,255,255,.85);padding:10px 18px;border-radius:999px;line-height:1.5;
+  animation:tg-hint-fade 3.5s forwards;max-width:80%;
+}
+@keyframes tg-hint-fade{0%{opacity:0}10%{opacity:1}80%{opacity:1}100%{opacity:0}}
+#tgGame .tg-fly{
+  position:absolute;font-size:34px;line-height:1;will-change:transform;
+  pointer-events:none;filter:drop-shadow(0 4px 8px rgba(0,0,0,.18));
+}
+#tgGame .tg-fly.promo{
+  font-size:22px;background:#0e0e0e;color:#dff6cf;padding:8px 14px;border-radius:999px;
+  font-family:var(--font-mono);font-weight:900;letter-spacing:.06em;
+  animation:tg-promo-pulse 1s infinite alternate;
+}
+@keyframes tg-promo-pulse{from{transform:scale(1)}to{transform:scale(1.1)}}
+#tgGame .tg-pop{
+  position:absolute;font-family:var(--font-mono);font-size:14px;font-weight:900;letter-spacing:.04em;
+  pointer-events:none;animation:tg-pop .7s forwards;color:var(--ink);
+}
+#tgGame .tg-pop.miss{color:#c53a2c}
+#tgGame .tg-pop.win{color:#0e0e0e;background:var(--mint);padding:4px 10px;border-radius:999px}
+@keyframes tg-pop{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-30px) scale(1.2)}}
+#tgGame .tg-status{
+  position:absolute;left:50%;bottom:14px;transform:translateX(-50%);font-family:var(--font-mono);
+  font-size:10px;color:var(--ink-60);background:rgba(255,255,255,.92);padding:5px 12px;border-radius:999px;
+  letter-spacing:.06em;pointer-events:none;
+}
+#tgGame .tg-status b{color:var(--ink);font-weight:800}
+
+/* Banner «промокод застосовано» */
+#tgPromoBanner{
+  position:absolute;left:14px;right:14px;top:14px;
+  background:var(--ink);color:var(--mint);
+  padding:14px 18px;border-radius:14px;
+  font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;line-height:1.5;
+  z-index:10;display:none;
+  animation:tg-banner-in .4s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 8px 24px rgba(0,0,0,.3);
+}
+#tgPromoBanner.show{display:block}
+#tgPromoBanner b{color:#fff;font-size:14px;display:block;margin-bottom:4px}
+@keyframes tg-banner-in{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+
 /* === V7_POLISH === */
 html, body { touch-action: pan-x pan-y; -webkit-text-size-adjust: 100%; }
 .to-overlay { padding: 0 !important; }
@@ -2621,195 +2685,6 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
 
 
 
-/* === V6_MINIGAME === */ JS
-(function(){
-  const ITEMS = [
-    {emoji:'👕', score: 1},
-    {emoji:'👕', score: 1},
-    {emoji:'👕', score: 1},
-    {emoji:'👟', score: 3},
-    {emoji:'⚡', score: -2}, // штраф — не лови
-  ];
-  const HS_KEY = 'ulhome_tryon_game_hs';
-
-  const games = new WeakMap(); // node -> game state
-
-  function ensureGame(slideNode){
-    if(games.has(slideNode)) return games.get(slideNode);
-    if(!slideNode.classList.contains('loading')) return null;
-
-    const w = slideNode.clientWidth, h = slideNode.clientHeight;
-    if(w < 200 || h < 200) return null;
-
-    const hi = +(localStorage.getItem(HS_KEY) || 0);
-
-    // HTML
-    const hud = document.createElement('div');
-    hud.className = 'tg-hud';
-    hud.innerHTML = '<div class="tg-hud-l">🪞 AI малює · <span class="tg-sc"><b>0</b></span> очок</div>'
-                  + '<div class="tg-hud-r">рекорд<br><b class="tg-hi">' + hi + '</b></div>';
-    slideNode.appendChild(hud);
-
-    const hint = document.createElement('div');
-    hint.className = 'tg-hint';
-    hint.innerHTML = '⚡ скоріш лови футболки і кросівки!<br>👕 +1 · 👟 +3 · ⚡ –2';
-    slideNode.appendChild(hint);
-
-    const status = document.createElement('div');
-    status.className = 'tg-status';
-    status.innerHTML = 'AI генерує · ~15 сек · <b class="tg-time">0s</b>';
-    slideNode.appendChild(status);
-
-    const state = {
-      slide: slideNode,
-      hud, hint, status,
-      score: 0,
-      hi,
-      tStart: Date.now(),
-      flies: [],          // [{el, x, y, vx, vy, item}]
-      lastSpawn: 0,
-      stopped: false,
-      rafId: null,
-      width: w, height: h
-    };
-
-    // Спавн
-    function spawn(){
-      const item = ITEMS[Math.floor(Math.random() * ITEMS.length)];
-      const el = document.createElement('div');
-      el.className = 'tg-fly';
-      el.textContent = item.emoji;
-      slideNode.appendChild(el);
-      const fromLeft = Math.random() > 0.5;
-      const x = fromLeft ? -40 : state.width + 10;
-      const y = 30 + Math.random() * (state.height * 0.55);
-      const vx = (fromLeft ? 1 : -1) * (60 + Math.random() * 80);
-      const vy = 30 + Math.random() * 60;
-      el.style.transform = 'translate(' + x + 'px,' + y + 'px) rotate(0deg)';
-      const f = { el, x, y, vx, vy, item, rot: 0, born: Date.now() };
-      state.flies.push(f);
-    }
-
-    // Loop
-    let lastTs = performance.now();
-    function loop(ts){
-      if(state.stopped) return;
-      const dt = Math.min(48, ts - lastTs) / 1000;
-      lastTs = ts;
-
-      // спавн кожні ~700-1100мс
-      if(ts - state.lastSpawn > 700 + Math.random() * 400 && state.flies.length < 6){
-        spawn();
-        state.lastSpawn = ts;
-      }
-
-      // оновлення
-      for(let i=state.flies.length-1; i>=0; i--){
-        const f = state.flies[i];
-        f.x += f.vx * dt;
-        f.y += f.vy * dt;
-        f.rot += dt * 60;
-        f.el.style.transform = 'translate(' + f.x + 'px,' + f.y + 'px) rotate(' + f.rot + 'deg)';
-        // вийшов за рамки
-        if(f.x < -80 || f.x > state.width + 80 || f.y > state.height + 80){
-          f.el.remove();
-          state.flies.splice(i, 1);
-        }
-      }
-      // оновлення таймера
-      const el = state.status.querySelector('.tg-time');
-      if(el) el.textContent = Math.floor((Date.now()-state.tStart)/1000) + 's';
-
-      state.rafId = requestAnimationFrame(loop);
-    }
-    state.rafId = requestAnimationFrame(loop);
-
-    // Тап (через делегування на slide)
-    function onTap(ev){
-      ev.preventDefault();
-      const rect = slideNode.getBoundingClientRect();
-      const tx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left;
-      const ty = (ev.touches ? ev.touches[0].clientY : ev.clientY) - rect.top;
-      // знайти найближчий «літун»
-      let best = null, bestD = 60*60; // дозволимо 60px радіус
-      for(const f of state.flies){
-        const dx = (f.x + 17) - tx;
-        const dy = (f.y + 17) - ty;
-        const d = dx*dx + dy*dy;
-        if(d < bestD){ best = f; bestD = d; }
-      }
-      if(best){
-        state.score += best.item.score;
-        if(state.score < 0) state.score = 0;
-        state.hud.querySelector('.tg-sc b').textContent = state.score;
-        if(state.score > state.hi){
-          state.hi = state.score;
-          state.hud.querySelector('.tg-hi').textContent = state.hi;
-          localStorage.setItem(HS_KEY, String(state.hi));
-        }
-        // pop
-        const pop = document.createElement('div');
-        pop.className = 'tg-pop' + (best.item.score < 0 ? ' miss' : '');
-        pop.textContent = (best.item.score > 0 ? '+' : '') + best.item.score;
-        pop.style.transform = 'translate(' + (best.x) + 'px,' + (best.y) + 'px)';
-        slideNode.appendChild(pop);
-        setTimeout(() => pop.remove(), 800);
-        best.el.remove();
-        state.flies = state.flies.filter(x => x !== best);
-      }
-    }
-    slideNode.addEventListener('click', onTap);
-    slideNode.addEventListener('touchstart', onTap, {passive:false});
-
-    // Cleanup
-    state.cleanup = function(){
-      state.stopped = true;
-      cancelAnimationFrame(state.rafId);
-      state.flies.forEach(f => f.el.remove());
-      state.flies = [];
-      hud.remove();
-      try{ hint.remove(); }catch(e){}
-      status.remove();
-      slideNode.removeEventListener('click', onTap);
-      slideNode.removeEventListener('touchstart', onTap);
-    };
-
-    games.set(slideNode, state);
-    return state;
-  }
-
-  function destroyGame(slideNode){
-    const s = games.get(slideNode);
-    if(!s) return;
-    s.cleanup();
-    games.delete(slideNode);
-  }
-
-  // Наглядаємо за DOM — коли з'являється/зникає .to-slide.loading
-  function scan(){
-    const slides = document.querySelectorAll('.to-slide');
-    slides.forEach(sl => {
-      if(sl.classList.contains('loading')){
-        ensureGame(sl);
-      } else {
-        destroyGame(sl);
-      }
-    });
-  }
-
-  // Наглядач за модалкою — кожна зміна стану carousel'у
-  const mo = new MutationObserver(scan);
-  // Атачитимемось після того як overlay у DOM
-  function attach(){
-    const overlay = document.getElementById('toOverlay');
-    if(!overlay){ setTimeout(attach, 500); return; }
-    mo.observe(overlay, {childList:true, subtree:true, attributes:true, attributeFilter:['class']});
-    scan();
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', attach);
-  } else attach();
-})();
 
 
 
@@ -2944,6 +2819,300 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
   } else attachMo2();
 })();
 
+
+
+/* === V8_GAME === */ JS
+(function(){
+  const HS_KEY = 'ulhome_tryon_game_hs';
+  const PROMO_KEY = 'ulhome_pending_promo';
+  // Спецоб'єкт промокода
+  const REGULAR = [
+    {emoji:'👕', score:1},
+    {emoji:'👕', score:1},
+    {emoji:'👕', score:1},
+    {emoji:'👟', score:3},
+    {emoji:'⚡', score:-2}
+  ];
+
+  let G = null;  // активна гра
+
+  function el(tag, cls, txt){
+    const e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(txt) e.textContent = txt;
+    return e;
+  }
+
+  function startGame(){
+    const box = document.getElementById('tgGame');
+    if(!box) return;
+    if(G) { stopGame(); }
+    box.innerHTML = '';
+    box.classList.add('show');
+
+    // дочекаємось layout
+    const tryInit = () => {
+      const w = box.clientWidth, h = box.clientHeight;
+      if(w < 200 || h < 200){ requestAnimationFrame(tryInit); return; }
+      initGame(box, w, h);
+    };
+    requestAnimationFrame(tryInit);
+  }
+
+  function initGame(box, w, h){
+    const hi = +(localStorage.getItem(HS_KEY) || 0);
+
+    box.innerHTML =
+      '<div class="tg-hud">'
+    +   '<div class="tg-hud-l">🪞 AI · <span class="tg-sc"><b>0</b></span> очок</div>'
+    +   '<div class="tg-hud-r">рекорд<br><b class="tg-hi">' + hi + '</b></div>'
+    + '</div>'
+    + '<div class="tg-hint">⚡ лови футболки і кросівки!<br>👕 +1 · 👟 +3 · ⚡ –2 · 🎟️ ПРОМОКОД</div>'
+    + '<div class="tg-status">AI генерує · <b class="tg-time">0s</b></div>';
+
+    G = {
+      box, width: w, height: h,
+      score: 0, hi,
+      tStart: Date.now(),
+      flies: [],
+      lastSpawn: 0,
+      stopped: false,
+      rafId: null,
+      promoCaught: null,    // {code, discount}
+      promoSpawned: false,  // щоб не випадав двічі
+      hud: box.querySelector('.tg-hud'),
+      hudScore: box.querySelector('.tg-sc b'),
+      hudHi: box.querySelector('.tg-hi'),
+      timeEl: box.querySelector('.tg-time')
+    };
+
+    let lastTs = performance.now();
+    const loop = (ts) => {
+      if(!G || G.stopped) return;
+      const dt = Math.min(48, ts - lastTs) / 1000;
+      lastTs = ts;
+
+      // Спавн
+      if(ts - G.lastSpawn > 700 + Math.random()*400 && G.flies.length < 7){
+        spawn();
+        G.lastSpawn = ts;
+      }
+
+      // Оновлення
+      for(let i=G.flies.length-1; i>=0; i--){
+        const f = G.flies[i];
+        f.x += f.vx * dt;
+        f.y += f.vy * dt;
+        f.rot += dt * (f.isPromo ? 0 : 60);
+        f.el.style.transform = 'translate(' + f.x + 'px,' + f.y + 'px) rotate(' + f.rot + 'deg)';
+        if(f.x < -100 || f.x > G.width + 100 || f.y > G.height + 100){
+          f.el.remove();
+          G.flies.splice(i, 1);
+        }
+      }
+      // Таймер
+      if(G.timeEl) G.timeEl.textContent = Math.floor((Date.now()-G.tStart)/1000) + 's';
+
+      G.rafId = requestAnimationFrame(loop);
+    };
+    G.rafId = requestAnimationFrame(loop);
+
+    function spawn(){
+      // Промокод спавниться 1 раз за гру, при score >= 5 і часі >= 3 сек
+      let isPromo = false;
+      if(!G.promoSpawned && G.score >= 3 && (Date.now()-G.tStart) > 2500 && Math.random() < 0.35){
+        isPromo = true;
+        G.promoSpawned = true;
+      }
+      const item = isPromo
+        ? { emoji: (G.score >= 15 ? '🎟️ -10%' : '🎟️ -5%'),
+            score: 5,
+            isPromo: true,
+            code: G.score >= 15 ? 'TRYON10' : 'TRYON5',
+            discount: G.score >= 15 ? 10 : 5 }
+        : REGULAR[Math.floor(Math.random() * REGULAR.length)];
+
+      const node = el('div', 'tg-fly' + (isPromo ? ' promo' : ''));
+      node.textContent = item.emoji;
+      G.box.appendChild(node);
+
+      const fromLeft = Math.random() > 0.5;
+      const x = fromLeft ? -50 : G.width + 20;
+      const y = 60 + Math.random() * (G.height * 0.55);
+      const vx = (fromLeft ? 1 : -1) * (isPromo ? 50 : (60 + Math.random()*80));
+      const vy = isPromo ? 15 : (30 + Math.random()*60);
+      const f = { el: node, x, y, vx, vy, item, rot: 0, isPromo };
+      G.flies.push(f);
+    }
+
+    // Тап
+    function onTap(ev){
+      if(!G || G.stopped) return;
+      ev.preventDefault();
+      const rect = G.box.getBoundingClientRect();
+      const tx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left;
+      const ty = (ev.touches ? ev.touches[0].clientY : ev.clientY) - rect.top;
+      let best = null, bestD = 70*70;
+      for(const f of G.flies){
+        const dx = (f.x + 20) - tx;
+        const dy = (f.y + 20) - ty;
+        const d = dx*dx + dy*dy;
+        if(d < bestD){ best = f; bestD = d; }
+      }
+      if(!best) return;
+      if(best.isPromo){
+        // Зловив промокод!
+        G.promoCaught = { code: best.item.code, discount: best.item.discount };
+        showPop(best.x, best.y, 'PROMO ' + best.item.discount + '%!', 'win');
+        // Подвійний score bonus
+        G.score += 10;
+      } else {
+        G.score += best.item.score;
+        if(G.score < 0) G.score = 0;
+        showPop(best.x, best.y, (best.item.score > 0 ? '+' : '') + best.item.score, best.item.score < 0 ? 'miss' : '');
+      }
+      G.hudScore.textContent = G.score;
+      if(G.score > G.hi){
+        G.hi = G.score;
+        G.hudHi.textContent = G.hi;
+        localStorage.setItem(HS_KEY, String(G.hi));
+      }
+      best.el.remove();
+      G.flies = G.flies.filter(x => x !== best);
+    }
+    function showPop(x, y, text, cls){
+      const p = el('div', 'tg-pop ' + (cls || ''));
+      p.textContent = text;
+      p.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+      G.box.appendChild(p);
+      setTimeout(() => p.remove(), 800);
+    }
+    G.box.addEventListener('click', onTap);
+    G.box.addEventListener('touchstart', onTap, {passive:false});
+    G.onTap = onTap;
+  }
+
+  function stopGame(){
+    if(!G) return;
+    G.stopped = true;
+    cancelAnimationFrame(G.rafId);
+    const promo = G.promoCaught;
+    const score = G.score;
+    G.box.classList.remove('show');
+    G.box.innerHTML = '';
+    G = null;
+    return { promo, score };
+  }
+
+  function showPromoBanner(promo, score){
+    const banner = document.getElementById('tgPromoBanner');
+    if(!banner) return;
+
+    if(promo){
+      // Зберегти у localStorage
+      try{
+        localStorage.setItem('ulhome_pending_promo', JSON.stringify(promo));
+      }catch(e){}
+      banner.innerHTML =
+        '<b>🎟️ Готово! Ваш промокод <span style="color:var(--mint)">' + promo.code + '</span> застосований до корзини</b>'
+      + 'AI домалював. Знижка –' + promo.discount + '% уже у твоїй корзині — переходь до замовлення.';
+      banner.classList.add('show');
+      // Спробуємо одразу заповнити поле кошика
+      try{ autoFillPromoInCart(promo.code); }catch(e){}
+      setTimeout(() => banner.classList.remove('show'), 10000);
+    } else if(score > 0){
+      banner.innerHTML =
+        '<b>👏 Гра завершена · ' + score + ' очок</b>'
+      + 'AI домалював. Промокод не зловив — спробуй наступного разу!';
+      banner.classList.add('show');
+      setTimeout(() => banner.classList.remove('show'), 6000);
+    }
+  }
+
+  // Спроба заповнити поле wPromo автоматично, якщо корзина вже на сторінці
+  function autoFillPromoInCart(code){
+    const f = document.getElementById('wPromo');
+    if(f){
+      f.value = code;
+      // Спробувати applyPromo якщо доступна
+      if(typeof window.applyPromo === 'function'){
+        try{ window.applyPromo(); }catch(e){}
+      }
+    }
+  }
+
+  // Глобальні хуки для toRun()
+  window.tryOnGame = {
+    start: startGame,
+    stop: function(){
+      const result = stopGame();
+      if(result) showPromoBanner(result.promo, result.score);
+      return result;
+    },
+    getPromo: function(){
+      try{ return JSON.parse(localStorage.getItem('ulhome_pending_promo') || 'null'); }catch(e){ return null; }
+    },
+    clearPromo: function(){ localStorage.removeItem('ulhome_pending_promo'); }
+  };
+
+  // При відкритті корзини — підставимо промокод якщо є
+  const origOpenCart = window.openCart;
+  if(typeof origOpenCart === 'function'){
+    window.openCart = function(){
+      const r = origOpenCart.apply(this, arguments);
+      try{
+        const promo = JSON.parse(localStorage.getItem('ulhome_pending_promo') || 'null');
+        if(promo && promo.code){
+          setTimeout(() => autoFillPromoInCart(promo.code), 250);
+        }
+      }catch(e){}
+      return r;
+    };
+  } else {
+    // Якщо ще не визначено — підмінимо коли визначиться
+    let _origOpenCart = null;
+    Object.defineProperty(window, 'openCart', {
+      configurable: true,
+      get(){ return _origOpenCart; },
+      set(v){
+        _origOpenCart = function(){
+          const r = v.apply(this, arguments);
+          try{
+            const promo = JSON.parse(localStorage.getItem('ulhome_pending_promo') || 'null');
+            if(promo && promo.code) setTimeout(() => autoFillPromoInCart(promo.code), 250);
+          }catch(e){}
+          return r;
+        };
+      }
+    });
+  }
+
+  // Перехопимо toRun — стартанемо/зупинемо гру навколо нього
+  function wrapToRun(){
+    const orig = window.toRun;
+    if(typeof orig !== 'function'){ setTimeout(wrapToRun, 400); return; }
+    if(orig.__tgWrapped) return;
+    const wrapped = async function(){
+      startGame();
+      try{
+        await orig.apply(this, arguments);
+      } finally {
+        // невелика затримка щоб гравець не пропустив фінальний score
+        setTimeout(() => {
+          window.tryOnGame.stop();
+        }, 600);
+      }
+    };
+    wrapped.__tgWrapped = true;
+    window.toRun = wrapped;
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', () => setTimeout(wrapToRun, 100));
+  } else {
+    setTimeout(wrapToRun, 100);
+  }
+})();
+
 </script>
 
 <!-- V3_TRYON_OVERLAY -->
@@ -3024,6 +3193,8 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
 
       <!-- STEP B: result -->
       <div id="toResult" class="to-result" style="display:none">
+        <div id="tgGame"></div>
+        <div id="tgPromoBanner"></div>
         <div class="to-carousel">
           <div class="slides" id="toSlides"></div>
           <button class="to-cnav prev" id="toPrev" onclick="toGoSlide(-1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
