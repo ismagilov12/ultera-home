@@ -590,6 +590,20 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
 /* .to-result як ancor для absolute children (гра, banner) */
 .to-result{position:relative}
 
+
+
+/* V11_GAME_INTOCAROUSEL */
+.to-carousel{position:relative}
+#tgGame{
+  position:absolute;inset:0;display:none;
+  background:linear-gradient(160deg,#f4f3ee 0%,#eae8e1 60%,#dee3e7 100%);
+  border-radius:18px;overflow:hidden;
+  z-index:20;  /* поверх slides і кнопок навігації */
+  cursor:crosshair;
+  touch-action:manipulation;user-select:none;-webkit-user-select:none;
+}
+#tgGame.show{display:block !important}
+
 /* === V8_GAME === */
 #tgGame{
   position:absolute;inset:0;display:none;
@@ -2867,9 +2881,16 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     box.classList.add('show');
 
     // дочекаємось layout
+    let initTries = 0;
     const tryInit = () => {
       const w = box.clientWidth, h = box.clientHeight;
-      if(w < 200 || h < 200){ requestAnimationFrame(tryInit); return; }
+      initTries++;
+      console.log('[tryon-game] init try', initTries, 'box:', w, 'x', h);
+      if((w < 80 || h < 80) && initTries < 60){ requestAnimationFrame(tryInit); return; }
+      if(w < 80 || h < 80){
+        console.warn('[tryon-game] box too small, abort');
+        return;
+      }
       initGame(box, w, h);
     };
     requestAnimationFrame(tryInit);
@@ -3110,6 +3131,8 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     const result = document.getElementById('toResult');
     if(!result) return;
     const visible = result.style.display !== 'none';
+    const hasL = !!result.querySelector('.to-slide.loading');
+    if(window.__tryonDbg !== false) console.log('[tryon-game] check: visible=' + visible + ' loading=' + hasL + ' active=' + (!!G));
     if(!visible){
       // toResult сховано — гарантовано зупинити
       if(G){
@@ -3229,9 +3252,9 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
 
       <!-- STEP B: result -->
       <div id="toResult" class="to-result" style="display:none">
-        <div id="tgGame"></div>
         <div id="tgPromoBanner"></div>
         <div class="to-carousel">
+          <div id="tgGame"></div>
           <div class="slides" id="toSlides"></div>
           <button class="to-cnav prev" id="toPrev" onclick="toGoSlide(-1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
           <button class="to-cnav next" id="toNext" onclick="toGoSlide(1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>
