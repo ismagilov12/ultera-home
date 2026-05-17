@@ -576,6 +576,20 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
 
 
 
+
+/* V10_GAME_FIX */
+/* Карусель на mobile мала height 0 через aspect-ratio:auto без content */
+@media (max-width:760px){
+  .to-result .to-carousel{
+    aspect-ratio:auto;
+    height:62vh;
+    min-height:400px;
+    max-height:62vh;
+  }
+}
+/* .to-result як ancor для absolute children (гра, banner) */
+.to-result{position:relative}
+
 /* === V8_GAME === */
 #tgGame{
   position:absolute;inset:0;display:none;
@@ -3089,30 +3103,50 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     });
   }
 
-  // Перехопимо toRun — стартанемо/зупинемо гру навколо нього
-  function wrapToRun(){
-    const orig = window.toRun;
-    if(typeof orig !== 'function'){ setTimeout(wrapToRun, 400); return; }
-    if(orig.__tgWrapped) return;
-    const wrapped = async function(){
-      startGame();
-      try{
-        await orig.apply(this, arguments);
-      } finally {
-        // невелика затримка щоб гравець не пропустив фінальний score
-        setTimeout(() => {
-          window.tryOnGame.stop();
-        }, 600);
+  // V10: MutationObserver — стартує гру коли є loading-слайди,
+  // зупиняє коли немає (і чекає до 1.5с щоб показати фінальний banner)
+  let _gameStopTimer = null;
+  function checkGame(){
+    const result = document.getElementById('toResult');
+    if(!result) return;
+    const visible = result.style.display !== 'none';
+    if(!visible){
+      // toResult сховано — гарантовано зупинити
+      if(G){
+        clearTimeout(_gameStopTimer); _gameStopTimer = null;
+        window.tryOnGame.stop();
       }
-    };
-    wrapped.__tgWrapped = true;
-    window.toRun = wrapped;
+      return;
+    }
+    const hasLoading = result.querySelector('.to-slide.loading');
+    const anyResults = result.querySelector('.to-slide');
+    if(hasLoading){
+      // є щось у роботі — стартуємо/підтримуємо
+      clearTimeout(_gameStopTimer); _gameStopTimer = null;
+      if(!G) startGame();
+    } else if(anyResults && G){
+      // всі слайди готові — плануємо стоп
+      if(!_gameStopTimer){
+        _gameStopTimer = setTimeout(() => {
+          window.tryOnGame.stop();
+          _gameStopTimer = null;
+        }, 700);
+      }
+    }
+  }
+  function attachMo(){
+    const result = document.getElementById('toResult');
+    if(!result){ setTimeout(attachMo, 400); return; }
+    const mo = new MutationObserver(checkGame);
+    mo.observe(result, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style']});
+    // Спостерігаємо також зміни style.display на самому toResult
+    const moStyle = new MutationObserver(checkGame);
+    moStyle.observe(result, {attributes:true, attributeFilter:['style','class']});
+    checkGame();
   }
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', () => setTimeout(wrapToRun, 100));
-  } else {
-    setTimeout(wrapToRun, 100);
-  }
+    document.addEventListener('DOMContentLoaded', attachMo);
+  } else attachMo();
 })();
 
 </script>
