@@ -1,10 +1,12 @@
-// api/tryon.js — AI Virtual Try-On (gpt-image-1) v5 · 2026-05-17
+// api/tryon.js — AI Virtual Try-On (gpt-image-1) v6 · 2026-05-17
 //
-// Зміни v5:
-//   • Виправлено OpenAI edits: поле 'image' (не 'image[]') — правильна назва FormData
-//   • MIME detection з magic bytes → правильні content-type і extension
-//     (WebP-фото від Tilda тепер передаються коректно як image/webp)
-// v4 + diptych: підтримка is_icon, front+back в одному 1536x1024.
+// Зміни v6:
+//   • maxDuration: 300 (для Vercel Pro)
+//   • Явний 240s AbortController timeout на OpenAI edits
+//   • [step] логи на кожному кроці (видно у Vercel Runtime Logs)
+//   • Graceful обробка OpenAI помилок (читає response як text якщо не JSON)
+// v5: 'image' field (не 'image[]') + MIME detection з magic bytes
+// v4: skip model image якщо is_icon=true; diptych output 1536x1024
 
 import crypto from 'node:crypto';
 
@@ -83,26 +85,23 @@ async function sbStorageUpload(bucket, path, bytes, contentType) {
 }
 async function fetchAsBytes(url) {
   const r = await fetch(url);
-  if (!r.ok) throw new Error('fetch ' + url + ' → ' + r.status);
+  if (!r.ok) throw new Error('fetch ' + url + ' -> ' + r.status);
   const ab = await r.arrayBuffer();
   return Buffer.from(ab);
 }
 function bytesToFile(bytes, filename, mime) { return new File([bytes], filename, { type: mime }); }
 
-// Magic-byte detection — щоб правильно передавати content-type у multipart
+// Magic-byte detection
 function detectMime(bytes) {
   if (!bytes || bytes.length < 12) return { mime: 'image/png', ext: 'png' };
-  // PNG  89 50 4E 47
   if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) return { mime: 'image/png', ext: 'png' };
-  // JPEG FF D8
   if (bytes[0] === 0xFF && bytes[1] === 0xD8) return { mime: 'image/jpeg', ext: 'jpg' };
-  // GIF
   if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) return { mime: 'image/gif', ext: 'gif' };
-  // WebP: "RIFF" .... "WEBP"
   if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
       bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) return { mime: 'image/webp', ext: 'webp' };
   return { mime: 'image/png', ext: 'png' };
 }
+
 function absolutizePhoto(path) {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
@@ -111,14 +110,11 @@ function absolutizePhoto(path) {
   return base + p;
 }
 
-// ---------- PROMPT ----------
 function buildPromptDiptych(opts) {
   const { gender, build, height, weight, colorName, family, slug, hasUploadFace, teeRefCount, hasModelImage } = opts;
-
   const chest  = Number(process.env.TRYON_TSHIRT_CHEST_CM  || 64);
   const length = Number(process.env.TRYON_TSHIRT_LENGTH_CM || 73);
   const circ   = chest * 2;
-
   let hem = 'around mid-hip';
   if (height) {
     if (height >= 185) hem = 'around the hip / upper thigh';
@@ -135,79 +131,46 @@ function buildPromptDiptych(opts) {
     else               fit = 'fitted around the chest while still loose at the hem, no stretching';
   }
   const subj = gender === 'female' ? 'woman' : 'man';
-
-  // BODY block — different depending on whether we have a real body image
   const bodyBlock = hasModelImage
-    ? [
-        `═══ BODY (image #1) ═══`,
-        `Preserve from image #1 EXACTLY:`,
-        `• body shape, proportions, build, stance, gender`,
-        `• face features, hair, skin tone, age (unless overridden by composing rule below)`
-      ].join('\n')
-    : [
-        `═══ BODY (from description) ═══`,
-        `Generate a photoreal ${subj} with these characteristics:`,
-        `• gender: ${gender || 'male'}`,
-        `• build: ${build || 'average'}`,
-        `• height: ${height || 178} cm`,
-        `• weight: ${weight || 75} kg`,
-        `• ethnicity: Caucasian, age 22–30, neutral confident expression`,
-        `• short natural hair (or feminine hair for women), no heavy makeup`,
-        `• realistic body proportions matching height/weight (BMI-appropriate)`,
-        `• stance: standing straight, weight slightly on one leg, hands relaxed`
-      ].join('\n');
-
+    ? `BODY (image #1): preserve EXACTLY body shape, proportions, build, stance, gender, face, hair, skin tone, age.`
+    : `BODY (description): photoreal ${subj}, gender ${gender||'male'}, build ${build||'average'}, height ${height||178}cm, weight ${weight||75}kg, Caucasian, age 22-30, neutral confident expression, short natural hair (women: feminine hair), no heavy makeup, realistic proportions matching height/weight, standing straight with weight slightly on one leg, hands relaxed.`;
   const composing = hasUploadFace
     ? (hasModelImage
-        ? `An additional PERSON REFERENCE is provided (image #2). Use it as a guide for FACE, hair, skin tone — but keep BODY shape strictly from image #1.`
-        : `A PERSON REFERENCE PHOTO is provided (image #1). Use it as a guide for FACE, hair, skin tone — but adjust BODY shape to match the description above (height/weight/build).`)
+        ? `Additional PERSON REFERENCE provided: use it as FACE guide only, keep BODY shape from image #1.`
+        : `A PERSON REFERENCE photo is provided: use it as FACE guide only, body shape per description above.`)
     : '';
-
   const teeRefHint = (teeRefCount >= 2)
-    ? `T-shirt references: TWO or more images at the end of the input. One shows the FRONT, another the BACK of the same t-shirt. Identify which is which from the visible graphic placement.`
-    : `T-shirt reference: ONE image at the end. Use it as the source of truth for the side it shows; if it shows the back (most ULTERA tees are back-print), keep the front plain.`;
-
+    ? `T-shirt references: TWO or more images at end. One shows FRONT, another BACK of the same t-shirt.`
+    : `T-shirt reference: ONE image at end. If it shows the back (most ULTERA tees are back-print), keep front plain.`;
   return [
-    `ULTERA TEES — Virtual Try-On (diptych output).`,
+    `ULTERA TEES Virtual Try-On (diptych).`,
     ``,
-    `═══ TASK ═══`,
-    `Produce ONE single image that is a DIPTYCH (two equal halves side-by-side):`,
-    `• LEFT HALF: the model standing facing the camera, FRONT view of the t-shirt visible.`,
-    `• RIGHT HALF: the same model with their back to the camera, BACK view of the t-shirt visible.`,
+    `TASK: Produce ONE image — diptych with two halves:`,
+    `LEFT HALF: model facing camera, FRONT view of t-shirt.`,
+    `RIGHT HALF: same model with back to camera, BACK view of t-shirt.`,
     `Both halves: same studio, same lighting, same person, same t-shirt.`,
     ``,
     bodyBlock,
-    ``,
     composing,
     ``,
-    `═══ GARMENT REFERENCE ═══`,
-    teeRefHint,
-    `REPLICATE the t-shirt EXACTLY:`,
-    `• print/graphic/text — same letters, glyphs, numbers (do NOT invent or rewrite — copy character by character)`,
-    `• print placement, scale, colours, line weights, spacing`,
-    `• t-shirt colour (${colorName || 'as shown'}) and fabric texture`,
-    `• logo position, no extra text anywhere`,
+    `GARMENT: ` + teeRefHint,
+    `REPLICATE the t-shirt EXACTLY: print/graphic/text — same letters, glyphs, numbers (copy character by character, do NOT invent or rewrite); same placement, scale, colours, line weights; t-shirt colour (${colorName || 'as shown'}) and texture; logo position; no extra text anywhere.`,
     ``,
-    `═══ T-SHIRT PHYSICAL SPECS ═══`,
-    `• Oversized fit, drop-shoulder, 100% cotton 240 gsm`,
-    `• Flat measurements (size L): chest width ${chest} cm (circumference ~${circ} cm), body length ${length} cm`,
-    `• On this ${subj} (height ${height || '~178'} cm, weight ${weight || '~75'} kg, build ${build || 'average'}):`,
-    `  – hem falls ${hem}`,
-    `  – sleeves drop ~5 cm past natural shoulder seam`,
-    `  – the t-shirt looks ${fit}`,
+    `SPECS: Oversized, drop-shoulder, 100% cotton 240gsm.`,
+    `Flat L: chest ${chest}cm (circ ~${circ}cm), length ${length}cm.`,
+    `On this ${subj} (${height||'~178'}cm, ${weight||'~75'}kg, build ${build||'average'}): hem at ${hem}; sleeves drop ~5cm past shoulder seam; t-shirt looks ${fit}.`,
     ``,
-    `═══ COMPOSITION ═══`,
-    `• Format: 1536×1024 landscape, two figures side by side, equal width per half`,
-    `• Both figures FULL BODY visible from head to mid-thigh, centered in their half`,
-    `• Background: clean studio cyclorama, warm beige (#f1ede4 → #ebe6d9) gradient, soft natural daylight from front-left, gentle ground shadow under each figure`,
-    `• PHOTOREALISTIC magazine-quality editorial fashion photography`,
-    `• ABSOLUTELY NO added text, watermark, tag, label, "FRONT"/"BACK" annotations, logo other than the original t-shirt print`,
+    `COMPOSITION: 1536x1024 landscape, two figures side by side at equal width.`,
+    `Both figures FULL BODY (head to mid-thigh) centered in their half.`,
+    `Background: warm beige studio (#f1ede4 to #ebe6d9), soft daylight from front-left, gentle ground shadows.`,
+    `PHOTOREALISTIC magazine-quality editorial fashion photography.`,
+    `NO added text, watermark, label, FRONT/BACK annotations, or logos other than the t-shirt print itself.`,
     ``,
     `Collection: ULTERA TEES${family ? ' ' + family : ''}${slug ? ' · ' + slug : ''}.`
   ].filter(Boolean).join('\n');
 }
 
-async function callGptImageEdit({ refImages, prompt, quality, model }) {
+async function callGptImageEdit({ refImages, prompt, quality, model, timeoutMs }) {
   const fd = new FormData();
   fd.append('model', model || 'gpt-image-1');
   fd.append('prompt', prompt);
@@ -216,41 +179,35 @@ async function callGptImageEdit({ refImages, prompt, quality, model }) {
   fd.append('quality', quality || 'medium');
   refImages.forEach((b, idx) => {
     const det = detectMime(b);
+    console.log('[tryon] ref ' + idx + ': ' + b.length + ' bytes ' + det.mime);
     fd.append('image', bytesToFile(b, 'ref-' + idx + '.' + det.ext, det.mime));
   });
-  const r = await fetch('https://api.openai.com/v1/images/edits', {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY },
-    body: fd
-  });
-  if (!r.ok) { const txt = await r.text(); throw new Error('OpenAI edits failed: ' + r.status + ' ' + txt.slice(0, 400)); }
-  const j = await r.json();
-  const b64 = j?.data?.[0]?.b64_json;
-  if (!b64) throw new Error('OpenAI: no image returned');
-  return Buffer.from(b64, 'base64');
-}
 
-// generations endpoint — для випадку коли немає референсного зображення взагалі
-async function callGptImageGenerate({ prompt, quality, model }) {
-  const r = await fetch('https://api.openai.com/v1/images/generations', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: model || 'gpt-image-1',
-      prompt,
-      n: 1,
-      size: '1536x1024',
-      quality: quality || 'medium'
-    })
-  });
-  if (!r.ok) { const txt = await r.text(); throw new Error('OpenAI generate failed: ' + r.status + ' ' + txt.slice(0, 400)); }
-  const j = await r.json();
-  const b64 = j?.data?.[0]?.b64_json;
-  if (!b64) throw new Error('OpenAI: no image returned');
-  return Buffer.from(b64, 'base64');
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs || 240000);
+  try {
+    const r = await fetch('https://api.openai.com/v1/images/edits', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY },
+      body: fd,
+      signal: ctrl.signal
+    });
+    if (!r.ok) {
+      const ct = r.headers.get('content-type') || '';
+      const raw = await r.text();
+      let detail = raw.slice(0, 400);
+      if (ct.includes('application/json')) {
+        try { const j = JSON.parse(raw); detail = j?.error?.message || detail; } catch {}
+      }
+      throw new Error('OpenAI edits ' + r.status + ': ' + detail);
+    }
+    const j = await r.json();
+    const b64 = j?.data?.[0]?.b64_json;
+    if (!b64) throw new Error('OpenAI: no image returned');
+    return Buffer.from(b64, 'base64');
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 export default async function handler(req, res) {
@@ -259,6 +216,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST')    return res.status(405).json({ error: 'method not allowed' });
   if (!allowed)                 return res.status(403).json({ error: 'origin not allowed' });
 
+  const t0 = Date.now();
   try {
     if (!process.env.OPENAI_API_KEY) return res.status(503).json({ error: 'OPENAI_API_KEY not configured' });
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -277,26 +235,28 @@ export default async function handler(req, res) {
     if (!tshirt_id) return res.status(400).json({ error: 'tshirt_id required' });
     if (!model_id && !photo_b64) return res.status(400).json({ error: 'model_id or photo_b64 required' });
 
-    // === 1. T-shirt ===
+    console.log('[tryon] start tshirt=' + tshirt_id + ' model=' + (model_id || 'upload') + ' ip=' + ip);
+
     const tshirt = await sbSelectOne(
       'ulhome_products',
-      `id=eq.${encodeURIComponent(tshirt_id)}&select=id,uid,family,title,color_name,color_hex,photo`
+      'id=eq.' + encodeURIComponent(tshirt_id) + '&select=id,uid,family,title,color_name,color_hex,photo'
     );
     if (!tshirt) return res.status(404).json({ error: 'tshirt not found' });
     if (!tshirt.photo) return res.status(422).json({ error: 'tshirt has no photo' });
+    console.log('[tryon] tshirt: ' + tshirt.uid + ' (' + tshirt.title + ')');
 
-    // === 2. Model source ===
     let modelMeta = null, modelBytes = null, uploadBytes = null, photoHash = null, cacheKey = null;
     let useModelImageAsRef = false;
 
     if (model_id) {
       modelMeta = await sbSelectOne(
         'ulhome_tryon_models',
-        `id=eq.${encodeURIComponent(model_id)}&select=id,slug,gender,build,height_cm,weight_kg,image_url,published,is_icon`
+        'id=eq.' + encodeURIComponent(model_id) + '&select=id,slug,gender,build,height_cm,weight_kg,image_url,published,is_icon'
       );
       if (!modelMeta || !modelMeta.published) return res.status(404).json({ error: 'model not found' });
-      cacheKey = `model_id=eq.${modelMeta.id}&tshirt_id=eq.${tshirt.id}&view=eq.${view}`;
+      cacheKey = 'model_id=eq.' + modelMeta.id + '&tshirt_id=eq.' + tshirt.id + '&view=eq.' + view;
       useModelImageAsRef = !modelMeta.is_icon;
+      console.log('[tryon] model: ' + modelMeta.slug + ' is_icon=' + modelMeta.is_icon + ' useRef=' + useModelImageAsRef);
     }
     if (photo_b64) {
       const m = /^data:image\/(png|jpe?g|webp);base64,(.+)$/i.exec(photo_b64);
@@ -304,22 +264,20 @@ export default async function handler(req, res) {
       const ub = Buffer.from(m[2], 'base64');
       if (ub.length > 8 * 1024 * 1024) return res.status(413).json({ error: 'photo too large (max 8MB)' });
       if (modelMeta) uploadBytes = ub;
-      else { modelBytes = ub; photoHash = sha256Hex(ub); cacheKey = `photo_hash=eq.${photoHash}&tshirt_id=eq.${tshirt.id}&view=eq.${view}`; }
+      else { modelBytes = ub; photoHash = sha256Hex(ub); cacheKey = 'photo_hash=eq.' + photoHash + '&tshirt_id=eq.' + tshirt.id + '&view=eq.' + view; }
     }
 
-    // === 3. Cache ===
     if (cacheKey && !uploadBytes) {
       const cached = await sbSelectOne('ulhome_tryon_cache', cacheKey + '&select=id,result_url,view');
       if (cached) {
+        console.log('[tryon] cache HIT (' + (Date.now()-t0) + 'ms)');
         return res.status(200).json({
-          ok: true, cached: true, view,
-          result_url: cached.result_url,
+          ok: true, cached: true, view, result_url: cached.result_url,
           tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name }
         });
       }
     }
 
-    // === 4. Збираємо референси ===
     const refImages = [];
     let hasModelImage = false;
     if (modelMeta && useModelImageAsRef) {
@@ -328,21 +286,18 @@ export default async function handler(req, res) {
       hasModelImage = true;
     }
     if (uploadBytes) refImages.push(uploadBytes);
-    if (!modelMeta && modelBytes) {  // upload-only mode: photo_b64 без model_id
-      refImages.push(modelBytes);
-      hasModelImage = true;
-    }
+    if (!modelMeta && modelBytes) { refImages.push(modelBytes); hasModelImage = true; }
 
-    // === 5. T-shirt photos ===
     const media = await sbSelect(
       'ulhome_product_media',
-      `product_id=eq.${encodeURIComponent(tshirt.id)}&select=url,sort_order&order=sort_order.asc&limit=4`
+      'product_id=eq.' + encodeURIComponent(tshirt.id) + '&select=url,sort_order&order=sort_order.asc&limit=4'
     );
     const teeUrls = [];
     if (Array.isArray(media) && media.length) media.forEach(m => { if (m && m.url && !/size_grid/i.test(m.url)) teeUrls.push(m.url); });
     if (!teeUrls.length && tshirt.photo) teeUrls.push(tshirt.photo);
     const seen = new Set();
     const teeUrlsClean = teeUrls.filter(u => { if (seen.has(u)) return false; seen.add(u); return true; }).slice(0, 2);
+    console.log('[tryon] tee urls: ' + teeUrlsClean.join(', '));
     for (const u of teeUrlsClean) {
       try { refImages.push(await fetchAsBytes(absolutizePhoto(u))); }
       catch (e) { console.warn('skip tee photo', u, e.message); }
@@ -350,12 +305,11 @@ export default async function handler(req, res) {
     const teeRefCount = teeUrlsClean.length;
     if (teeRefCount < 1) return res.status(422).json({ error: 'no tee photos available' });
 
-    // === 6. Prompt ===
     const prompt = buildPromptDiptych({
-      gender: modelMeta?.gender || genderIn || 'male',
-      build:  modelMeta?.build  || 'average',
-      height: modelMeta?.height_cm || heightIn || null,
-      weight: modelMeta?.weight_kg || weightIn || null,
+      gender: (modelMeta && modelMeta.gender) || genderIn || 'male',
+      build:  (modelMeta && modelMeta.build)  || 'average',
+      height: (modelMeta && modelMeta.height_cm) || heightIn || null,
+      weight: (modelMeta && modelMeta.weight_kg) || weightIn || null,
       colorName: tshirt.color_name,
       family: tshirt.family,
       slug: tshirt.uid,
@@ -364,33 +318,55 @@ export default async function handler(req, res) {
       teeRefCount
     });
 
-    // === 7. OpenAI ===
     const quality = process.env.TRYON_QUALITY || 'medium';
     const model = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
-    let resultBytes;
-    if (refImages.length >= 1) {
-      // Якщо є хоч одне фото (футболка обовʼязково), використовуємо edits endpoint
-      resultBytes = await callGptImageEdit({ refImages, prompt, quality, model });
-    } else {
-      // (не повинно статись — футболка завжди є)
-      resultBytes = await callGptImageGenerate({ prompt, quality, model });
-    }
+    console.log('[tryon] calling OpenAI: refs=' + refImages.length + ' quality=' + quality + ' model=' + model + ' (t+' + (Date.now()-t0) + 'ms)');
+    const resultBytes = await callGptImageEdit({ refImages, prompt, quality, model, timeoutMs: 240000 });
+    console.log('[tryon] OpenAI done: ' + resultBytes.length + ' bytes (t+' + (Date.now()-t0) + 'ms)');
 
-    // === 8. Save ===
     const stamp = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
     const tag = modelMeta ? modelMeta.slug : ('user-' + (photoHash || 'anon').slice(0, 12));
-    const path = `${tshirt.uid}/combined-${tag}-${stamp}.png`;
+    const path = tshirt.uid + '/combined-' + tag + '-' + stamp + '.png';
     const resultUrl = await sbStorageUpload('tryon-results', path, resultBytes, 'image/png');
+    console.log('[tryon] saved: ' + resultUrl + ' (t+' + (Date.now()-t0) + 'ms)');
 
-    // === 9. Cache ===
     if (cacheKey && !uploadBytes) {
       try {
         await sbInsert('ulhome_tryon_cache', {
-          model_id: modelMeta?.id || null,
+          model_id: (modelMeta && modelMeta.id) || null,
           photo_hash: photoHash,
           tshirt_uid: tshirt.uid,
           tshirt_id: tshirt.id,
           view,
           result_url: resultUrl,
           prompt: prompt.slice(0, 2000),
-        
+          cost_cents: quality === 'high' ? 17 : (quality === 'low' ? 1 : 4)
+        });
+      } catch (e) {
+        const again = await sbSelectOne('ulhome_tryon_cache', cacheKey + '&select=id,result_url');
+        if (again) {
+          return res.status(200).json({
+            ok: true, cached: true, view, result_url: again.result_url,
+            tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name }
+          });
+        }
+        throw e;
+      }
+    }
+
+    console.log('[tryon] DONE (total ' + (Date.now()-t0) + 'ms)');
+    return res.status(200).json({
+      ok: true, cached: false, view, result_url: resultUrl,
+      tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name }
+    });
+
+  } catch (e) {
+    console.error('[tryon] ERROR (t+' + (Date.now()-t0) + 'ms):', (e && e.message) || e);
+    return res.status(500).json({ error: String((e && e.message) || e) });
+  }
+}
+
+export const config = {
+  api: { bodyParser: { sizeLimit: '12mb' } },
+  maxDuration: 300
+};
