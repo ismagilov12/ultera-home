@@ -639,7 +639,9 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
 @keyframes tg-banner-in{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
 
 /* === V7_POLISH === */
-html, body { touch-action: pan-x pan-y; -webkit-text-size-adjust: 100%; }
+/* V9_FLOAT_FIX */
+html, body { touch-action: pan-y; -webkit-text-size-adjust: 100%; overflow-x: hidden; max-width: 100%; overscroll-behavior-x: none; }
+body { position: relative; }
 .to-overlay { padding: 0 !important; }
 .to-dialog { padding-top: env(safe-area-inset-top, 0); }
 @media (max-width:760px){
