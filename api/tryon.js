@@ -1,10 +1,10 @@
-// api/tryon.js — AI Virtual Try-On (gpt-image-1) v4 · 2026-05-17
+// api/tryon.js — AI Virtual Try-On (gpt-image-1) v5 · 2026-05-17
 //
-// Зміни v4:
-//   • Підтримка ulhome_tryon_models.is_icon — якщо true (іконка/силует),
-//     модельне фото НЕ передається у gpt-image-1; AI генерує тіло
-//     із текстового опису (gender/build/height/weight) + user photo (якщо є)
-//   • Все інше — як v3 diptych (front+back в одному фото 1536x1024)
+// Зміни v5:
+//   • Виправлено OpenAI edits: поле 'image' (не 'image[]') — правильна назва FormData
+//   • MIME detection з magic bytes → правильні content-type і extension
+//     (WebP-фото від Tilda тепер передаються коректно як image/webp)
+// v4 + diptych: підтримка is_icon, front+back в одному 1536x1024.
 
 import crypto from 'node:crypto';
 
@@ -88,6 +88,21 @@ async function fetchAsBytes(url) {
   return Buffer.from(ab);
 }
 function bytesToFile(bytes, filename, mime) { return new File([bytes], filename, { type: mime }); }
+
+// Magic-byte detection — щоб правильно передавати content-type у multipart
+function detectMime(bytes) {
+  if (!bytes || bytes.length < 12) return { mime: 'image/png', ext: 'png' };
+  // PNG  89 50 4E 47
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) return { mime: 'image/png', ext: 'png' };
+  // JPEG FF D8
+  if (bytes[0] === 0xFF && bytes[1] === 0xD8) return { mime: 'image/jpeg', ext: 'jpg' };
+  // GIF
+  if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) return { mime: 'image/gif', ext: 'gif' };
+  // WebP: "RIFF" .... "WEBP"
+  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+      bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) return { mime: 'image/webp', ext: 'webp' };
+  return { mime: 'image/png', ext: 'png' };
+}
 function absolutizePhoto(path) {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
@@ -199,7 +214,10 @@ async function callGptImageEdit({ refImages, prompt, quality, model }) {
   fd.append('n', '1');
   fd.append('size', '1536x1024');
   fd.append('quality', quality || 'medium');
-  refImages.forEach((b, idx) => fd.append('image[]', bytesToFile(b, 'ref-' + idx + '.png', 'image/png')));
+  refImages.forEach((b, idx) => {
+    const det = detectMime(b);
+    fd.append('image', bytesToFile(b, 'ref-' + idx + '.' + det.ext, det.mime));
+  });
   const r = await fetch('https://api.openai.com/v1/images/edits', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY },
@@ -375,32 +393,4 @@ export default async function handler(req, res) {
           view,
           result_url: resultUrl,
           prompt: prompt.slice(0, 2000),
-          cost_cents: quality === 'high' ? 17 : (quality === 'low' ? 1 : 4)
-        });
-      } catch (e) {
-        const again = await sbSelectOne('ulhome_tryon_cache', cacheKey + '&select=id,result_url');
-        if (again) {
-          return res.status(200).json({
-            ok: true, cached: true, view, result_url: again.result_url,
-            tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name }
-          });
-        }
-        throw e;
-      }
-    }
-
-    return res.status(200).json({
-      ok: true, cached: false, view, result_url: resultUrl,
-      tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name }
-    });
-
-  } catch (e) {
-    console.error('tryon v4 error', e);
-    return res.status(500).json({ error: String(e?.message || e) });
-  }
-}
-
-export const config = {
-  api: { bodyParser: { sizeLimit: '12mb' } },
-  maxDuration: 75
-};
+        
