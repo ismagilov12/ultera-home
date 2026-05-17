@@ -1,6 +1,7 @@
-// api/tryon.js — AI Virtual Try-On (gpt-image-1 / gpt-image-2) v8 · 2026-05-17
+// api/tryon.js — AI Virtual Try-On (gpt-image-1 / gpt-image-2) v9 · 2026-05-17
 //
-// v8 FIX: фільтр product_media тільки на image extensions (.webp/.png/.jpg/.gif)
+// v9 FIX: жорстко вимагати однакову довжину футболки в обох halves (фронт+спина)
+// v8: фільтр product_media тільки на image extensions (.webp/.png/.jpg/.gif)
 //          tee-002 мав .mp4 у списку — ламало OpenAI «Invalid image file for image 3»
 // v7: image[] array syntax + WebP MIME detection. 2 сценарії:
 //   A) З фото клієнта (photo_b64) → use it as the person + override description with their height/weight
@@ -142,6 +143,8 @@ function buildPrompt({ scenario, gender, build, height, weight, colorName, famil
       '',
       'T-SHIRT: ULTERA TEES oversized L (chest 64cm flat / circ 128cm, length 73cm, 240gsm cotton, drop-shoulder).',
       'Color: ' + (colorName || 'as shown') + '. Fit: ' + fit + '.',
+      'LENGTH (critical): The hem falls just past the waistline, around mid-hip — NEVER below the hip line, NEVER past mid-thigh. The shirt length 73cm covers roughly from collar to top-of-hip on an average-height adult.',
+      'BOTH HALVES IDENTICAL: The t-shirt MUST have IDENTICAL length, width and proportions in the LEFT (front) and RIGHT (back) halves. The hem hits the SAME body landmark in both views. Do NOT draw the back longer or shorter than the front.',
       'REPLICATE the print/graphic/text EXACTLY as in references (same letters, glyphs, placement, colors — copy character by character, do NOT invent or rewrite text).',
       '',
       'BACKGROUND: clean studio cyclorama, warm beige (#f1ede4 to #ebe6d9), soft daylight from front-left, gentle ground shadow.',
@@ -170,6 +173,8 @@ function buildPrompt({ scenario, gender, build, height, weight, colorName, famil
     '',
     'T-SHIRT: ULTERA TEES oversized L (chest 64cm flat / circ 128cm, length 73cm, 240gsm cotton, drop-shoulder).',
     'Color: ' + (colorName || 'as shown') + '. Fit: ' + fit + '.',
+    'LENGTH (critical): The hem falls just past the waistline, around mid-hip — NEVER below the hip line, NEVER past mid-thigh. The shirt length 73cm covers roughly from collar to top-of-hip on an average-height adult.',
+    'BOTH HALVES IDENTICAL: The t-shirt MUST have IDENTICAL length, width and proportions in the LEFT (front) and RIGHT (back) halves. The hem hits the SAME body landmark in both views. Do NOT draw the back longer or shorter than the front.',
     'REPLICATE the print/graphic/text EXACTLY as in references (same letters, glyphs, placement, colors — copy character by character, do NOT invent or rewrite text).',
     '',
     'BACKGROUND: clean studio cyclorama, warm beige (#f1ede4 to #ebe6d9), soft daylight from front-left, gentle ground shadow.',
