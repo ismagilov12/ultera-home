@@ -1,12 +1,10 @@
-// api/tryon.js — AI Virtual Try-On (gpt-image-1) v6 · 2026-05-17
+// api/tryon.js — AI Virtual Try-On (gpt-image-1) v7 · 2026-05-17
 //
-// Зміни v6:
-//   • maxDuration: 300 (для Vercel Pro)
-//   • Явний 240s AbortController timeout на OpenAI edits
-//   • [step] логи на кожному кроці (видно у Vercel Runtime Logs)
-//   • Graceful обробка OpenAI помилок (читає response як text якщо не JSON)
-// v5: 'image' field (не 'image[]') + MIME detection з magic bytes
-// v4: skip model image якщо is_icon=true; diptych output 1536x1024
+// FINAL FIX: image[] array syntax + WebP MIME detection
+// Спрощений промпт. 2 сценарії:
+//   A) З фото клієнта (photo_b64) → use it as the person + override description with their height/weight
+//   B) Без фото → опис тіла з типажа (gender/build/height/weight)
+// Always diptych output 1536x1024 (front+back).
 
 import crypto from 'node:crypto';
 
@@ -35,7 +33,7 @@ async function checkRateLimit(ip, limit) {
   const sbu = process.env.SUPABASE_URL, sbk = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!sbu || !sbk) return { allowed: true, skipped: true };
   try {
-    const r = await fetch(`${sbu}/rest/v1/rpc/check_and_increment_rate_limit`, {
+    const r = await fetch(sbu + '/rest/v1/rpc/check_and_increment_rate_limit', {
       method: 'POST',
       headers: { 'apikey': sbk, 'Authorization': 'Bearer ' + sbk, 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_ip: ip, p_endpoint: 'tryon', p_limit: limit })
@@ -47,8 +45,7 @@ async function checkRateLimit(ip, limit) {
 function sha256Hex(buf) { return crypto.createHash('sha256').update(buf).digest('hex'); }
 
 async function sbSelect(table, query) {
-  const url = `${process.env.SUPABASE_URL}/rest/v1/${table}?${query}`;
-  const r = await fetch(url, {
+  const r = await fetch(process.env.SUPABASE_URL + '/rest/v1/' + table + '?' + query, {
     headers: { 'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
                'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_ROLE_KEY, 'Accept': 'application/json' }
   });
@@ -60,8 +57,7 @@ async function sbSelectOne(table, query) {
   return Array.isArray(arr) && arr.length ? arr[0] : null;
 }
 async function sbInsert(table, payload) {
-  const url = `${process.env.SUPABASE_URL}/rest/v1/${table}`;
-  const r = await fetch(url, {
+  const r = await fetch(process.env.SUPABASE_URL + '/rest/v1/' + table, {
     method: 'POST',
     headers: { 'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
                'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -69,36 +65,30 @@ async function sbInsert(table, payload) {
     body: JSON.stringify(payload)
   });
   if (!r.ok) { const txt = await r.text(); throw new Error('Supabase insert: ' + r.status + ' ' + txt); }
-  const arr = await r.json();
-  return Array.isArray(arr) ? arr[0] : arr;
+  return await r.json();
 }
 async function sbStorageUpload(bucket, path, bytes, contentType) {
-  const url = `${process.env.SUPABASE_URL}/storage/v1/object/${bucket}/${path}`;
-  const r = await fetch(url, {
+  const r = await fetch(process.env.SUPABASE_URL + '/storage/v1/object/' + bucket + '/' + path, {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_ROLE_KEY,
                'Content-Type': contentType, 'x-upsert': 'true' },
     body: bytes
   });
   if (!r.ok) { const txt = await r.text(); throw new Error('Storage upload: ' + r.status + ' ' + txt); }
-  return `${process.env.SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+  return process.env.SUPABASE_URL + '/storage/v1/object/public/' + bucket + '/' + path;
 }
 async function fetchAsBytes(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error('fetch ' + url + ' -> ' + r.status);
-  const ab = await r.arrayBuffer();
-  return Buffer.from(ab);
+  return Buffer.from(await r.arrayBuffer());
 }
 function bytesToFile(bytes, filename, mime) { return new File([bytes], filename, { type: mime }); }
 
-// Magic-byte detection
 function detectMime(bytes) {
   if (!bytes || bytes.length < 12) return { mime: 'image/png', ext: 'png' };
-  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) return { mime: 'image/png', ext: 'png' };
+  if (bytes[0] === 0x89 && bytes[1] === 0x50) return { mime: 'image/png', ext: 'png' };
   if (bytes[0] === 0xFF && bytes[1] === 0xD8) return { mime: 'image/jpeg', ext: 'jpg' };
-  if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) return { mime: 'image/gif', ext: 'gif' };
-  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
-      bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) return { mime: 'image/webp', ext: 'webp' };
+  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[8] === 0x57 && bytes[9] === 0x45) return { mime: 'image/webp', ext: 'webp' };
   return { mime: 'image/png', ext: 'png' };
 }
 
@@ -106,68 +96,86 @@ function absolutizePhoto(path) {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
   const base = (process.env.PUBLIC_BASE_URL || 'https://ultera-home.vercel.app').replace(/\/+$/, '');
-  const p = path.startsWith('/') ? path : '/' + path;
-  return base + p;
+  return base + (path.startsWith('/') ? path : '/' + path);
 }
 
-function buildPromptDiptych(opts) {
-  const { gender, build, height, weight, colorName, family, slug, hasUploadFace, teeRefCount, hasModelImage } = opts;
-  const chest  = Number(process.env.TRYON_TSHIRT_CHEST_CM  || 64);
-  const length = Number(process.env.TRYON_TSHIRT_LENGTH_CM || 73);
-  const circ   = chest * 2;
-  let hem = 'around mid-hip';
-  if (height) {
-    if (height >= 185) hem = 'around the hip / upper thigh';
-    else if (height >= 175) hem = 'mid-hip';
-    else if (height >= 165) hem = 'at the hip';
-    else hem = 'upper-hip';
-  }
-  let fit = 'naturally oversized with relaxed drape';
-  if (height && weight) {
-    const bmi = weight / Math.pow(height / 100, 2);
-    if (bmi < 20)      fit = 'very loose and roomy, fabric drapes off the shoulders, soft pleats';
-    else if (bmi < 25) fit = 'naturally oversized, balanced drape, gentle folds';
-    else if (bmi < 30) fit = 'a relaxed oversized fit, fills the chest more, minimal slack';
-    else               fit = 'fitted around the chest while still loose at the hem, no stretching';
-  }
+// ---------- SIMPLE PROMPT ----------
+// 2 сценарії: A) є фото юзера; B) тільки опис + типаж
+function buildPrompt({ scenario, gender, build, height, weight, colorName, family, slug }) {
   const subj = gender === 'female' ? 'woman' : 'man';
-  const bodyBlock = hasModelImage
-    ? `BODY (image #1): preserve EXACTLY body shape, proportions, build, stance, gender, face, hair, skin tone, age.`
-    : `BODY (description): photoreal ${subj}, gender ${gender||'male'}, build ${build||'average'}, height ${height||178}cm, weight ${weight||75}kg, Caucasian, age 22-30, neutral confident expression, short natural hair (women: feminine hair), no heavy makeup, realistic proportions matching height/weight, standing straight with weight slightly on one leg, hands relaxed.`;
-  const composing = hasUploadFace
-    ? (hasModelImage
-        ? `Additional PERSON REFERENCE provided: use it as FACE guide only, keep BODY shape from image #1.`
-        : `A PERSON REFERENCE photo is provided: use it as FACE guide only, body shape per description above.`)
-    : '';
-  const teeRefHint = (teeRefCount >= 2)
-    ? `T-shirt references: TWO or more images at end. One shows FRONT, another BACK of the same t-shirt.`
-    : `T-shirt reference: ONE image at end. If it shows the back (most ULTERA tees are back-print), keep front plain.`;
+
+  const buildHints = {
+    slim:    'lean, narrow shoulders, slim waist',
+    average: 'balanced proportions, moderate chest and waist',
+    athletic:'broad shoulders, defined chest, narrow waist, toned',
+    plus:    'fuller build, wider torso, soft body shape'
+  };
+  const buildDesc = buildHints[build] || 'average proportions';
+
+  // BMI hint
+  let fit = 'naturally oversized, balanced drape';
+  if (height && weight) {
+    const bmi = weight / Math.pow(height/100, 2);
+    if (bmi < 20)      fit = 'very loose, fabric drapes off shoulders, soft pleats';
+    else if (bmi < 25) fit = 'oversized with relaxed drape';
+    else if (bmi < 30) fit = 'relaxed oversized fit, fills chest more';
+    else               fit = 'fitted at chest, loose at hem, no stretching';
+  }
+
+  if (scenario === 'A') {
+    // З фото клієнта
+    return [
+      'ULTERA TEES virtual try-on.',
+      '',
+      'INPUT IMAGES:',
+      '#1 — the customer photo (the PERSON to dress).',
+      '#2 (and #3 if present) — the t-shirt references (front and/or back of the garment).',
+      '',
+      'TASK: Make ONE diptych image (1536x1024 landscape):',
+      '• LEFT HALF: the SAME PERSON from image #1, facing camera, wearing the t-shirt from the references, FRONT view.',
+      '• RIGHT HALF: the SAME PERSON, back to camera, BACK view of the t-shirt.',
+      '',
+      'PERSON: Preserve EXACTLY the face, hair, skin tone, ethnicity from image #1.',
+      'Adjust body proportions to match: height ' + (height || 178) + ' cm, weight ' + (weight || 75) + ' kg, build "' + build + '" (' + buildDesc + ').',
+      'Pose: standing straight, weight slightly on one leg, hands relaxed.',
+      '',
+      'T-SHIRT: ULTERA TEES oversized L (chest 64cm flat / circ 128cm, length 73cm, 240gsm cotton, drop-shoulder).',
+      'Color: ' + (colorName || 'as shown') + '. Fit: ' + fit + '.',
+      'REPLICATE the print/graphic/text EXACTLY as in references (same letters, glyphs, placement, colors — copy character by character, do NOT invent or rewrite text).',
+      '',
+      'BACKGROUND: clean studio cyclorama, warm beige (#f1ede4 to #ebe6d9), soft daylight from front-left, gentle ground shadow.',
+      'STYLE: photorealistic, magazine-quality editorial fashion. NO added text, no watermarks, no "FRONT"/"BACK" labels.',
+      '',
+      'Collection: ULTERA TEES' + (family ? ' ' + family : '') + (slug ? ' · ' + slug : '') + '.'
+    ].join('\n');
+  }
+
+  // B — без фото юзера
   return [
-    `ULTERA TEES Virtual Try-On (diptych).`,
-    ``,
-    `TASK: Produce ONE image — diptych with two halves:`,
-    `LEFT HALF: model facing camera, FRONT view of t-shirt.`,
-    `RIGHT HALF: same model with back to camera, BACK view of t-shirt.`,
-    `Both halves: same studio, same lighting, same person, same t-shirt.`,
-    ``,
-    bodyBlock,
-    composing,
-    ``,
-    `GARMENT: ` + teeRefHint,
-    `REPLICATE the t-shirt EXACTLY: print/graphic/text — same letters, glyphs, numbers (copy character by character, do NOT invent or rewrite); same placement, scale, colours, line weights; t-shirt colour (${colorName || 'as shown'}) and texture; logo position; no extra text anywhere.`,
-    ``,
-    `SPECS: Oversized, drop-shoulder, 100% cotton 240gsm.`,
-    `Flat L: chest ${chest}cm (circ ~${circ}cm), length ${length}cm.`,
-    `On this ${subj} (${height||'~178'}cm, ${weight||'~75'}kg, build ${build||'average'}): hem at ${hem}; sleeves drop ~5cm past shoulder seam; t-shirt looks ${fit}.`,
-    ``,
-    `COMPOSITION: 1536x1024 landscape, two figures side by side at equal width.`,
-    `Both figures FULL BODY (head to mid-thigh) centered in their half.`,
-    `Background: warm beige studio (#f1ede4 to #ebe6d9), soft daylight from front-left, gentle ground shadows.`,
-    `PHOTOREALISTIC magazine-quality editorial fashion photography.`,
-    `NO added text, watermark, label, FRONT/BACK annotations, or logos other than the t-shirt print itself.`,
-    ``,
-    `Collection: ULTERA TEES${family ? ' ' + family : ''}${slug ? ' · ' + slug : ''}.`
-  ].filter(Boolean).join('\n');
+    'ULTERA TEES virtual try-on.',
+    '',
+    'INPUT IMAGES: the t-shirt references (front and/or back of the garment).',
+    '',
+    'TASK: Make ONE diptych image (1536x1024 landscape):',
+    '• LEFT HALF: a model facing camera, FRONT view of the t-shirt.',
+    '• RIGHT HALF: same model with back to camera, BACK view of the t-shirt.',
+    '',
+    'MODEL (generate photorealistically):',
+    '• ' + subj + ', height ' + (height || 178) + ' cm, weight ' + (weight || 75) + ' kg',
+    '• body type: ' + build + ' (' + buildDesc + ')',
+    '• Caucasian, age 22-30, neutral confident expression, calm gaze slightly off-camera',
+    '• short natural hair (women: feminine medium-length hair), minimal makeup',
+    '• standing straight, weight slightly on one leg, hands relaxed',
+    '',
+    'T-SHIRT: ULTERA TEES oversized L (chest 64cm flat / circ 128cm, length 73cm, 240gsm cotton, drop-shoulder).',
+    'Color: ' + (colorName || 'as shown') + '. Fit: ' + fit + '.',
+    'REPLICATE the print/graphic/text EXACTLY as in references (same letters, glyphs, placement, colors — copy character by character, do NOT invent or rewrite text).',
+    '',
+    'BACKGROUND: clean studio cyclorama, warm beige (#f1ede4 to #ebe6d9), soft daylight from front-left, gentle ground shadow.',
+    'STYLE: photorealistic, magazine-quality editorial fashion. NO added text, no watermarks, no "FRONT"/"BACK" labels.',
+    '',
+    'Collection: ULTERA TEES' + (family ? ' ' + family : '') + (slug ? ' · ' + slug : '') + '.'
+  ].join('\n');
 }
 
 async function callGptImageEdit({ refImages, prompt, quality, model, timeoutMs }) {
@@ -177,10 +185,11 @@ async function callGptImageEdit({ refImages, prompt, quality, model, timeoutMs }
   fd.append('n', '1');
   fd.append('size', '1536x1024');
   fd.append('quality', quality || 'medium');
+  // image[] — array syntax as required by OpenAI for multiple input images
   refImages.forEach((b, idx) => {
     const det = detectMime(b);
     console.log('[tryon] ref ' + idx + ': ' + b.length + ' bytes ' + det.mime);
-    fd.append('image', bytesToFile(b, 'ref-' + idx + '.' + det.ext, det.mime));
+    fd.append('image[]', bytesToFile(b, 'ref-' + idx + '.' + det.ext, det.mime));
   });
 
   const ctrl = new AbortController();
@@ -197,12 +206,12 @@ async function callGptImageEdit({ refImages, prompt, quality, model, timeoutMs }
       const raw = await r.text();
       let detail = raw.slice(0, 400);
       if (ct.includes('application/json')) {
-        try { const j = JSON.parse(raw); detail = j?.error?.message || detail; } catch {}
+        try { const j = JSON.parse(raw); detail = (j && j.error && j.error.message) || detail; } catch {}
       }
       throw new Error('OpenAI edits ' + r.status + ': ' + detail);
     }
     const j = await r.json();
-    const b64 = j?.data?.[0]?.b64_json;
+    const b64 = j && j.data && j.data[0] && j.data[0].b64_json;
     if (!b64) throw new Error('OpenAI: no image returned');
     return Buffer.from(b64, 'base64');
   } finally {
@@ -224,8 +233,7 @@ export default async function handler(req, res) {
     }
 
     const ip = getClientIp(req);
-    const limit = Number(process.env.TRYON_RATE_LIMIT_PER_MIN || 5);
-    const rl = await checkRateLimit(ip, limit);
+    const rl = await checkRateLimit(ip, Number(process.env.TRYON_RATE_LIMIT_PER_MIN || 5));
     if (!rl.allowed) return res.status(429).json({ error: 'too many requests' });
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
@@ -235,65 +243,52 @@ export default async function handler(req, res) {
     if (!tshirt_id) return res.status(400).json({ error: 'tshirt_id required' });
     if (!model_id && !photo_b64) return res.status(400).json({ error: 'model_id or photo_b64 required' });
 
-    console.log('[tryon] start tshirt=' + tshirt_id + ' model=' + (model_id || 'upload') + ' ip=' + ip);
+    console.log('[tryon] start tshirt=' + tshirt_id + ' model=' + (model_id || 'upload'));
 
-    const tshirt = await sbSelectOne(
-      'ulhome_products',
-      'id=eq.' + encodeURIComponent(tshirt_id) + '&select=id,uid,family,title,color_name,color_hex,photo'
-    );
+    const tshirt = await sbSelectOne('ulhome_products',
+      'id=eq.' + encodeURIComponent(tshirt_id) + '&select=id,uid,family,title,color_name,color_hex,photo');
     if (!tshirt) return res.status(404).json({ error: 'tshirt not found' });
     if (!tshirt.photo) return res.status(422).json({ error: 'tshirt has no photo' });
-    console.log('[tryon] tshirt: ' + tshirt.uid + ' (' + tshirt.title + ')');
 
-    let modelMeta = null, modelBytes = null, uploadBytes = null, photoHash = null, cacheKey = null;
-    let useModelImageAsRef = false;
-
+    let modelMeta = null, uploadBytes = null, photoHash = null, cacheKey = null;
     if (model_id) {
-      modelMeta = await sbSelectOne(
-        'ulhome_tryon_models',
-        'id=eq.' + encodeURIComponent(model_id) + '&select=id,slug,gender,build,height_cm,weight_kg,image_url,published,is_icon'
-      );
+      modelMeta = await sbSelectOne('ulhome_tryon_models',
+        'id=eq.' + encodeURIComponent(model_id) + '&select=id,slug,gender,build,height_cm,weight_kg,image_url,published,is_icon');
       if (!modelMeta || !modelMeta.published) return res.status(404).json({ error: 'model not found' });
       cacheKey = 'model_id=eq.' + modelMeta.id + '&tshirt_id=eq.' + tshirt.id + '&view=eq.' + view;
-      useModelImageAsRef = !modelMeta.is_icon;
-      console.log('[tryon] model: ' + modelMeta.slug + ' is_icon=' + modelMeta.is_icon + ' useRef=' + useModelImageAsRef);
+      console.log('[tryon] model: ' + modelMeta.slug + ' is_icon=' + modelMeta.is_icon);
     }
     if (photo_b64) {
       const m = /^data:image\/(png|jpe?g|webp);base64,(.+)$/i.exec(photo_b64);
       if (!m) return res.status(400).json({ error: 'photo_b64 must be data:image/...;base64,...' });
-      const ub = Buffer.from(m[2], 'base64');
-      if (ub.length > 8 * 1024 * 1024) return res.status(413).json({ error: 'photo too large (max 8MB)' });
-      if (modelMeta) uploadBytes = ub;
-      else { modelBytes = ub; photoHash = sha256Hex(ub); cacheKey = 'photo_hash=eq.' + photoHash + '&tshirt_id=eq.' + tshirt.id + '&view=eq.' + view; }
+      uploadBytes = Buffer.from(m[2], 'base64');
+      if (uploadBytes.length > 8 * 1024 * 1024) return res.status(413).json({ error: 'photo too large (max 8MB)' });
+      if (!modelMeta) { photoHash = sha256Hex(uploadBytes); cacheKey = 'photo_hash=eq.' + photoHash + '&tshirt_id=eq.' + tshirt.id + '&view=eq.' + view; }
     }
 
+    // Cache check (тільки коли без upload — інакше упустимо унікальне)
     if (cacheKey && !uploadBytes) {
       const cached = await sbSelectOne('ulhome_tryon_cache', cacheKey + '&select=id,result_url,view');
       if (cached) {
-        console.log('[tryon] cache HIT (' + (Date.now()-t0) + 'ms)');
-        return res.status(200).json({
-          ok: true, cached: true, view, result_url: cached.result_url,
-          tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name }
-        });
+        console.log('[tryon] cache HIT');
+        return res.status(200).json({ ok: true, cached: true, view, result_url: cached.result_url,
+          tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name } });
       }
     }
 
+    // Збираємо refs
     const refImages = [];
-    let hasModelImage = false;
-    if (modelMeta && useModelImageAsRef) {
-      modelBytes = await fetchAsBytes(modelMeta.image_url);
-      refImages.push(modelBytes);
-      hasModelImage = true;
+    let scenario = 'B'; // default — без фото юзера
+    if (uploadBytes) {
+      refImages.push(uploadBytes);
+      scenario = 'A';
     }
-    if (uploadBytes) refImages.push(uploadBytes);
-    if (!modelMeta && modelBytes) { refImages.push(modelBytes); hasModelImage = true; }
 
-    const media = await sbSelect(
-      'ulhome_product_media',
-      'product_id=eq.' + encodeURIComponent(tshirt.id) + '&select=url,sort_order&order=sort_order.asc&limit=4'
-    );
+    // Tee photos: 1-2 з product_media або primary
+    const media = await sbSelect('ulhome_product_media',
+      'product_id=eq.' + encodeURIComponent(tshirt.id) + '&select=url,sort_order&order=sort_order.asc&limit=4');
     const teeUrls = [];
-    if (Array.isArray(media) && media.length) media.forEach(m => { if (m && m.url && !/size_grid/i.test(m.url)) teeUrls.push(m.url); });
+    if (Array.isArray(media)) media.forEach(m => { if (m && m.url && !/size_grid/i.test(m.url)) teeUrls.push(m.url); });
     if (!teeUrls.length && tshirt.photo) teeUrls.push(tshirt.photo);
     const seen = new Set();
     const teeUrlsClean = teeUrls.filter(u => { if (seen.has(u)) return false; seen.add(u); return true; }).slice(0, 2);
@@ -302,34 +297,32 @@ export default async function handler(req, res) {
       try { refImages.push(await fetchAsBytes(absolutizePhoto(u))); }
       catch (e) { console.warn('skip tee photo', u, e.message); }
     }
-    const teeRefCount = teeUrlsClean.length;
-    if (teeRefCount < 1) return res.status(422).json({ error: 'no tee photos available' });
+    if (!refImages.length) return res.status(422).json({ error: 'no images to send' });
 
-    const prompt = buildPromptDiptych({
-      gender: (modelMeta && modelMeta.gender) || genderIn || 'male',
-      build:  (modelMeta && modelMeta.build)  || 'average',
-      height: (modelMeta && modelMeta.height_cm) || heightIn || null,
-      weight: (modelMeta && modelMeta.weight_kg) || weightIn || null,
-      colorName: tshirt.color_name,
-      family: tshirt.family,
-      slug: tshirt.uid,
-      hasUploadFace: !!uploadBytes,
-      hasModelImage,
-      teeRefCount
+    // Prompt
+    const gender = (modelMeta && modelMeta.gender) || genderIn || 'male';
+    const build  = (modelMeta && modelMeta.build)  || 'average';
+    const height = (modelMeta && modelMeta.height_cm) || Number(heightIn) || null;
+    const weight = (modelMeta && modelMeta.weight_kg) || Number(weightIn) || null;
+
+    const prompt = buildPrompt({
+      scenario, gender, build, height, weight,
+      colorName: tshirt.color_name, family: tshirt.family, slug: tshirt.uid
     });
 
     const quality = process.env.TRYON_QUALITY || 'medium';
     const model = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
-    console.log('[tryon] calling OpenAI: refs=' + refImages.length + ' quality=' + quality + ' model=' + model + ' (t+' + (Date.now()-t0) + 'ms)');
+    console.log('[tryon] OpenAI: scenario=' + scenario + ' refs=' + refImages.length + ' quality=' + quality + ' (t+' + (Date.now()-t0) + 'ms)');
     const resultBytes = await callGptImageEdit({ refImages, prompt, quality, model, timeoutMs: 240000 });
     console.log('[tryon] OpenAI done: ' + resultBytes.length + ' bytes (t+' + (Date.now()-t0) + 'ms)');
 
+    // Save
     const stamp = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
     const tag = modelMeta ? modelMeta.slug : ('user-' + (photoHash || 'anon').slice(0, 12));
     const path = tshirt.uid + '/combined-' + tag + '-' + stamp + '.png';
     const resultUrl = await sbStorageUpload('tryon-results', path, resultBytes, 'image/png');
-    console.log('[tryon] saved: ' + resultUrl + ' (t+' + (Date.now()-t0) + 'ms)');
 
+    // Cache
     if (cacheKey && !uploadBytes) {
       try {
         await sbInsert('ulhome_tryon_cache', {
@@ -344,21 +337,15 @@ export default async function handler(req, res) {
         });
       } catch (e) {
         const again = await sbSelectOne('ulhome_tryon_cache', cacheKey + '&select=id,result_url');
-        if (again) {
-          return res.status(200).json({
-            ok: true, cached: true, view, result_url: again.result_url,
-            tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name }
-          });
-        }
+        if (again) return res.status(200).json({ ok: true, cached: true, view, result_url: again.result_url,
+          tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name } });
         throw e;
       }
     }
 
     console.log('[tryon] DONE (total ' + (Date.now()-t0) + 'ms)');
-    return res.status(200).json({
-      ok: true, cached: false, view, result_url: resultUrl,
-      tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name }
-    });
+    return res.status(200).json({ ok: true, cached: false, view, result_url: resultUrl,
+      tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name } });
 
   } catch (e) {
     console.error('[tryon] ERROR (t+' + (Date.now()-t0) + 'ms):', (e && e.message) || e);
