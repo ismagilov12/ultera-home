@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<title>ULTERA TEES — AI Примірочна · Online Try-On</title>
+<meta name="description" content="Приміряй футболки ULTERA на віртуальній моделі або своєму фото. AI-примірочна за 15 секунд.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f4f3ee; --bg-alt:#eae8e1; --bg-cool:#dee3e7;
+  --ink:#0e0e0e; --ink-80:#1f1f1f; --ink-60:#555; --ink-40:#8a8a86;
+  --line:#d8d6cc; --mint:#dff6cf; --pink:#ffc8a5; --warm-grey:#aa8a77;
+  --max:1480px; --pad:clamp(20px,3.5vw,56px);
+  --font-sans:"Helvetica Now Display","Neue Haas Grotesk Display Pro","Helvetica Neue",Helvetica,"Inter",-apple-system,BlinkMacSystemFont,Arial,sans-serif;
+  --font-mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+}
+html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;letter-spacing:-.005em;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block;height:auto}
+button{background:none;border:none;font:inherit;color:inherit;cursor:pointer}
+input,select{font:inherit;color:inherit}
+.mono{font-family:var(--font-mono);letter-spacing:0}
+.wide{max-width:var(--max);margin:0 auto;padding:0 var(--pad)}
+
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:50;background:rgba(244,243,238,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--line)}
+.hdr-in{display:flex;align-items:center;justify-content:space-between;padding:14px 0;gap:18px}
+.hdr-logo{display:flex;align-items:center;height:30px;flex-shrink:0;gap:8px}
+.hdr-logo img{height:22px;display:block;filter:brightness(0)}
+.hdr-logo .sub{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--warm-grey);letter-spacing:.1em}
+.hdr-nav{display:flex;gap:6px;flex:1;justify-content:center}
+.hdr-nav a{font-family:var(--font-mono);font-size:11px;padding:8px 14px;letter-spacing:.04em;color:var(--ink-60);transition:color .2s;white-space:nowrap}
+.hdr-nav a::before{content:"[ ";color:var(--ink-40)}
+.hdr-nav a::after{content:" ]";color:var(--ink-40)}
+.hdr-nav a:hover,.hdr-nav a.active{color:var(--ink)}
+.hdr-r{display:flex;gap:10px;align-items:center}
+@media (max-width:960px){.hdr-nav{display:none}}
+
+/* HERO */
+.hero{padding:48px 0 28px}
+.hero-tag{font-family:var(--font-mono);font-size:12px;letter-spacing:.18em;color:var(--ink-60);text-transform:uppercase;margin-bottom:14px}
+.hero-tag em{font-style:normal;color:var(--ink);font-weight:600}
+.hero h1{font-size:clamp(38px,5.5vw,68px);line-height:.95;letter-spacing:-.025em;font-weight:900;text-transform:uppercase;margin-bottom:18px;max-width:14ch}
+.hero p{font-size:16px;color:var(--ink-60);max-width:62ch;line-height:1.55}
+
+/* STEPS */
+.steps{display:flex;gap:0;padding:18px 0 28px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:36px;overflow-x:auto}
+.step{flex:1;min-width:160px;padding:14px 18px;display:flex;align-items:center;gap:14px;font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-40);text-transform:uppercase;border-right:1px solid var(--line)}
+.step:last-child{border-right:none}
+.step .num{width:30px;height:30px;border-radius:50%;background:var(--bg-alt);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--ink-40);flex-shrink:0}
+.step.active{color:var(--ink)}
+.step.active .num{background:var(--ink);color:#fff}
+.step.done .num{background:var(--mint);color:var(--ink)}
+
+/* PANELS */
+.panel{padding:36px 0}
+.panel h2{font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.015em;margin-bottom:8px}
+.panel .sub{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-60);text-transform:uppercase;margin-bottom:22px}
+
+/* STEP 1 — выбор футболки */
+.tees-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.tee-card{position:relative;cursor:pointer;border-radius:14px;overflow:hidden;background:var(--bg-alt);transition:.25s;border:2px solid transparent}
+.tee-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.08)}
+.tee-card.selected{border-color:var(--ink);box-shadow:0 8px 20px rgba(0,0,0,.15)}
+.tee-card .ph{aspect-ratio:3/4;overflow:hidden;background:#fff}
+.tee-card .ph img{width:100%;height:100%;object-fit:cover}
+.tee-card .meta{padding:10px 12px}
+.tee-card .ttl{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:-.01em;margin-bottom:2px;line-height:1.15}
+.tee-card .clr{font-family:var(--font-mono);font-size:10px;color:var(--ink-60);letter-spacing:.04em}
+.tee-card .price{font-family:var(--font-mono);font-size:11px;color:var(--ink);font-weight:700;margin-top:4px}
+
+/* STEP 2 — типажи */
+.tabs{display:inline-flex;background:var(--bg-alt);border-radius:999px;padding:4px;margin-bottom:24px;gap:4px}
+.tab{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:8px 18px;border-radius:999px;color:var(--ink-60);cursor:pointer;transition:.2s}
+.tab.active{background:var(--ink);color:#fff}
+
+.models-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.model-card{cursor:pointer;border-radius:14px;overflow:hidden;background:var(--bg-alt);transition:.25s;border:2px solid transparent}
+.model-card:hover{transform:translateY(-2px)}
+.model-card.selected{border-color:var(--ink);box-shadow:0 8px 20px rgba(0,0,0,.15)}
+.model-card .ph{aspect-ratio:2/3;background:#fff;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;color:var(--ink-40);font-family:var(--font-mono);font-size:10px}
+.model-card .ph img{width:100%;height:100%;object-fit:cover}
+.model-card .meta{padding:8px 10px}
+.model-card .ttl{font-size:11px;font-weight:600;line-height:1.2;margin-bottom:2px}
+.model-card .sub2{font-family:var(--font-mono);font-size:9px;color:var(--ink-60);letter-spacing:.06em;text-transform:uppercase}
+
+.upload-zone{border:2px dashed var(--line);border-radius:18px;padding:48px 28px;text-align:center;cursor:pointer;transition:.25s;background:var(--bg-alt)}
+.upload-zone:hover,.upload-zone.dragging{border-color:var(--ink);background:#fff}
+.upload-zone .ic{font-size:48px;margin-bottom:12px;color:var(--ink-40)}
+.upload-zone h3{font-size:18px;font-weight:700;margin-bottom:6px}
+.upload-zone p{color:var(--ink-60);font-size:13px;max-width:42ch;margin:0 auto}
+.upload-zone .preview{max-width:240px;max-height:320px;margin:0 auto 12px;border-radius:12px;overflow:hidden}
+.upload-zone input[type=file]{display:none}
+
+.params{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:18px;max-width:520px}
+.params label{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--ink-60);text-transform:uppercase;margin-bottom:6px}
+.params input,.params select{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:14px}
+.params input:focus,.params select:focus{outline:none;border-color:var(--ink)}
+
+/* STEP 3 — результат */
+.result-wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:start}
+@media (max-width:840px){.result-wrap{grid-template-columns:1fr}}
+.result-img{aspect-ratio:2/3;background:var(--bg-alt);border-radius:18px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+.result-img img{width:100%;height:100%;object-fit:contain;background:#fff}
+.result-img .ph{color:var(--ink-40);font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-align:center;padding:20px}
+.result-info h3{font-size:24px;font-weight:900;text-transform:uppercase;margin-bottom:6px}
+.result-info .meta{font-family:var(--font-mono);font-size:11px;color:var(--ink-60);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+.result-info .price-box{background:var(--bg-alt);padding:16px;border-radius:12px;margin-bottom:18px;display:flex;align-items:baseline;gap:10px}
+.result-info .price-box .cur{font-size:24px;font-weight:900}
+.result-info .price-box .was{color:var(--ink-40);text-decoration:line-through;font-size:13px}
+.result-actions{display:flex;flex-direction:column;gap:10px}
+
+/* Loader */
+.loader{display:none;text-align:center;padding:60px 20px}
+.loader.show{display:block}
+.loader .spinner{width:54px;height:54px;border:3px solid var(--bg-alt);border-top-color:var(--ink);border-radius:50%;margin:0 auto 16px;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader p{font-family:var(--font-mono);font-size:12px;color:var(--ink-60);letter-spacing:.06em;text-transform:uppercase}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 26px;border-radius:999px;font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;transition:.25s;cursor:pointer;border:1.5px solid transparent}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-primary:hover{background:var(--ink-80);transform:translateY(-2px)}
+.btn-primary:disabled{background:var(--ink-40);cursor:not-allowed;transform:none}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--ink);background:var(--bg-alt)}
+
+.nav-row{display:flex;justify-content:space-between;gap:12px;margin-top:30px;padding-top:24px;border-top:1px solid var(--line)}
+
+.hidden{display:none !important}
+
+.error-box{background:#fee;border:1px solid #fbb;border-radius:12px;padding:14px 16px;color:#a00;font-size:13px;margin-top:14px}
+.note{font-size:12px;color:var(--ink-60);margin-top:12px;font-family:var(--font-mono);letter-spacing:.04em}
+
+footer.ft{padding:60px 0 40px;border-top:1px solid var(--line);margin-top:60px;font-family:var(--font-mono);font-size:11px;color:var(--ink-60);letter-spacing:.06em;text-transform:uppercase;text-align:center}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="wide hdr-in">
+    <a href="index.html" class="hdr-logo"><img src="logo.png" alt="ULTERA"><span class="sub">TEES™</span></a>
+    <nav class="hdr-nav">
+      <a href="tshirts.html">колекція</a>
+      <a href="tryon.html" class="active">AI примірочна</a>
+      <a href="tshirts.html#sizegrid">розмір</a>
+      <a href="tshirts.html#tech">матеріали</a>
+      <a href="index.html">← кросівки</a>
+    </nav>
+    <div class="hdr-r">
+      <div class="lang mono"><b>UA</b> · EN</div>
+    </div>
+  </div>
+</header>
+
+<section class="hero wide">
+  <div class="hero-tag"><em>BETA</em> · AI Virtual Try-On · gpt-image · ~15 sec</div>
+  <h1>Приміряй футболку онлайн</h1>
+  <p>Завантаж своє фото або обери схожий типаж — і подивися, як футболка ULTERA сидить саме на твоїй фігурі. AI генерує реалістичне фото за ~15 секунд. Безкоштовно. Без реєстрації.</p>
+</section>
+
+<div class="wide">
+  <div class="steps" id="steps">
+    <div class="step active" data-step="1"><div class="num">1</div><span>Обери футболку</span></div>
+    <div class="step" data-step="2"><div class="num">2</div><span>Типаж або фото</span></div>
+    <div class="step" data-step="3"><div class="num">3</div><span>Результат</span></div>
+  </div>
+</div>
+
+<!-- STEP 1 -->
+<section class="panel wide" id="panel1">
+  <h2>Крок 1. Обери футболку</h2>
+  <div class="sub">// 27 моделей у колекції</div>
+  <div class="tees-grid" id="teesGrid">
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--ink-40);font-family:var(--font-mono);font-size:12px">завантаження каталогу…</div>
+  </div>
+  <div class="nav-row">
+    <a href="tshirts.html" class="btn btn-ghost">← в каталог</a>
+    <button class="btn btn-primary" id="toStep2" disabled onclick="goStep(2)">далі →</button>
+  </div>
+</section>
+
+<!-- STEP 2 -->
+<section class="panel wide hidden" id="panel2">
+  <h2>Крок 2. Хто буде моделлю?</h2>
+  <div class="sub">// обери типаж, схожий на тебе, або завантаж своє фото</div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="preset" onclick="switchTab('preset')">типажі</button>
+    <button class="tab" data-tab="upload" onclick="switchTab('upload')">моє фото</button>
+  </div>
+
+  <div id="tabPreset">
+    <div class="tabs" style="background:transparent;padding:0;margin-bottom:14px;gap:0">
+      <button class="tab" id="genM" data-gen="all" onclick="filterGender('all')" style="background:var(--bg-alt);border-radius:999px 0 0 999px">всі</button>
+      <button class="tab" data-gen="male" onclick="filterGender('male')" style="background:var(--bg-alt);border-radius:0">чоловіки</button>
+      <button class="tab" data-gen="female" onclick="filterGender('female')" style="background:var(--bg-alt);border-radius:0 999px 999px 0">жінки</button>
+    </div>
+    <div class="models-grid" id="modelsGrid">
+      <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--ink-40);font-family:var(--font-mono);font-size:12px">завантаження типажів…</div>
+    </div>
+  </div>
+
+  <div id="tabUpload" class="hidden">
+    <label class="upload-zone" id="uploadZone" for="filePick">
+      <div id="uploadEmpty">
+        <div class="ic">📸</div>
+        <h3>Завантаж своє фото</h3>
+        <p>JPG/PNG до 8 МБ. Краще — фото в повний зріст, на однотонному фоні, в облягаючому одязі. Обличчя видно не обов'язково.</p>
+      </div>
+      <div id="uploadFilled" class="hidden">
+        <div class="preview"><img id="uploadPreview" src="" alt=""></div>
+        <button type="button" class="btn btn-ghost" onclick="event.preventDefault();clearUpload()">обрати інше</button>
+      </div>
+      <input type="file" id="filePick" accept="image/*">
+    </label>
+    <div class="params">
+      <div>
+        <label>стать</label>
+        <select id="uGender"><option value="male">Чоловік</option><option value="female">Жінка</option></select>
+      </div>
+      <div>
+        <label>зріст, см</label>
+        <input type="number" id="uHeight" min="140" max="220" placeholder="180">
+      </div>
+      <div>
+        <label>вага, кг</label>
+        <input type="number" id="uWeight" min="40" max="180" placeholder="75">
+      </div>
+    </div>
+    <div class="note">Параметри допомагають AI краще підібрати посадку. Фото обробляється тимчасово, не зберігається з прив'язкою до особи.</div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goStep(1)">← назад</button>
+    <button class="btn btn-primary" id="toStep3" disabled onclick="runTryon()">🪞 приміряти →</button>
+  </div>
+</section>
+
+<!-- STEP 3 -->
+<section class="panel wide hidden" id="panel3">
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <p id="loaderMsg">AI малює, ~15 секунд…</p>
+  </div>
+  <div id="resultBox" class="hidden">
+    <h2>Готово 🪞</h2>
+    <div class="sub">// AI-генерація · збережено для тебе на пристрої</div>
+    <div class="result-wrap">
+      <div class="result-img"><img id="resImg" src="" alt="Try-on result"></div>
+      <div class="result-info">
+        <h3 id="resTitle">—</h3>
+        <div class="meta" id="resMeta">—</div>
+        <div class="price-box">
+          <span class="cur" id="resPrice">— ₴</span>
+        </div>
+        <div class="result-actions">
+          <a class="btn btn-primary" id="resBuy" href="tshirts.html">купити цю модель</a>
+          <button class="btn btn-ghost" onclick="goStep(1);clearAll()">приміряти іншу</button>
+          <a class="btn btn-ghost" id="resDownload" download="ultera-tryon.png">⬇ зберегти фото</a>
+        </div>
+        <div class="note">Якщо результат виглядає дивно — спробуй інший типаж або краще фото. AI ще навчається.</div>
+      </div>
+    </div>
+  </div>
+  <div id="errorBox" class="error-box hidden"></div>
+  <div class="nav-row">
+    <button class="btn btn-ghost" onclick="goStep(2)">← змінити</button>
+  </div>
+</section>
+
+<footer class="ft">
+  <div class="wide">© ULTERA TEES™ · AI Try-On · Powered by gpt-image · 2026</div>
+</footer>
+
+<script>
+/* ====== ULTERA TRY-ON · клиентская логика ====== */
+
+const SUPABASE_URL = 'https://fsihlzzjewhxpogvjapu.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const ST = {
+  step: 1,
+  tshirt: null,    // {id, uid, family, title, color_name, color_hex, photo, price, price_old}
+  modelMode: 'preset', // 'preset' | 'upload'
+  model: null,     // preset model row OR null
+  upload: null,    // {dataUrl, gender, height, weight}
+  models: [],
+  tees: [],
+  filterGender: 'all'
+};
+
+function priceFmt(v){ return Number(v||0).toLocaleString('uk-UA').replace(/,/g,' ') + ' ₴'; }
+
+function goStep(n){
+  ST.step = n;
+  document.querySelectorAll('.step').forEach(el => {
+    const i = +el.dataset.step;
+    el.classList.toggle('active', i === n);
+    el.classList.toggle('done', i < n);
+  });
+  ['panel1','panel2','panel3'].forEach((id, idx) => {
+    document.getElementById(id).classList.toggle('hidden', (idx+1) !== n);
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ---------- STEP 1: каталог футболок ---------- */
+async function loadTees(){
+  const { data, error } = await sb
+    .from('ulhome_products')
+    .select('id,uid,family,title,color_name,color_hex,photo,price,price_old,published')
+    .eq('family', 'Tees')
+    .eq('published', true)
+    .order('sort_order', { ascending: true });
+  if (error) { console.error(error); return; }
+  ST.tees = data || [];
+  renderTees();
+}
+function renderTees(){
+  const grid = document.getElementById('teesGrid');
+  if (!ST.tees.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--ink-40)">футболки не знайдено</div>';
+    return;
+  }
+  grid.innerHTML = ST.tees.map(t => `
+    <div class="tee-card" data-id="${t.id}" onclick="pickTee('${t.id}')">
+      <div class="ph"><img src="${t.photo}" alt="${t.title||''}" loading="lazy"></div>
+      <div class="meta">
+        <div class="ttl">${t.title || t.family}</div>
+        <div class="clr">${t.color_name || ''}</div>
+        <div class="price">${priceFmt(t.price)}</div>
+      </div>
+    </div>`).join('');
+}
+window.pickTee = function(id){
+  ST.tshirt = ST.tees.find(t => t.id === id) || null;
+  document.querySelectorAll('.tee-card').forEach(c => c.classList.toggle('selected', c.dataset.id === id));
+  document.getElementById('toStep2').disabled = !ST.tshirt;
+};
+
+/* ---------- STEP 2: модели ---------- */
+async function loadModels(){
+  const { data, error } = await sb
+    .from('ulhome_tryon_models')
+    .select('id,slug,gender,build,height_cm,weight_kg,title,image_url')
+    .eq('published', true)
+    .order('sort_order', { ascending: true });
+  if (error) { console.error(error); return; }
+  ST.models = data || [];
+  renderModels();
+}
+function renderModels(){
+  const grid = document.getElementById('modelsGrid');
+  const list = ST.filterGender === 'all'
+    ? ST.models
+    : ST.models.filter(m => m.gender === ST.filterGender);
+  if (!list.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--ink-40);font-family:var(--font-mono);font-size:12px">типажі ще не згенеровано — заглянь пізніше</div>';
+    return;
+  }
+  grid.innerHTML = list.map(m => `
+    <div class="model-card" data-id="${m.id}" onclick="pickModel('${m.id}')">
+      <div class="ph">${m.image_url ? `<img src="${m.image_url}" loading="lazy" alt="${m.title}">` : 'без фото'}</div>
+      <div class="meta">
+        <div class="ttl">${m.title}</div>
+        <div class="sub2">${m.gender === 'male' ? 'ч' : 'ж'} · ${m.height_cm}/${m.weight_kg}</div>
+      </div>
+    </div>`).join('');
+}
+window.pickModel = function(id){
+  ST.model = ST.models.find(m => m.id === id) || null;
+  ST.modelMode = 'preset';
+  document.querySelectorAll('.model-card').forEach(c => c.classList.toggle('selected', c.dataset.id === id));
+  document.getElementById('toStep3').disabled = !ST.model;
+};
+window.filterGender = function(g){
+  ST.filterGender = g;
+  document.querySelectorAll('[data-gen]').forEach(b => b.classList.toggle('active', b.dataset.gen === g));
+  renderModels();
+};
+window.switchTab = function(tab){
+  ST.modelMode = tab;
+  document.querySelectorAll('.tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('tabPreset').classList.toggle('hidden', tab !== 'preset');
+  document.getElementById('tabUpload').classList.toggle('hidden', tab !== 'upload');
+  validateStep2();
+};
+function validateStep2(){
+  let ok = false;
+  if (ST.modelMode === 'preset') ok = !!ST.model;
+  else                            ok = !!ST.upload?.dataUrl;
+  document.getElementById('toStep3').disabled = !ok;
+}
+
+/* ---- upload ---- */
+const filePick = document.getElementById('filePick');
+filePick.addEventListener('change', (e) => {
+  const f = e.target.files?.[0];
+  if (!f) return;
+  if (f.size > 8 * 1024 * 1024) { alert('Файл більше 8 МБ'); return; }
+  const r = new FileReader();
+  r.onload = () => {
+    ST.upload = { dataUrl: r.result };
+    document.getElementById('uploadPreview').src = r.result;
+    document.getElementById('uploadEmpty').classList.add('hidden');
+    document.getElementById('uploadFilled').classList.remove('hidden');
+    validateStep2();
+  };
+  r.readAsDataURL(f);
+});
+window.clearUpload = function(){
+  ST.upload = null;
+  filePick.value = '';
+  document.getElementById('uploadEmpty').classList.remove('hidden');
+  document.getElementById('uploadFilled').classList.add('hidden');
+  validateStep2();
+};
+
+/* ---------- STEP 3: вызов try-on API ---------- */
+window.runTryon = async function(){
+  goStep(3);
+  document.getElementById('loader').classList.add('show');
+  document.getElementById('resultBox').classList.add('hidden');
+  document.getElementById('errorBox').classList.add('hidden');
+
+  const payload = { tshirt_id: ST.tshirt.id };
+  if (ST.modelMode === 'preset') {
+    payload.model_id = ST.model.id;
+  } else {
+    payload.photo_b64 = ST.upload.dataUrl;
+    payload.gender = document.getElementById('uGender').value || 'male';
+    const h = +document.getElementById('uHeight').value || 0;
+    const w = +document.getElementById('uWeight').value || 0;
+    if (h) payload.height = h;
+    if (w) payload.weight = w;
+  }
+
+  // динамическое сообщение загрузки
+  const msgs = ['AI малює, ~15 секунд…','Підбираємо посадку…','Обробляємо принт…','Майже готово…'];
+  let mi = 0;
+  const mt = setInterval(() => {
+    mi = (mi+1) % msgs.length;
+    document.getElementById('loaderMsg').textContent = msgs[mi];
+  }, 4000);
+
+  try {
+    const r = await fetch('/api/tryon', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const j = await r.json();
+    clearInterval(mt);
+    document.getElementById('loader').classList.remove('show');
+    if (!r.ok) {
+      showError(j.error || ('HTTP ' + r.status));
+      return;
+    }
+    showResult(j.result_url);
+  } catch (e) {
+    clearInterval(mt);
+    document.getElementById('loader').classList.remove('show');
+    showError(String(e?.message || e));
+  }
+};
+
+function showResult(url){
+  document.getElementById('resImg').src = url;
+  document.getElementById('resTitle').textContent = ST.tshirt.title || 'ULTERA TEES';
+  document.getElementById('resMeta').textContent = (ST.tshirt.family ? ST.tshirt.family + ' · ' : '') + (ST.tshirt.color_name || '');
+  document.getElementById('resPrice').textContent = priceFmt(ST.tshirt.price);
+  document.getElementById('resBuy').href = 'tshirts.html#' + (ST.tshirt.uid || '');
+  document.getElementById('resDownload').href = url;
+  document.getElementById('resultBox').classList.remove('hidden');
+}
+function showError(msg){
+  const el = document.getElementById('errorBox');
+  el.textContent = 'Помилка: ' + msg + '. Спробуй ще раз або інший типаж.';
+  el.classList.remove('hidden');
+}
+function clearAll(){
+  ST.tshirt = null; ST.model = null; ST.upload = null;
+  document.querySelectorAll('.tee-card,.model-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('toStep2').disabled = true;
+  document.getElementById('toStep3').disabled = true;
+  clearUpload();
+}
+
+/* ---------- init ---------- */
+(async function init(){
+  // preselect tshirt из URL ?tee=<uid>
+  await loadTees();
+  await loadModels();
+  const params = new URLSearchParams(location.search);
+  const teeUid = params.get('tee');
+  if (teeUid) {
+    const t = ST.tees.find(x => x.uid === teeUid);
+    if (t) {
+      pickTee(t.id);
+      setTimeout(() => goStep(2), 200);
+    }
+  }
+  filterGender('all');
+})();
+</script>
+</body>
+</html>

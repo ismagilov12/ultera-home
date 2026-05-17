@@ -442,6 +442,13 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
 .cta-add:hover{background:var(--warm-grey)}
 .cta-buy{flex:1;padding:16px;border-radius:12px;background:var(--mint);color:var(--ink);font-family:var(--font-mono);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .cta-buy:hover{background:#cdebbc}
+/* ====== TRY-ON CTA ====== */
+.cta-tryon{margin-top:8px;width:100%;padding:14px;border-radius:12px;background:var(--bg-alt);color:var(--ink);font-family:var(--font-mono);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;gap:8px}
+.cta-tryon:hover{background:#fff;border-color:var(--ink);transform:translateY(-1px)}
+.cta-tryon .ic{font-size:14px}
+.cta-tryon-pill{position:absolute;top:14px;left:14px;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(6px);padding:7px 12px;border-radius:999px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--ink);text-transform:uppercase;display:flex;align-items:center;gap:6px;border:1px solid var(--line);cursor:pointer;transition:.2s}
+.cta-tryon-pill:hover{background:#fff;border-color:var(--ink);transform:translateY(-1px)}
+
 
 /* ====== CART DRAWER ====== */
 .cart-drawer{position:fixed;inset:0;z-index:120;pointer-events:none}
@@ -604,6 +611,7 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
       <a href="#collection" class="active">колекція</a>
       <a href="#" data-filter="lifestyle">lifestyle</a>
       <a href="#" data-filter="concept">concept</a>
+      <a href="tryon.html">🪞 AI примірочна</a>
       <a href="#sizegrid">розмір</a>
       <a href="#tech">матеріали</a>
       <a href="index.html">← кросівки</a>
@@ -873,6 +881,8 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
         <button class="cta-add" onclick="addToCart()">Додати в кошик</button>
         <button class="cta-buy" onclick="buyNow()">Купити в 1 клік</button>
       </div>
+      <button class="cta-tryon" onclick="openTryon()" type="button"><span class="ic">🪞</span> Приміряти онлайн (AI)</button>
+      <!-- /TRYON BUTTON -->
     </div>
   </div>
 </div>
@@ -2024,6 +2034,19 @@ bootstrapFromSupabase().then(() => buildGrid()).catch(()=>{});
 })();
 
 console.log('ULTERA TEES Drop 01 models:', DATA.length);
+
+function openTryon(){
+  try{
+    var p = (typeof modalCtx === 'object' && modalCtx && modalCtx.product) ? modalCtx.product : null;
+    var uid = p && p.uid ? p.uid : '';
+    var url = 'tryon.html' + (uid ? ('?tee=' + encodeURIComponent(uid)) : '');
+    if(typeof ulteraFbq === 'function'){
+      ulteraFbq('InitiateCheckout', {content_ids:[uid], content_type:'tryon', content_name: p && p.name});
+    }
+    location.href = url;
+  } catch(e){ location.href = 'tryon.html'; }
+}
+
 </script>
 </body>
 </html>
