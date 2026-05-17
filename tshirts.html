@@ -572,6 +572,68 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
 
 
 
+
+
+/* === V7_POLISH === */
+html, body { touch-action: pan-x pan-y; -webkit-text-size-adjust: 100%; }
+.to-overlay { padding: 0 !important; }
+.to-dialog { padding-top: env(safe-area-inset-top, 0); }
+@media (max-width:760px){
+  .to-dialog{
+    height:100dvh; /* dynamic viewport — без іOS-стрибання */
+    min-height:100dvh;
+    max-height:100dvh;
+    border-radius:0;
+  }
+}
+.to-head{padding-top: max(18px, env(safe-area-inset-top, 0px));}
+.to-foot{padding-bottom: max(14px, env(safe-area-inset-bottom, 0px));}
+
+/* Lightbox для готового фото */
+.tg-lightbox{
+  position:fixed;inset:0;background:rgba(8,8,8,.96);z-index:300;
+  display:none;align-items:center;justify-content:center;
+  padding:0;touch-action:pan-x pan-y pinch-zoom;
+  animation:tg-fade .25s;
+}
+.tg-lightbox.open{display:flex}
+@keyframes tg-fade{from{opacity:0}to{opacity:1}}
+.tg-lightbox-img{
+  max-width:100%;max-height:100%;width:auto;height:auto;
+  object-fit:contain;display:block;
+  cursor:zoom-out;
+  touch-action:pinch-zoom;
+}
+.tg-lightbox-close{
+  position:absolute;top:max(16px,env(safe-area-inset-top,16px));right:16px;
+  width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.92);
+  display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;
+  border:0;color:var(--ink);box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:5;
+}
+.tg-lightbox-close:hover{background:#fff}
+.tg-lightbox-actions{
+  position:absolute;bottom:max(20px,env(safe-area-inset-bottom,20px));left:50%;
+  transform:translateX(-50%);display:flex;gap:10px;z-index:5;
+}
+.tg-lightbox-actions a{
+  display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:999px;
+  font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;background:#fff;color:var(--ink);text-decoration:none;
+  box-shadow:0 4px 14px rgba(0,0,0,.25);border:0;cursor:pointer;
+}
+.tg-lightbox-actions a:hover{background:var(--mint)}
+.tg-lightbox-hint{
+  position:absolute;top:max(70px,calc(env(safe-area-inset-top,16px) + 56px));left:50%;
+  transform:translateX(-50%);background:rgba(255,255,255,.85);
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--ink-60);
+  padding:5px 14px;border-radius:999px;text-transform:uppercase;
+  animation:tg-fade-out 4s forwards;pointer-events:none;
+}
+@keyframes tg-fade-out{0%{opacity:0}10%{opacity:1}70%{opacity:1}100%{opacity:0}}
+
+/* Курсор-zoom на готовому слайді */
+.to-slide:not(.loading):not(.error) img{cursor:zoom-in}
+
 /* === V6_MINIGAME === */
 .to-slide.loading{background:linear-gradient(160deg,#f4f3ee 0%,#eae8e1 60%,#dee3e7 100%);animation:none;position:relative;overflow:hidden;cursor:crosshair}
 .to-slide.loading::after{content:""}
@@ -2747,6 +2809,139 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', attach);
   } else attach();
+})();
+
+
+
+/* === V7_POLISH === */ JS
+(function(){
+  // 1. Блок pinch-zoom на iOS (Safari ігнорує user-scalable=no)
+  document.addEventListener('gesturestart', function(e){ e.preventDefault(); }, {passive:false});
+  document.addEventListener('gesturechange', function(e){ e.preventDefault(); }, {passive:false});
+  document.addEventListener('gestureend', function(e){ e.preventDefault(); }, {passive:false});
+  // Блок double-tap zoom
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', function(e){
+    const now = Date.now();
+    if(now - lastTouchEnd <= 350){ e.preventDefault(); }
+    lastTouchEnd = now;
+  }, {passive:false});
+
+  // 2. Lightbox для готового фото
+  let lb = null;
+  function ensureLightbox(){
+    if(lb) return lb;
+    lb = document.createElement('div');
+    lb.className = 'tg-lightbox';
+    lb.innerHTML =
+      '<button class="tg-lightbox-close" aria-label="Закрити">✕</button>'
+    + '<img class="tg-lightbox-img" src="" alt="">'
+    + '<div class="tg-lightbox-hint">щипай щоб збільшити · тап ✕ щоб закрити</div>'
+    + '<div class="tg-lightbox-actions">'
+    +   '<a class="tg-lb-dl" href="#" download="ultera-tryon.png">⬇ зберегти</a>'
+    +   '<a class="tg-lb-share" href="#">📤 поділитись</a>'
+    + '</div>';
+    document.body.appendChild(lb);
+
+    lb.addEventListener('click', function(e){
+      if(e.target === lb || e.target.classList.contains('tg-lightbox-close') || e.target.classList.contains('tg-lightbox-img')){
+        closeLightbox();
+      }
+    });
+    return lb;
+  }
+  function openLightbox(url){
+    ensureLightbox();
+    const img = lb.querySelector('.tg-lightbox-img');
+    const dl = lb.querySelector('.tg-lb-dl');
+    const sh = lb.querySelector('.tg-lb-share');
+    img.src = url;
+    dl.href = url;
+    sh.onclick = function(ev){
+      ev.preventDefault();
+      if(navigator.share){
+        navigator.share({ url, title: 'ULTERA AI Try-On', text: 'Подивись як на мені сидить ULTERA TEES' })
+          .catch(()=>{});
+      } else {
+        // fallback: копіюємо лінк
+        try{
+          navigator.clipboard.writeText(url);
+          sh.textContent = '✓ лінк скопійовано';
+          setTimeout(()=>{ sh.innerHTML = '📤 поділитись'; }, 1500);
+        }catch(e){}
+      }
+    };
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox(){
+    if(!lb) return;
+    lb.classList.remove('open');
+    // повертаємо overflow тільки якщо overlay не відкритий
+    const ov = document.getElementById('toOverlay');
+    if(!ov || !ov.classList.contains('open')){
+      document.body.style.overflow = '';
+    }
+  }
+
+  // ESC
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && lb && lb.classList.contains('open')) closeLightbox();
+  });
+
+  // Делегування: клік на готове фото у to-slide → відкриваємо
+  document.addEventListener('click', function(e){
+    const img = e.target && e.target.closest && e.target.closest('.to-slide:not(.loading):not(.error) img');
+    if(!img) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openLightbox(img.src);
+  });
+  // Touch — теж відкривати по тапу
+  document.addEventListener('touchend', function(e){
+    if(!e.target || !e.target.closest) return;
+    const img = e.target.closest('.to-slide:not(.loading):not(.error) img');
+    if(!img) return;
+    if(lb && lb.classList.contains('open')) return; // вже відкритий — пропустимо
+    openLightbox(img.src);
+  }, {passive:true});
+
+  // 3. FIX V6 game на mobile: rAF щоб дочекатись layout (clientWidth/Height)
+  // Спостерігаємо за зміною класу .to-slide.loading і перевідкриваємо гру через rAF
+  function tryStartGame(slide){
+    if(!slide.classList.contains('loading')) return;
+    if(slide.querySelector('.tg-hud')) return; // вже стартувала
+    if(slide.clientWidth < 200 || slide.clientHeight < 200){
+      requestAnimationFrame(() => tryStartGame(slide));
+      return;
+    }
+    // Симулюємо повторний scan — додамо/приберемо клас щоб старий MutationObserver спрацював
+    // Тригеримо штучну зміну атрибутів
+    slide.classList.add('loading');
+  }
+  const mo2 = new MutationObserver((muts) => {
+    muts.forEach(m => {
+      // нові ноди .to-slide
+      m.addedNodes && m.addedNodes.forEach(n => {
+        if(n.nodeType !== 1) return;
+        if(n.classList && n.classList.contains('to-slide') && n.classList.contains('loading')){
+          requestAnimationFrame(() => tryStartGame(n));
+        }
+        // Також глибинно — n може містити to-slide
+        n.querySelectorAll && n.querySelectorAll('.to-slide.loading').forEach(s => {
+          requestAnimationFrame(() => tryStartGame(s));
+        });
+      });
+    });
+  });
+  function attachMo2(){
+    const ov = document.getElementById('toOverlay');
+    if(!ov){ setTimeout(attachMo2, 500); return; }
+    mo2.observe(ov, {childList:true, subtree:true});
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', attachMo2);
+  } else attachMo2();
 })();
 
 </script>
