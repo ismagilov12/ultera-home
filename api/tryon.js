@@ -1,7 +1,8 @@
-// api/tryon.js — AI Virtual Try-On (gpt-image-1) v7 · 2026-05-17
+// api/tryon.js — AI Virtual Try-On (gpt-image-1 / gpt-image-2) v8 · 2026-05-17
 //
-// FINAL FIX: image[] array syntax + WebP MIME detection
-// Спрощений промпт. 2 сценарії:
+// v8 FIX: фільтр product_media тільки на image extensions (.webp/.png/.jpg/.gif)
+//          tee-002 мав .mp4 у списку — ламало OpenAI «Invalid image file for image 3»
+// v7: image[] array syntax + WebP MIME detection. 2 сценарії:
 //   A) З фото клієнта (photo_b64) → use it as the person + override description with their height/weight
 //   B) Без фото → опис тіла з типажа (gender/build/height/weight)
 // Always diptych output 1536x1024 (front+back).
@@ -286,10 +287,13 @@ export default async function handler(req, res) {
 
     // Tee photos: 1-2 з product_media або primary
     const media = await sbSelect('ulhome_product_media',
-      'product_id=eq.' + encodeURIComponent(tshirt.id) + '&select=url,sort_order&order=sort_order.asc&limit=4');
+      'product_id=eq.' + encodeURIComponent(tshirt.id) + '&select=url,sort_order&order=sort_order.asc&limit=20');
+    const isImageUrl = (u) => /\.(png|jpe?g|webp|gif)(\?.*)?$/i.test(u);
     const teeUrls = [];
-    if (Array.isArray(media)) media.forEach(m => { if (m && m.url && !/size_grid/i.test(m.url)) teeUrls.push(m.url); });
-    if (!teeUrls.length && tshirt.photo) teeUrls.push(tshirt.photo);
+    if (Array.isArray(media)) media.forEach(m => {
+      if (m && m.url && !/size_grid/i.test(m.url) && isImageUrl(m.url)) teeUrls.push(m.url);
+    });
+    if (!teeUrls.length && tshirt.photo && isImageUrl(tshirt.photo)) teeUrls.push(tshirt.photo);
     const seen = new Set();
     const teeUrlsClean = teeUrls.filter(u => { if (seen.has(u)) return false; seen.add(u); return true; }).slice(0, 2);
     console.log('[tryon] tee urls: ' + teeUrlsClean.join(', '));
