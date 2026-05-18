@@ -293,6 +293,14 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .ana-row,.ana-row.equal,.ana-row.tri{grid-template-columns:1fr}
 }
+
+.pv-chip{padding:4px 10px;border:1px solid #e4e3dc;border-radius:999px;background:#fff;font-weight:500;cursor:pointer;color:#0e0e0e80;font-size:12px}
+.pv-chip:hover{background:#f5f5f0}
+.pv-chip.active{background:#0e0e0e;color:#fff;border-color:#0e0e0e}
+#pv-tbl td:first-child{font-weight:600}
+#pv-tbl td{padding:6px 8px;border-bottom:1px dashed #ecebe5;font-size:12.5px}
+#pv-tbl th{padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #e4e3dc;color:#0e0e0e80;font-size:12px}
+#pv-tbl th.num,#pv-tbl td.num{text-align:right}
 </style>
 <!-- TEES_EDITOR_PATCH -->
 <style id="tees-editor-patch">
@@ -589,6 +597,29 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
       <div class="ana-block" style="margin-top:14px">
         <h3>Джерела по днях <span style="font-weight:400;color:#0e0e0e70;font-size:12px">· топ-8 + агрегат</span></h3>
         <div id="sources-daily-wrap" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <div class="ana-block" style="margin-top:14px">
+        <h3>Перегляди товарів <span style="font-weight:400;color:#0e0e0e70;font-size:12px">· відкриття картки + перемикання кольору</span>
+          <span id="pv-chips" style="margin-left:12px;display:inline-flex;gap:6px;vertical-align:middle">
+            <button type="button" data-d="1"  class="pv-chip">Сьогодні</button>
+            <button type="button" data-d="7"  class="pv-chip active">7 днів</button>
+            <button type="button" data-d="30" class="pv-chip">30 днів</button>
+          </span>
+        </h3>
+        <div id="pv-totals" style="font-size:12px;color:#0e0e0e80;margin-bottom:8px">—</div>
+        <div style="overflow-x:auto">
+          <table class="daily-tbl" id="pv-tbl">
+            <thead><tr>
+              <th>Модель</th>
+              <th>Колір</th>
+              <th class="num">Перегляди</th>
+              <th class="num">Переключень кольору</th>
+              <th class="num">Унікальні сесії</th>
+            </tr></thead>
+            <tbody><tr><td colspan="5" class="ana-empty">Завантажую…</td></tr></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="ana-row tri">
@@ -2529,5 +2560,70 @@ else wireDailySort();
   if(anaLink) anaLink.addEventListener('click', ()=>{ setTimeout(loadAnalytics, 40); });
 })();
 
+
+// v132 2026-05-18: Product views (modal_open + color switch) for admin analytics.
+const PV = { days: 7, category: 'tshirts' };
+async function loadProductViews(){
+  const tb = document.querySelector('#pv-tbl tbody');
+  if(!tb) return;
+  tb.innerHTML = '<tr><td colspan="5" class="ana-empty">Завантажую…</td></tr>';
+  try {
+    const r = await rest('rpc/ulhome_product_views_summary', {
+      method:'POST',
+      body: JSON.stringify({ p_days: PV.days, p_category: PV.category })
+    });
+    const rows = (r && r.rows) || [];
+    const t = (r && r.totals) || {};
+    const tot = document.getElementById('pv-totals');
+    if (tot) tot.textContent =
+      fmtInt(t.views||0) + ' відкриттів · ' +
+      fmtInt(t.color_switches||0) + ' переключень · ' +
+      fmtInt(t.unique_sessions||0) + ' сесій · ' +
+      fmtInt(t.models||0) + ' моделей';
+    if(!rows.length){
+      tb.innerHTML = '<tr><td colspan="5" class="ana-empty">Немає переглядів за період</td></tr>';
+      return;
+    }
+    const esc = (typeof escapeHtml === 'function') ? escapeHtml : function(s){ return String(s==null?'':s).replace(/[&<>"\']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
+    tb.innerHTML = rows.map(function(row){
+      const dot = row.color_hex
+        ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+esc(row.color_hex)+';border:1px solid #0e0e0e22;vertical-align:middle;margin-right:6px"></span>'
+        : '';
+      return '<tr>' +
+        '<td>' + esc(row.model) + '</td>' +
+        '<td>' + dot + esc(row.color) + '</td>' +
+        '<td class="num">' + fmtInt(row.views) + '</td>' +
+        '<td class="num">' + fmtInt(row.color_switches) + '</td>' +
+        '<td class="num">' + fmtInt(row.unique_sessions) + '</td>' +
+      '</tr>';
+    }).join('');
+  } catch(e){
+    console.error('product_views err', e);
+    tb.innerHTML = '<tr><td colspan="5" class="ana-empty">Помилка: ' + String(e&&e.message||e).slice(0,200) + '</td></tr>';
+  }
+}
+function bindPvChips(){
+  const wrap = document.getElementById('pv-chips');
+  if(!wrap || wrap.__bound) return;
+  wrap.__bound = true;
+  wrap.addEventListener('click', function(e){
+    const b = e.target.closest('button[data-d]');
+    if(!b) return;
+    PV.days = parseInt(b.dataset.d, 10) || 7;
+    wrap.querySelectorAll('button').forEach(function(x){ x.classList.toggle('active', x === b); });
+    loadProductViews();
+  });
+}
+(function(){
+  const orig = window.loadAnalytics;
+  if (typeof orig === 'function' && !orig.__pvHook){
+    window.loadAnalytics = async function(){
+      const r = await orig.apply(this, arguments);
+      try { bindPvChips(); loadProductViews(); } catch(_){}
+      return r;
+    };
+    window.loadAnalytics.__pvHook = true;
+  }
+})();
 </script></body>
 </html>

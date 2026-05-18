@@ -1738,6 +1738,24 @@ function bindChips(){
 /* ---------- MODAL ---------- */
 function openModal(p){
   modalCtx = { product: p, photoIdx: 0 };
+  // v132 2026-05-18: product_view / color_view tracker for admin analytics
+  try {
+    var __mEl = document.getElementById('modal');
+    var __wasOpen = __mEl && __mEl.classList.contains('open');
+    var __prevUid = window.__tModalUid;
+    var __evt = (__wasOpen && __prevUid && __prevUid !== p.uid) ? 'color_view' : 'product_view';
+    window.__tModalUid = p.uid;
+    if (typeof window.ulteraTrack === 'function') {
+      window.ulteraTrack(__evt, {
+        category: 'tshirts',
+        uid: p.uid,
+        family: p.group || '',
+        title: p.name || '',
+        color_name: p.color_ua || '',
+        color_hex: p.color_hex || ''
+      });
+    }
+  } catch(_){}
   // reset video carry-over from previous (re)open
   const _rIfr = document.getElementById('m_video_iframe');
   if(_rIfr){ _rIfr.src = ''; _rIfr.style.display = 'none'; }
@@ -3277,5 +3295,40 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
   </div>
 </div>
 
+
+<script>
+/* v132 2026-05-18 ULTERA TEES mini-tracker — analytics_events sink for product_view/color_view */
+(function() {
+  if (window.__ULTERA_TRACKER_ON) return;
+  window.__ULTERA_TRACKER_ON = true;
+  var SUPABASE_URL = 'https://fsihlzzjewhxpogvjapu.supabase.co';
+  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU';
+  var TABLE = 'analytics_events';
+  var BATCH_MS = 3000;
+  var sid = (function(){
+    try {
+      var s = sessionStorage.getItem('_ut_sid');
+      if (!s) { s = Date.now().toString(36) + Math.random().toString(36).slice(2,8); sessionStorage.setItem('_ut_sid', s); }
+      return s;
+    } catch(_) { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  })();
+  function vw(){ return innerWidth; } function vh(){ return innerHeight; }
+  function dev(){ return vw()<768?'mobile':vw()<1024?'tablet':'desktop'; }
+  var queue = [];
+  function enqueue(et, ed){
+    queue.push({session_id:sid, event_type:et, event_data:ed||{}, page_url:location.href, viewport_w:vw(), viewport_h:vh(), screen_w:screen.width, screen_h:screen.height, device_type:dev(), user_agent:navigator.userAgent, referrer:document.referrer||null});
+  }
+  function flush(){
+    if (!queue.length) return;
+    var batch = queue.splice(0, queue.length);
+    fetch(SUPABASE_URL + '/rest/v1/' + TABLE, {method:'POST', headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}, body: JSON.stringify(batch), keepalive: true}).catch(function(){});
+  }
+  setInterval(flush, BATCH_MS);
+  try { window.ulteraTrack = enqueue; window.ulteraTrackFlush = flush; } catch(_) {}
+  enqueue('page_view', {title: document.title, timestamp: new Date().toISOString(), page: 'tshirts'});
+  addEventListener('beforeunload', flush);
+  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') flush(); });
+})();
+</script>
 </body>
 </html>

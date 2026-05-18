@@ -3458,6 +3458,23 @@ function openModal(uid){
   const p = findProduct(uid);
   if(!p) return;
   try { if (typeof ulteraFbq === 'function') ulteraFbq('ViewContent', {content_ids:[p.uid], content_type:'product', content_name:p.title||'', value: parseFloat(p.price)||0, currency:'UAH'}); } catch(_){}
+  // v132 2026-05-18: product_view / color_view tracker for admin analytics
+  try {
+    var __mEl = document.getElementById('modal');
+    var __wasOpen = __mEl && __mEl.classList.contains('open');
+    var __prevUid = window.__modalUid;
+    var __evt = (__wasOpen && __prevUid && __prevUid !== p.uid) ? 'color_view' : 'product_view';
+    if (typeof window.ulteraTrack === 'function') {
+      window.ulteraTrack(__evt, {
+        category: 'footwear',
+        uid: p.uid,
+        family: p.family || '',
+        title: (p.title||'').replace(/^ULTERA\s*-?\s*/i,'').trim(),
+        color_name: p.color_name || '',
+        color_hex: p.color_hex || ''
+      });
+    }
+  } catch(_){}
   // SHAPE тепер відкриває модалку як інші товари
   const row = findFamily(p.family);
   currentColor = p.uid;
@@ -5404,6 +5421,8 @@ insertWomanDivider();
     fetch(url,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},body:JSON.stringify(batch),keepalive:true}).catch(()=>{});
   }
   setInterval(flush, BATCH_MS);
+  // v132 2026-05-18: expose for openModal-level product_view / color_view trackers.
+  try { window.ulteraTrack = enqueue; window.ulteraTrackFlush = flush; } catch(_){}
   // page_view
   enqueue('page_view',{title:document.title, timestamp:new Date().toISOString()});
   // click
