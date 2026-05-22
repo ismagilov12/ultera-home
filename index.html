@@ -5926,6 +5926,7 @@ insertWomanDivider();
 </script>
 
 
+
 <!-- ULTERA_DEEPLINK_V1_START -->
 <script>
 
@@ -5971,21 +5972,37 @@ insertWomanDivider();
     try { if (typeof DATA !== 'undefined' && Array.isArray(DATA)) return DATA; } catch(_){}
     return [];
   }
-  function findUid(slug){
-    if (!slug) return null;
-    slug = String(slug).trim().toLowerCase();
+  function findUid(token){
+    if (!token) return null;
+    token = String(token).trim();
     var arr = _allProducts();
-    for (var i=0;i<arr.length;i++){
-      var p = arr[i]; if (!p) continue;
-      if (fromProduct(p) === slug) return p.uid;
+    /* Format: ?p=slug,uid — uid is the authoritative anchor (slug may rename) */
+    var uidPart = null, slugPart = null;
+    if (token.indexOf(',') !== -1){
+      var parts = token.split(',');
+      slugPart = parts[0].toLowerCase();
+      uidPart  = parts[parts.length-1];
+      /* try uid match first */
+      for (var i=0;i<arr.length;i++){
+        if (arr[i] && String(arr[i].uid) === uidPart) return arr[i].uid;
+      }
+    } else {
+      slugPart = token.toLowerCase();
+      /* also accept bare uid */
+      for (var u=0;u<arr.length;u++){
+        if (arr[u] && String(arr[u].uid) === token) return arr[u].uid;
+      }
     }
-    for (var j=0;j<arr.length;j++){
-      var q = arr[j]; if (!q || !q.uid) continue;
-      if (fromProduct(q) + '-' + String(q.uid).slice(-6) === slug) return q.uid;
-    }
-    for (var k=0;k<arr.length;k++){
-      var r = arr[k]; if (!r) continue;
-      if (String(r.uid||'') === slug) return r.uid;
+    /* slug match */
+    if (slugPart){
+      for (var s=0;s<arr.length;s++){
+        var p = arr[s]; if (!p) continue;
+        if (fromProduct(p) === slugPart) return p.uid;
+      }
+      for (var j=0;j<arr.length;j++){
+        var q = arr[j]; if (!q || !q.uid) continue;
+        if (fromProduct(q) + '-' + String(q.uid).slice(-6) === slugPart) return q.uid;
+      }
     }
     return null;
   }
@@ -6002,8 +6019,9 @@ insertWomanDivider();
       if (!p) return;
       var slug = fromProduct(p);
       if (!slug) return;
+      var token = slug + ',' + String(p.uid || '');
       var url = new URL(window.location.href);
-      url.searchParams.set('p', slug);
+      url.searchParams.set('p', token);
       history.replaceState(null, '', url.pathname + url.search + url.hash);
     } catch(_){}
   }
