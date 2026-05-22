@@ -657,6 +657,17 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         <input type="text" id="ed-uid" placeholder="593008410302">
       </div>
     </div>
+    <!-- ULTERA_DEEPLINK_FIELD_START -->
+    <div class="field" style="margin-bottom:14px">
+      <label>Пряме посилання (для реклами)</label>
+      <div style="display:flex;gap:8px;align-items:stretch">
+        <input type="text" id="ed-deeplink" readonly style="flex:1;font-family:var(--font-mono);font-size:12.5px;background:#f5f5f0;color:var(--ink);user-select:all;cursor:text" placeholder="https://ultera.in.ua/?p=…">
+        <button type="button" id="ed-deeplink-copy" style="padding:0 16px;background:var(--ink,#0a0a0a);color:#fff;border-radius:6px;font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border:0;white-space:nowrap">Копіювати</button>
+        <a id="ed-deeplink-open" href="#" target="_blank" rel="noopener" style="padding:0 16px;background:#fff;color:var(--ink,#0a0a0a);border:1px solid var(--line,#e5e5e0);border-radius:6px;font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;display:inline-flex;align-items:center;text-decoration:none;white-space:nowrap">Відкрити ↗</a>
+      </div>
+    </div>
+    <!-- ULTERA_DEEPLINK_FIELD_END -->
+
 
     <div class="field">
       <label>Артикул (короткий, напр. Ю11)</label>
@@ -2625,5 +2636,108 @@ function bindPvChips(){
     window.loadAnalytics.__pvHook = true;
   }
 })();
-</script></body>
+</script>
+<!-- ULTERA_DEEPLINK_JS_START -->
+<script>
+/* ===== ULTERA admin deep-link field v1 ===== */
+(function(){
+  var COLOR_DICT = {"чорний": "black", "чёрный": "black", "черный": "black", "білий": "white", "белый": "white", "white": "white", "сірий": "grey", "серый": "grey", "сіро-білий": "grey-white", "серо-белый": "grey-white", "чорний/білий": "black-white", "чорний-білий": "black-white", "бронзово-білий": "bronze-white", "чорний нубук": "black-nubuck", "чорний brft": "black-brft", "brft": "brft", "чорний замша": "black-suede", "all black": "all-black", "сальвія": "salvia", "аква": "aqua", "фісташковий": "pistachio", "мʼятний": "mint", "м'ятний": "mint", "мятный": "mint", "олива": "olive", "оливковий": "olive", "вино": "wine", "винний": "wine", "асфальт": "asphalt", "коричневий": "brown", "бежевий": "beige", "блакитний": "blue", "бордо": "bordeaux", "бордовий": "bordeaux", "помаранчевий": "orange", "червоний": "red", "крем": "cream", "кремовий": "cream", "panda": "panda", "сафарі": "safari"};
+  var TR_MAP = {"а": "a", "б": "b", "в": "v", "г": "h", "ґ": "g", "д": "d", "е": "e", "є": "ie", "ж": "zh", "з": "z", "и": "y", "і": "i", "ї": "i", "й": "i", "к": "k", "л": "l", "м": "m", "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u", "ф": "f", "х": "kh", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "shch", "ь": "", "ю": "iu", "я": "ia", "ы": "y", "э": "e", "ъ": "", "ё": "e", "'": "", "ʼ": ""};
+  var PAGE = "tshirts.html";
+  var BASE = "https://ultera.in.ua";
+
+  function tr(s){
+    s = String(s||'').toLowerCase();
+    var out = '';
+    for (var i=0;i<s.length;i++){
+      var ch = s[i];
+      out += (TR_MAP[ch] !== undefined) ? TR_MAP[ch] : ch;
+    }
+    return out;
+  }
+  function slugify(s){
+    s = String(s||'').trim();
+    var low = s.toLowerCase().trim();
+    if (COLOR_DICT[low]) return COLOR_DICT[low];
+    s = tr(s);
+    s = s.replace(/[^a-z0-9]+/g,'-');
+    s = s.replace(/-+/g,'-').replace(/^-+|-+$/g,'');
+    return s;
+  }
+  function buildToken(){
+    var famEl = document.getElementById('ed-family');
+    var colEl = document.getElementById('ed-color-name');
+    var uidEl = document.getElementById('ed-uid');
+    var fam = slugify(famEl ? famEl.value : '');
+    var col = slugify(colEl ? colEl.value : '');
+    var uid = ((uidEl ? uidEl.value : '') || '').trim();
+    if (!col || col === fam) col = uid.slice(-6);
+    var slug = fam ? (fam + '-' + col) : col;
+    if (!slug && !uid) return '';
+    return slug + ',' + uid;
+  }
+  function updateDeeplink(){
+    var inp = document.getElementById('ed-deeplink');
+    var a   = document.getElementById('ed-deeplink-open');
+    if (!inp) return;
+    var tok = buildToken();
+    if (!tok || tok === ','){ inp.value=''; if(a) a.removeAttribute('href'); return; }
+    var url = BASE + '/' + PAGE + '?p=' + tok;
+    inp.value = url;
+    if (a) a.href = url;
+  }
+  function bindOnce(){
+    ['ed-family','ed-color-name','ed-uid'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el && !el.__ulteraDeeplinkBound){
+        el.addEventListener('input', updateDeeplink);
+        el.addEventListener('change', updateDeeplink);
+        el.__ulteraDeeplinkBound = true;
+      }
+    });
+    var btn = document.getElementById('ed-deeplink-copy');
+    if (btn && !btn.__ulteraBound){
+      btn.addEventListener('click', function(){
+        var inp = document.getElementById('ed-deeplink');
+        if (!inp || !inp.value) return;
+        var done = function(){
+          var prev = btn.textContent;
+          btn.textContent = '✓ Скопійовано';
+          btn.style.background = '#10b981';
+          setTimeout(function(){ btn.textContent = prev; btn.style.background = ''; }, 1500);
+        };
+        try {
+          navigator.clipboard.writeText(inp.value).then(done, function(){
+            try { inp.select(); document.execCommand('copy'); done(); } catch(_){}
+          });
+        } catch(_){
+          try { inp.select(); document.execCommand('copy'); done(); } catch(__){}
+        }
+      });
+      btn.__ulteraBound = true;
+    }
+  }
+  /* Wrap openEditor so the field refreshes whenever the editor opens */
+  var attempts = 0;
+  var iv = setInterval(function(){
+    attempts++;
+    if (typeof window.openEditor === 'function' && !window.__ulteraDeeplinkWrapped){
+      var orig = window.openEditor;
+      window.openEditor = function(){
+        var r = orig.apply(this, arguments);
+        setTimeout(function(){ bindOnce(); updateDeeplink(); }, 50);
+        return r;
+      };
+      window.__ulteraDeeplinkWrapped = true;
+      clearInterval(iv);
+      /* also update on page load if editor is already in DOM */
+      setTimeout(function(){ bindOnce(); updateDeeplink(); }, 100);
+      return;
+    }
+    if (attempts > 80){ clearInterval(iv); /* give up gracefully */ }
+  }, 100);
+})();
+</script>
+<!-- ULTERA_DEEPLINK_JS_END -->
+</body>
 </html>
