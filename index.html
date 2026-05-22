@@ -1978,6 +1978,54 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
   .h3intro .h3-skip,.shapeintro .sh-skip{display:none!important}
   .h3intro.on,.shapeintro.on{pointer-events:auto;cursor:pointer}
 }
+
+/* ============== TEES SECTION (v133, 2026-05-18) ============== */
+.tees-section{padding:80px 0 60px;background:var(--bg-cool);border-top:1px solid var(--line)}
+.tees-head{max-width:680px;margin:0 auto 38px;text-align:center}
+.tees-tag{font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;color:var(--ink-60);margin-bottom:14px}
+.tees-title{font-family:var(--font-sans);font-weight:800;font-size:clamp(38px,5vw,64px);letter-spacing:-.02em;line-height:1;margin:0 0 14px}
+.tees-title .trade{font-size:.4em;vertical-align:super;margin-left:2px;font-weight:600;opacity:.7}
+.tees-sub{font-family:var(--font-sans);font-size:14px;line-height:1.55;color:var(--ink-60);margin:0;max-width:520px;margin-left:auto;margin-right:auto}
+.tees-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(560px,100%),1fr));gap:24px;max-width:1180px;margin:0 auto}
+.tees-card{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:transform .25s,box-shadow .25s;position:relative}
+.tees-card:hover{transform:translateY(-2px);box-shadow:0 18px 50px rgba(14,14,14,.08)}
+.tees-card-head{display:flex;justify-content:space-between;align-items:center;padding:14px 22px;border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;color:var(--ink-60);text-transform:uppercase}
+.tees-card-head .badge-mini{background:var(--ink);color:var(--mint);padding:3px 8px;border-radius:4px;font-weight:700;letter-spacing:.08em}
+.tees-card-img{position:relative;background:var(--bg-alt);aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.tees-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .35s}
+.tees-card:hover .tees-card-img img{transform:scale(1.03)}
+.tees-card-body{padding:22px 22px 24px;display:flex;flex-direction:column;gap:14px}
+.tees-card-titlerow{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.tees-card-title{font-family:var(--font-sans);font-weight:800;font-size:26px;letter-spacing:-.01em;line-height:1;margin:0}
+.tees-card-title .trade{font-size:.45em;vertical-align:super;margin-left:2px;opacity:.6;font-weight:600}
+.tees-card-price{font-family:var(--font-mono);font-size:14px;letter-spacing:.02em;display:flex;align-items:baseline;gap:8px}
+.tees-card-price s{opacity:.4;font-weight:400;font-size:12px}
+.tees-card-price b{font-weight:700;font-size:17px}
+.tees-card-meta{font-family:var(--font-sans);font-size:13px;color:var(--ink-60);line-height:1.5;margin:0}
+.tees-card-colors-wrap{margin-top:4px}
+.tees-card-colors-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;color:var(--ink-60);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.tees-card-colors-label .count{color:var(--ink);font-weight:700}
+.tees-card-colors{display:flex;flex-wrap:wrap;gap:8px}
+.tees-card-colors .sw{width:38px;height:38px;border-radius:50%;border:1.5px solid rgba(14,14,14,.12);padding:0;cursor:pointer;overflow:hidden;background:#fff;transition:transform .15s,border-color .15s;flex-shrink:0}
+.tees-card-colors .sw img{width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit}
+.tees-card-colors .sw:hover{border-color:var(--ink-60);transform:scale(1.08)}
+.tees-card-colors .sw.active{border-color:var(--ink);border-width:2px;transform:scale(1.1)}
+.tees-card-cta{margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:16px;border-top:1px solid var(--line)}
+.tees-card-cta .open-btn{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:#fff;border:0;padding:12px 22px;border-radius:999px;font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:opacity .15s,transform .15s}
+.tees-card-cta .open-btn:hover{opacity:.9;transform:translateY(-1px)}
+.tees-card-cta .open-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2}
+.tees-card-cta .stock{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;color:var(--ink-60);text-transform:uppercase}
+.tees-card-cta .stock .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#7fb069;margin-right:6px;vertical-align:1px}
+@media(max-width:760px){
+  .tees-section{padding:60px 0 40px}
+  .tees-head{margin-bottom:28px;padding:0 20px}
+  .tees-wrap{grid-template-columns:1fr;gap:18px;padding:0 16px}
+  .tees-card-head{padding:12px 18px;font-size:9px}
+  .tees-card-body{padding:18px 18px 20px;gap:12px}
+  .tees-card-title{font-size:22px}
+  .tees-card-colors .sw{width:34px;height:34px}
+}
+/* ============== /TEES SECTION ============== */
 </style>
 
 <!-- Meta Pixel v97 (ULTERA) -->
@@ -2020,7 +2068,7 @@ window.ulteraFbq = function(name, params){
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v128 · modal-fix</div>
+<div class="build-tag">v133 · tees-section</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -2272,6 +2320,19 @@ window.ulteraFbq = function(name, params){
 
     <div id="featuredWrap"></div>
     <div id="gridWrap" class="grid reveal-stagger" style="display:none"></div>
+  </div>
+</section>
+
+
+<!-- TEES section — separated from sneakers, custom layout -->
+<section class="tees-section" id="teesSection" style="display:none">
+  <div class="wide">
+    <div class="tees-head reveal">
+      <div class="tees-tag mono">[ TEES ]</div>
+      <h2 class="tees-title">Футболки<span class="trade">&trade;</span></h2>
+      <p class="tees-sub">Базова лінійка з преміум-щільної бавовни. Оверсайз-крій, друк ULTERA на грудях і спині.</p>
+    </div>
+    <div id="teesWrap" class="tees-wrap"></div>
   </div>
 </section>
 
@@ -2988,6 +3049,8 @@ window.ulteraFbq = function(name, params){
     try {
       if (typeof renderFeatured === 'function') renderFeatured();
       if (typeof renderGrid === 'function') renderGrid();
+try { renderTeesSection(); } catch(e) { try{ console.warn('renderTeesSection init', e);}catch(_){} }
+      if (typeof renderTeesSection === 'function') renderTeesSection();
       if (typeof insertWomanDivider === 'function') insertWomanDivider();
     } catch(e){
       try { console.warn('[ultera] re-render after live merge failed:', e && e.message); } catch(_){}
@@ -3157,7 +3220,9 @@ function renderFeatured(){
   ];
 
   // Build merged list of rows to render as feat-cards
-  const rows = [...DATA.featured, ...DATA.grid];
+  // v133 2026-05-18: tees (family=Tees) рендеряться окремою секцією, не як feat-card
+  const _isTees = function(f){ return String(f||'').toLowerCase() === 'tees'; };
+  const rows = [...DATA.featured, ...DATA.grid].filter(r => !_isTees(r && r.family));
 
   el.innerHTML = rows.map((row, idx) => {
     const fam = row.family;
@@ -3240,6 +3305,82 @@ function renderFeatured(){
     });
   });
 }
+
+
+/* ————— TEES (футболки) — окрема секція з власним layout (v133) ————— */
+function renderTeesSection(){
+  var section = document.getElementById('teesSection');
+  var wrap = document.getElementById('teesWrap');
+  if(!section || !wrap) return;
+  var teesRows = [...(DATA.featured||[]), ...(DATA.grid||[])].filter(function(r){
+    return r && String(r.family||'').toLowerCase() === 'tees';
+  });
+  if(!teesRows.length){ section.style.display='none'; return; }
+  section.style.display = '';
+
+  var html = teesRows.map(function(row){
+    var fam = row.family;
+    var variants = (row.variants||[]).slice();
+    if(!variants.length) return '';
+    var heroVariant = variants[0];
+    var minP = Math.min.apply(null, variants.map(function(v){ return parseFloat(v.price)||99999; }));
+    var hasSale = variants.some(function(v){ return v.sizes && v.sizes[0] && v.sizes[0].price_old; });
+    var oldMin = hasSale ? Math.max.apply(null, variants.map(function(v){ return parseFloat((v.sizes && v.sizes[0] && v.sizes[0].price_old) || 0); })) : 0;
+    var priceTxt = Math.round(minP).toLocaleString('uk-UA') + ' ₴';
+    var priceOld = oldMin > 0 ? '<s>' + Math.round(oldMin).toLocaleString('uk-UA') + ' ₴</s>' : '';
+    var serial = (heroVariant.uid || (fam.toUpperCase()+'-01')).toUpperCase();
+    var colorCount = variants.length;
+
+    var swatchesHtml = variants.slice(0, 14).map(function(v, i){
+      return '<button class="sw' + (i===0?' active':'') + '" data-uid="' + v.uid + '" title="' + (v.color_name||'') + '" onclick="event.stopPropagation();__teesPickColor(this,\''+v.uid+'\')"><img src="' + v.photo + '" alt="' + (v.color_name||'') + '" loading="lazy" decoding="async"></button>';
+    }).join('');
+    var moreCount = variants.length > 14 ? '<span class="sw" style="display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px;color:var(--ink-60);background:var(--bg-alt);cursor:pointer" onclick="event.stopPropagation();openModal(\''+heroVariant.uid+'\')">+'+(variants.length-14)+'</span>' : '';
+
+    return '<div class="tees-card" data-fam="' + fam + '" data-active-uid="' + heroVariant.uid + '" onclick="__teesOpen(this)">'
+      + '<div class="tees-card-head">'
+      +   '<span>SRL · <b style="color:var(--ink)">' + serial + '</b></span>'
+      +   '<span class="badge-mini">NEW · TEES</span>'
+      + '</div>'
+      + '<div class="tees-card-img" data-img-slot>'
+      +   '<img src="' + heroVariant.photo + '" alt="' + (heroVariant.title||fam) + '" loading="lazy" decoding="async">'
+      + '</div>'
+      + '<div class="tees-card-body">'
+      +   '<div class="tees-card-titlerow">'
+      +     '<h3 class="tees-card-title">' + fam + '<span class="trade">™</span></h3>'
+      +     '<div class="tees-card-price">' + priceOld + '<b>' + priceTxt + '</b></div>'
+      +   '</div>'
+      +   '<p class="tees-card-meta">100% преміум бавовна щільності 240 г/м² · оверсайз-крій · друк ULTERA. Виробництво — Харків.</p>'
+      +   '<div class="tees-card-colors-wrap">'
+      +     '<div class="tees-card-colors-label"><span>Колір</span><span class="count">' + colorCount + ' варіант' + (colorCount>1&&colorCount<5?'и':(colorCount>=5?'ів':'')) + '</span></div>'
+      +     '<div class="tees-card-colors">' + swatchesHtml + moreCount + '</div>'
+      +   '</div>'
+      +   '<div class="tees-card-cta">'
+      +     '<span class="stock"><span class="dot"></span>в наявності</span>'
+      +     '<button class="open-btn" onclick="event.stopPropagation();__teesOpen(this.closest(\'.tees-card\'))">Деталі<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+  wrap.innerHTML = html;
+}
+window.__teesPickColor = function(btn, uid){
+  try {
+    var card = btn.closest('.tees-card'); if(!card) return;
+    card.querySelectorAll('.tees-card-colors .sw').forEach(function(x){ x.classList.remove('active'); });
+    btn.classList.add('active');
+    card.dataset.activeUid = uid;
+    var imgSlot = card.querySelector('[data-img-slot] img');
+    var p = (window.D && D.all) ? D.all.find(function(x){ return x.uid === uid; }) : null;
+    if(imgSlot && p && p.photo){ imgSlot.src = p.photo; }
+  } catch(e){ try{ console.warn('__teesPickColor', e); }catch(_){} }
+};
+window.__teesOpen = function(card){
+  try {
+    if(!card) return;
+    var uid = card.dataset.activeUid;
+    if(uid && typeof openModal === 'function') openModal(uid);
+  } catch(e){ try{ console.warn('__teesOpen', e); }catch(_){} }
+};
 
 /* v128: open modal for the currently-active variant of a featured card. */
 window.__featOpen = function(node){
@@ -3495,6 +3636,14 @@ function openModal(uid){
   }
   document.getElementById('m_price').innerHTML = priceHtml;
 
+  // v133: hide size helper (Розмірна сітка) for Tees family — only kept for footwear
+  try {
+    var _shBtn = document.getElementById('shOpen');
+    var _shBox = document.getElementById('shBox');
+    var _isTee = String(p.family||'').toLowerCase() === 'tees';
+    if(_shBtn) _shBtn.style.display = _isTee ? 'none' : '';
+    if(_shBox && _isTee) _shBox.style.display = 'none';
+  } catch(_){}
   const sizes = p.size_list || [];
   document.getElementById('m_sizes').innerHTML = sizes.map((s,i)=>`
     <button class="size-btn ${i===2?'selected':''} ${parseInt(s.qty)<1?'out':''}" ${parseInt(s.qty)<1?'disabled':''} data-sz="${s.eu}">
@@ -5775,5 +5924,175 @@ insertWomanDivider();
   document.head.appendChild(css);
 })();
 </script>
+
+
+<!-- ULTERA_DEEPLINK_V1_START -->
+<script>
+
+/* ===== ULTERA deep-link slug router v1 (2026-05-23) ===== */
+(function(){
+  var COLOR_DICT = {"чорний": "black", "чёрный": "black", "черный": "black", "білий": "white", "белый": "white", "white": "white", "сірий": "grey", "серый": "grey", "сіро-білий": "grey-white", "серо-белый": "grey-white", "чорний/білий": "black-white", "чорний-білий": "black-white", "бронзово-білий": "bronze-white", "чорний нубук": "black-nubuck", "чорний brft": "black-brft", "brft": "brft", "чорний замша": "black-suede", "all black": "all-black", "сальвія": "salvia", "аква": "aqua", "фісташковий": "pistachio", "мʼятний": "mint", "м'ятний": "mint", "мятный": "mint", "олива": "olive", "оливковий": "olive", "вино": "wine", "винний": "wine", "асфальт": "asphalt", "коричневий": "brown", "бежевий": "beige", "блакитний": "blue", "бордо": "bordeaux", "бордовий": "bordeaux", "помаранчевий": "orange", "червоний": "red", "крем": "cream", "кремовий": "cream", "panda": "panda", "сафарі": "safari"};
+  var TR_MAP = {"а": "a", "б": "b", "в": "v", "г": "h", "ґ": "g", "д": "d", "е": "e", "є": "ie", "ж": "zh", "з": "z", "и": "y", "і": "i", "ї": "i", "й": "i", "к": "k", "л": "l", "м": "m", "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u", "ф": "f", "х": "kh", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "shch", "ь": "", "ю": "iu", "я": "ia", "ы": "y", "э": "e", "ъ": "", "ё": "e", "'": "", "ʼ": ""};
+  function tr(s){
+    s = String(s||'').toLowerCase();
+    var out = '';
+    for (var i=0;i<s.length;i++){
+      var ch = s[i];
+      out += (TR_MAP[ch] !== undefined) ? TR_MAP[ch] : ch;
+    }
+    return out;
+  }
+  function slugify(s){
+    s = String(s||'').trim();
+    var low = s.toLowerCase().trim();
+    if (COLOR_DICT[low]) return COLOR_DICT[low];
+    s = tr(s);
+    s = s.replace(/[^a-z0-9]+/g,'-');
+    s = s.replace(/-+/g,'-').replace(/^-+|-+$/g,'');
+    return s;
+  }
+  function fromProduct(p){
+    if (!p) return '';
+    if (p.slug){
+      var s = slugify(p.slug);
+      if (s) return s;
+    }
+    var fam = slugify(p.family || p.group || '');
+    var col = slugify(p.color_name || p.color_ua || '');
+    var uid = String(p.uid || '');
+    if (!col || col === fam) col = uid.slice(-6);
+    if (!fam) return col || slugify(uid);
+    return fam + '-' + col;
+  }
+  function _allProducts(){
+    try { if (typeof window.D !== 'undefined' && window.D && Array.isArray(window.D.all)) return window.D.all; } catch(_){}
+    try { if (typeof DATA !== 'undefined' && DATA && Array.isArray(DATA.all)) return DATA.all; } catch(_){}
+    try { if (typeof DATA_ALL !== 'undefined' && Array.isArray(DATA_ALL)) return DATA_ALL; } catch(_){}
+    try { if (typeof DATA !== 'undefined' && Array.isArray(DATA)) return DATA; } catch(_){}
+    return [];
+  }
+  function findUid(slug){
+    if (!slug) return null;
+    slug = String(slug).trim().toLowerCase();
+    var arr = _allProducts();
+    for (var i=0;i<arr.length;i++){
+      var p = arr[i]; if (!p) continue;
+      if (fromProduct(p) === slug) return p.uid;
+    }
+    for (var j=0;j<arr.length;j++){
+      var q = arr[j]; if (!q || !q.uid) continue;
+      if (fromProduct(q) + '-' + String(q.uid).slice(-6) === slug) return q.uid;
+    }
+    for (var k=0;k<arr.length;k++){
+      var r = arr[k]; if (!r) continue;
+      if (String(r.uid||'') === slug) return r.uid;
+    }
+    return null;
+  }
+  function _findProductObj(uid){
+    var arr = _allProducts();
+    for (var i=0;i<arr.length;i++){
+      if (arr[i] && String(arr[i].uid) === String(uid)) return arr[i];
+    }
+    return null;
+  }
+  function updateUrl(arg){
+    try {
+      var p = (typeof arg === 'string') ? _findProductObj(arg) : arg;
+      if (!p) return;
+      var slug = fromProduct(p);
+      if (!slug) return;
+      var url = new URL(window.location.href);
+      url.searchParams.set('p', slug);
+      history.replaceState(null, '', url.pathname + url.search + url.hash);
+    } catch(_){}
+  }
+  function clearUrl(){
+    try {
+      var url = new URL(window.location.href);
+      if (!url.searchParams.has('p')) return;
+      url.searchParams.delete('p');
+      var qs = url.searchParams.toString();
+      history.replaceState(null, '', url.pathname + (qs ? '?' + qs : '') + url.hash);
+    } catch(_){}
+  }
+  window.ulteraSlug = { fromProduct: fromProduct, findUid: findUid, updateUrl: updateUrl, clearUrl: clearUrl };
+})();
+
+
+/* ===== ULTERA deep-link router (index.html) ===== */
+(function(){
+  function waitForBootstrap(cb){
+    try { if (window.__ulteraBootstrapDone === true) { cb(); return; } } catch(_){}
+    var done=false; function fire(){ if(done) return; done=true; try{cb();}catch(_){} }
+    try { window.addEventListener('ultera:bootstrap:done', fire, { once:true }); } catch(_){}
+    var iters=0, MAX=80;
+    (function poll(){
+      if(done) return;
+      try { if (window.__ulteraBootstrapDone === true) { fire(); return; } } catch(_){}
+      iters++;
+      if (iters>=MAX) { fire(); return; }
+      setTimeout(poll, 100);
+    })();
+  }
+  function runOpen(){
+    var params = new URLSearchParams(window.location.search);
+    var slug = params.get('p');
+    if (!slug) return;
+    waitForBootstrap(function(){
+      var tries=0, MAX=150;
+      function tryOpen(){
+        tries++;
+        if (typeof openModal !== 'function' || !window.ulteraSlug){
+          if (tries<MAX) return setTimeout(tryOpen, 100);
+          return;
+        }
+        var uid = window.ulteraSlug.findUid(slug);
+        if (uid){
+          try { openModal(uid); } catch(e){ try{console.warn('[deeplink] openModal err', e);}catch(_){} }
+          return;
+        }
+        if (tries<MAX) setTimeout(tryOpen, 100);
+        else try { console.warn('[deeplink] product not found for slug', slug); } catch(_){}
+      }
+      tryOpen();
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runOpen);
+  else setTimeout(runOpen, 0);
+
+  function installWrapper(){
+    if (typeof window.openModal !== 'function' || window.__ulteraOpenModalWrapped) return false;
+    var orig = window.openModal;
+    window.openModal = function(uidArg){
+      var r = orig.apply(this, arguments);
+      try { if (window.ulteraSlug) window.ulteraSlug.updateUrl(uidArg); } catch(_){}
+      return r;
+    };
+    window.__ulteraOpenModalWrapped = true;
+    return true;
+  }
+  if (!installWrapper()){
+    var t=0, iv = setInterval(function(){ t++; if (installWrapper() || t>50) clearInterval(iv); }, 100);
+  }
+
+  function installCloseWrapper(){
+    if (typeof window.closeModal !== 'function' || window.__ulteraCloseModalWrapped) return false;
+    var orig = window.closeModal;
+    window.closeModal = function(){
+      var r = orig.apply(this, arguments);
+      try { if (window.ulteraSlug) window.ulteraSlug.clearUrl(); } catch(_){}
+      return r;
+    };
+    window.__ulteraCloseModalWrapped = true;
+    return true;
+  }
+  if (!installCloseWrapper()){
+    var t2=0, iv2 = setInterval(function(){ t2++; if (installCloseWrapper() || t2>50) clearInterval(iv2); }, 100);
+  }
+})();
+
+</script>
+<!-- ULTERA_DEEPLINK_V1_END -->
 </body>
 </html>

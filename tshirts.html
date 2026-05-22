@@ -3330,5 +3330,162 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
   document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') flush(); });
 })();
 </script>
+
+
+<!-- ULTERA_DEEPLINK_V1_START -->
+<script>
+
+/* ===== ULTERA deep-link slug router v1 (2026-05-23) ===== */
+(function(){
+  var COLOR_DICT = {"чорний": "black", "чёрный": "black", "черный": "black", "білий": "white", "белый": "white", "white": "white", "сірий": "grey", "серый": "grey", "сіро-білий": "grey-white", "серо-белый": "grey-white", "чорний/білий": "black-white", "чорний-білий": "black-white", "бронзово-білий": "bronze-white", "чорний нубук": "black-nubuck", "чорний brft": "black-brft", "brft": "brft", "чорний замша": "black-suede", "all black": "all-black", "сальвія": "salvia", "аква": "aqua", "фісташковий": "pistachio", "мʼятний": "mint", "м'ятний": "mint", "мятный": "mint", "олива": "olive", "оливковий": "olive", "вино": "wine", "винний": "wine", "асфальт": "asphalt", "коричневий": "brown", "бежевий": "beige", "блакитний": "blue", "бордо": "bordeaux", "бордовий": "bordeaux", "помаранчевий": "orange", "червоний": "red", "крем": "cream", "кремовий": "cream", "panda": "panda", "сафарі": "safari"};
+  var TR_MAP = {"а": "a", "б": "b", "в": "v", "г": "h", "ґ": "g", "д": "d", "е": "e", "є": "ie", "ж": "zh", "з": "z", "и": "y", "і": "i", "ї": "i", "й": "i", "к": "k", "л": "l", "м": "m", "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u", "ф": "f", "х": "kh", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "shch", "ь": "", "ю": "iu", "я": "ia", "ы": "y", "э": "e", "ъ": "", "ё": "e", "'": "", "ʼ": ""};
+  function tr(s){
+    s = String(s||'').toLowerCase();
+    var out = '';
+    for (var i=0;i<s.length;i++){
+      var ch = s[i];
+      out += (TR_MAP[ch] !== undefined) ? TR_MAP[ch] : ch;
+    }
+    return out;
+  }
+  function slugify(s){
+    s = String(s||'').trim();
+    var low = s.toLowerCase().trim();
+    if (COLOR_DICT[low]) return COLOR_DICT[low];
+    s = tr(s);
+    s = s.replace(/[^a-z0-9]+/g,'-');
+    s = s.replace(/-+/g,'-').replace(/^-+|-+$/g,'');
+    return s;
+  }
+  function fromProduct(p){
+    if (!p) return '';
+    if (p.slug){
+      var s = slugify(p.slug);
+      if (s) return s;
+    }
+    var fam = slugify(p.family || p.group || '');
+    var col = slugify(p.color_name || p.color_ua || '');
+    var uid = String(p.uid || '');
+    if (!col || col === fam) col = uid.slice(-6);
+    if (!fam) return col || slugify(uid);
+    return fam + '-' + col;
+  }
+  function _allProducts(){
+    try { if (typeof window.D !== 'undefined' && window.D && Array.isArray(window.D.all)) return window.D.all; } catch(_){}
+    try { if (typeof DATA !== 'undefined' && DATA && Array.isArray(DATA.all)) return DATA.all; } catch(_){}
+    try { if (typeof DATA_ALL !== 'undefined' && Array.isArray(DATA_ALL)) return DATA_ALL; } catch(_){}
+    try { if (typeof DATA !== 'undefined' && Array.isArray(DATA)) return DATA; } catch(_){}
+    return [];
+  }
+  function findUid(slug){
+    if (!slug) return null;
+    slug = String(slug).trim().toLowerCase();
+    var arr = _allProducts();
+    for (var i=0;i<arr.length;i++){
+      var p = arr[i]; if (!p) continue;
+      if (fromProduct(p) === slug) return p.uid;
+    }
+    for (var j=0;j<arr.length;j++){
+      var q = arr[j]; if (!q || !q.uid) continue;
+      if (fromProduct(q) + '-' + String(q.uid).slice(-6) === slug) return q.uid;
+    }
+    for (var k=0;k<arr.length;k++){
+      var r = arr[k]; if (!r) continue;
+      if (String(r.uid||'') === slug) return r.uid;
+    }
+    return null;
+  }
+  function _findProductObj(uid){
+    var arr = _allProducts();
+    for (var i=0;i<arr.length;i++){
+      if (arr[i] && String(arr[i].uid) === String(uid)) return arr[i];
+    }
+    return null;
+  }
+  function updateUrl(arg){
+    try {
+      var p = (typeof arg === 'string') ? _findProductObj(arg) : arg;
+      if (!p) return;
+      var slug = fromProduct(p);
+      if (!slug) return;
+      var url = new URL(window.location.href);
+      url.searchParams.set('p', slug);
+      history.replaceState(null, '', url.pathname + url.search + url.hash);
+    } catch(_){}
+  }
+  function clearUrl(){
+    try {
+      var url = new URL(window.location.href);
+      if (!url.searchParams.has('p')) return;
+      url.searchParams.delete('p');
+      var qs = url.searchParams.toString();
+      history.replaceState(null, '', url.pathname + (qs ? '?' + qs : '') + url.hash);
+    } catch(_){}
+  }
+  window.ulteraSlug = { fromProduct: fromProduct, findUid: findUid, updateUrl: updateUrl, clearUrl: clearUrl };
+})();
+
+
+/* ===== ULTERA deep-link router (tshirts.html) ===== */
+(function(){
+  function runOpen(){
+    var params = new URLSearchParams(window.location.search);
+    var slug = params.get('p');
+    if (!slug) return;
+    var tries=0, MAX=150;
+    function tryOpen(){
+      tries++;
+      if (typeof openModal !== 'function' || !window.ulteraSlug){
+        if (tries<MAX) return setTimeout(tryOpen, 100);
+        return;
+      }
+      var uid = window.ulteraSlug.findUid(slug);
+      if (uid){
+        var arr = (typeof DATA_ALL !== 'undefined' && Array.isArray(DATA_ALL)) ? DATA_ALL
+                 : (typeof DATA !== 'undefined' && Array.isArray(DATA)) ? DATA : [];
+        var p = null;
+        for (var i=0;i<arr.length;i++){ if (arr[i] && String(arr[i].uid) === String(uid)){ p = arr[i]; break; } }
+        if (p){ try { openModal(p); } catch(e){ try{console.warn('[deeplink] tee openModal err', e);}catch(_){} } return; }
+      }
+      if (tries<MAX) setTimeout(tryOpen, 100);
+      else try { console.warn('[deeplink] tee product not found for slug', slug); } catch(_){}
+    }
+    tryOpen();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runOpen);
+  else setTimeout(runOpen, 0);
+
+  function installWrapper(){
+    if (typeof window.openModal !== 'function' || window.__ulteraOpenModalWrapped) return false;
+    var orig = window.openModal;
+    window.openModal = function(pArg){
+      var r = orig.apply(this, arguments);
+      try { if (window.ulteraSlug) window.ulteraSlug.updateUrl(pArg); } catch(_){}
+      return r;
+    };
+    window.__ulteraOpenModalWrapped = true;
+    return true;
+  }
+  if (!installWrapper()){
+    var t=0, iv = setInterval(function(){ t++; if (installWrapper() || t>50) clearInterval(iv); }, 100);
+  }
+  function installCloseWrapper(){
+    if (typeof window.closeModal !== 'function' || window.__ulteraCloseModalWrapped) return false;
+    var orig = window.closeModal;
+    window.closeModal = function(){
+      var r = orig.apply(this, arguments);
+      try { if (window.ulteraSlug) window.ulteraSlug.clearUrl(); } catch(_){}
+      return r;
+    };
+    window.__ulteraCloseModalWrapped = true;
+    return true;
+  }
+  if (!installCloseWrapper()){
+    var t2=0, iv2 = setInterval(function(){ t2++; if (installCloseWrapper() || t2>50) clearInterval(iv2); }, 100);
+  }
+})();
+
+</script>
+<!-- ULTERA_DEEPLINK_V1_END -->
 </body>
 </html>
