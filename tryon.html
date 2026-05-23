@@ -68,7 +68,7 @@ input,select{font:inherit;color:inherit}
 .panel h2{font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.015em;margin-bottom:8px}
 .panel .sub{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-60);text-transform:uppercase;margin-bottom:22px}
 
-/* STEP 1 — выбор футболки */
+/* STEP 1 */
 .tees-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
 .tee-card{position:relative;cursor:pointer;border-radius:14px;overflow:hidden;background:var(--bg-alt);transition:.25s;border:2px solid transparent}
 .tee-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.08)}
@@ -80,11 +80,10 @@ input,select{font:inherit;color:inherit}
 .tee-card .clr{font-family:var(--font-mono);font-size:10px;color:var(--ink-60);letter-spacing:.04em}
 .tee-card .price{font-family:var(--font-mono);font-size:11px;color:var(--ink);font-weight:700;margin-top:4px}
 
-/* STEP 2 — типажи */
+/* STEP 2 */
 .tabs{display:inline-flex;background:var(--bg-alt);border-radius:999px;padding:4px;margin-bottom:24px;gap:4px}
 .tab{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:8px 18px;border-radius:999px;color:var(--ink-60);cursor:pointer;transition:.2s}
 .tab.active{background:var(--ink);color:#fff}
-
 .models-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
 .model-card{cursor:pointer;border-radius:14px;overflow:hidden;background:var(--bg-alt);transition:.25s;border:2px solid transparent}
 .model-card:hover{transform:translateY(-2px)}
@@ -94,7 +93,6 @@ input,select{font:inherit;color:inherit}
 .model-card .meta{padding:8px 10px}
 .model-card .ttl{font-size:11px;font-weight:600;line-height:1.2;margin-bottom:2px}
 .model-card .sub2{font-family:var(--font-mono);font-size:9px;color:var(--ink-60);letter-spacing:.06em;text-transform:uppercase}
-
 .upload-zone{border:2px dashed var(--line);border-radius:18px;padding:48px 28px;text-align:center;cursor:pointer;transition:.25s;background:var(--bg-alt)}
 .upload-zone:hover,.upload-zone.dragging{border-color:var(--ink);background:#fff}
 .upload-zone .ic{font-size:48px;margin-bottom:12px;color:var(--ink-40)}
@@ -102,13 +100,12 @@ input,select{font:inherit;color:inherit}
 .upload-zone p{color:var(--ink-60);font-size:13px;max-width:42ch;margin:0 auto}
 .upload-zone .preview{max-width:240px;max-height:320px;margin:0 auto 12px;border-radius:12px;overflow:hidden}
 .upload-zone input[type=file]{display:none}
-
 .params{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:18px;max-width:520px}
 .params label{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--ink-60);text-transform:uppercase;margin-bottom:6px}
 .params input,.params select{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:14px}
 .params input:focus,.params select:focus{outline:none;border-color:var(--ink)}
 
-/* STEP 3 — результат */
+/* STEP 3 */
 .result-wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:start}
 @media (max-width:840px){.result-wrap{grid-template-columns:1fr}}
 .result-img{aspect-ratio:2/3;background:var(--bg-alt);border-radius:18px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
@@ -127,6 +124,37 @@ input,select{font:inherit;color:inherit}
 .loader .spinner{width:54px;height:54px;border:3px solid var(--bg-alt);border-top-color:var(--ink);border-radius:50%;margin:0 auto 16px;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loader p{font-family:var(--font-mono);font-size:12px;color:var(--ink-60);letter-spacing:.06em;text-transform:uppercase}
+.loader-extra{margin-top:22px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.loader-extra .play-btn{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:#fff;padding:14px 24px;border-radius:999px;font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:0;transition:.25s}
+.loader-extra .play-btn:hover{background:var(--ink-80);transform:translateY(-2px)}
+.loader-extra .play-hint{font-family:var(--font-mono);font-size:10px;color:var(--ink-40);letter-spacing:.06em;text-transform:uppercase}
+
+/* GAME OVERLAY */
+.game-ov{position:fixed;inset:0;z-index:200;background:rgba(14,14,14,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:16px}
+.game-ov.show{display:flex}
+.game-box{width:min(440px,100%);background:var(--bg);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;max-height:96vh;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.game-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--bg-alt)}
+.game-head .ttl{font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.game-head .ttl em{font-style:normal;color:var(--warm-grey)}
+.game-head .x{font-size:22px;line-height:1;color:var(--ink-60);cursor:pointer;padding:4px 10px;border-radius:8px;background:transparent;border:0;transition:.15s}
+.game-head .x:hover{background:var(--bg);color:var(--ink)}
+.game-stats{display:flex;justify-content:space-around;padding:10px 18px;background:var(--bg);border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-60)}
+.game-stats b{color:var(--ink);font-size:14px;margin-left:4px}
+.game-canvas-wrap{position:relative;background:linear-gradient(180deg,#dee3e7 0%,#eae8e1 100%);aspect-ratio:4/5;width:100%}
+#gameCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.game-foot{padding:12px 18px;text-align:center;font-family:var(--font-mono);font-size:10px;color:var(--ink-40);letter-spacing:.05em;text-transform:uppercase;background:var(--bg-alt);border-top:1px solid var(--line)}
+.game-over{position:absolute;inset:0;background:rgba(244,243,238,.96);display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:24px;text-align:center}
+.game-over.show{display:flex}
+.game-over h3{font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em}
+.game-over .score-big{font-family:var(--font-mono);font-size:48px;font-weight:900;color:var(--ink)}
+.game-over .score-lbl{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-60)}
+.game-over button{padding:12px 24px;border-radius:999px;background:var(--ink);color:#fff;font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:0;cursor:pointer;margin-top:6px}
+.game-ready{position:absolute;left:0;right:0;bottom:0;background:var(--mint);color:var(--ink);padding:16px 18px;display:none;align-items:center;justify-content:space-between;gap:12px;animation:slideUp .35s ease}
+.game-ready.show{display:flex}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.game-ready .msg{font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;line-height:1.3}
+.game-ready .msg em{font-style:normal;display:block;font-size:10px;color:var(--ink-60);font-weight:500;margin-top:2px}
+.game-ready button{padding:10px 18px;border-radius:999px;background:var(--ink);color:#fff;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:0;cursor:pointer;white-space:nowrap;flex-shrink:0}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 26px;border-radius:999px;font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;transition:.25s;cursor:pointer;border:1.5px solid transparent}
@@ -135,14 +163,10 @@ input,select{font:inherit;color:inherit}
 .btn-primary:disabled{background:var(--ink-40);cursor:not-allowed;transform:none}
 .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
 .btn-ghost:hover{border-color:var(--ink);background:var(--bg-alt)}
-
 .nav-row{display:flex;justify-content:space-between;gap:12px;margin-top:30px;padding-top:24px;border-top:1px solid var(--line)}
-
 .hidden{display:none !important}
-
 .error-box{background:#fee;border:1px solid #fbb;border-radius:12px;padding:14px 16px;color:#a00;font-size:13px;margin-top:14px}
 .note{font-size:12px;color:var(--ink-60);margin-top:12px;font-family:var(--font-mono);letter-spacing:.04em}
-
 footer.ft{padding:60px 0 40px;border-top:1px solid var(--line);margin-top:60px;font-family:var(--font-mono);font-size:11px;color:var(--ink-60);letter-spacing:.06em;text-transform:uppercase;text-align:center}
 </style>
 </head>
@@ -253,6 +277,10 @@ footer.ft{padding:60px 0 40px;border-top:1px solid var(--line);margin-top:60px;f
   <div class="loader" id="loader">
     <div class="spinner"></div>
     <p id="loaderMsg">AI малює, ~15 секунд…</p>
+    <div class="loader-extra">
+      <button class="play-btn" id="playWhileWait" type="button">🎮 Зіграти поки чекаєш</button>
+      <div class="play-hint">// Catch the Drop · лови футболки та кеди</div>
+    </div>
   </div>
   <div id="resultBox" class="hidden">
     <h2>Готово 🪞</h2>
@@ -280,6 +308,35 @@ footer.ft{padding:60px 0 40px;border-top:1px solid var(--line);margin-top:60px;f
   </div>
 </section>
 
+<!-- GAME OVERLAY: Catch the Drop -->
+<div class="game-ov" id="gameOv" role="dialog" aria-modal="true" aria-label="Mini-game">
+  <div class="game-box">
+    <div class="game-head">
+      <div class="ttl">🎮 Catch the <em>Drop</em></div>
+      <button class="x" id="gameClose" type="button" aria-label="Закрити">✕</button>
+    </div>
+    <div class="game-stats">
+      <div>Score<b id="gScore">0</b></div>
+      <div>Best<b id="gBest">0</b></div>
+      <div>Life<b id="gLives">❤❤❤</b></div>
+    </div>
+    <div class="game-canvas-wrap" id="gameWrap">
+      <canvas id="gameCanvas" width="400" height="500"></canvas>
+      <div class="game-over" id="gameOver">
+        <div class="score-lbl">Game over</div>
+        <div class="score-big" id="gameOverScore">0</div>
+        <div class="score-lbl">пійманих дропів</div>
+        <button id="gameRestart" type="button">↻ Ще раз</button>
+      </div>
+      <div class="game-ready" id="gameReady">
+        <div class="msg">✨ Готово!<em>AI-фото згенеровано</em></div>
+        <button id="gameSeeResult" type="button">Подивитись →</button>
+      </div>
+    </div>
+    <div class="game-foot">← → або тач · лови ULTERA-дропи · уникай 🔥</div>
+  </div>
+</div>
+
 <footer class="ft">
   <div class="wide">© ULTERA TEES™ · AI Try-On · Powered by gpt-image · 2026</div>
 </footer>
@@ -293,10 +350,10 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const ST = {
   step: 1,
-  tshirt: null,    // {id, uid, family, title, color_name, color_hex, photo, price, price_old}
-  modelMode: 'preset', // 'preset' | 'upload'
-  model: null,     // preset model row OR null
-  upload: null,    // {dataUrl, gender, height, weight}
+  tshirt: null,
+  modelMode: 'preset',
+  model: null,
+  upload: null,
   models: [],
   tees: [],
   filterGender: 'all'
@@ -351,7 +408,7 @@ window.pickTee = function(id){
   document.getElementById('toStep2').disabled = !ST.tshirt;
 };
 
-/* ---------- STEP 2: модели ---------- */
+/* ---------- STEP 2: моделі ---------- */
 async function loadModels(){
   const { data, error } = await sb
     .from('ulhome_tryon_models')
@@ -435,6 +492,8 @@ window.runTryon = async function(){
   document.getElementById('loader').classList.add('show');
   document.getElementById('resultBox').classList.add('hidden');
   document.getElementById('errorBox').classList.add('hidden');
+  // reset game-ready state on every new run
+  if (window.GAME){ GAME.tryonReady = false; GAME.resultUrl = null; const gr = document.getElementById('gameReady'); if (gr) gr.classList.remove('show'); }
 
   const payload = { tshirt_id: ST.tshirt.id };
   if (ST.modelMode === 'preset') {
@@ -448,7 +507,6 @@ window.runTryon = async function(){
     if (w) payload.weight = w;
   }
 
-  // динамическое сообщение загрузки
   const msgs = ['AI малює, ~15 секунд…','Підбираємо посадку…','Обробляємо принт…','Майже готово…'];
   let mi = 0;
   const mt = setInterval(() => {
@@ -464,12 +522,20 @@ window.runTryon = async function(){
     });
     const j = await r.json();
     clearInterval(mt);
-    document.getElementById('loader').classList.remove('show');
     if (!r.ok) {
+      document.getElementById('loader').classList.remove('show');
       showError(j.error || ('HTTP ' + r.status));
       return;
     }
-    showResult(j.result_url);
+    const gameOpen = document.getElementById('gameOv').classList.contains('show');
+    GAME.resultUrl  = j.result_url;
+    GAME.tryonReady = true;
+    if (gameOpen){
+      document.getElementById('gameReady').classList.add('show');
+    } else {
+      document.getElementById('loader').classList.remove('show');
+      showResult(j.result_url);
+    }
   } catch (e) {
     clearInterval(mt);
     document.getElementById('loader').classList.remove('show');
@@ -499,9 +565,305 @@ function clearAll(){
   clearUpload();
 }
 
+/* ====== MINI-GAME · Catch the Drop ====== */
+const GAME = {
+  cv: null, ctx: null, W: 400, H: 500, dpr: 1,
+  raf: null, running: false, lastTs: 0,
+  score: 0, lives: 3, best: +(localStorage.getItem('ultera_game_best')||0),
+  basket: { x: 200, y: 460, w: 90, h: 28 },
+  pieces: [], spawnAcc: 0, spawnEvery: 900, speed: 1,
+  keys: { left:false, right:false },
+  touchX: null,
+  tryonReady: false, resultUrl: null,
+};
+
+function gameResize(){
+  if (!GAME.cv) return;
+  const wrap = document.getElementById('gameWrap');
+  const rect = wrap.getBoundingClientRect();
+  GAME.W = rect.width; GAME.H = rect.height;
+  GAME.dpr = Math.min(window.devicePixelRatio || 1, 2);
+  GAME.cv.width  = Math.round(GAME.W * GAME.dpr);
+  GAME.cv.height = Math.round(GAME.H * GAME.dpr);
+  GAME.ctx.setTransform(GAME.dpr, 0, 0, GAME.dpr, 0, 0);
+  GAME.basket.y = GAME.H - 40;
+  GAME.basket.x = Math.min(Math.max(GAME.basket.x, GAME.basket.w/2), GAME.W - GAME.basket.w/2);
+}
+
+function gameSpawn(){
+  const types = ['tee','tee','tee','sneaker','sneaker','fire'];
+  const t = types[Math.floor(Math.random()*types.length)];
+  const colors = ['#0e0e0e','#dff6cf','#ffc8a5','#aa8a77','#dee3e7','#e84a5f','#3a5a40'];
+  GAME.pieces.push({
+    type: t,
+    x: 30 + Math.random()*(GAME.W-60),
+    y: -30,
+    vy: 90 + Math.random()*60 + GAME.speed*15,
+    rot: (Math.random()-.5)*0.6,
+    vrot: (Math.random()-.5)*1.4,
+    size: t==='fire' ? 26 : (t==='sneaker' ? 30 : 34),
+    color: colors[Math.floor(Math.random()*colors.length)],
+  });
+}
+
+function drawTee(ctx, p){
+  const s = p.size;
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.rot);
+  ctx.fillStyle = p.color;
+  ctx.beginPath();
+  ctx.moveTo(-s*.45,-s*.35);
+  ctx.lineTo(-s*.7,-s*.15);
+  ctx.lineTo(-s*.55,s*.1);
+  ctx.lineTo(-s*.45,s*.5);
+  ctx.lineTo(s*.45,s*.5);
+  ctx.lineTo(s*.55,s*.1);
+  ctx.lineTo(s*.7,-s*.15);
+  ctx.lineTo(s*.45,-s*.35);
+  ctx.quadraticCurveTo(0,-s*.15,-s*.45,-s*.35);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = (p.color==='#0e0e0e' || p.color==='#3a5a40' || p.color==='#e84a5f') ? '#fff' : '#0e0e0e';
+  ctx.font = 'bold 9px monospace';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('ULT', 0, s*.08);
+  ctx.restore();
+}
+function drawSneaker(ctx, p){
+  const s = p.size;
+  ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.ellipse(0, s*.25, s*.8, s*.2, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = p.color;
+  ctx.beginPath();
+  ctx.moveTo(-s*.8,s*.15);
+  ctx.quadraticCurveTo(-s*.8,-s*.25,-s*.3,-s*.3);
+  ctx.lineTo(s*.5,-s*.15);
+  ctx.quadraticCurveTo(s*.85,-s*.05,s*.8,s*.15);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = p.color==='#fff' ? '#0e0e0e' : '#fff';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(-s*.4,s*.05);
+  ctx.quadraticCurveTo(0,-s*.1, s*.45,-s*.05);
+  ctx.stroke();
+  ctx.restore();
+}
+function drawFire(ctx, p){
+  const s = p.size;
+  ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*.3);
+  const g = ctx.createRadialGradient(0,0,2,0,0,s);
+  g.addColorStop(0,'#fff5a0'); g.addColorStop(.4,'#ff9a3c'); g.addColorStop(1,'#e84a5f');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(0,-s*.7);
+  ctx.bezierCurveTo(s*.6,-s*.2, s*.5,s*.5, 0,s*.6);
+  ctx.bezierCurveTo(-s*.5,s*.5, -s*.6,-s*.2, 0,-s*.7);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('🔥', 0, s*.05);
+  ctx.restore();
+}
+
+function drawBasket(ctx){
+  const b = GAME.basket;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,.18)';
+  ctx.beginPath(); ctx.ellipse(b.x, b.y+18, b.w/2, 4, 0,0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#0e0e0e';
+  ctx.beginPath();
+  ctx.roundRect(b.x - b.w/2, b.y - b.h/2, b.w, b.h, 6);
+  ctx.fill();
+  ctx.strokeStyle = '#0e0e0e';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(b.x, b.y - b.h/2 - 1, b.w*0.32, Math.PI, 0);
+  ctx.stroke();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 11px monospace';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('ULTERA', b.x, b.y);
+  ctx.restore();
+}
+
+function gameStep(ts){
+  if (!GAME.running) return;
+  const dt = Math.min(40, ts - (GAME.lastTs||ts)) / 1000;
+  GAME.lastTs = ts;
+  const ctx = GAME.ctx;
+
+  ctx.clearRect(0,0,GAME.W,GAME.H);
+  ctx.fillStyle = 'rgba(255,255,255,.4)';
+  ctx.fillRect(0, GAME.H-22, GAME.W, 22);
+
+  const speedB = 360;
+  if (GAME.keys.left)  GAME.basket.x -= speedB*dt;
+  if (GAME.keys.right) GAME.basket.x += speedB*dt;
+  if (GAME.touchX !== null){
+    const dx = GAME.touchX - GAME.basket.x;
+    GAME.basket.x += dx * Math.min(1, dt*14);
+  }
+  GAME.basket.x = Math.max(GAME.basket.w/2, Math.min(GAME.W - GAME.basket.w/2, GAME.basket.x));
+
+  GAME.spawnAcc += dt*1000;
+  if (GAME.spawnAcc >= GAME.spawnEvery){
+    GAME.spawnAcc = 0;
+    gameSpawn();
+    if (GAME.spawnEvery > 480) GAME.spawnEvery -= 8;
+    GAME.speed = Math.min(8, GAME.speed + 0.05);
+  }
+
+  for (let i = GAME.pieces.length - 1; i >= 0; i--){
+    const p = GAME.pieces[i];
+    p.y   += p.vy * dt;
+    p.rot += p.vrot * dt;
+    if      (p.type === 'tee')     drawTee(ctx, p);
+    else if (p.type === 'sneaker') drawSneaker(ctx, p);
+    else                            drawFire(ctx, p);
+
+    const b = GAME.basket;
+    if (p.y >= b.y - b.h/2 - p.size*.3 && p.y <= b.y + b.h/2 &&
+        Math.abs(p.x - b.x) <= b.w/2 + p.size*.3){
+      GAME.pieces.splice(i,1);
+      if (p.type === 'fire'){
+        GAME.lives--;
+        updHud();
+        if (GAME.lives <= 0) return gameOver();
+      } else {
+        const add = (p.type === 'sneaker') ? 3 : 1;
+        GAME.score += add;
+        updHud();
+      }
+      continue;
+    }
+    if (p.y > GAME.H + 40){
+      GAME.pieces.splice(i,1);
+      if (p.type !== 'fire'){
+        GAME.lives--;
+        updHud();
+        if (GAME.lives <= 0) return gameOver();
+      }
+    }
+  }
+
+  drawBasket(ctx);
+  GAME.raf = requestAnimationFrame(gameStep);
+}
+
+function updHud(){
+  document.getElementById('gScore').textContent = GAME.score;
+  document.getElementById('gBest').textContent  = Math.max(GAME.best, GAME.score);
+  const l = Math.max(0, GAME.lives);
+  document.getElementById('gLives').textContent = '❤'.repeat(l) + '·'.repeat(3 - l);
+}
+
+function gameOver(){
+  GAME.running = false;
+  if (GAME.raf) cancelAnimationFrame(GAME.raf);
+  if (GAME.score > GAME.best){
+    GAME.best = GAME.score;
+    try { localStorage.setItem('ultera_game_best', String(GAME.best)); } catch(_){}
+  }
+  document.getElementById('gameOverScore').textContent = GAME.score;
+  document.getElementById('gameOver').classList.add('show');
+}
+
+function gameReset(){
+  GAME.score = 0; GAME.lives = 3; GAME.pieces = [];
+  GAME.spawnAcc = 0; GAME.spawnEvery = 900; GAME.speed = 1;
+  GAME.lastTs = 0; GAME.touchX = null;
+  GAME.keys.left = false; GAME.keys.right = false;
+  updHud();
+  document.getElementById('gameOver').classList.remove('show');
+}
+
+function gameStart(){
+  gameReset();
+  GAME.running = true;
+  GAME.raf = requestAnimationFrame(gameStep);
+}
+
+function openGame(){
+  const ov = document.getElementById('gameOv');
+  ov.classList.add('show');
+  if (!GAME.cv){
+    GAME.cv  = document.getElementById('gameCanvas');
+    GAME.ctx = GAME.cv.getContext('2d');
+    bindGameInputs();
+  }
+  document.getElementById('gameReady').classList.toggle('show', !!GAME.tryonReady);
+  requestAnimationFrame(() => { gameResize(); gameStart(); });
+}
+
+function closeGame(){
+  GAME.running = false;
+  if (GAME.raf) cancelAnimationFrame(GAME.raf);
+  document.getElementById('gameOv').classList.remove('show');
+  document.getElementById('gameOver').classList.remove('show');
+  if (GAME.tryonReady && GAME.resultUrl){
+    revealResult();
+  }
+}
+
+function bindGameInputs(){
+  window.addEventListener('keydown', (e) => {
+    if (!document.getElementById('gameOv').classList.contains('show')) return;
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A')  GAME.keys.left  = true;
+    if (e.key === 'ArrowRight'|| e.key === 'd' || e.key === 'D')  GAME.keys.right = true;
+    if (e.key === 'Escape') closeGame();
+  });
+  window.addEventListener('keyup', (e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A')  GAME.keys.left  = false;
+    if (e.key === 'ArrowRight'|| e.key === 'd' || e.key === 'D')  GAME.keys.right = false;
+  });
+  const cv = GAME.cv;
+  const moveTo = (clientX) => {
+    const r = cv.getBoundingClientRect();
+    GAME.touchX = (clientX - r.left) * (GAME.W / r.width);
+  };
+  cv.addEventListener('pointerdown',   (e) => { try{ cv.setPointerCapture(e.pointerId); }catch(_){} moveTo(e.clientX); });
+  cv.addEventListener('pointermove',   (e) => { if (e.buttons || e.pointerType === 'touch') moveTo(e.clientX); });
+  cv.addEventListener('pointerup',     () => { GAME.touchX = null; });
+  cv.addEventListener('pointercancel', () => { GAME.touchX = null; });
+  window.addEventListener('resize', gameResize);
+}
+
+// roundRect polyfill (older Safari)
+if (!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+    r = Math.min(r, w/2, h/2);
+    this.beginPath();
+    this.moveTo(x+r,y);
+    this.arcTo(x+w,y,x+w,y+h,r);
+    this.arcTo(x+w,y+h,x,y+h,r);
+    this.arcTo(x,y+h,x,y,r);
+    this.arcTo(x,y,x+w,y,r);
+    this.closePath();
+    return this;
+  };
+}
+
+function revealResult(){
+  document.getElementById('loader').classList.remove('show');
+  document.getElementById('gameOv').classList.remove('show');
+  GAME.running = false;
+  if (GAME.raf) cancelAnimationFrame(GAME.raf);
+  if (GAME.resultUrl) showResult(GAME.resultUrl);
+}
+
+document.getElementById('playWhileWait').addEventListener('click', openGame);
+document.getElementById('gameClose').addEventListener('click', closeGame);
+document.getElementById('gameRestart').addEventListener('click', gameStart);
+document.getElementById('gameSeeResult').addEventListener('click', revealResult);
+
 /* ---------- init ---------- */
 (async function init(){
-  // preselect tshirt из URL ?tee=<uid>
   await loadTees();
   await loadModels();
   const params = new URLSearchParams(location.search);
