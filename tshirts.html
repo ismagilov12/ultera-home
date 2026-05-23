@@ -2617,6 +2617,17 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     document.getElementById('toResult').style.display = '';
     renderCarousel();
     refreshFooter();
+    /* V12_GAME_FORCE_START: стартуємо гру напряму, не через MutationObserver */
+    try{
+      if(window.tryOnGame && typeof window.tryOnGame.start === 'function'){
+        /* подвійний rAF — щоб layout встиг розрахувати розміри .to-carousel */
+        requestAnimationFrame(function(){
+          requestAnimationFrame(function(){
+            try{ window.tryOnGame.start(); }catch(e){ console.warn('[tryon-game] force start failed', e); }
+          });
+        });
+      }
+    }catch(e){ console.warn('[tryon-game] hook err', e); }
 
     for(let i=0; i<ST.basket.length; i++){
       const uid = ST.basket[i];
@@ -2901,13 +2912,16 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     // дочекаємось layout
     let initTries = 0;
     const tryInit = () => {
-      const w = box.clientWidth, h = box.clientHeight;
+      let w = box.clientWidth, h = box.clientHeight;
       initTries++;
-      console.log('[tryon-game] init try', initTries, 'box:', w, 'x', h);
-      if((w < 80 || h < 80) && initTries < 60){ requestAnimationFrame(tryInit); return; }
+      if((w < 80 || h < 80) && initTries < 240){ requestAnimationFrame(tryInit); return; }
       if(w < 80 || h < 80){
-        console.warn('[tryon-game] box too small, abort');
-        return;
+        /* V12: fallback — беремо розмір .to-carousel або 320x400, аніж нічого */
+        const par = box.parentElement;
+        const pr = par && par.getBoundingClientRect();
+        w = (pr && pr.width)  > 80 ? pr.width  : 320;
+        h = (pr && pr.height) > 80 ? pr.height : 400;
+        console.warn('[tryon-game] box was tiny — forcing ' + w + 'x' + h);
       }
       initGame(box, w, h);
     };
@@ -3145,6 +3159,7 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
   // V10: MutationObserver — стартує гру коли є loading-слайди,
   // зупиняє коли немає (і чекає до 1.5с щоб показати фінальний banner)
   let _gameStopTimer = null;
+  let _gameMinStop  = 0; /* V12: мін-час показу гри (ms epoch) */
   function checkGame(){
     const result = document.getElementById('toResult');
     if(!result) return;
@@ -3164,14 +3179,15 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     if(hasLoading){
       // є щось у роботі — стартуємо/підтримуємо
       clearTimeout(_gameStopTimer); _gameStopTimer = null;
-      if(!G) startGame();
+      if(!G){ startGame(); _gameMinStop = Date.now() + 2500; }
     } else if(anyResults && G){
-      // всі слайди готові — плануємо стоп
+      // всі слайди готові — плануємо стоп (з врахуванням мін-часу гри)
       if(!_gameStopTimer){
+        const wait = Math.max(700, _gameMinStop - Date.now());
         _gameStopTimer = setTimeout(() => {
           window.tryOnGame.stop();
           _gameStopTimer = null;
-        }, 700);
+        }, wait);
       }
     }
   }
