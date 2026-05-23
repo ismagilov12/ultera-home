@@ -301,6 +301,29 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 #pv-tbl td{padding:6px 8px;border-bottom:1px dashed #ecebe5;font-size:12.5px}
 #pv-tbl th{padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #e4e3dc;color:#0e0e0e80;font-size:12px}
 #pv-tbl th.num,#pv-tbl td.num{text-align:right}
+
+/* ULH_TRYON_ADMIN_V1 */
+.tryon-kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:2px;min-width:120px}
+.tryon-kpi .lab{font-family:var(--font-mono);font-size:10px;color:var(--ink-60);letter-spacing:.06em;text-transform:uppercase}
+.tryon-kpi b{font-size:18px;font-weight:800}
+.tryon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.tryon-grid .loading{grid-column:1/-1;text-align:center;padding:60px;color:var(--ink-60);font-family:var(--font-mono);font-size:13px}
+.tr-card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:.2s;cursor:default}
+.tr-card:hover{border-color:var(--ink);transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,0,0,.06)}
+.tr-card .img-wrap{aspect-ratio:3/2;background:#f4f3ee;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:zoom-in}
+.tr-card .img-wrap img{width:100%;height:100%;object-fit:contain;display:block}
+.tr-card .meta{padding:10px 12px;display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line)}
+.tr-card .ttl{font-size:13px;font-weight:700;line-height:1.3;text-transform:uppercase;letter-spacing:-.01em}
+.tr-card .sub{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-60);letter-spacing:.04em}
+.tr-card .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.tr-card .tag{font-family:var(--font-mono);font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:999px;letter-spacing:.06em;text-transform:uppercase;background:#f1ede4;color:var(--ink)}
+.tr-card .tag.cache{background:#e0f1e7;color:#0c5e2e}
+.tr-card .tag.fresh{background:#fde9d0;color:#7a4b00}
+.tr-card .tag.upload{background:#fad9d9;color:#7a1c1c}
+.tr-card .actions{display:flex;gap:6px;margin-top:6px}
+.tr-card .actions a{flex:1;text-align:center;padding:6px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:8px;text-decoration:none;color:var(--ink);background:var(--bg-alt);border:1px solid var(--line);transition:.15s}
+.tr-card .actions a:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+
 </style>
 <!-- TEES_EDITOR_PATCH -->
 <style id="tees-editor-patch">
@@ -410,6 +433,10 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
       <a data-page="settings">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Налаштування
+      </a>
+      <a data-page="tryon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 11l2 2 4-4M12 21V12"/></svg>
+        AI Примірочна
       </a>
       <a data-page="admins">
         <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -637,6 +664,51 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         </div>
       </div>
     </div>
+
+    <!-- ULH_TRYON_ADMIN_V1 begin -->
+    <div class="page" id="page-tryon" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>AI Примірочна</h1>
+          <div class="meta" id="tryon-meta">—</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="tryon-days" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-family:var(--font-mono);font-size:12px">
+            <option value="1">за сьогодні</option>
+            <option value="7" selected>за 7 днів</option>
+            <option value="30">за 30 днів</option>
+            <option value="0">всі</option>
+          </select>
+          <select id="tryon-filter" style="padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-family:var(--font-mono);font-size:12px">
+            <option value="">всі джерела</option>
+            <option value="fresh">тільки свіжі</option>
+            <option value="cache">з кешу</option>
+            <option value="upload">з фото юзера</option>
+          </select>
+          <button class="btn ghost" id="tryon-refresh" type="button"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg>Оновити</button>
+        </div>
+      </div>
+
+      <div class="tryon-totals" id="tryon-totals" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+        <div class="tryon-kpi"><span class="lab">всього</span><b id="tryon-kpi-total">0</b></div>
+        <div class="tryon-kpi"><span class="lab">свіжих</span><b id="tryon-kpi-fresh">0</b></div>
+        <div class="tryon-kpi"><span class="lab">з кешу</span><b id="tryon-kpi-cache">0</b></div>
+        <div class="tryon-kpi"><span class="lab">з фото</span><b id="tryon-kpi-upload">0</b></div>
+        <div class="tryon-kpi"><span class="lab">витрачено</span><b id="tryon-kpi-cost">$0.00</b></div>
+        <div class="tryon-kpi"><span class="lab">унікальних сесій</span><b id="tryon-kpi-sess">0</b></div>
+      </div>
+
+      <div class="tryon-grid" id="tryon-grid">
+        <div class="loading">Завантажую…</div>
+      </div>
+    </div>
+
+    <!-- Lightbox для збільшення -->
+    <div id="tryon-lb" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:10000;align-items:center;justify-content:center;padding:20px;cursor:zoom-out">
+      <img id="tryon-lb-img" src="" alt="" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;box-shadow:0 12px 50px rgba(0,0,0,.6)">
+    </div>
+    <!-- ULH_TRYON_ADMIN_V1 end -->
+
   </main>
 </div>
 
@@ -2739,5 +2811,140 @@ function bindPvChips(){
 })();
 </script>
 <!-- ULTERA_DEEPLINK_JS_END -->
+
+<script>
+
+/* ULH_TRYON_ADMIN_V1 — admin AI Tryon section */
+(function(){
+  var SLUG_HUMAN = {
+    'male-slim':'Худорлявий', 'male-average':'Середній', 'male-large':'Великий',
+    'female-slim':'Худорлява', 'female-average':'Середня', 'female-curvy':'Жіночна'
+  };
+  function fmtDate(s){
+    if(!s) return '—';
+    try{ return new Date(s).toLocaleString('uk-UA', {dateStyle:'short', timeStyle:'short'}); }catch(e){ return s; }
+  }
+  function fmtCost(cents){
+    var d = (Number(cents)||0)/100;
+    return '$' + d.toFixed(2);
+  }
+  function safe(s){
+    if(s==null) return '';
+    return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; });
+  }
+  function pickTag(row){
+    if (row.with_upload) return '<span class="tag upload">фото юзера</span>';
+    if (row.from_cache)  return '<span class="tag cache">з кешу</span>';
+    return '<span class="tag fresh">свіжа</span>';
+  }
+  function renderRow(r){
+    var model = r.with_upload
+      ? ('фото · ' + (r.gender==='female'?'ж':'ч') + ' · ' + (r.height_cm||'-') + '/' + (r.weight_kg||'-'))
+      : (SLUG_HUMAN[r.model_slug] || r.model_title || r.model_slug || '—');
+    return ''
+      + '<div class="tr-card">'
+      +   '<div class="img-wrap" data-url="' + safe(r.result_url) + '">'
+      +     '<img src="' + safe(r.result_url) + '" alt="" loading="lazy">'
+      +   '</div>'
+      +   '<div class="meta">'
+      +     '<div class="ttl">' + safe(r.tshirt_title || r.tshirt_uid || '—') + '</div>'
+      +     '<div class="sub">' + fmtDate(r.created_at) + ' · ' + safe(r.color_name || '') + '</div>'
+      +     '<div class="sub">типаж: ' + safe(model) + '</div>'
+      +     '<div class="tags">'
+      +       pickTag(r)
+      +       (r.cost_cents ? ('<span class="tag">' + fmtCost(r.cost_cents) + '</span>') : '')
+      +       (r.duration_ms ? ('<span class="tag">' + (Math.round(r.duration_ms/100)/10) + ' с</span>') : '')
+      +     '</div>'
+      +     '<div class="actions">'
+      +       '<a href="' + safe(r.result_url) + '" target="_blank" rel="noopener">↗ відкрити</a>'
+      +       '<a href="' + safe(r.result_url) + '" download="ultera-tryon.png">⬇ зберегти</a>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>';
+  }
+  var TR_STATE = { days: 7, filter: '', rows: [] };
+  function applyFilter(rows){
+    if (TR_STATE.filter === 'fresh')  return rows.filter(function(r){ return !r.from_cache && !r.with_upload; });
+    if (TR_STATE.filter === 'cache')  return rows.filter(function(r){ return !!r.from_cache; });
+    if (TR_STATE.filter === 'upload') return rows.filter(function(r){ return !!r.with_upload; });
+    return rows;
+  }
+  function renderGrid(){
+    var grid = document.getElementById('tryon-grid'); if(!grid) return;
+    var rows = applyFilter(TR_STATE.rows);
+    if (!rows.length){
+      grid.innerHTML = '<div class="loading">— Немає примірок за період —</div>';
+    } else {
+      grid.innerHTML = rows.map(renderRow).join('');
+    }
+    // KPI
+    var all = TR_STATE.rows;
+    var f = all.filter(function(r){ return !r.from_cache && !r.with_upload; }).length;
+    var c = all.filter(function(r){ return !!r.from_cache; }).length;
+    var u = all.filter(function(r){ return !!r.with_upload; }).length;
+    var cost = all.reduce(function(s,r){ return s + (Number(r.cost_cents)||0); }, 0);
+    var sess = (function(){
+      var set = {};
+      all.forEach(function(r){ if(r.session_id) set[r.session_id] = 1; });
+      return Object.keys(set).length;
+    })();
+    var $ = function(id){ return document.getElementById(id); };
+    if($('tryon-kpi-total'))  $('tryon-kpi-total').textContent  = all.length;
+    if($('tryon-kpi-fresh'))  $('tryon-kpi-fresh').textContent  = f;
+    if($('tryon-kpi-cache'))  $('tryon-kpi-cache').textContent  = c;
+    if($('tryon-kpi-upload')) $('tryon-kpi-upload').textContent = u;
+    if($('tryon-kpi-cost'))   $('tryon-kpi-cost').textContent   = fmtCost(cost);
+    if($('tryon-kpi-sess'))   $('tryon-kpi-sess').textContent   = sess;
+    if($('tryon-meta'))       $('tryon-meta').textContent       = all.length + ' примірок · ' + sess + ' сесій · витрачено ' + fmtCost(cost);
+  }
+  async function loadTryonEvents(){
+    var grid = document.getElementById('tryon-grid'); if(!grid) return;
+    grid.innerHTML = '<div class="loading">Завантажую…</div>';
+    try{
+      var body = { p_limit: 500, p_offset: 0, p_days: TR_STATE.days || null };
+      var resp = await rest('rpc/ulhome_tryon_admin_list', { method:'POST', body: JSON.stringify(body) });
+      var rows = (resp && resp.rows) || [];
+      TR_STATE.rows = rows;
+      renderGrid();
+    } catch(e){
+      grid.innerHTML = '<div class="loading" style="color:#c0392b">Помилка: ' + (e && e.message || e) + '</div>';
+    }
+  }
+
+  function init(){
+    var days = document.getElementById('tryon-days');
+    var filt = document.getElementById('tryon-filter');
+    var refr = document.getElementById('tryon-refresh');
+    if (days) days.addEventListener('change', function(){ TR_STATE.days = parseInt(days.value,10)||0; loadTryonEvents(); });
+    if (filt) filt.addEventListener('change', function(){ TR_STATE.filter = filt.value; renderGrid(); });
+    if (refr) refr.addEventListener('click', loadTryonEvents);
+
+    // Lightbox
+    var grid = document.getElementById('tryon-grid');
+    var lb   = document.getElementById('tryon-lb');
+    var lbi  = document.getElementById('tryon-lb-img');
+    if (grid && lb && lbi){
+      grid.addEventListener('click', function(e){
+        var wrap = e.target && e.target.closest && e.target.closest('.img-wrap[data-url]');
+        if (!wrap) return;
+        lbi.src = wrap.getAttribute('data-url');
+        lb.style.display = 'flex';
+      });
+      lb.addEventListener('click', function(){ lb.style.display='none'; lbi.src=''; });
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape' && lb.style.display==='flex'){ lb.style.display='none'; lbi.src=''; } });
+    }
+
+    // load when switching to tryon page
+    var link = document.querySelector('[data-page="tryon"]');
+    if (link) link.addEventListener('click', function(){ setTimeout(loadTryonEvents, 40); });
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+</script>
 </body>
 </html>

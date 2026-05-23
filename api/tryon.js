@@ -1,5 +1,7 @@
-// api/tryon.js — AI Virtual Try-On (gpt-image-1 / gpt-image-2) v9 · 2026-05-17
+// api/tryon.js — AI Virtual Try-On (gpt-image-1 / gpt-image-2) v10 · 2026-05-23
 //
+// v10: лог КОЖНОЇ примірки у ulhome_tryon_events (включаючи cache hit, upload).
+//      Фото юзера НЕ зберігаємо — тільки фінальний AI-результат.
 // v9 FIX: жорстко вимагати однакову довжину футболки в обох halves (фронт+спина)
 // v8: фільтр product_media тільки на image extensions (.webp/.png/.jpg/.gif)
 //          tee-002 мав .mp4 у списку — ламало OpenAI «Invalid image file for image 3»
@@ -69,6 +71,19 @@ async function sbInsert(table, payload) {
   if (!r.ok) { const txt = await r.text(); throw new Error('Supabase insert: ' + r.status + ' ' + txt); }
   return await r.json();
 }
+// Лог події у ulhome_tryon_events (best-effort; ніколи не валить хендлер)
+async function logTryonEvent(ev) {
+  try {
+    await fetch(process.env.SUPABASE_URL + '/rest/v1/ulhome_tryon_events', {
+      method: 'POST',
+      headers: { 'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
+                 'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_ROLE_KEY,
+                 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(ev)
+    });
+  } catch (e) { console.warn('[tryon] event log failed:', e && e.message || e); }
+}
+
 async function sbStorageUpload(bucket, path, bytes, contentType) {
   const r = await fetch(process.env.SUPABASE_URL + '/storage/v1/object/' + bucket + '/' + path, {
     method: 'POST',
@@ -243,8 +258,10 @@ export default async function handler(req, res) {
     if (!rl.allowed) return res.status(429).json({ error: 'too many requests' });
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-    const { tshirt_id, model_id, photo_b64, gender: genderIn, height: heightIn, weight: weightIn } = body;
+    const { tshirt_id, model_id, photo_b64, gender: genderIn, height: heightIn, weight: weightIn, session_id: sessionIdIn } = body;
     const view = 'combined';
+    const sessionId = (typeof sessionIdIn === 'string' && sessionIdIn) ? sessionIdIn.slice(0, 80) : null;
+    const userAgent = (req.headers['user-agent'] || '').slice(0, 240) || null;
 
     if (!tshirt_id) return res.status(400).json({ error: 'tshirt_id required' });
     if (!model_id && !photo_b64) return res.status(400).json({ error: 'model_id or photo_b64 required' });
@@ -277,6 +294,21 @@ export default async function handler(req, res) {
       const cached = await sbSelectOne('ulhome_tryon_cache', cacheKey + '&select=id,result_url,view');
       if (cached) {
         console.log('[tryon] cache HIT');
+        await logTryonEvent({
+          tshirt_id: tshirt.id, tshirt_uid: tshirt.uid, tshirt_title: tshirt.title, color_name: tshirt.color_name,
+          model_id: (modelMeta && modelMeta.id) || null,
+          model_slug: (modelMeta && modelMeta.slug) || null,
+          model_title: (modelMeta && modelMeta.title) || null,
+          with_upload: false,
+          gender: (modelMeta && modelMeta.gender) || genderIn || null,
+          height_cm: (modelMeta && modelMeta.height_cm) || Number(heightIn) || null,
+          weight_kg: (modelMeta && modelMeta.weight_kg) || Number(weightIn) || null,
+          result_url: cached.result_url,
+          from_cache: true,
+          cost_cents: 0,
+          duration_ms: Date.now() - t0,
+          session_id: sessionId, ip, user_agent: userAgent
+        });
         return res.status(200).json({ ok: true, cached: true, view, result_url: cached.result_url,
           tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name } });
       }
@@ -322,47 +354,4 @@ export default async function handler(req, res) {
     const quality = process.env.TRYON_QUALITY || 'medium';
     const model = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
     console.log('[tryon] OpenAI: scenario=' + scenario + ' refs=' + refImages.length + ' quality=' + quality + ' (t+' + (Date.now()-t0) + 'ms)');
-    const resultBytes = await callGptImageEdit({ refImages, prompt, quality, model, timeoutMs: 240000 });
-    console.log('[tryon] OpenAI done: ' + resultBytes.length + ' bytes (t+' + (Date.now()-t0) + 'ms)');
-
-    // Save
-    const stamp = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
-    const tag = modelMeta ? modelMeta.slug : ('user-' + (photoHash || 'anon').slice(0, 12));
-    const path = tshirt.uid + '/combined-' + tag + '-' + stamp + '.png';
-    const resultUrl = await sbStorageUpload('tryon-results', path, resultBytes, 'image/png');
-
-    // Cache
-    if (cacheKey && !uploadBytes) {
-      try {
-        await sbInsert('ulhome_tryon_cache', {
-          model_id: (modelMeta && modelMeta.id) || null,
-          photo_hash: photoHash,
-          tshirt_uid: tshirt.uid,
-          tshirt_id: tshirt.id,
-          view,
-          result_url: resultUrl,
-          prompt: prompt.slice(0, 2000),
-          cost_cents: quality === 'high' ? 17 : (quality === 'low' ? 1 : 4)
-        });
-      } catch (e) {
-        const again = await sbSelectOne('ulhome_tryon_cache', cacheKey + '&select=id,result_url');
-        if (again) return res.status(200).json({ ok: true, cached: true, view, result_url: again.result_url,
-          tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name } });
-        throw e;
-      }
-    }
-
-    console.log('[tryon] DONE (total ' + (Date.now()-t0) + 'ms)');
-    return res.status(200).json({ ok: true, cached: false, view, result_url: resultUrl,
-      tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name } });
-
-  } catch (e) {
-    console.error('[tryon] ERROR (t+' + (Date.now()-t0) + 'ms):', (e && e.message) || e);
-    return res.status(500).json({ error: String((e && e.message) || e) });
-  }
-}
-
-export const config = {
-  api: { bodyParser: { sizeLimit: '12mb' } },
-  maxDuration: 300
-};
+    const resultBytes = await callGptImageEdit({ refImages, prompt, quality, model, tim

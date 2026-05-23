@@ -2622,7 +2622,7 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
       const uid = ST.basket[i];
       const tshirt_id = await resolveTshirtId(uid);
       if(!tshirt_id){ ST.results[i].status='err'; ST.results[i].err='БД не знайшла товар (uid)'; updateSlide(i); continue; }
-      const payload = { tshirt_id, model_id: ST.model.id, gender, height, weight };
+      const payload = { tshirt_id, model_id: ST.model.id, gender, height, weight, session_id: (window.ULHOME_SESSION_ID || null) };
       if(ST.upload && ST.upload.dataUrl) payload.photo_b64 = ST.upload.dataUrl;
       toUpdateStatus((i+1)+'/'+ST.basket.length);
       try{
