@@ -2546,18 +2546,63 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     document.getElementById('toUploadEmpty').style.display = '';
     document.getElementById('toUploadFilled').style.display = 'none';
   };
-  document.addEventListener('change', function(e){
+  // V13_RESIZE: ресайз великих фото на клієнті щоб не вбити iOS Safari OOM
+  async function _shrinkImageToDataUrl(file, maxDim, quality){
+    return new Promise(function(resolve, reject){
+      try{
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function(){
+          try{
+            URL.revokeObjectURL(url);
+            var w = img.naturalWidth || img.width;
+            var h = img.naturalHeight || img.height;
+            var ratio = Math.min(maxDim / Math.max(w, h), 1);
+            var W = Math.max(1, Math.round(w * ratio));
+            var H = Math.max(1, Math.round(h * ratio));
+            var cv = document.createElement('canvas');
+            cv.width = W; cv.height = H;
+            var ctx = cv.getContext('2d');
+            ctx.drawImage(img, 0, 0, W, H);
+            var dataUrl = cv.toDataURL('image/jpeg', quality);
+            resolve(dataUrl);
+          }catch(e){ reject(e); }
+        };
+        img.onerror = function(e){ URL.revokeObjectURL(url); reject(e); };
+        img.src = url;
+      }catch(e){ reject(e); }
+    });
+  }
+  document.addEventListener('change', async function(e){
     if(e.target && e.target.id === 'toFilePick'){
       const f = e.target.files && e.target.files[0]; if(!f) return;
-      if(f.size > 8*1024*1024){ alert('Файл більше 8 МБ'); return; }
-      const r = new FileReader();
-      r.onload = function(){
-        ST.upload = { dataUrl: r.result };
-        document.getElementById('toUploadPreview').src = r.result;
+      if(f.size > 16*1024*1024){ alert('Файл більше 16 МБ'); return; }
+      var prev = document.getElementById('toUploadPreview');
+      try{
+        // Ресайзимо до 1280×1280 (більше нічого не дасть AI) + jpeg 0.85
+        var dataUrl = await _shrinkImageToDataUrl(f, 1280, 0.85);
+        var sizeKB = Math.round(dataUrl.length * 0.75 / 1024); // приблизно
+        console.log('[upload] photo resized → ~' + sizeKB + ' KB base64');
+        ST.upload = { dataUrl: dataUrl };
+        if(prev) prev.src = dataUrl;
         document.getElementById('toUploadEmpty').style.display = 'none';
         document.getElementById('toUploadFilled').style.display = '';
-      };
-      r.readAsDataURL(f);
+      }catch(err){
+        console.warn('[upload] resize failed, fallback to raw', err);
+        // fallback: read raw (тільки якщо файл < 4 МБ — щоб не вибухнути)
+        if(f.size > 4*1024*1024){
+          alert('Не вдалося обробити фото. Спробуй інше або менше за 4 МБ.');
+          return;
+        }
+        var rr = new FileReader();
+        rr.onload = function(){
+          ST.upload = { dataUrl: rr.result };
+          if(prev) prev.src = rr.result;
+          document.getElementById('toUploadEmpty').style.display = 'none';
+          document.getElementById('toUploadFilled').style.display = '';
+        };
+        rr.readAsDataURL(f);
+      }
     }
   });
 
