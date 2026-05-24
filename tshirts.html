@@ -2955,22 +2955,24 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     box.classList.add('show');
 
     // дочекаємось layout
-    let initTries = 0;
-    const tryInit = () => {
-      let w = box.clientWidth, h = box.clientHeight;
-      initTries++;
-      if((w < 80 || h < 80) && initTries < 240){ requestAnimationFrame(tryInit); return; }
-      if(w < 80 || h < 80){
-        /* V12: fallback — беремо розмір .to-carousel або 320x400, аніж нічого */
-        const par = box.parentElement;
-        const pr = par && par.getBoundingClientRect();
-        w = (pr && pr.width)  > 80 ? pr.width  : 320;
-        h = (pr && pr.height) > 80 ? pr.height : 400;
-        console.warn('[tryon-game] box was tiny — forcing ' + w + 'x' + h);
-      }
-      initGame(box, w, h);
-    };
-    requestAnimationFrame(tryInit);
+    /* V14: синхронний init без rAF — rAF throttled у background tab та iOS full-screen modal */
+    var w0 = box.clientWidth, h0 = box.clientHeight;
+    if(w0 < 80 || h0 < 80){
+      var par0 = box.parentElement;
+      var pr0 = par0 && par0.getBoundingClientRect();
+      if(!w0 || w0 < 80) w0 = (pr0 && pr0.width  > 80) ? Math.round(pr0.width)  : 320;
+      if(!h0 || h0 < 80) h0 = (pr0 && pr0.height > 80) ? Math.round(pr0.height) : 400;
+    }
+    initGame(box, w0, h0);
+    /* Якщо box був зовсім скритий — повторимо init після короткого setTimeout (resilient до layout race) */
+    setTimeout(function(){
+      try{
+        if (G && (G.width < 80 || G.height < 80)){
+          var w2 = box.clientWidth || 320, h2 = box.clientHeight || 400;
+          if (w2 >= 80 && h2 >= 80){ stopGame(); initGame(box, w2, h2); }
+        }
+      }catch(e){}
+    }, 120);
   }
 
   function initGame(box, w, h){
