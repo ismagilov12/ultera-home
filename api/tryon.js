@@ -354,4 +354,75 @@ export default async function handler(req, res) {
     const quality = process.env.TRYON_QUALITY || 'medium';
     const model = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
     console.log('[tryon] OpenAI: scenario=' + scenario + ' refs=' + refImages.length + ' quality=' + quality + ' (t+' + (Date.now()-t0) + 'ms)');
-    const resultBytes = await callGptImageEdit({ refImages, prompt, quality, model, tim
+    const resultBytes = await callGptImageEdit({ refImages, prompt, quality, model, timeoutMs: 240000 });
+    console.log('[tryon] OpenAI done: ' + resultBytes.length + ' bytes (t+' + (Date.now()-t0) + 'ms)');
+
+    // Save
+    const stamp = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    const tag = modelMeta ? modelMeta.slug : ('user-' + (photoHash || 'anon').slice(0, 12));
+    const path = tshirt.uid + '/combined-' + tag + '-' + stamp + '.png';
+    const resultUrl = await sbStorageUpload('tryon-results', path, resultBytes, 'image/png');
+
+    const costCents = quality === 'high' ? 17 : (quality === 'low' ? 1 : 4);
+
+    // Cache (тільки для preset-моделей без upload — щоб не плодити унікальні юзерські)
+    if (cacheKey && !uploadBytes) {
+      try {
+        await sbInsert('ulhome_tryon_cache', {
+          model_id: (modelMeta && modelMeta.id) || null,
+          photo_hash: photoHash,
+          tshirt_uid: tshirt.uid,
+          tshirt_id: tshirt.id,
+          view,
+          result_url: resultUrl,
+          prompt: prompt.slice(0, 2000),
+          cost_cents: costCents
+        });
+      } catch (e) {
+        const again = await sbSelectOne('ulhome_tryon_cache', cacheKey + '&select=id,result_url');
+        if (again) {
+          await logTryonEvent({
+            tshirt_id: tshirt.id, tshirt_uid: tshirt.uid, tshirt_title: tshirt.title, color_name: tshirt.color_name,
+            model_id: (modelMeta && modelMeta.id) || null,
+            model_slug: (modelMeta && modelMeta.slug) || null,
+            model_title: (modelMeta && modelMeta.title) || null,
+            with_upload: !!uploadBytes,
+            gender, height_cm: height, weight_kg: weight,
+            result_url: again.result_url,
+            from_cache: true, cost_cents: 0, duration_ms: Date.now() - t0,
+            session_id: sessionId, ip, user_agent: userAgent
+          });
+          return res.status(200).json({ ok: true, cached: true, view, result_url: again.result_url,
+            tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name } });
+        }
+        throw e;
+      }
+    }
+
+    // Лог події (свіжа генерація — для preset-моделей І для uploads)
+    await logTryonEvent({
+      tshirt_id: tshirt.id, tshirt_uid: tshirt.uid, tshirt_title: tshirt.title, color_name: tshirt.color_name,
+      model_id: (modelMeta && modelMeta.id) || null,
+      model_slug: (modelMeta && modelMeta.slug) || null,
+      model_title: (modelMeta && modelMeta.title) || null,
+      with_upload: !!uploadBytes,
+      gender, height_cm: height, weight_kg: weight,
+      result_url: resultUrl,
+      from_cache: false, cost_cents: costCents, duration_ms: Date.now() - t0,
+      session_id: sessionId, ip, user_agent: userAgent
+    });
+
+    console.log('[tryon] DONE (total ' + (Date.now()-t0) + 'ms)');
+    return res.status(200).json({ ok: true, cached: false, view, result_url: resultUrl,
+      tshirt: { id: tshirt.id, uid: tshirt.uid, title: tshirt.title, color_name: tshirt.color_name } });
+
+  } catch (e) {
+    console.error('[tryon] ERROR (t+' + (Date.now()-t0) + 'ms):', (e && e.message) || e);
+    return res.status(500).json({ error: String((e && e.message) || e) });
+  }
+}
+
+export const config = {
+  api: { bodyParser: { sizeLimit: '12mb' } },
+  maxDuration: 300
+};
