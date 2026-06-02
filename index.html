@@ -488,6 +488,11 @@ input,textarea,select{font:inherit;color:inherit}
 @keyframes badgePop{from{opacity:0;transform:translateY(-6px) scale(.85)}to{opacity:1;transform:translateY(0) scale(1)}}
 .badge.sale{background:var(--pink);color:var(--ink)}
 .badge.new{background:var(--mint);color:var(--ink)}
+.badge.soldout{background:#8c8c8c;color:#fff}
+.card.sold-out .card-img img{filter:grayscale(.6);opacity:.7}
+.card.sold-out .card-price{opacity:.65}
+.card.sold-out .card-quick{display:none}
+.btn.primary[disabled]{opacity:.5;cursor:not-allowed;filter:grayscale(.4)}
 .card-quick{
   position:absolute;z-index:2;right:12px;bottom:12px;
   width:38px;height:38px;border-radius:50%;background:#fff;
@@ -2732,7 +2737,7 @@ window.ulteraFbq = function(name, params){
       </div>
 
       <div class="modal-cta">
-        <button class="btn primary" onclick="addToCart()">В кошик</button>
+        <button class="btn primary" id="m_buy" onclick="addToCart()">В кошик</button>
         <button class="btn ghost" onclick="toast('Додано в обране ♥')">♡ Закладки</button>
       </div>
 
@@ -3149,7 +3154,10 @@ let currentColor = 'allBlack';
 
 function priceNum(p){return Math.round(parseFloat(p||0)).toLocaleString('uk-UA')}
 
+var SOLD_OUT_UIDS = ['576612833084']; // Hunk Black White BRFT (біла підошва)
+function isSoldOut(p){ return !!(p && SOLD_OUT_UIDS.indexOf(String(p.uid)) !== -1); }
 function badgeFor(p){
+  if(isSoldOut(p)) return '<div class="badge soldout">SOLD OUT</div>';
   const m = p.mark || '';
   if(!m) return '';
   let cls = '';
@@ -3411,7 +3419,7 @@ function renderGrid(){
       const dots = row.variants.map(x=>`<span class="dot" style="background:${x.swatch}"></span>`).join('');
       const _imgLoad = (_classicsIdx < 2) ? 'loading="eager" fetchpriority="high" decoding="async"' : 'loading="lazy" decoding="async"';
       _classicsIdx++;
-      const card = `<div class="card" data-fam="${row.family}" onclick="openModal('${v.uid}')">
+      const card = `<div class="card ${isSoldOut(v)?'sold-out':''}" data-fam="${row.family}" onclick="openModal('${v.uid}')">
         <div class="card-img">${badgeFor(v)}<img src="${v.photo}" alt="${v.title}" ${_imgLoad}>
           <div class="card-quick"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
         </div>
@@ -3434,7 +3442,7 @@ function renderGrid(){
     row.variants.slice(1).forEach(v=>{  // skip hero (already shown as feat-card)
       const price = parseFloat(v.price)||0;
       const dots = row.variants.map(x=>`<span class="dot" style="background:${x.swatch}"></span>`).join('');
-      mainVariants.push(`<div class="card" data-fam="${row.family}" onclick="openModal('${v.uid}')">
+      mainVariants.push(`<div class="card ${isSoldOut(v)?'sold-out':''}" data-fam="${row.family}" onclick="openModal('${v.uid}')">
         <div class="card-img">${badgeFor(v)}<img src="${v.photo}" alt="${v.title}" loading="lazy">
           <div class="card-quick"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
         </div>
@@ -3635,6 +3643,15 @@ function openModal(uid){
     priceHtml += '<span class="save">−' + pct + '%</span>';
   }
   document.getElementById('m_price').innerHTML = priceHtml;
+
+  // SOLD OUT state — disable buy for out-of-stock SKUs
+  try {
+    var _buyBtn = document.getElementById('m_buy');
+    if(_buyBtn){
+      if(isSoldOut(p)){ _buyBtn.textContent = 'Немає в наявності'; _buyBtn.setAttribute('disabled','disabled'); }
+      else { _buyBtn.textContent = 'В кошик'; _buyBtn.removeAttribute('disabled'); }
+    }
+  } catch(_){}
 
   // v133: hide size helper (Розмірна сітка) for Tees family — only kept for footwear
   try {
@@ -4026,6 +4043,7 @@ function addToCart(){
   const uid = currentColor;
   const p = findProduct(uid);
   if(!p){ toast('Помилка товару'); return; }
+  if(isSoldOut(p)){ toast('Немає в наявності'); return; }
   // Season: summer (default) | spring (+500 UAH). Families without season selector
   // (SHAPE, Lite) fall through with summer/none.
   const NO_SEASON = ['SHAPE','Lite'];
