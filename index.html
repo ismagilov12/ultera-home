@@ -3320,6 +3320,10 @@ function renderTeesSection(){
   var section = document.getElementById('teesSection');
   var wrap = document.getElementById('teesWrap');
   if(!section || !wrap) return;
+  /* TEES section hidden per request — keep permanently off */
+  section.style.display='none';
+  if(wrap) wrap.innerHTML='';
+  return;
   var teesRows = [...(DATA.featured||[]), ...(DATA.grid||[])].filter(function(r){
     return r && String(r.family||'').toLowerCase() === 'tees';
   });
