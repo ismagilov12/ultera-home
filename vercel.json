@@ -3,7 +3,8 @@
   "rewrites": [
     { "source": "/tproduct/:path*", "destination": "/index.html" },
     { "source": "/woman", "destination": "/index.html" },
-    { "source": "/woman/:path*", "destination": "/index.html" }
+    { "source": "/woman/:path*", "destination": "/index.html" },
+    { "source": "/order", "destination": "/order.html" }
   ],
   "crons": [
     {

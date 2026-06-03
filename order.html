@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ULTERA™ — Відстеження замовлення</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="Особистий кабінет ULTERA — статус і відстеження вашого замовлення.">
+<style>
+:root{
+  --bg:#f4f3ee; --bg-alt:#eae8e1; --bg-cool:#dee3e7; --ink:#0e0e0e;
+  --line:#d8d6cc; --mint:#dff6cf; --pink:#ffc8a5; --warm-grey:#aa8a77; --ice:#b9c5cc;
+  --muted:#6b6a63; --ok:#2f7d34; --bad:#b23b2e;
+  --font-sans:"Helvetica Now Display","Neue Haas Grotesk Display Pro","Helvetica Neue",Helvetica,"Inter",-apple-system,BlinkMacSystemFont,Arial,sans-serif;
+  --font-mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --pad:clamp(18px,3.5vw,40px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--font-sans);
+  -webkit-font-smoothing:antialiased; line-height:1.45;
+  min-height:100vh;
+}
+a{color:inherit}
+.wrap{max-width:680px;margin:0 auto;padding:var(--pad) var(--pad) 72px}
+header.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:28px;padding-top:8px}
+.brand{font-weight:800;letter-spacing:.02em;font-size:20px}
+.brand sup{font-size:.5em;vertical-align:super}
+.back{font-family:var(--font-mono);font-size:12px;color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line);padding-bottom:1px}
+.back:hover{color:var(--ink)}
+h1{font-size:clamp(22px,5vw,30px);font-weight:800;letter-spacing:-.01em;margin:0 0 6px}
+.sub{color:var(--muted);font-size:14px;margin:0 0 24px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:clamp(18px,4vw,28px);margin-bottom:18px}
+.label{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.banner{border-radius:12px;padding:12px 14px;font-size:14px;margin-bottom:18px;display:none}
+.banner.ok{background:var(--mint);color:#1f4d22;display:block}
+.banner.bad{background:#ffe1da;color:#7d271b;display:block}
+/* phone gate */
+.gate input{
+  width:100%;font-family:var(--font-mono);font-size:16px;padding:14px 14px;
+  border:1px solid var(--line);border-radius:12px;background:var(--bg-alt);color:var(--ink);
+  outline:none;margin-bottom:12px
+}
+.gate input:focus{border-color:var(--ink);background:#fff}
+.refchip{display:inline-block;font-family:var(--font-mono);font-size:13px;background:var(--bg-alt);border:1px solid var(--line);border-radius:999px;padding:5px 12px;margin-bottom:14px}
+button.cta{
+  width:100%;border:none;border-radius:12px;background:var(--ink);color:#fff;
+  font-family:var(--font-sans);font-weight:700;font-size:15px;padding:15px;cursor:pointer;
+  transition:opacity .15s
+}
+button.cta:hover{opacity:.88}
+button.cta:disabled{opacity:.5;cursor:default}
+.err{color:var(--bad);font-size:13px;margin-top:10px;min-height:18px}
+.hint{color:var(--muted);font-size:12.5px;margin-top:10px}
+/* timeline */
+.tl{list-style:none;margin:6px 0 0;padding:0}
+.tl li{position:relative;padding:0 0 22px 34px;}
+.tl li:last-child{padding-bottom:0}
+.tl li::before{content:"";position:absolute;left:9px;top:20px;bottom:0;width:2px;background:var(--line)}
+.tl li:last-child::before{display:none}
+.dot{position:absolute;left:0;top:1px;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid var(--line)}
+.tl li.done .dot{background:var(--ink);border-color:var(--ink)}
+.tl li.done .dot::after{content:"";position:absolute;left:5px;top:5px;width:6px;height:6px;border-radius:50%;background:#fff}
+.tl li.current .dot{border-color:var(--ink);box-shadow:0 0 0 4px rgba(14,14,14,.08)}
+.tl .t-name{font-weight:600;font-size:15px}
+.tl li.pending .t-name{color:var(--muted);font-weight:500}
+.tl li.current .t-name{font-weight:800}
+.statusline{font-size:18px;font-weight:800;margin:2px 0 4px}
+.statusline.cancelled{color:var(--bad)}
+.updated{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+/* tracking */
+.ttn{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px}
+.ttn code{font-family:var(--font-mono);font-size:16px;background:var(--bg-alt);border:1px solid var(--line);border-radius:8px;padding:7px 11px;letter-spacing:.04em}
+.ttn a.np{font-size:13px;font-weight:700;text-decoration:none;border-bottom:2px solid var(--pink);padding-bottom:1px}
+.ttn button.copy{font-family:var(--font-mono);font-size:11px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 9px;cursor:pointer}
+/* items */
+.item{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line);font-size:14px}
+.item:first-of-type{border-top:none}
+.item .nm{font-weight:600}
+.item .meta{color:var(--muted);font-size:12.5px;margin-top:2px}
+.item .qty{font-family:var(--font-mono);color:var(--muted);white-space:nowrap}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:5px 0}
+.kv .k{color:var(--muted)}
+.kv .v{font-weight:600;text-align:right}
+.total{display:flex;justify-content:space-between;font-size:17px;font-weight:800;margin-top:10px;padding-top:12px;border-top:2px solid var(--ink)}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+.refresh{font-family:var(--font-mono);font-size:12px;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;margin-top:14px}
+.foot{color:var(--muted);font-size:12px;text-align:center;margin-top:30px;line-height:1.7}
+.foot a{font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">ULTERA<sup>™</sup></div>
+    <a class="back" href="/">← на сайт</a>
+  </header>
+
+  <div id="payBanner" class="banner"></div>
+
+  <h1>Відстеження замовлення</h1>
+  <p class="sub">Введіть номер телефону, вказаний при оформленні, щоб переглянути статус і ТТН.</p>
+
+  <!-- PHONE GATE -->
+  <div id="gate" class="card gate">
+    <div class="label">Замовлення</div>
+    <div id="refChip" class="refchip">—</div>
+    <div class="label">Номер телефону</div>
+    <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+380 00 000 00 00">
+    <button id="btn" class="cta">Переглянути замовлення</button>
+    <div id="err" class="err"></div>
+    <div class="hint">Це той самий номер, на який оформлювалось замовлення та доставка.</div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result" class="hidden">
+    <div class="card">
+      <div class="label">Замовлення <span id="rNum"></span></div>
+      <div id="statusLine" class="statusline">—</div>
+      <div id="updated" class="updated"></div>
+      <ul id="timeline" class="tl"></ul>
+    </div>
+
+    <div id="ttnCard" class="card hidden">
+      <div class="label">Номер для відстеження (ТТН)</div>
+      <div class="ttn">
+        <code id="ttnCode"></code>
+        <button class="copy" id="ttnCopy">копіювати</button>
+        <a id="ttnLink" class="np" target="_blank" rel="noopener">відстежити на Новій Пошті →</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Склад замовлення</div>
+      <div id="items"></div>
+      <div class="total"><span>Разом</span><span id="total"></span></div>
+    </div>
+
+    <div class="card">
+      <div class="label">Доставка та оплата</div>
+      <div class="kv"><span class="k">Отримувач</span><span class="v" id="rName"></span></div>
+      <div class="kv"><span class="k">Телефон</span><span class="v" id="rPhone"></span></div>
+      <div class="kv" id="cityRow"><span class="k">Місто</span><span class="v" id="rCity"></span></div>
+      <div class="kv" id="branchRow"><span class="k">Відділення</span><span class="v" id="rBranch"></span></div>
+      <div class="kv"><span class="k">Оплата</span><span class="v" id="rPay"></span></div>
+    </div>
+
+    <button id="refreshBtn" class="refresh">оновити статус</button>
+  </div>
+
+  <div class="foot">
+    Питання щодо замовлення? Напишіть нам у
+    <a href="https://www.instagram.com/ultera.ua" target="_blank" rel="noopener">Instagram</a>
+    або <a href="https://t.me/ultera_ua" target="_blank" rel="noopener">Telegram</a>.
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var qs = new URLSearchParams(location.search);
+  var ref = (qs.get('ref') || qs.get('order') || '').trim();
+  var paid = qs.get('paid');
+  var pstatus = qs.get('pstatus') || '';
+  var LS_KEY = 'ulteraTrackPhone:' + ref;
+
+  var $ = function(id){ return document.getElementById(id); };
+
+  // payment banner
+  var pb = $('payBanner');
+  if (paid === '1') {
+    pb.className = 'banner ok';
+    pb.textContent = '✓ Оплату отримано. Дякуємо за замовлення!';
+  } else if (paid === '0') {
+    pb.className = 'banner bad';
+    pb.textContent = '✕ Оплата не пройшла' + (pstatus ? ' (' + pstatus + ')' : '') + '. Ви можете повторити оплату або зв’язатися з нами.';
+  }
+
+  $('refChip').textContent = ref || 'не вказано';
+  if (!ref) {
+    $('btn').disabled = true;
+    $('err').textContent = 'У посиланні відсутній номер замовлення.';
+  }
+
+  function money(n){
+    if (n == null) return '—';
+    return Math.round(Number(n)).toLocaleString('uk-UA') + ' ₴';
+  }
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+    });
+  }
+  function fmtDate(s){
+    if (!s) return '';
+    var d = new Date(s);
+    if (isNaN(d.getTime())) return '';
+    try { return d.toLocaleString('uk-UA', {day:'2-digit',month:'long',hour:'2-digit',minute:'2-digit'}); }
+    catch(e){ return d.toLocaleString(); }
+  }
+
+  function renderTimeline(stages, stage, cancelled){
+    var ul = $('timeline'); ul.innerHTML = '';
+    stages.forEach(function(name, i){
+      var idx = i + 1;
+      var li = document.createElement('li');
+      var cls;
+      if (cancelled) { cls = 'pending'; }
+      else if (idx < stage) cls = 'done';
+      else if (idx === stage) cls = 'current done';
+      else cls = 'pending';
+      li.className = cls;
+      li.innerHTML = '<span class="dot"></span><span class="t-name">' + esc(name) + '</span>';
+      ul.appendChild(li);
+    });
+  }
+
+  function render(d){
+    $('gate').classList.add('hidden');
+    $('result').classList.remove('hidden');
+
+    $('rNum').textContent = d.number != null ? ('№ ' + d.number) : '';
+    var sl = $('statusLine');
+    sl.textContent = d.status.label || '—';
+    sl.className = 'statusline' + (d.status.cancelled ? ' cancelled' : '');
+    $('updated').textContent = d.status.updated_at ? ('оновлено: ' + fmtDate(d.status.updated_at)) : '';
+
+    renderTimeline(d.stages || [], d.status.stage || 1, !!d.status.cancelled);
+
+    // tracking
+    if (d.tracking && d.tracking.code) {
+      $('ttnCard').classList.remove('hidden');
+      $('ttnCode').textContent = d.tracking.code;
+      var lk = $('ttnLink');
+      if (d.tracking.url) { lk.href = d.tracking.url; lk.classList.remove('hidden'); }
+      else { lk.classList.add('hidden'); }
+    } else {
+      $('ttnCard').classList.add('hidden');
+    }
+
+    // items
+    var box = $('items'); box.innerHTML = '';
+    (d.items || []).forEach(function(it){
+      var meta = [it.color, it.size ? ('розмір ' + it.size) : null].filter(Boolean).join(' · ');
+      var row = document.createElement('div');
+      row.className = 'item';
+      row.innerHTML = '<div><div class="nm">' + esc(it.title) + '</div>' +
+        (meta ? '<div class="meta">' + esc(meta) + '</div>' : '') + '</div>' +
+        '<div class="qty">×' + (it.qty || 1) + '</div>';
+      box.appendChild(row);
+    });
+    $('total').textContent = money(d.total);
+
+    $('rName').textContent = d.customer ? (d.customer.first_name || '—') : '—';
+    $('rPhone').textContent = d.customer ? (d.customer.phone_masked || '—') : '—';
+    var city = (d.delivery && d.delivery.city) || '';
+    var branch = (d.delivery && d.delivery.branch) || '';
+    if (city) $('rCity').textContent = city; else $('cityRow').classList.add('hidden');
+    if (branch) $('rBranch').textContent = branch; else $('branchRow').classList.add('hidden');
+    $('rPay').textContent = (d.payment && d.payment.label) || '—';
+  }
+
+  var loading = false;
+  function lookup(phone, silent){
+    if (loading) return;
+    loading = true;
+    var btn = $('btn');
+    var prevTxt = btn.textContent;
+    if (!silent){ btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Перевіряємо…'; $('err').textContent=''; }
+    var url = '/api/order-status?ref=' + encodeURIComponent(ref) + '&phone=' + encodeURIComponent(phone);
+    fetch(url, { headers:{'Accept':'application/json'} })
+      .then(function(r){ return r.json().then(function(j){ return {status:r.status, j:j}; }); })
+      .then(function(res){
+        loading = false;
+        if (res.status === 200 && res.j && res.j.ok) {
+          try { localStorage.setItem(LS_KEY, phone); } catch(e){}
+          render(res.j);
+        } else {
+          if (!silent){
+            btn.disabled = false; btn.textContent = prevTxt;
+            $('err').textContent = (res.j && res.j.error) || 'Не вдалося завантажити замовлення.';
+          }
+        }
+      })
+      .catch(function(){
+        loading = false;
+        if (!silent){ btn.disabled = false; btn.textContent = prevTxt; $('err').textContent = 'Помилка мережі. Спробуйте ще раз.'; }
+      });
+  }
+
+  $('btn').addEventListener('click', function(){
+    var p = $('phone').value.trim();
+    if (p.replace(/\D/g,'').length < 9){ $('err').textContent = 'Введіть коректний номер телефону.'; return; }
+    lookup(p, false);
+  });
+  $('phone').addEventListener('keydown', function(e){ if (e.key === 'Enter') $('btn').click(); });
+
+  $('refreshBtn').addEventListener('click', function(){
+    var p = '';
+    try { p = localStorage.getItem(LS_KEY) || ''; } catch(e){}
+    if (p) { var b=$('refreshBtn'); b.textContent='оновлюємо…'; lookup(p, true); setTimeout(function(){ b.textContent='оновити статус'; }, 1200); }
+  });
+
+  $('ttnCopy').addEventListener('click', function(){
+    var code = $('ttnCode').textContent;
+    var self = this;
+    if (navigator.clipboard) navigator.clipboard.writeText(code).then(function(){ self.textContent='скопійовано'; setTimeout(function(){ self.textContent='копіювати'; },1400); });
+  });
+
+  // Auto-load if we already know the phone for this ref.
+  var saved = '';
+  try { saved = localStorage.getItem(LS_KEY) || ''; } catch(e){}
+  if (ref && saved) { $('phone').value = saved; lookup(saved, false); }
+})();
+</script>
+</body>
+</html>
