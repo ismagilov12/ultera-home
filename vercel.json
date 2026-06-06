@@ -1,10 +1,30 @@
 {
   "ignoreCommand": "exit 1",
   "rewrites": [
-    { "source": "/tproduct/:path*", "destination": "/index.html" },
-    { "source": "/woman", "destination": "/index.html" },
-    { "source": "/woman/:path*", "destination": "/index.html" },
-    { "source": "/order", "destination": "/order.html" }
+    {
+      "source": "/tproduct/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/woman",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/woman/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/order",
+      "destination": "/order.html"
+    },
+    {
+      "source": "/feed.xml",
+      "destination": "/api/feed"
+    },
+    {
+      "source": "/api/feed.xml",
+      "destination": "/api/feed"
+    }
   ],
   "crons": [
     {
