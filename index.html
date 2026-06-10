@@ -3154,7 +3154,7 @@ let currentColor = 'allBlack';
 
 function priceNum(p){return Math.round(parseFloat(p||0)).toLocaleString('uk-UA')}
 
-var SOLD_OUT_UIDS = ['576612833084']; // Hunk Black White BRFT (біла підошва)
+var SOLD_OUT_UIDS = ['576612833084','938371874105']; // Hunk Black White BRFT (біла підошва), Hunk3 Grey
 function isSoldOut(p){ return !!(p && SOLD_OUT_UIDS.indexOf(String(p.uid)) !== -1); }
 function badgeFor(p){
   if(isSoldOut(p)) return '<div class="badge soldout">SOLD OUT</div>';
