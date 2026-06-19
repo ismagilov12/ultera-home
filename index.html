@@ -5337,12 +5337,19 @@ insertWomanDivider();
   function toEmbed(u){ var id = ytId(u); return id ? ('https://www.youtube.com/embed/' + id + '?rel=0&playsinline=1&modestbranding=1') : u; }
   function toPoster(u){ var id = ytId(u); return id ? ('https://img.youtube.com/vi/' + id + '/hqdefault.jpg') : u; }
 
+  function isVid(u){ return typeof u === 'string' && /\.(mp4|webm|mov)(\?|#|$)/i.test(u) && !isYT(u); }
+  var VID_POSTERS = {
+    'https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/v/aganta-safari-1781872097.mp4': 'https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/v/aganta-safari-1781872097-poster.webp',
+    'https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/v/shape-black-suede-1781872097.mp4': 'https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/v/shape-black-suede-1781872097-poster.webp'
+  };
+  function posterFor(u){ return (VID_POSTERS && VID_POSTERS[u]) || ''; }
+
   function updateVideoBtnVisibility(){
     var btn = document.getElementById('mVideoBtn');
     if (!btn) return;
     var photos = window.__modalPhotos || [];
     var hasYT = false;
-    for (var i=0;i<photos.length;i++){ if (isYT(photos[i])){ hasYT = true; break; } }
+    for (var i=0;i<photos.length;i++){ if (isYT(photos[i]) || isVid(photos[i])){ hasYT = true; break; } }
     btn.style.display = hasYT ? '' : 'none';
   }
 
@@ -5373,9 +5380,42 @@ insertWomanDivider();
     if (img) img.style.visibility = 'hidden';
     return true;
   }
+  function ensureVideoEl(){
+    var img = document.getElementById('m_img');
+    if (!img) return null;
+    var parent = img.parentElement;
+    if (!parent) return null;
+    var v = document.getElementById('m_file_video');
+    if (!v){
+      if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+      v = document.createElement('video');
+      v.id = 'm_file_video';
+      v.setAttribute('playsinline','');
+      v.setAttribute('webkit-playsinline','');
+      v.muted = true; v.loop = true; v.controls = true; v.preload = 'metadata';
+      v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;border-radius:inherit;display:none;z-index:2';
+      parent.appendChild(v);
+    }
+    return v;
+  }
+  function showFileVideo(url){
+    var v = ensureVideoEl();
+    if (!v) return false;
+    var fr = document.getElementById('m_video_iframe');
+    if (fr){ fr.src = 'about:blank'; fr.style.display = 'none'; }
+    var pp = posterFor(url); if (pp) v.poster = pp;
+    if (v.getAttribute('src') !== url){ v.setAttribute('src', url); try{ v.load(); }catch(_){} }
+    v.style.display = 'block';
+    var img = document.getElementById('m_img');
+    if (img) img.style.visibility = 'hidden';
+    var pl = v.play(); if (pl && pl.catch) pl.catch(function(){});
+    return true;
+  }
   function hideVideo(){
     var f = document.getElementById('m_video_iframe');
     if (f){ f.src = 'about:blank'; f.style.display = 'none'; }
+    var vf = document.getElementById('m_file_video');
+    if (vf){ try{ vf.pause(); }catch(_){} vf.style.display = 'none'; }
     var img = document.getElementById('m_img');
     if (img) img.style.visibility = '';
   }
@@ -5394,6 +5434,20 @@ insertWomanDivider();
           badge.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;text-shadow:0 0 6px rgba(0,0,0,.85);pointer-events:none';
           if (getComputedStyle(btn).position === 'static') btn.style.position = 'relative';
           btn.appendChild(badge);
+        }
+      }
+      if (isVid(s) && !im.dataset.vidFixed){
+        var pp = posterFor(s);
+        if (pp) im.src = pp;
+        im.dataset.vidFixed = '1';
+        var b2 = im.closest('button');
+        if (b2 && !b2.querySelector('.yt-play-badge')){
+          var bd2 = document.createElement('span');
+          bd2.className = 'yt-play-badge';
+          bd2.textContent = String.fromCharCode(9654);
+          bd2.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;text-shadow:0 0 6px rgba(0,0,0,.85);pointer-events:none';
+          if (getComputedStyle(b2).position === 'static') b2.style.position = 'relative';
+          b2.appendChild(bd2);
         }
       }
     });
@@ -5421,6 +5475,18 @@ insertWomanDivider();
           return;
         }
       }
+      if (isVid(url)){
+        if (showFileVideo(url)){
+          window.__modalPhotoIdx = idx;
+          try{
+            document.querySelectorAll('.modal-strip button, [data-strip] button').forEach(function(b,ii){ b.classList.toggle('active', ii===idx); });
+            document.querySelectorAll('#m_dots button').forEach(function(d,ii){ d.classList.toggle('active', ii===idx); });
+            var cntv = document.getElementById('m_counter_cur'); if(cntv) cntv.textContent = String(idx+1);
+            var pcurv = document.getElementById('m_counter_cur_g'); if(pcurv) pcurv.textContent = String(idx+1);
+          }catch(_){}
+          return;
+        }
+      }
       hideVideo();
       updateVideoBtnVisibility();
       return orig.call(this, i);
@@ -5436,12 +5502,14 @@ insertWomanDivider();
     var obs = new MutationObserver(function(){
       var s = img.src || img.getAttribute('src') || '';
       if (isYT(s)) showVideo(s);
+      else if (isVid(s)) showFileVideo(s);
       else hideVideo();
       updateVideoBtnVisibility();
     });
     obs.observe(img, { attributes: true, attributeFilter: ['src'] });
     var s = img.src || img.getAttribute('src') || '';
     if (isYT(s)) showVideo(s);
+    else if (isVid(s)) showFileVideo(s);
   }
 
   function observeThumbs(){
@@ -5464,7 +5532,7 @@ insertWomanDivider();
     function jumpToVideo(e){
       var photos = window.__modalPhotos || [];
       for (var i = photos.length - 1; i >= 0; i--){
-        if (isYT(photos[i])){
+        if (isYT(photos[i]) || isVid(photos[i])){
           if (e && e.preventDefault) e.preventDefault();
           if (e && e.stopPropagation) e.stopPropagation();
           if (e && e.stopImmediatePropagation) e.stopImmediatePropagation();
