@@ -5342,7 +5342,11 @@ insertWomanDivider();
     'https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/v/aganta-safari-1781872097.mp4': 'https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/v/aganta-safari-1781872097-poster.webp',
     'https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/v/shape-black-suede-1781872097.mp4': 'https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/v/shape-black-suede-1781872097-poster.webp'
   };
-  function posterFor(u){ return (VID_POSTERS && VID_POSTERS[u]) || ''; }
+  function posterFor(u){
+    if (VID_POSTERS && VID_POSTERS[u]) return VID_POSTERS[u];
+    if (typeof u === 'string'){ var m = u.match(/^(.*)\.(mp4|webm|mov)(\?.*)?$/i); if (m) return m[1] + '-poster.webp' + (m[3]||''); }
+    return '';
+  }
 
   function updateVideoBtnVisibility(){
     var btn = document.getElementById('mVideoBtn');
@@ -5392,7 +5396,7 @@ insertWomanDivider();
       v.id = 'm_file_video';
       v.setAttribute('playsinline','');
       v.setAttribute('webkit-playsinline','');
-      v.muted = true; v.loop = true; v.controls = true; v.preload = 'metadata';
+      v.muted = false; v.loop = true; v.controls = true; v.preload = 'metadata';
       v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;border-radius:inherit;display:none;z-index:2';
       parent.appendChild(v);
     }
