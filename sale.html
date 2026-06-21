@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ULTERA — Розпродаж остатків −30%</title>
+<style>
+  :root{--ink:#111;--muted:#777;--line:#e7e7e7;--red:#c0392b;--bg:#fafafa}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  header{padding:26px 18px 14px;text-align:center;border-bottom:1px solid var(--line);background:#fff}
+  header h1{margin:0;font-size:22px;letter-spacing:.18em;font-weight:800}
+  header .sub{margin:6px 0 0;color:var(--muted);font-size:13px;letter-spacing:.04em}
+  .note{max-width:920px;margin:14px auto 0;padding:10px 14px;background:#fff7e6;border:1px solid #f3dca0;border-radius:10px;color:#7a5a00;font-size:12.5px;line-height:1.5}
+  .wrap{max-width:920px;margin:18px auto 60px;padding:0 14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+  .ph{aspect-ratio:1/1;background:#f2f2f2;overflow:hidden}
+  .ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .b{padding:12px 13px 14px;display:flex;flex-direction:column;gap:7px;flex:1}
+  .nm{font-size:14px;font-weight:700;line-height:1.25}
+  .cl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:-3px}
+  .pr{display:flex;align-items:baseline;gap:8px;margin-top:2px}
+  .new{font-size:18px;font-weight:800;color:var(--red)}
+  .old{font-size:13px;color:var(--muted);text-decoration:line-through}
+  .pct{font-size:11px;font-weight:700;color:#fff;background:var(--red);border-radius:6px;padding:2px 6px}
+  .szlbl{font-size:11px;color:var(--muted);margin-top:4px}
+  .sz{display:flex;flex-wrap:wrap;gap:6px}
+  .sz span{border:1px solid var(--ink);border-radius:7px;padding:4px 9px;font-size:13px;font-weight:600}
+  .badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.04em;color:#fff;background:#111;border-radius:6px;padding:2px 6px;width:max-content}
+  .cta{margin:6px 14px 16px;text-align:center}
+  a.buy{display:block;text-align:center;background:#111;color:#fff;text-decoration:none;padding:11px;border-radius:10px;font-weight:700;font-size:13px;letter-spacing:.05em}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:0 14px 40px}
+</style>
+</head>
+<body>
+<header>
+  <h1>ULTERA</h1>
+  <div class="sub">Розпродаж остатків · −30%</div>
+</header>
+<div class="note" id="note">
+  Превʼю розпродажу. Ціна −30% діє <b>лише на вказані під кожною моделлю розміри</b> (залишки зі складу).
+  Оплата на сайті для цих розмірів підключається окремо — поки замовлення через Direct із вказанням моделі та розміру.
+</div>
+<div class="wrap"><div class="grid" id="grid"></div></div>
+<footer>ULTERA · ціни оновлюються · превʼю-версія</footer>
+<script>
+const IG='https://www.instagram.com/ultera_shoes/';
+const D=[
+ {n:"Hunk2 Panda",c:"Panda",p:3590,ph:"https://ultera-home.vercel.app/photos/55942430.webp",sz:["41"]},
+ {n:"Hunk Mint",c:"Мʼятний",p:4100,ph:"https://ultera-home.vercel.app/photos/aa0a01576c53f65f8087274daa9ebe54.webp",sz:["39"]},
+ {n:"Hunk Pistachio",c:"Фісташковий",p:3990,ph:"https://ultera-home.vercel.app/photos/28324109.webp",sz:["40","45"]},
+ {n:"Aganta Aqva",c:"Аква",p:4100,ph:"https://ultera-home.vercel.app/photos/23471110.webp",sz:["38","44","45"]},
+ {n:"Aganta Safari",c:"Сафарі",p:4200,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776947101629-xc6bga.jpg",sz:["42","44"]},
+ {n:"Aganta Black Nubuck",c:"Чорний нубук",p:3790,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776859553465-j97nc3.jpg",sz:["42","45"]},
+ {n:"Aganta Oreo",c:"Базовий",p:3790,ph:"https://ultera-home.vercel.app/photos/e82fd4d04441145469843abf55294e79.webp",sz:["37"]},
+ {n:"Aganta Olive",c:"Олива",p:4200,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776946142411-n380e4.webp",sz:["40"]},
+ {n:"Aganta Salvia",c:"Сальвія",p:4198,ph:"https://ultera-home.vercel.app/photos/68403915.webp",sz:["41","45"]},
+ {n:"Hunk3 Grey",c:"Grey",p:4500,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1778529257235-rww011.jpg",sz:["40","41"]},
+ {n:"Hunk3 Asphalt",c:"Асфальт",p:4200,ph:"https://ultera-home.vercel.app/photos/62232281.webp",sz:["41"]},
+ {n:"Hunk3 RED",c:"Red",p:4500,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1778529207497-0edjfq.jpg",sz:["41","42"]}
+];
+const fmt=n=>n.toLocaleString('uk-UA');
+document.getElementById('grid').innerHTML=D.map(x=>{
+  const sale=Math.round(x.p*0.7);
+  return `<div class="card">
+    <div class="ph"><img loading="lazy" src="${x.ph}" alt="${x.n}"></div>
+    <div class="b">
+      <div class="nm">${x.n}</div>
+      <div class="cl">${x.c}</div>
+      <div class="pr"><span class="new">${fmt(sale)} ₴</span><span class="old">${fmt(x.p)} ₴</span><span class="pct">−30%</span></div>
+      <div class="szlbl">Залишкові розміри:</div>
+      <div class="sz">${x.sz.map(s=>`<span>${s}</span>`).join('')}</div>
+    </div>
+    <div class="cta"><a class="buy" href="${IG}" target="_blank" rel="noopener">Замовити в Direct</a></div>
+  </div>`;
+}).join('');
+</script>
+</body>
+</html>
