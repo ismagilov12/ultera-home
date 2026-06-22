@@ -381,6 +381,9 @@ input,textarea,select{font:inherit;color:inherit}
 }
 /* SHAPE photos are clean cutouts — don't over-zoom them */
 .feat-card[data-fam="SHAPE"] .feat-photo img{width:110%;height:110%}
+.feat-card[data-fam="Hunk Summer W"] .feat-right{background:#fff}
+.feat-card[data-fam="Hunk Summer W"] .feat-photo{padding:5% 7%}
+.feat-card[data-fam="Hunk Summer W"] .feat-photo img{width:100%;height:100%;object-fit:contain;object-position:center}
 
 .feat-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
 .feat-serial{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-60)}
@@ -445,6 +448,9 @@ input,textarea,select{font:inherit;color:inherit}
   .feat-card[data-fam="SHAPE"] .feat-right{aspect-ratio:4/5;background:linear-gradient(135deg,#f6f5f0 0%,#ecebe5 100%)}
   .feat-card[data-fam="SHAPE"] .feat-photo{padding:8% 10% 12%}
   .feat-card[data-fam="SHAPE"] .feat-photo img{width:100%;height:100%;object-fit:contain;object-position:center}
+  .feat-card[data-fam="Hunk Summer W"] .feat-right{aspect-ratio:4/5;background:#fff}
+  .feat-card[data-fam="Hunk Summer W"] .feat-photo{padding:6% 8%}
+  .feat-card[data-fam="Hunk Summer W"] .feat-photo img{width:100%;height:100%;object-fit:contain;object-position:center}
   .feat-overlay{top:16px;left:18px;max-width:62%}
   .feat-overlay-title{font-size:clamp(38px,11vw,56px)}
   .feat-overlay-tag{font-size:10px}
@@ -454,6 +460,8 @@ input,textarea,select{font:inherit;color:inherit}
   .feat-photo img{width:108%;height:108%;object-fit:cover}
   .feat-card[data-fam="SHAPE"] .feat-photo{padding:6% 8% 10%}
   .feat-card[data-fam="SHAPE"] .feat-photo img{width:100%;height:100%;object-fit:contain}
+  .feat-card[data-fam="Hunk Summer W"] .feat-photo{padding:5% 6%}
+  .feat-card[data-fam="Hunk Summer W"] .feat-photo img{width:100%;height:100%;object-fit:contain}
   .feat-overlay{top:14px;left:16px}
   .feat-overlay-title{font-size:clamp(34px,11.5vw,48px)}
 }
@@ -3818,7 +3826,7 @@ function openModal(uid){
   document.getElementById('shBox').classList.remove('open');
 
   // Моделі без сезонного вибору (всесезонні / одна версія)
-  const NO_SEASON = ['SHAPE','Lite'];
+  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W'];
   const sw = document.getElementById('m_season_wrap');
   if (sw) sw.style.display = NO_SEASON.includes(p.family) ? 'none' : '';
 
@@ -4050,7 +4058,7 @@ function addToCart(){
   if(isSoldOut(p)){ toast('Немає в наявності'); return; }
   // Season: summer (default) | spring (+500 UAH). Families without season selector
   // (SHAPE, Lite) fall through with summer/none.
-  const NO_SEASON = ['SHAPE','Lite'];
+  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W'];
   const canSeason = !NO_SEASON.includes(p.family);
   const seasonId   = canSeason ? (window.__modalSeason || 'summer') : null;
   const seasonLabel = seasonId === 'spring' ? 'Весна/Осінь' : (seasonId === 'summer' ? 'Літо' : '');
