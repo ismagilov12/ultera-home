@@ -664,6 +664,9 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .modal-close:hover{background:var(--ink);color:#fff;transform:rotate(90deg)}
 .modal-img{grid-row:1/3;grid-column:1/2;position:relative;background:var(--bg-alt);overflow:hidden;min-height:360px;height:100%;display:flex;align-items:center;justify-content:center}
 .modal-img img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.modal-img[data-fam="Hunk Summer W"]{background:#fff}
+.modal-img[data-fam="Hunk Summer W"] img{object-fit:contain;object-position:center}
+.modal-img[data-fam="Hunk Summer W"]:hover img{transform:none}
 .modal-img:hover img{transform:scale(1.04)}
 .ms-swatches-top{margin-top:2px;margin-bottom:16px}
 
@@ -3644,6 +3647,7 @@ function openModal(uid){
   document.getElementById('m_title').textContent = p.title.replace('ULTERA - ','').replace('ULTERA ','');
   document.getElementById('m_sku').textContent = 'SKU · ' + p.uid.slice(-10).toUpperCase();
   document.getElementById('m_img').src = p.photo;
+  try{ var _miw=document.getElementById('m_img_wrap'); if(_miw) _miw.setAttribute('data-fam', p.family||''); }catch(_){ }
   document.getElementById('m_color_name').textContent = p.color_name;
 
   const price = parseFloat(p.price)||0;
