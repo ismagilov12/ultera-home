@@ -1,4 +1,7 @@
 // api/wayforpay.js
+// SECURITY v8 (2026-06-22):
+//   - [v8] COD prepayment unified to 200₴ sitewide (was 500₴ for sneakers, 200₴ for tees).
+//          Single env COD_PREPAYMENT_AMOUNT (default 200) now controls all COD orders.
 // SECURITY v7 (2026-05-15):
 //   - [v7] TEES COD prepayment: orders with any tee-* uid use 200₴ (env COD_PREPAYMENT_AMOUNT_TEES);
 //          all other orders keep 500₴ (env COD_PREPAYMENT_AMOUNT). Backward compatible.
@@ -189,11 +192,8 @@ module.exports = async function handler(req, res) {
 
   let amountStr, productName, productCount, productPrice;
   if (isCOD) {
-    // [v7] Tees orders use lower COD prepayment (200₴ default vs 500₴ for sneakers).
-    const hasTees = resolvedItems.some(it => String(it.uid || '').startsWith('tee-'));
-    const codPrepayment = hasTees
-      ? Number(process.env.COD_PREPAYMENT_AMOUNT_TEES || 200)
-      : Number(process.env.COD_PREPAYMENT_AMOUNT || 500);
+    // [v8 2026-06-22] COD prepayment unified to 200₴ sitewide (was 500₴ for sneakers, 200₴ tees).
+    const codPrepayment = Number(process.env.COD_PREPAYMENT_AMOUNT || 200);
     if (!(codPrepayment > 0)) return res.status(500).json({ error: 'COD prepayment misconfigured' });
     if (codPrepayment > authoritativeAmount) {
       return res.status(400).json({
