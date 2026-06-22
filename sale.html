@@ -9,28 +9,61 @@
   :root{--ink:#111;--muted:#777;--line:#e7e7e7;--red:#c0392b;--bg:#fafafa}
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
-  header{padding:26px 18px 14px;text-align:center;border-bottom:1px solid var(--line);background:#fff}
-  header h1{margin:0;font-size:22px;letter-spacing:.18em;font-weight:800}
-  header .sub{margin:6px 0 0;color:var(--muted);font-size:13px;letter-spacing:.04em}
-  .note{max-width:920px;margin:14px auto 0;padding:10px 14px;background:#fff7e6;border:1px solid #f3dca0;border-radius:10px;color:#7a5a00;font-size:12.5px;line-height:1.5}
-  .wrap{max-width:920px;margin:18px auto 60px;padding:0 14px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+  header{padding:24px 18px 12px;text-align:center;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:20}
+  header h1{margin:0;font-size:20px;letter-spacing:.18em;font-weight:800}
+  header .sub{margin:5px 0 0;color:var(--muted);font-size:12px;letter-spacing:.04em}
+  #cartBtn{position:absolute;right:14px;top:18px;background:#111;color:#fff;border:none;border-radius:10px;padding:9px 13px;font-weight:700;font-size:13px;cursor:pointer}
+  #cartBtn b{background:var(--red);border-radius:10px;padding:0 6px;margin-left:6px}
+  .note{max-width:960px;margin:12px auto 0;padding:9px 14px;background:#fff7e6;border:1px solid #f3dca0;border-radius:10px;color:#7a5a00;font-size:12px;line-height:1.5}
+  .wrap{max-width:960px;margin:16px auto 70px;padding:0 14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:15px}
   .card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;position:relative}
-  .new{position:absolute;top:10px;left:10px;background:#111;color:#fff;font-size:10px;font-weight:700;letter-spacing:.06em;padding:3px 7px;border-radius:6px;z-index:2}
+  .new{position:absolute;top:10px;left:10px;background:#111;color:#fff;font-size:10px;font-weight:700;letter-spacing:.05em;padding:3px 7px;border-radius:6px;z-index:2}
   .ph{aspect-ratio:1/1;background:#f2f2f2;overflow:hidden}
   .ph img{width:100%;height:100%;object-fit:cover;display:block}
-  .b{padding:12px 13px 14px;display:flex;flex-direction:column;gap:7px;flex:1}
-  .nm{font-size:14px;font-weight:700;line-height:1.25}
-  .cl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:-3px}
-  .pr{display:flex;align-items:baseline;gap:8px;margin-top:2px}
-  .cur{font-size:18px;font-weight:800;color:var(--red)}
-  .old{font-size:13px;color:var(--muted);text-decoration:line-through}
-  .pct{font-size:11px;font-weight:700;color:#fff;background:var(--red);border-radius:6px;padding:2px 6px}
-  .szlbl{font-size:11px;color:var(--muted);margin-top:4px}
+  .b{padding:11px 12px 13px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .nm{font-size:14px;font-weight:700;line-height:1.2}
+  .cl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .pr{display:flex;align-items:baseline;gap:7px}
+  .cur{font-size:17px;font-weight:800;color:var(--red)}
+  .old{font-size:12px;color:var(--muted);text-decoration:line-through}
+  .pct{font-size:10px;font-weight:700;color:#fff;background:var(--red);border-radius:5px;padding:2px 5px}
+  .szlbl{font-size:10px;color:var(--muted);margin-top:2px}
   .sz{display:flex;flex-wrap:wrap;gap:6px}
-  .sz span{border:1px solid var(--ink);border-radius:7px;padding:4px 9px;font-size:13px;font-weight:600}
-  .cta{margin:6px 14px 16px;text-align:center}
-  a.buy{display:block;text-align:center;background:#111;color:#fff;text-decoration:none;padding:11px;border-radius:10px;font-weight:700;font-size:13px;letter-spacing:.05em}
+  .sz button{border:1px solid var(--ink);background:#fff;border-radius:7px;padding:5px 10px;font-size:13px;font-weight:600;cursor:pointer}
+  .sz button.sel{background:var(--ink);color:#fff}
+  .add{margin-top:6px;background:#111;color:#fff;border:none;border-radius:9px;padding:10px;font-weight:700;font-size:13px;cursor:pointer}
+  .add:disabled{background:#bbb;cursor:not-allowed}
+  /* drawer */
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.25s;z-index:40}
+  .ov.on{opacity:1;pointer-events:auto}
+  .drw{position:fixed;top:0;right:0;height:100%;width:min(420px,100%);background:#fff;transform:translateX(100%);transition:.3s;z-index:50;display:flex;flex-direction:column}
+  .drw.on{transform:none}
+  .drw h3{margin:0;padding:16px;border-bottom:1px solid var(--line);font-size:16px}
+  .drw .x{position:absolute;right:12px;top:14px;border:none;background:none;font-size:22px;cursor:pointer;line-height:1}
+  .cl-list{flex:1;overflow:auto;padding:12px 16px}
+  .ci{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .ci img{width:56px;height:56px;border-radius:8px;object-fit:cover}
+  .ci .t{font-size:13px;font-weight:700}
+  .ci .m{font-size:12px;color:var(--muted)}
+  .ci .p{font-size:14px;font-weight:800;color:var(--red)}
+  .ci .rm{border:none;background:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline}
+  .foot{border-top:1px solid var(--line);padding:14px 16px;background:#fff}
+  .foot .row{display:flex;justify-content:space-between;font-weight:800;font-size:16px;margin-bottom:10px}
+  .foot input,.foot select{width:100%;padding:11px;border:1px solid #ccc;border-radius:9px;font-size:14px;margin-bottom:9px}
+  .pm{display:flex;gap:8px;margin-bottom:10px}
+  .pm label{flex:1;border:1px solid #ccc;border-radius:9px;padding:9px;text-align:center;font-size:13px;font-weight:600;cursor:pointer}
+  .pm input{display:none}
+  .pm input:checked+span{}
+  .pm label:has(input:checked){border-color:#111;background:#111;color:#fff}
+  .go{width:100%;background:#111;color:#fff;border:none;border-radius:11px;padding:14px;font-weight:800;font-size:15px;cursor:pointer}
+  .go:disabled{background:#999}
+  .err{color:var(--red);font-size:12px;margin-bottom:8px;min-height:1px}
+  .ac{position:relative}
+  .acbox{position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid #ccc;border-radius:9px;max-height:200px;overflow:auto;z-index:5;display:none}
+  .acbox div{padding:9px 11px;font-size:13px;cursor:pointer;border-bottom:1px solid #f0f0f0}
+  .acbox div:hover{background:#f5f5f5}
+  .empty{color:var(--muted);text-align:center;padding:30px 0}
   footer{text-align:center;color:var(--muted);font-size:12px;padding:0 14px 40px}
 </style>
 </head>
@@ -38,51 +71,158 @@
 <header>
   <h1>ULTERA</h1>
   <div class="sub">Розпродаж остатків · −30%</div>
+  <button id="cartBtn" onclick="openCart()">Кошик<b id="cnt">0</b></button>
 </header>
-<div class="note" id="note">
-  Превʼю розпродажу. Ціна −30% діє <b>лише на вказані під кожною моделлю розміри</b> (залишки зі складу).
-  Оплата на сайті для цих розмірів підключається окремо — поки замовлення через Direct із вказанням моделі та розміру.
-</div>
+<div class="note">Ціна −30% діє на залишкові розміри зі складу. Оплата картку онлайн або наложений платіж (передплата 500₴) — як на основному сайті.</div>
 <div class="wrap"><div class="grid" id="grid"></div></div>
-<footer>ULTERA · ціни оновлюються · превʼю-версія</footer>
+<footer>ULTERA · розпродаж остатків</footer>
+
+<div class="ov" id="ov" onclick="closeCart()"></div>
+<div class="drw" id="drw">
+  <h3>Кошик <button class="x" onclick="closeCart()">&times;</button></h3>
+  <div class="cl-list" id="clist"></div>
+  <div class="foot" id="foot"></div>
+</div>
+
 <script>
-const IG='https://www.instagram.com/ultera_shoes/';
+const NP_API='https://api.novaposhta.ua/v2.0/json/', NP_KEY='';
+const SALE_PCT=30;
+const saleP=p=>Math.ceil(p*(100-SALE_PCT)/100/25)*25;
+const fmt=n=>Number(n).toLocaleString('uk-UA');
 const PS='https://ultera-home.vercel.app/photos/sale/';
 const D=[
- {n:"Hunk2 Panda",c:"Panda",p:3590,ph:"https://ultera-home.vercel.app/photos/55942430.webp",sz:["41"]},
- {n:"Hunk Mint",c:"Мʼятний",p:4100,ph:"https://ultera-home.vercel.app/photos/aa0a01576c53f65f8087274daa9ebe54.webp",sz:["39"]},
- {n:"Hunk Pistachio",c:"Фісташковий",p:3990,ph:"https://ultera-home.vercel.app/photos/28324109.webp",sz:["40","45"]},
- {n:"Aganta Aqva",c:"Аква",p:4100,ph:"https://ultera-home.vercel.app/photos/23471110.webp",sz:["38","44","45"]},
- {n:"Aganta Safari",c:"Сафарі",p:4200,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776947101629-xc6bga.jpg",sz:["42","44"]},
- {n:"Aganta Black Nubuck",c:"Чорний нубук",p:3790,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776859553465-j97nc3.jpg",sz:["42","45"]},
- {n:"Aganta Oreo",c:"Базовий",p:3790,ph:"https://ultera-home.vercel.app/photos/e82fd4d04441145469843abf55294e79.webp",sz:["37"]},
- {n:"Aganta Olive",c:"Олива",p:4200,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776946142411-n380e4.webp",sz:["40"]},
- {n:"Aganta Salvia",c:"Сальвія",p:4198,ph:"https://ultera-home.vercel.app/photos/68403915.webp",sz:["41","45"]},
- {n:"Hunk3 Grey",c:"Grey",p:4500,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1778529257235-rww011.jpg",sz:["40","41"]},
- {n:"Hunk3 Asphalt",c:"Асфальт",p:4200,ph:"https://ultera-home.vercel.app/photos/62232281.webp",sz:["41"]},
- {n:"Hunk3 RED",c:"Red",p:4500,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1778529207497-0edjfq.jpg",sz:["41","42"]},
- {n:"Hunk Білий",c:"Білий",p:3990,ph:PS+"u1-bel.png",sz:["44"],nw:1},
- {n:"Hunk Чорний замш",c:"Чорний замш",p:3990,ph:PS+"u1-chern-zamsh.png",sz:["41"],nw:1},
- {n:"Hunk Олива",c:"Олива",p:3990,ph:PS+"u1-oliv.png",sz:["41"],nw:1},
- {n:"ULTERA Trail",c:"Чорний",p:3990,ph:PS+"u6-chern.png",sz:["44"],nw:1},
- {n:"CROS 31",c:"Чорний",p:3990,ph:PS+"cros31.png",sz:["44"],nw:1},
- {n:"Hunk3 Білий",c:"Білий",p:3990,ph:PS+"u11-bel.png",sz:["41"],nw:1}
+ {uid:"671974984372",n:"Hunk2 Panda",c:"Panda",p:3590,ph:"https://ultera-home.vercel.app/photos/55942430.webp",sz:["41"]},
+ {uid:"469658834434",n:"Hunk Mint",c:"Мʼятний",p:4100,ph:"https://ultera-home.vercel.app/photos/aa0a01576c53f65f8087274daa9ebe54.webp",sz:["39"]},
+ {uid:"634978737742",n:"Hunk Pistachio",c:"Фісташковий",p:3990,ph:"https://ultera-home.vercel.app/photos/28324109.webp",sz:["40","45"]},
+ {uid:"260203663062",n:"Aganta Aqva",c:"Аква",p:4100,ph:"https://ultera-home.vercel.app/photos/23471110.webp",sz:["38","44","45"]},
+ {uid:"828457052803",n:"Aganta Safari",c:"Сафарі",p:4200,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776947101629-xc6bga.jpg",sz:["42","44"]},
+ {uid:"454860479882",n:"Aganta Black Nubuck",c:"Чорний нубук",p:3790,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776859553465-j97nc3.jpg",sz:["42","45"]},
+ {uid:"924701650982",n:"Aganta Oreo",c:"Базовий",p:3790,ph:"https://ultera-home.vercel.app/photos/e82fd4d04441145469843abf55294e79.webp",sz:["37"]},
+ {uid:"270047232977",n:"Aganta Olive",c:"Олива",p:4200,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776946142411-n380e4.webp",sz:["40"]},
+ {uid:"977627506822",n:"Aganta Salvia",c:"Сальвія",p:4198,ph:"https://ultera-home.vercel.app/photos/68403915.webp",sz:["41","45"]},
+ {uid:"938371874105",n:"Hunk3 Grey",c:"Grey",p:4500,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1778529257235-rww011.jpg",sz:["40","41"]},
+ {uid:"798291700932",n:"Hunk3 Asphalt",c:"Асфальт",p:4200,ph:"https://ultera-home.vercel.app/photos/62232281.webp",sz:["41"]},
+ {uid:"375461019313",n:"Hunk3 RED",c:"Red",p:4500,ph:"https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1778529207497-0edjfq.jpg",sz:["41","42"]},
+ {uid:"sale-u1-bel",n:"Hunk Білий",c:"Білий",p:3990,ph:PS+"u1-bel.png",sz:["44"],nw:1},
+ {uid:"sale-u1-chern-zamsh",n:"Hunk Чорний замш",c:"Чорний замш",p:3990,ph:PS+"u1-chern-zamsh.png",sz:["41"],nw:1},
+ {uid:"sale-u1-oliv",n:"Hunk Олива",c:"Олива",p:3990,ph:PS+"u1-oliv.png",sz:["41"],nw:1},
+ {uid:"sale-u6-chern",n:"Trail Чорний",c:"Чорний",p:3990,ph:PS+"u6-chern.png",sz:["44"],nw:1},
+ {uid:"sale-cros31",n:"CROS 31",c:"Чорний",p:3990,ph:PS+"cros31.png",sz:["44"],nw:1},
+ {uid:"sale-u11-bel",n:"Hunk3 Білий",c:"Білий",p:3990,ph:PS+"u11-bel.png",sz:["41"],nw:1}
 ];
-const fmt=n=>n.toLocaleString('uk-UA');
-document.getElementById('grid').innerHTML=D.map(x=>{
-  const sale=Math.round(x.p*0.7);
-  return `<div class="card">${x.nw?'<span class="new">NEW · остаток</span>':''}
-    <div class="ph"><img loading="lazy" src="${x.ph}" alt="${x.n}"></div>
-    <div class="b">
-      <div class="nm">${x.n}</div>
-      <div class="cl">${x.c}</div>
-      <div class="pr"><span class="cur">${fmt(sale)} ₴</span><span class="old">${fmt(x.p)} ₴</span><span class="pct">−30%</span></div>
-      <div class="szlbl">Залишкові розміри:</div>
-      <div class="sz">${x.sz.map(s=>`<span>${s}</span>`).join('')}</div>
+const CART=[];
+const pick={};
+document.getElementById('grid').innerHTML=D.map((x,i)=>`<div class="card">${x.nw?'<span class="new">NEW · остаток</span>':''}
+  <div class="ph"><img loading="lazy" src="${x.ph}" alt="${x.n}"></div>
+  <div class="b">
+    <div class="nm">${x.n}</div><div class="cl">${x.c}</div>
+    <div class="pr"><span class="cur">${fmt(saleP(x.p))} ₴</span><span class="old">${fmt(x.p)} ₴</span><span class="pct">−30%</span></div>
+    <div class="szlbl">Розмір:</div>
+    <div class="sz" data-i="${i}">${x.sz.map(s=>`<button onclick="selSz(${i},'${s}',this)">${s}</button>`).join('')}</div>
+    <button class="add" id="add${i}" onclick="addCart(${i})">В кошик</button>
+  </div></div>`).join('');
+
+function selSz(i,s,btn){pick[i]=s;btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');}
+function addCart(i){
+  const x=D[i], s=pick[i]|| (x.sz.length===1?x.sz[0]:null);
+  if(!s){alert('Оберіть розмір');return;}
+  const found=CART.find(c=>c.uid===x.uid&&c.size===s);
+  if(found)found.qty++;
+  else CART.push({uid:x.uid,title:x.n,color_name:x.c,photo:x.ph,size:s,price:saleP(x.p),qty:1});
+  renderCart();openCart();
+}
+function rm(idx){CART.splice(idx,1);renderCart();}
+function cnt(){return CART.reduce((s,c)=>s+c.qty,0);}
+function total(){return CART.reduce((s,c)=>s+c.price*c.qty,0);}
+function openCart(){document.getElementById('ov').classList.add('on');document.getElementById('drw').classList.add('on');}
+function closeCart(){document.getElementById('ov').classList.remove('on');document.getElementById('drw').classList.remove('on');}
+function renderCart(){
+  document.getElementById('cnt').textContent=cnt();
+  const list=document.getElementById('clist'), foot=document.getElementById('foot');
+  if(!CART.length){list.innerHTML='<div class="empty">Кошик порожній</div>';foot.innerHTML='';return;}
+  list.innerHTML=CART.map((c,i)=>`<div class="ci"><img src="${c.photo}"><div style="flex:1">
+    <div class="t">${c.title}</div><div class="m">${c.color_name} · розмір ${c.size} · ${c.qty} шт</div>
+    <button class="rm" onclick="rm(${i})">прибрати</button></div>
+    <div class="p">${fmt(c.price*c.qty)} ₴</div></div>`).join('');
+  foot.innerHTML=`<div class="row"><span>Разом</span><span>${fmt(total())} ₴</span></div>
+    <div class="err" id="err"></div>
+    <input id="fio" placeholder="Імʼя та прізвище" autocomplete="name">
+    <input id="phone" placeholder="Телефон (+380...)" inputmode="tel" autocomplete="tel">
+    <div class="ac"><input id="city" placeholder="Місто (Нова Пошта)" autocomplete="off"><div class="acbox" id="cityBox"></div></div>
+    <div class="ac"><input id="wh" placeholder="Відділення / поштомат" autocomplete="off"><div class="acbox" id="whBox"></div></div>
+    <div class="pm">
+      <label><input type="radio" name="pm" value="card" checked><span>Картка онлайн</span></label>
+      <label><input type="radio" name="pm" value="np"><span>Наложка (передпл. 500₴)</span></label>
     </div>
-    <div class="cta"><a class="buy" href="${IG}" target="_blank" rel="noopener">Замовити в Direct</a></div>
-  </div>`;
-}).join('');
+    <button class="go" id="go" onclick="checkout()">Оформити та оплатити</button>`;
+  bindNP();
+}
+let cityRef='';
+const deb=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};};
+async function npFetch(method,props){
+  const r=await fetch(NP_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:NP_KEY,modelName:'AddressGeneral',calledMethod:method,methodProperties:props})});
+  const d=await r.json();return d.success?(d.data||[]):[];
+}
+function bindNP(){
+  const city=document.getElementById('city'),cityBox=document.getElementById('cityBox');
+  const wh=document.getElementById('wh'),whBox=document.getElementById('whBox');
+  city.addEventListener('input',deb(async()=>{
+    cityRef='';wh.value='';
+    if(city.value.trim().length<2){cityBox.style.display='none';return;}
+    const r=await npFetch('searchSettlements',{CityName:city.value.trim(),Limit:8});
+    const list=(r[0]&&r[0].Addresses)||[];
+    cityBox.innerHTML=list.map(a=>`<div data-ref="${a.DeliveryCity||a.Ref}">${(a.Present||a.MainDescription)}</div>`).join('');
+    cityBox.style.display=list.length?'block':'none';
+    cityBox.querySelectorAll('div').forEach(el=>el.onclick=()=>{city.value=el.textContent;cityRef=el.dataset.ref;cityBox.style.display='none';});
+  },300));
+  wh.addEventListener('input',deb(async()=>{
+    if(!cityRef||wh.value.trim().length<1){whBox.style.display='none';return;}
+    const r=await npFetch('getWarehouses',{CityRef:cityRef,FindByString:wh.value.trim(),Limit:50});
+    whBox.innerHTML=r.slice(0,30).map(w=>`<div>${w.Description}</div>`).join('');
+    whBox.style.display=r.length?'block':'none';
+    whBox.querySelectorAll('div').forEach(el=>el.onclick=()=>{wh.value=el.textContent;whBox.style.display='none';});
+  },300));
+}
+async function checkout(){
+  const err=document.getElementById('err'), go=document.getElementById('go');
+  const fio=document.getElementById('fio').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  const city=document.getElementById('city').value.trim();
+  const wh=document.getElementById('wh').value.trim();
+  const pm=document.querySelector('input[name=pm]:checked').value;
+  err.textContent='';
+  if(fio.length<2){err.textContent='Вкажіть імʼя';return;}
+  if(phone.replace(/\D/g,'').length<10){err.textContent='Вкажіть телефон';return;}
+  if(!city){err.textContent='Вкажіть місто';return;}
+  if(!wh){err.textContent='Вкажіть відділення';return;}
+  go.disabled=true;go.textContent='Надсилаю...';
+  const num='ULT-'+Date.now().toString().slice(-8);
+  const items=CART.map(c=>({uid:c.uid,title:c.title,photo:c.photo,color_name:c.color_name,size:c.size,price:c.price,qty:c.qty,promo_pct:SALE_PCT}));
+  try{
+    const or=await fetch('/api/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      num,stage:'final',fio,phone,city,wh,payment:pm,total:total(),items
+    })});
+    const ores=await or.json().catch(()=>({}));
+    if(!or.ok||ores.ok===false)throw new Error(ores.error||ores.message||('HTTP '+or.status));
+    const fioP=fio.split(/\s+/);
+    const wfp=await fetch('/api/wayforpay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      orderReference:num,
+      items:CART.map(c=>({uid:String(c.uid),qty:Number(c.qty),promo_pct:SALE_PCT})),
+      amount:total(),
+      products:CART.map(c=>({name:c.title,count:c.qty,price:c.price})),
+      paymentMode:(pm==='np'?'cod':'card'),
+      clientFirstName:fioP[0]||'',clientLastName:fioP.slice(1).join(' ')||'',clientEmail:'',clientPhone:phone
+    })});
+    const w=await wfp.json().catch(()=>({}));
+    if(wfp.ok&&w.ok&&w.formHtml){document.open();document.write(w.formHtml);document.close();return;}
+    err.textContent='Замовлення прийнято. Менеджер звʼяжеться для оплати.';
+    go.textContent='Готово';
+  }catch(e){
+    err.textContent='Помилка: '+e.message;
+    go.disabled=false;go.textContent='Оформити та оплатити';
+  }
+}
+renderCart();
 </script>
 </body>
 </html>
