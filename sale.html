@@ -43,6 +43,39 @@ header .sub{margin:5px 0 0;color:var(--ink-60);font-family:var(--font-mono);font
 .sz button.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
 .add{margin-top:auto;background:var(--ink);color:#fff;border:none;border-radius:9px;padding:11px;font-weight:700;font-size:12px;font-family:var(--font-mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .add:active{transform:translateY(1px)}
+.modal{position:fixed;inset:0;z-index:70;display:none}
+.modal.on{display:block}
+.mback{position:absolute;inset:0;background:rgba(14,14,14,.55)}
+.mpanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1040px,94vw);max-height:92vh;background:var(--bg);border-radius:18px;overflow:auto;display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:820px){.mpanel{grid-template-columns:1fr;width:96vw}}
+.mx{position:absolute;right:14px;top:14px;z-index:6;width:38px;height:38px;border-radius:50%;border:none;background:#fff;font-size:22px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.mgal{position:relative;background:var(--bg-alt);min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px}
+.vbadge{position:absolute;top:16px;left:16px;background:#3a3a3a;color:#cfff5a;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;padding:5px 10px;border-radius:20px;display:none;z-index:3}
+.gstage{flex:1;display:flex;align-items:center;justify-content:center;width:100%;max-height:62vh}
+.gstage img,.gstage video{max-width:100%;max-height:60vh;object-fit:contain;border-radius:8px}
+.gstage iframe{width:min(80%,360px);height:min(60vh,640px);border:0;border-radius:10px;background:#000}
+.gnav{position:absolute;top:46%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:none;background:#fff;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);z-index:3}
+.gnav.prev{left:14px}.gnav.next{right:14px}
+.gcount{position:absolute;bottom:86px;left:50%;transform:translateX(-50%);background:#222;color:#fff;font-family:var(--font-mono);font-size:11px;padding:3px 10px;border-radius:20px}
+.gthumbs{display:flex;gap:8px;overflow:auto;width:100%;padding-top:12px}
+.gthumbs button{flex:0 0 auto;width:58px;height:58px;border-radius:10px;border:1px solid var(--line);overflow:hidden;background:#fff;cursor:pointer;padding:0}
+.gthumbs button.sel{border-color:var(--ink)}
+.gthumbs img{width:100%;height:100%;object-fit:cover}
+.minfo{padding:30px 32px 28px;position:relative}
+.meye{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;color:var(--ink-60);text-transform:uppercase;margin-bottom:10px}
+.mtitle{margin:0;font-size:30px;font-weight:800;text-transform:uppercase;letter-spacing:-.02em;line-height:1}
+.msku{font-family:var(--font-mono);font-size:11px;color:var(--ink-40);letter-spacing:.06em;margin:8px 0 18px}
+.mpbox{background:var(--bg-alt);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.mp-cur{font-size:26px;font-weight:800}
+.mp-old{color:var(--ink-40);text-decoration:line-through;font-size:15px}
+.mp-pct{margin-left:auto;background:var(--pink);color:var(--ink);font-family:var(--font-mono);font-size:12px;font-weight:700;padding:4px 9px;border-radius:6px}
+.msz-h{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--ink-60);margin-bottom:10px}
+.mszs{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:22px}
+.mszs button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:12px 0;text-align:center;cursor:pointer;font-weight:700;font-size:15px}
+.mszs button small{display:block;font-family:var(--font-mono);font-size:10px;color:var(--ink-40);font-weight:400;margin-top:3px}
+.mszs button.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
+.mszs button.sel small{color:#cfcfcf}
+.mbuy{width:100%;background:var(--ink);color:#fff;border:none;border-radius:12px;padding:16px;font-weight:700;font-family:var(--font-mono);letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
 .lb{position:fixed;inset:0;background:rgba(10,10,10,.92);display:none;align-items:center;justify-content:center;z-index:80;cursor:zoom-out;padding:20px}
 .lb.on{display:flex}
 .lb .x{position:absolute;top:14px;right:18px;color:#fff;font-size:30px;line-height:1;cursor:pointer;z-index:3}
@@ -94,7 +127,7 @@ footer{text-align:center;color:var(--ink-40);font-family:var(--font-mono);font-s
 <div class="wrap"><div class="grid" id="grid"></div></div>
 <footer>ULTERA · розпродаж остатків</footer>
 
-<div class="lb" id="lb" onclick="closeLB()"><span class="x" onclick="closeLB(event)">&times;</span><button class="nav prev" onclick="lbNav(-1,event)">&#10094;</button><div class="stage" id="lbStage" onclick="event.stopPropagation()"></div><button class="nav next" onclick="lbNav(1,event)">&#10095;</button><div class="count" id="lbCount"></div><div class="cap" id="lbCap"></div></div>
+<div class="modal" id="modal"><div class="mback" onclick="closeModal()"></div><div class="mpanel"><button class="mx" onclick="closeModal()">&times;</button><div class="mgal"><span class="vbadge" id="mVbadge">&#9654; ВІДЕО</span><button class="gnav prev" onclick="mNav(-1)">&#10094;</button><div class="gstage" id="mStage"></div><button class="gnav next" onclick="mNav(1)">&#10095;</button><div class="gcount" id="mCount"></div><div class="gthumbs" id="mThumbs"></div></div><div class="minfo"><div class="meye" id="mEye"></div><h2 class="mtitle" id="mTitle"></h2><div class="msku" id="mSku"></div><div class="mpbox"><span class="mp-cur" id="mPcur"></span><span class="mp-old" id="mPold"></span><span class="mp-pct">−30%</span></div><div class="msz-h"><span>РОЗМІР</span><span>ЄС / СМ</span></div><div class="mszs" id="mSzs"></div><button class="mbuy" id="mBuy" onclick="modalAdd()">В КОШИК</button></div></div></div>
 <div class="ov" id="ov" onclick="closeCart()"></div>
 <div class="drw" id="drw">
   <h3>Кошик <button class="x" onclick="closeCart()">&times;</button></h3>
@@ -130,26 +163,45 @@ const D=[
 ];
 const CART=[];
 const pick={};
-document.getElementById('grid').innerHTML=D.map((x,i)=>`<div class="card">
-  <div class="card-img" onclick="openLB('${x.uid}','${x.ph}','${x.n} · ${x.c}')">
+document.getElementById('grid').innerHTML=D.map((x,i)=>`<div class="card" onclick="openModal(${i})">
+  <div class="card-img">
     <img loading="lazy" src="${x.ph}" alt="${x.n}">
     <span class="badge ${x.nw?'new':''}">${x.nw?'NEW · ОСТАТОК':'SALE −30%'}</span>
     <div class="card-quick"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>
   </div>
   <div class="card-name">${x.n}</div>
-  <div class="card-sku">${x.c}</div>
+  <div class="card-sku">SKU · ${String(x.uid).replace('sale-','')}</div>
   <div class="card-price"><s>${fmt(x.p)} ₴</s>${fmt(saleP(x.p))} ₴<span class="pct">−30%</span></div>
-  <div class="sz" data-i="${i}">${x.sz.map(s=>`<button onclick="selSz(${i},'${s}',this)">${s}</button>`).join('')}</div>
-  <button class="add" id="add${i}" onclick="addCart(${i})">В кошик</button>
 </div>`).join('');
 
 const MEDIA={"634978737742": [{"t": "video", "u": "https://youtube.com/shorts/KfkHGytllME?feature=share"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/28324109.webp"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776715247768-6eq6m4.png"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/e7e822bd106704acd7bf11bb951d0d8e.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/bae60a9364519a6e75af2f97c43a5f67.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/312a3a873a2e77e68ef08f097b07bdde.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/8bdcb9fa32abd0e20ae767e1b968064e.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/51a871c495cb44e30e69db81c735e965.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/9eed09d528d8e07e922e9610f6db531e.webp"}], "469658834434": [{"t": "video", "u": "https://youtube.com/shorts/HXhaBcbDa0k?feature=share"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/aa0a01576c53f65f8087274daa9ebe54.webp"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776715310452-yvra3t.png"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/125111864e64546570cf0d21d080d3a5.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/1531f3233ca00ef5b6f27d2c9176490c.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/10cb59803e6743ebfddd4d82545d07ed.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/829c659d1aa6bbd98509ba88a080ee8b.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/c4e39195601efd61ecef9d2926e7877f.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/fe863143f40b94297c82557d4a3de2d3.webp"}], "828457052803": [{"t": "video", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/v/aganta-safari-1781872097.mp4?v=2"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776947117392-canboa.jpg"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/aganta-safari-1781872097-1.webp"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/aganta-safari-1781872097-2.webp"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/aganta-safari-1781872097-3.webp"}], "938371874105": [{"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1778529264703-ujl4za.jpg"}], "270047232977": [{"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776946908200-e4l371.webp"}], "977627506822": [{"t": "video", "u": "https://youtube.com/shorts/IUnDGD1m_d0?feature=share"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/68403915.webp"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776702114819-jrqai2.png"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/65535140.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/33796935.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/76806765.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/80718107.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/30793276.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/93492662.webp"}], "260203663062": [{"t": "video", "u": "https://youtube.com/shorts/bxMCWsAbUzw?feature=share"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/23471110.webp"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776714982903-6hie3x.png"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/91772469.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/53834366.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/60942294.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/49007791.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/71454489.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/22517937.webp"}], "454860479882": [{"t": "video", "u": "https://youtube.com/shorts/4YeJai5wg3Q?feature=share"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776859568133-kskkyu.jpg"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776715217526-p4xhgr.png"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/79435477.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/74960268.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/91225369.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/46194880.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/66793627.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/54734429.webp"}], "671974984372": [{"t": "video", "u": "https://youtube.com/shorts/jXZKJJwGqCQ?feature=share"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/55942430.webp"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776715144331-lbg300.png"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/b2cbefa5d40d1aed2bef7da17b79f79a.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/de0c6e87a8c072eae65c0c8627e08ff2.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/21564de058d1435cf3f13583afc590fd.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/c6eb5201940239bed6b785999bde10a0.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/99548488.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/58038427.webp"}], "375461019313": [{"t": "video", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/v/hunk3-red-1781873080.mp4?v=2"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1778529214250-o3bcds.jpg"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/hunk3-red-1781873080-1.webp"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/hunk3-red-1781873080-2.webp"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/hunk3-red-1781873080-3.webp"}], "924701650982": [{"t": "video", "u": "https://www.youtube.com/shorts/I7BgUNkUEi0"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/e82fd4d04441145469843abf55294e79.webp"}, {"t": "photo", "u": "https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776702099684-9aaqbd.png"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/36484555.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/32239824.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/86499737.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/54255902.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/51977286.webp"}, {"t": "photo", "u": "https://ultera-home.vercel.app/photos/67365293.webp"}]};
-let LB={list:[],i:0};
+const CM={'36':'23.5','37':'24','38':'25','39':'25.5','40':'26','41':'27','42':'28','43':'28.5','44':'29','45':'30','46':'30.5'};
+let MV={list:[],i:0,prod:null,size:null};
+function mediaFor(uid,ph){var m=MEDIA[uid];return (m&&m.length)?m:[{t:'photo',u:ph}];}
 function ytEmbed(u){var m=u.match(/shorts\/([A-Za-z0-9_-]+)/)||u.match(/[?&]v=([A-Za-z0-9_-]+)/)||u.match(/youtu\.be\/([A-Za-z0-9_-]+)/);return m?('https://www.youtube.com/embed/'+m[1]):u;}
-function lbRender(){var it=LB.list[LB.i],st=document.getElementById('lbStage');if(!it){st.innerHTML='';return;}if(it.t==='video'){if(/youtube|youtu\.be/.test(it.u))st.innerHTML='<iframe src="'+ytEmbed(it.u)+'" allow="autoplay; encrypted-media" allowfullscreen></iframe>';else st.innerHTML='<video src="'+it.u+'" controls playsinline autoplay></video>';}else st.innerHTML='<img src="'+it.u+'" alt="">';document.getElementById('lbCount').textContent=LB.list.length>1?((LB.i+1)+' / '+LB.list.length):'';}
-function lbNav(d,e){if(e)e.stopPropagation();if(LB.list.length<2)return;LB.i=(LB.i+d+LB.list.length)%LB.list.length;lbRender();}
-function openLB(uid,fallback,cap){var m=MEDIA[uid];LB.list=(m&&m.length)?m:[{t:'photo',u:fallback}];LB.i=0;document.getElementById('lbCap').textContent=cap||'';lbRender();document.getElementById('lb').classList.add('on');}
-function closeLB(){document.getElementById('lb').classList.remove('on');document.getElementById('lbStage').innerHTML='';}
+function poster(x){var p=MV.list.find(z=>z.t==='photo');return p?p.u:x.ph;}
+function mRender(){var it=MV.list[MV.i],st=document.getElementById('mStage');
+ if(it.t==='video'){if(/youtube|youtu\.be/.test(it.u))st.innerHTML='<iframe src="'+ytEmbed(it.u)+'" allow="autoplay; encrypted-media" allowfullscreen></iframe>';else st.innerHTML='<video src="'+it.u+'" controls playsinline></video>';}
+ else st.innerHTML='<img src="'+it.u+'" alt="">';
+ document.getElementById('mVbadge').style.display=(it.t==='video')?'block':'none';
+ document.getElementById('mCount').textContent=(MV.i+1)+' / '+MV.list.length;
+ document.querySelectorAll('#mThumbs button').forEach((b,k)=>b.classList.toggle('sel',k===MV.i));}
+function mNav(d){MV.i=(MV.i+d+MV.list.length)%MV.list.length;mRender();}
+function mThumb(k){MV.i=k;mRender();}
+function mSel(s,btn){MV.size=s;document.querySelectorAll('#mSzs button').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');}
+function openModal(i){var x=D[i];MV.prod=x;MV.list=mediaFor(x.uid,x.ph);MV.i=0;MV.size=(x.sz.length===1?x.sz[0]:null);
+ document.getElementById('mEye').textContent='Розпродаж · −30%'+(x.nw?' · NEW':'');
+ document.getElementById('mTitle').textContent=x.n;
+ document.getElementById('mSku').textContent='SKU · '+String(x.uid).replace('sale-','');
+ document.getElementById('mPcur').textContent=fmt(saleP(x.p))+' ₴';
+ document.getElementById('mPold').textContent=fmt(x.p)+' ₴';
+ document.getElementById('mThumbs').innerHTML=MV.list.map((m,k)=>'<button onclick="mThumb('+k+')"><img src="'+(m.t==='video'?poster(x):m.u)+'"></button>').join('');
+ document.getElementById('mSzs').innerHTML=x.sz.map(s=>'<button onclick="mSel(\''+s+'\',this)" class="'+(MV.size===s?'sel':'')+'">'+s+'<small>'+(CM[s]||'')+'см</small></button>').join('');
+ mRender();document.getElementById('modal').classList.add('on');document.body.style.overflow='hidden';}
+function closeModal(){document.getElementById('modal').classList.remove('on');document.getElementById('mStage').innerHTML='';document.body.style.overflow='';}
+function modalAdd(){var x=MV.prod;if(!x)return;if(!MV.size){alert('Оберіть розмір');return;}
+ var f=CART.find(c=>c.uid===x.uid&&c.size===MV.size);if(f)f.qty++;else CART.push({uid:x.uid,title:x.n,color_name:x.c,photo:x.ph,size:MV.size,price:saleP(x.p),qty:1});
+ renderCart();closeModal();openCart();}
 function selSz(i,s,btn){pick[i]=s;btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');}
 function addCart(i){
   const x=D[i], s=pick[i]|| (x.sz.length===1?x.sz[0]:null);
