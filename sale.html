@@ -19,8 +19,13 @@
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:15px}
   .card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;position:relative}
   .new{position:absolute;top:10px;left:10px;background:#111;color:#fff;font-size:10px;font-weight:700;letter-spacing:.05em;padding:3px 7px;border-radius:6px;z-index:2}
-  .ph{aspect-ratio:1/1;background:#f2f2f2;overflow:hidden}
+  .ph{aspect-ratio:1/1;background:#f2f2f2;overflow:hidden;cursor:zoom-in}
   .ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .lb{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;z-index:80;cursor:zoom-out;padding:20px}
+  .lb.on{display:flex}
+  .lb img{max-width:96vw;max-height:88vh;object-fit:contain;border-radius:10px}
+  .lb .cap{position:absolute;bottom:18px;left:0;right:0;text-align:center;color:#fff;font-size:14px;font-weight:600}
+  .lb .x{position:absolute;top:14px;right:18px;color:#fff;font-size:30px;line-height:1;cursor:pointer}
   .b{padding:11px 12px 13px;display:flex;flex-direction:column;gap:6px;flex:1}
   .nm{font-size:14px;font-weight:700;line-height:1.2}
   .cl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
@@ -77,6 +82,7 @@
 <div class="wrap"><div class="grid" id="grid"></div></div>
 <footer>ULTERA · розпродаж остатків</footer>
 
+<div class="lb" id="lb" onclick="closeLB()"><span class="x">&times;</span><img id="lbImg" src="" alt=""><div class="cap" id="lbCap"></div></div>
 <div class="ov" id="ov" onclick="closeCart()"></div>
 <div class="drw" id="drw">
   <h3>Кошик <button class="x" onclick="closeCart()">&times;</button></h3>
@@ -113,7 +119,7 @@ const D=[
 const CART=[];
 const pick={};
 document.getElementById('grid').innerHTML=D.map((x,i)=>`<div class="card">${x.nw?'<span class="new">NEW · остаток</span>':''}
-  <div class="ph"><img loading="lazy" src="${x.ph}" alt="${x.n}"></div>
+  <div class="ph" onclick="openLB('${x.ph}','${x.n} · ${x.c}')"><img loading="lazy" src="${x.ph}" alt="${x.n}"></div>
   <div class="b">
     <div class="nm">${x.n}</div><div class="cl">${x.c}</div>
     <div class="pr"><span class="cur">${fmt(saleP(x.p))} ₴</span><span class="old">${fmt(x.p)} ₴</span><span class="pct">−30%</span></div>
@@ -122,6 +128,8 @@ document.getElementById('grid').innerHTML=D.map((x,i)=>`<div class="card">${x.nw
     <button class="add" id="add${i}" onclick="addCart(${i})">В кошик</button>
   </div></div>`).join('');
 
+function openLB(src,cap){document.getElementById('lbImg').src=src;document.getElementById('lbCap').textContent=cap||'';document.getElementById('lb').classList.add('on');}
+function closeLB(){document.getElementById('lb').classList.remove('on');}
 function selSz(i,s,btn){pick[i]=s;btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');}
 function addCart(i){
   const x=D[i], s=pick[i]|| (x.sz.length===1?x.sz[0]:null);
