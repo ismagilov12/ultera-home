@@ -80,6 +80,35 @@ async function lookupOrderForCAPI(orderRef) {
   }
 }
 
+async function markSaleSold(orderRef) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey || !orderRef) return;
+  try {
+    const q = encodeURIComponent(orderRef);
+    const r = await fetch(`${supabaseUrl}/rest/v1/ulhome_orders?select=items&payment_ref=eq.${q}&limit=1`, {
+      headers: { apikey: supabaseKey, Authorization: 'Bearer ' + supabaseKey }
+    });
+    if (!r.ok) return;
+    const rows = await r.json();
+    const items = (rows[0] && Array.isArray(rows[0].items)) ? rows[0].items : [];
+    const saleUids = [...new Set(items.filter(it => it && (it.saleItem === true || it.family === 'SALE')).map(it => String(it.uid)))];
+    if (!saleUids.length) return;
+    const sr = await fetch(`${supabaseUrl}/rest/v1/ulhome_settings?key=eq.sale_sold_uids&select=value`, {
+      headers: { apikey: supabaseKey, Authorization: 'Bearer ' + supabaseKey }
+    });
+    const srows = sr.ok ? await sr.json() : [];
+    const cur = (srows[0] && Array.isArray(srows[0].value)) ? srows[0].value.map(String) : [];
+    const merged = [...new Set(cur.concat(saleUids))];
+    await fetch(`${supabaseUrl}/rest/v1/ulhome_settings?key=eq.sale_sold_uids`, {
+      method: 'PATCH',
+      headers: { apikey: supabaseKey, Authorization: 'Bearer ' + supabaseKey, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ value: merged })
+    });
+    console.log('[wfp-callback] sale SOLD marked', saleUids);
+  } catch (e) { console.error('[wfp-callback] markSaleSold', e.message); }
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -311,6 +340,7 @@ module.exports = async function handler(req, res) {
     } catch (e) {
       console.error('[wfp-callback] CAPI exception', e.message);
     }
+    try { await markSaleSold(orderReference); } catch (e) { console.error('[wfp-callback] sold exc', e.message); }
     // TODO: Phase 2 — обновить ulhome_orders.payment_status = 'paid'
     //       + дёрнуть KeyCRM stage=paid.
   }
