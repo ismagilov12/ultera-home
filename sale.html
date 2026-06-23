@@ -123,6 +123,15 @@ header .sub{margin:5px 0 0;color:var(--ink-60);font-family:var(--font-mono);font
 .empty{color:var(--ink-40);text-align:center;padding:30px 0;font-family:var(--font-mono);font-size:12px}
 footer{text-align:center;color:var(--ink-40);font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;padding:0 14px 40px}
 </style>
+<!-- TikTok Pixel (ULTERA) -->
+<script>
+!function (w, d, t) {
+  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{},n=document.createElement("script"),n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(n,a)};
+  ttq.load('D39G1P3C77UFKOQ7L4QG');
+  ttq.page();
+}(window, document, 'ttq');
+</script>
+<!-- /TikTok Pixel -->
 </head>
 <body>
 <header>
@@ -290,6 +299,7 @@ async function checkout(){
     })});
     const ores=await or.json().catch(()=>({}));
     if(!or.ok||ores.ok===false)throw new Error(ores.error||ores.message||('HTTP '+or.status));
+    try{if(typeof ttq!=='undefined'&&ttq&&typeof ttq.track==='function'){ttq.track('CompletePayment',{contents:CART.map(function(c){return {content_id:String(c.uid),content_type:'product',content_name:c.title||''};}),content_type:'product',value:total(),currency:'UAH'},{event_id:num});}}catch(_t){}
     const fioP=fio.split(/\s+/);
     const wfp=await fetch('/api/wayforpay',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       orderReference:num,

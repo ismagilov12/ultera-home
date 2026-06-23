@@ -2059,11 +2059,22 @@ window.ulteraFbq = function(name, params){
     var clean = {};
     for (var k in params) if (k !== 'event_id') clean[k] = params[k];
     if (typeof fbq === 'function') fbq('track', name, clean, {eventID: eventId});
+    try{if(typeof ttq!=='undefined'&&ttq&&typeof ttq.track==='function'){var __m={ViewContent:'ViewContent',AddToCart:'AddToCart',InitiateCheckout:'InitiateCheckout',Purchase:'CompletePayment'},__e=__m[name];if(__e){var __ids=params.content_ids||[];if(!Array.isArray(__ids))__ids=[__ids];var __c=__ids.map(function(id){return {content_id:String(id),content_type:params.content_type||'product',content_name:params.content_name||''};});ttq.track(__e,{contents:__c,content_type:params.content_type||'product',value:params.value,currency:params.currency||'UAH'},{event_id:eventId});}}}catch(_t){}
     return eventId;
   } catch(e){ return null; }
 };
 </script>
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1861447568005608&ev=PageView&noscript=1"/></noscript>
+<!-- TikTok Pixel (ULTERA) -->
+<script>
+!function (w, d, t) {
+  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{},n=document.createElement("script"),n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(n,a)};
+  ttq.load('D39G1P3C77UFKOQ7L4QG');
+  ttq.page();
+}(window, document, 'ttq');
+</script>
+<!-- /TikTok Pixel -->
+
 <!-- /Meta Pixel -->
 </head>
 <body>

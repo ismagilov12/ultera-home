@@ -37,11 +37,22 @@ window.ulteraFbq = function(name, params){
     var clean={};
     for(var k in params) if(k!=='event_id') clean[k]=params[k];
     if(typeof fbq==='function') fbq('track', name, clean, {eventID: eventId});
+    try{if(typeof ttq!=='undefined'&&ttq&&typeof ttq.track==='function'){var __m={ViewContent:'ViewContent',AddToCart:'AddToCart',InitiateCheckout:'InitiateCheckout',Purchase:'CompletePayment'},__e=__m[name];if(__e){var __ids=params.content_ids||[];if(!Array.isArray(__ids))__ids=[__ids];var __c=__ids.map(function(id){return {content_id:String(id),content_type:params.content_type||'product',content_name:params.content_name||''};});ttq.track(__e,{contents:__c,content_type:params.content_type||'product',value:params.value,currency:params.currency||'UAH'},{event_id:eventId});}}}catch(_t){}
     return eventId;
   }catch(e){ return null; }
 };
 </script>
 <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1861447568005608&ev=PageView&noscript=1"/></noscript>
+<!-- TikTok Pixel (ULTERA) -->
+<script>
+!function (w, d, t) {
+  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{},n=document.createElement("script"),n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(n,a)};
+  ttq.load('D39G1P3C77UFKOQ7L4QG');
+  ttq.page();
+}(window, document, 'ttq');
+</script>
+<!-- /TikTok Pixel -->
+
 
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -593,7 +604,8 @@ footer{padding:60px 0 calc(60px + var(--safe));background:var(--ink);color:#a5a5
 
 
 /* V11_GAME_INTOCAROUSEL */
-.to-carousel{position:relative}
+/* V17: явні розміри для .to-carousel щоб #tgGame не був 0x0 */
+.to-carousel{position:relative;aspect-ratio:3/4;min-height:300px;width:100%;max-height:70vh}
 #tgGame{
   position:absolute;inset:0;display:none;
   background:linear-gradient(160deg,#f4f3ee 0%,#eae8e1 60%,#dee3e7 100%);
@@ -2638,10 +2650,54 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     }catch(e){}
     return null;
   }
+  /* V15_DIAG: глобальні error handlers + детальна діагностика */
+  if (!window.__V15_DIAG){
+    window.__V15_DIAG = true;
+    window.addEventListener('error', function(ev){
+      try{
+        console.error('[V15] window.error:', ev.message, 'src=', ev.filename, ev.lineno+':'+ev.colno, 'err=', ev.error && ev.error.stack);
+        var el = document.getElementById('toStatus');
+        if (el && ST.open) el.innerHTML = '<b style="color:#c53a2c">JS '+(ev.message||'?').slice(0,90)+'</b>';
+      }catch(_){}
+    });
+    window.addEventListener('unhandledrejection', function(ev){
+      try{
+        var r = ev.reason || {};
+        console.error('[V15] unhandledrejection:', r.name, r.message, r.stack);
+        var el = document.getElementById('toStatus');
+        if (el && ST.open) el.innerHTML = '<b style="color:#c53a2c">P '+(r.name||'?')+': '+String(r.message||r).slice(0,90)+'</b>';
+      }catch(_){}
+    });
+  }
   async function callTryon(payload){
-    const r = await fetch('/api/tryon', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    const j = await r.json();
-    if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+    let r, body;
+    try {
+      body = JSON.stringify(payload);
+      console.log('[V15] callTryon body bytes=' + body.length + ' photo_b64?=' + (payload.photo_b64?'yes('+payload.photo_b64.length+')':'no'));
+    } catch(e){
+      console.error('[V15] JSON.stringify failed', e.name, e.message);
+      throw new Error('JSON.stringify failed: ' + e.message);
+    }
+    try {
+      r = await fetch('/api/tryon', { method:'POST', headers:{'Content-Type':'application/json'}, body: body });
+    } catch(e){
+      console.error('[V15] fetch threw', e.name, e.message, e.stack);
+      throw new Error('FETCH ' + e.name + ': ' + e.message);
+    }
+    let j;
+    try {
+      j = await r.json();
+    } catch(e){
+      console.error('[V15] r.json() threw', e.name, e.message);
+      throw new Error('JSON.parse: ' + e.message);
+    }
+    if(!r.ok){
+      console.warn('[V15] HTTP ' + r.status, j);
+      throw new Error(j.error || ('HTTP '+r.status));
+    }
+    if (!j.result_url || typeof j.result_url !== 'string'){
+      throw new Error('Bad response: no result_url');
+    }
     return j;
   }
   window.toRun = async function(){
@@ -2955,24 +3011,36 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
     box.classList.add('show');
 
     // дочекаємось layout
-    /* V14: синхронний init без rAF — rAF throttled у background tab та iOS full-screen modal */
+    /* V16: force layout reflow → read size → init з мін розміром 320x400 */
+    // Force browser to recalc layout після додавання .show class
+    void box.offsetHeight;
+    void box.offsetWidth;
     var w0 = box.clientWidth, h0 = box.clientHeight;
+    // Fallback chain: parent → fixed 320x400
     if(w0 < 80 || h0 < 80){
       var par0 = box.parentElement;
+      if (par0) void par0.offsetHeight;
       var pr0 = par0 && par0.getBoundingClientRect();
       if(!w0 || w0 < 80) w0 = (pr0 && pr0.width  > 80) ? Math.round(pr0.width)  : 320;
       if(!h0 || h0 < 80) h0 = (pr0 && pr0.height > 80) ? Math.round(pr0.height) : 400;
     }
+    // Жорсткий мінімум — щоб spawn не спавнив за межами
+    if (w0 < 200) w0 = 320;
+    if (h0 < 200) h0 = 400;
     initGame(box, w0, h0);
-    /* Якщо box був зовсім скритий — повторимо init після короткого setTimeout (resilient до layout race) */
+    /* Через 150ms — якщо реальний box став більший, переініціалізувати */
     setTimeout(function(){
       try{
-        if (G && (G.width < 80 || G.height < 80)){
-          var w2 = box.clientWidth || 320, h2 = box.clientHeight || 400;
-          if (w2 >= 80 && h2 >= 80){ stopGame(); initGame(box, w2, h2); }
+        if (!G) return;
+        var w2 = box.clientWidth, h2 = box.clientHeight;
+        if (w2 >= 200 && h2 >= 200 && (Math.abs(w2 - G.width) > 50 || Math.abs(h2 - G.height) > 50)){
+          stopGame();
+          /* re-add show бо stopGame його зняв */
+          box.classList.add('show');
+          initGame(box, w2, h2);
         }
       }catch(e){}
-    }, 120);
+    }, 200);
   }
 
   function initGame(box, w, h){
@@ -3002,9 +3070,11 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
       timeEl: box.querySelector('.tg-time')
     };
 
+    /* V17: setTimeout-based loop (rAF throttled у background tab + iOS full-screen modal) */
     let lastTs = performance.now();
-    const loop = (ts) => {
+    const loop = () => {
       if(!G || G.stopped) return;
+      const ts = performance.now();
       const dt = Math.min(48, ts - lastTs) / 1000;
       lastTs = ts;
 
@@ -3029,9 +3099,9 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
       // Таймер
       if(G.timeEl) G.timeEl.textContent = Math.floor((Date.now()-G.tStart)/1000) + 's';
 
-      G.rafId = requestAnimationFrame(loop);
+      G.rafId = setTimeout(loop, 16);
     };
-    G.rafId = requestAnimationFrame(loop);
+    G.rafId = setTimeout(loop, 16);
 
     function spawn(){
       // Промокод спавниться 1 раз за гру, при score >= 5 і часі >= 3 сек
@@ -3111,7 +3181,9 @@ console.log('ULTERA TEES Drop 01 models:', DATA.length);
   function stopGame(){
     if(!G) return;
     G.stopped = true;
-    cancelAnimationFrame(G.rafId);
+    /* V17: rafId тепер може бути timeoutId — обидва безпечно очистити */
+    try { cancelAnimationFrame(G.rafId); } catch(_){}
+    try { clearTimeout(G.rafId); } catch(_){}
     const promo = G.promoCaught;
     const score = G.score;
     G.box.classList.remove('show');
