@@ -25,6 +25,7 @@
 
 const crypto = require('crypto');
 const { sendCAPI } = require('./fb-capi');
+const { sendTikTokEvent } = require('./tiktok-events');
 
 const WFP_SIGNATURE_FIELDS = [
   'merchantAccount',
@@ -298,6 +299,15 @@ module.exports = async function handler(req, res) {
         custom_data: custom
       });
       console.log('[wfp-callback] CAPI Purchase →', result);
+      try {
+        const ttRes = await sendTikTokEvent('CompletePayment', {
+          event_id: orderReference,
+          event_source_url: 'https://ultera.in.ua/?paid=1&order=' + encodeURIComponent(orderReference),
+          user_data: Object.assign({ client_ip_address: clientIp, client_user_agent: ua }, (enriched && enriched.user_data) || {}),
+          custom_data: custom
+        });
+        console.log('[wfp-callback] TikTok CompletePayment →', ttRes);
+      } catch (e) { console.error('[wfp-callback] TikTok exception', e.message); }
     } catch (e) {
       console.error('[wfp-callback] CAPI exception', e.message);
     }
