@@ -54,7 +54,7 @@ header .sub{margin:5px 0 0;color:var(--ink-60);font-family:var(--font-mono);font
 .modal.on{display:block}
 .mback{position:absolute;inset:0;background:rgba(14,14,14,.55)}
 .mpanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1040px,94vw);max-height:92vh;background:var(--bg);border-radius:18px;overflow:auto;display:grid;grid-template-columns:1fr 1fr}
-@media(max-width:820px){.mpanel{grid-template-columns:1fr;width:96vw}}
+@media(max-width:820px){.mpanel{grid-template-columns:1fr;width:100%;max-width:100%;height:100%;max-height:100%;left:0;top:0;transform:none;border-radius:0;display:flex;flex-direction:column}.mgal{min-height:0;flex:0 0 auto}.gstage{max-height:40vh}.gstage img,.gstage video{max-height:40vh}.gstage iframe{height:40vh}.gthumbs button{width:46px;height:46px}.minfo{flex:1;padding:20px 20px 34px}.mtitle{font-size:22px}}
 .mx{position:absolute;right:14px;top:14px;z-index:6;width:38px;height:38px;border-radius:50%;border:none;background:#fff;font-size:22px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12)}
 .mgal{position:relative;background:var(--bg-alt);min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px}
 .vbadge{position:absolute;top:16px;left:16px;background:#3a3a3a;color:#cfff5a;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;padding:5px 10px;border-radius:20px;display:none;z-index:3}
