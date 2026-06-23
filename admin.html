@@ -56,6 +56,14 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 .page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
 .page-head h1{font-size:26px;font-weight:800;letter-spacing:-.015em}
 .page-head .meta{font-family:var(--font-mono);font-size:11px;color:var(--ink-60);letter-spacing:.06em}
+.fam-order-list{display:flex;flex-direction:column;gap:8px;max-width:560px}
+.fam-ord-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.fam-ord-idx{font-family:var(--font-mono);font-size:12px;color:var(--ink-60);width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:#f5f5f0;border-radius:6px;flex-shrink:0}
+.fam-ord-name{flex:1;font-size:14px;font-weight:600}
+.fam-ord-name small{font-weight:400}
+.fam-ord-btns{display:flex;gap:6px}
+.fam-ord-btns button{width:34px;height:34px;display:flex;align-items:center;justify-content:center;padding:0;font-size:16px;line-height:1}
+.fam-ord-btns button:disabled{opacity:.3;cursor:not-allowed}
 
 .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;transition:all .15s;border:1px solid transparent}
 .btn.primary{background:var(--ink);color:#fff}
@@ -343,6 +351,10 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         <svg viewBox="0 0 24 24"><path d="M20 7L12 3L4 7M20 7v10l-8 4-8-4V7M20 7l-8 4M4 7l8 4M12 11v10"/></svg>
         Товари
       </a>
+      <a data-page="catalog">
+        <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        Порядок каталогу
+      </a>
       <a data-page="orders">
         <svg viewBox="0 0 24 24"><path d="M6 2l3 7h10l-2 8H8L6 2zM6 2H3M9 20c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1zM20 20c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1z"/></svg>
         Замовлення
@@ -394,6 +406,18 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         </div>
         <div class="loading">Завантажую…</div>
       </div>
+    </div>
+
+    <!-- CATALOG ORDER -->
+    <div class="page" id="page-catalog" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Порядок сімей у каталозі</h1>
+          <div class="meta">Стрілками ↑/↓ задайте послідовність карток і чипсів-фільтрів на головній</div>
+        </div>
+        <button class="btn primary" id="fam-order-save" onclick="saveFamilyOrder()"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>Зберегти порядок</button>
+      </div>
+      <div id="fam-order-list" class="fam-order-list"><div class="loading">Завантажую…</div></div>
     </div>
 
     <!-- ORDERS -->
@@ -1928,6 +1952,60 @@ document.getElementById('csv-apply-btn').onclick = async ()=>{
 
 // orders
 document.querySelector('[data-page="orders"]').addEventListener('click', loadOrders);
+
+/* ==================== CATALOG FAMILY ORDER ==================== */
+let FAM_ORDER = [];
+async function loadFamilyOrder(){
+  const wrap = document.getElementById('fam-order-list');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="loading">Завантажую\u2026</div>';
+  try {
+    if (!PRODUCTS || !PRODUCTS.length){ try { await loadProducts(); } catch(_){} }
+    const rows = await rest('ulhome_family_order?select=family,sort_order&order=sort_order.asc') || [];
+    const orderMap = {}; rows.forEach(r=>{ if(r && r.family!=null) orderMap[String(r.family).trim()] = Number(r.sort_order)||0; });
+    const SKIP = { 'Tees':1, 'SaleOstatki':1 };
+    const pubFams = {};
+    (PRODUCTS||[]).forEach(p=>{ const f=String(p.family||'').trim(); if(p.published && f && !SKIP[f]) pubFams[f]=1; });
+    const set = {};
+    Object.keys(orderMap).forEach(f=>{ if(!SKIP[f]) set[f]=1; });
+    Object.keys(pubFams).forEach(f=>{ set[f]=1; });
+    let list = Object.keys(set);
+    list.sort((a,b)=>{ const oa=orderMap[a]!=null?orderMap[a]:9999, ob=orderMap[b]!=null?orderMap[b]:9999; if(oa!==ob) return oa-ob; return a<b?-1:1; });
+    FAM_ORDER = list.map(f=>({ family:f, published: !!pubFams[f] }));
+    renderFamOrder();
+  } catch(e){ wrap.innerHTML = '<div class="loading">Помилка: '+(e&&e.message||e)+'</div>'; }
+}
+function renderFamOrder(){
+  const wrap = document.getElementById('fam-order-list');
+  if (!wrap) return;
+  if (!FAM_ORDER.length){ wrap.innerHTML = '<div class="loading">Немає сімей для впорядкування</div>'; return; }
+  wrap.innerHTML = FAM_ORDER.map((it,i)=>'<div class="fam-ord-row">'+
+    '<span class="fam-ord-idx">'+(i+1)+'</span>'+
+    '<span class="fam-ord-name">'+it.family+(it.published?'':' <small style="color:var(--ink-60)">(прихована)</small>')+'</span>'+
+    '<span class="fam-ord-btns">'+
+      '<button class="btn ghost" '+(i===0?'disabled':'')+' onclick="moveFam('+i+',-1)" title="Вгору">\u2191</button>'+
+      '<button class="btn ghost" '+(i===FAM_ORDER.length-1?'disabled':'')+' onclick="moveFam('+i+',1)" title="Вниз">\u2193</button>'+
+    '</span>'+
+  '</div>').join('');
+}
+function moveFam(i, dir){
+  const j = i + dir; if (j<0 || j>=FAM_ORDER.length) return;
+  const t = FAM_ORDER[i]; FAM_ORDER[i] = FAM_ORDER[j]; FAM_ORDER[j] = t;
+  renderFamOrder();
+}
+async function saveFamilyOrder(){
+  if (!FAM_ORDER.length){ toast('Нічого зберігати','err'); return; }
+  const btn = document.getElementById('fam-order-save');
+  if (btn) btn.disabled = true;
+  const now = new Date().toISOString();
+  const payload = FAM_ORDER.map((it,i)=>({ family: it.family, sort_order: (i+1)*10, updated_at: now }));
+  try {
+    await rest('ulhome_family_order', { method:'POST', headers:{ Prefer:'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(payload) });
+    toast('Порядок збережено — оновіть головну (F5)');
+  } catch(e){ toast('Помилка збереження: '+(e&&e.message||e),'err'); }
+  finally { if (btn) btn.disabled = false; }
+}
+document.querySelector('[data-page="catalog"]').addEventListener('click', loadFamilyOrder);
 </script>
 
 <script>

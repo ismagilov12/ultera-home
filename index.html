@@ -2547,7 +2547,7 @@ window.ulteraFbq = function(name, params){
 
           <div class="cd-section"><b>4</b><span>Спосіб оплати</span></div>
           <label class="cd-radio"><input type="radio" name="pm" value="card" checked><div><b>Оплата карткою</b><span>Доступна оплата частинами моно/а-банк</span></div></label>
-          <label class="cd-radio"><input type="radio" name="pm" value="np"><div><b>Оплата на пошті (наложений платіж)</b><span>Мінімальна передоплата 200 ₴</span></div></label>
+          <label class="cd-radio"><input type="radio" name="pm" value="np"><div><b>Оплата на пошті (наложений платіж)</b><span>Мінімальна передоплата 500 ₴</span></div></label>
 
           <div class="cd-err" id="wErr1"></div>
           <button class="cd-next submit big" onclick="wizardSubmit()">Оформити замовлення<svg class="cd-arr" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -3076,15 +3076,36 @@ try { renderTeesSection(); } catch(e) { try{ console.warn('renderTeesSection ini
     }
   }
 
+  function applyFamilyOrder(rows){
+    var map = {};
+    if (Array.isArray(rows)) rows.forEach(function(x){ if (x && x.family != null) map[String(x.family).trim()] = Number(x.sort_order)||0; });
+    window.FAMILY_ORDER = map;
+    try { reorderChips(map); } catch(_){}
+  }
+  function reorderChips(map){
+    map = map || window.FAMILY_ORDER || {};
+    var box = document.getElementById('chips');
+    if (!box) return;
+    var chips = Array.prototype.slice.call(box.querySelectorAll('.coll-chip'));
+    chips.sort(function(a,b){
+      var fa=(a.dataset.fam||''), fb=(b.dataset.fam||'');
+      if (fa==='all') return -1; if (fb==='all') return 1;
+      var oa=(map[fa.trim()]!=null)?map[fa.trim()]:9999, ob=(map[fb.trim()]!=null)?map[fb.trim()]:9999;
+      return oa-ob;
+    });
+    chips.forEach(function(c){ box.appendChild(c); });
+  }
   function go(){
     Promise.all([
       fetchJSON('/rest/v1/ulhome_products?select=*&published=eq.true&order=family.asc'),
       /* v130: was fetchJSON (capped at PostgREST default page size, дропало
          частину з 282 фото). Тепер fetchAllRows тягне всі рядки через Range. */
-      fetchAllRows('/rest/v1/ulhome_product_media?select=product_id,url,type,sort_order&order=product_id.asc,sort_order.asc', 1000)
+      fetchAllRows('/rest/v1/ulhome_product_media?select=product_id,url,type,sort_order&order=product_id.asc,sort_order.asc', 1000),
+      fetchJSON('/rest/v1/ulhome_family_order?select=family,sort_order').catch(function(){ return []; })
     ]).then(function(r){
       try {
         try { console.log('[ultera] bootstrap media rows:', (r[1]||[]).length); } catch(_){}
+        try { applyFamilyOrder(r[2]); } catch(_){}
         applyLive(r[0], r[1]);
       } catch(e){ try{ console.warn('[ultera] applyLive err:', e && e.message); }catch(_){} }
     }).catch(function(e){
@@ -3245,6 +3266,7 @@ function renderFeatured(){
   // v133 2026-05-18: tees (family=Tees) рендеряться окремою секцією, не як feat-card
   const _isTees = function(f){ return String(f||'').toLowerCase() === 'tees'; };
   const rows = [...DATA.featured, ...DATA.grid].filter(r => !_isTees(r && r.family));
+  (function(){ var _fo=(window.FAMILY_ORDER||{}); rows.sort(function(a,b){ var ka=String((a&&a.family)||'').trim(), kb=String((b&&b.family)||'').trim(); var oa=(_fo[ka]!=null)?_fo[ka]:9999, ob=(_fo[kb]!=null)?_fo[kb]:9999; return oa-ob; }); })();
 
   el.innerHTML = rows.map((row, idx) => {
     const fam = row.family;
