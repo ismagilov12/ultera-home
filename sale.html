@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>ULTERA — Розпродаж остатків −30%</title>
+<title>ULTERA — Розпродаж залишків −30%</title>
 <style>
 :root{
   --bg:#f4f3ee;--bg-alt:#eae8e1;--ink:#0e0e0e;--ink-60:#555;--ink-40:#8a8a86;
@@ -136,12 +136,12 @@ footer{text-align:center;color:var(--ink-40);font-family:var(--font-mono);font-s
 <body>
 <header>
   <h1>ULTERA</h1>
-  <div class="sub">Розпродаж остатків · −30%</div>
+  <div class="sub">Розпродаж залишків · −30%</div>
   <button id="cartBtn" onclick="openCart()">Кошик<b id="cnt">0</b></button>
 </header>
 <div class="note">Ціна −30% діє на залишкові розміри зі складу. Оплата картку онлайн або наложений платіж (передплата 200₴) — як на основному сайті.</div>
 <div class="wrap"><div class="grid" id="grid"></div></div>
-<footer>ULTERA · розпродаж остатків</footer>
+<footer>ULTERA · розпродаж залишків</footer>
 
 <div class="modal" id="modal"><div class="mback" onclick="closeModal()"></div><div class="mpanel"><button class="mx" onclick="closeModal()">&times;</button><div class="mgal"><span class="vbadge" id="mVbadge">&#9654; ВІДЕО</span><button class="gnav prev" onclick="mNav(-1)">&#10094;</button><div class="gstage" id="mStage"></div><button class="gnav next" onclick="mNav(1)">&#10095;</button><div class="gcount" id="mCount"></div><div class="gthumbs" id="mThumbs"></div></div><div class="minfo"><div class="meye" id="mEye"></div><h2 class="mtitle" id="mTitle"></h2><div class="msku" id="mSku"></div><div class="mpbox"><span class="mp-cur" id="mPcur"></span><span class="mp-old" id="mPold"></span><span class="mp-pct">−30%</span></div><div class="msz-h"><span>РОЗМІР</span><span>ЄС / СМ</span></div><div class="mszs" id="mSzs"></div><button class="mbuy" id="mBuy" onclick="modalAdd()">В КОШИК</button><div class="mspec" id="mSpec"></div></div></div></div>
 <div class="ov" id="ov" onclick="closeCart()"></div>
@@ -179,7 +179,7 @@ const pick={};
 document.getElementById('grid').innerHTML=D.map((x,i)=>`<div class="card" onclick="openModal(${i})">
   <div class="card-img">
     <img loading="lazy" src="${x.ph}" alt="${x.n}">
-    <span class="badge ${x.nw?'new':''}">${x.nw?'NEW · ОСТАТОК':'SALE −30%'}</span>
+    <span class="badge ${x.nw?'new':''}">${x.nw?'NEW · ЗАЛИШОК':'SALE −30%'}</span>
     <div class="card-quick"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>
   </div>
   <div class="card-name">${x.n}</div>
