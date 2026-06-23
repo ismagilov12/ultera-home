@@ -299,7 +299,7 @@ async function checkout(){
   if(!wh){err.textContent='Вкажіть відділення';return;}
   go.disabled=true;go.textContent='Надсилаю...';
   const num='ULT-'+Date.now().toString().slice(-8);
-  const items=CART.map(c=>({uid:c.uid,title:c.title,photo:c.photo,color_name:c.color_name,size:c.size,price:c.price,qty:c.qty,promo_pct:SALE_PCT}));
+  const items=CART.map(c=>({uid:c.uid,title:c.title,photo:c.photo,color_name:c.color_name,size:c.size,price:c.price,qty:c.qty,promo_pct:SALE_PCT,family:'SALE',saleItem:true}));
   try{
     const or=await fetch('/api/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       num,stage:'final',fio,phone,city,wh,payment:pm,total:total(),items
