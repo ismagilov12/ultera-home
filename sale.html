@@ -312,6 +312,16 @@ async function checkout(){
   }
 }
 renderCart();
+
+/* deeplink router: /sale.html?p=<uid> opens the product modal (used by the FB sale feed) */
+(function(){
+  var _open=openModal,_close=closeModal;
+  openModal=function(i){_open(i);try{var u=D[i]&&D[i].uid;if(u)history.replaceState(null,'','?p='+encodeURIComponent(u));}catch(e){}};
+  closeModal=function(){_close();try{history.replaceState(null,'',location.pathname);}catch(e){}};
+  function openByUid(u){if(!u)return;var i=D.findIndex(function(x){return String(x.uid)===String(u);});if(i>=0)openModal(i);}
+  openByUid(new URLSearchParams(location.search).get('p'));
+  window.addEventListener('popstate',function(){var u=new URLSearchParams(location.search).get('p');if(u)openByUid(u);else _close();});
+})();
 </script>
 </body>
 </html>
