@@ -24,6 +24,14 @@
     {
       "source": "/api/feed.xml",
       "destination": "/api/feed"
+    },
+    {
+      "source": "/sale-feed.xml",
+      "destination": "/api/sale-feed"
+    },
+    {
+      "source": "/api/sale-feed.xml",
+      "destination": "/api/sale-feed"
     }
   ],
   "crons": [
