@@ -130,7 +130,7 @@ footer{text-align:center;color:var(--ink-40);font-family:var(--font-mono);font-s
   <div class="sub">Розпродаж остатків · −30%</div>
   <button id="cartBtn" onclick="openCart()">Кошик<b id="cnt">0</b></button>
 </header>
-<div class="note">Ціна −30% діє на залишкові розміри зі складу. Оплата картку онлайн або наложений платіж (передплата 500₴) — як на основному сайті.</div>
+<div class="note">Ціна −30% діє на залишкові розміри зі складу. Оплата картку онлайн або наложений платіж (передплата 200₴) — як на основному сайті.</div>
 <div class="wrap"><div class="grid" id="grid"></div></div>
 <footer>ULTERA · розпродаж остатків</footer>
 
@@ -241,7 +241,7 @@ function renderCart(){
     <div class="ac"><input id="wh" placeholder="Відділення / поштомат" autocomplete="off"><div class="acbox" id="whBox"></div></div>
     <div class="pm">
       <label><input type="radio" name="pm" value="card" checked><span>Картка онлайн</span></label>
-      <label><input type="radio" name="pm" value="np"><span>Наложка (передпл. 500₴)</span></label>
+      <label><input type="radio" name="pm" value="np"><span>Наложка (передпл. 200₴)</span></label>
     </div>
     <button class="go" id="go" onclick="checkout()">Оформити та оплатити</button>`;
   bindNP();
