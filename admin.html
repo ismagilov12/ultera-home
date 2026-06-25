@@ -443,7 +443,11 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
       <div class="page-head">
         <div>
           <h1>Фід Facebook</h1>
-          <div class="meta">Познач моделі, що потрапляють у Facebook product feed (/feed.xml). <span id="feed-count">0</span></div>
+          <div class="meta">Познач моделі, що потрапляють у Facebook product feed. <span id="feed-count">0</span></div>
+          <div class="meta" style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">Посилання на фід:
+            <a href="https://ultera.in.ua/feed.xml" target="_blank" rel="noopener" style="color:#3a6aa8;text-decoration:underline;font-family:var(--font-mono)">https://ultera.in.ua/feed.xml</a>
+            <button type="button" class="btn ghost" style="padding:3px 10px;font-size:11px" onclick="copyFeedUrl(this)">копіювати</button>
+          </div>
         </div>
         <button class="btn primary" id="feed-save" onclick="saveFeed()" disabled>Зберегти фід</button>
       </div>
@@ -2110,6 +2114,12 @@ async function saveFeed(){
     toast('Фід збережено \u2713 ('+changed.length+') — оновиться за ~10 хв');
   }catch(e){ toast('Помилка: '+(e&&e.message||e),'err'); }
   finally{ if(btn){ btn.textContent='Зберегти фід'; } updateFeedCount(); }
+}
+function copyFeedUrl(btn){
+  const url="https://ultera.in.ua/feed.xml";
+  const done=()=>{ if(btn){ const t=btn.textContent; btn.textContent="скопійовано \u2713"; setTimeout(()=>{btn.textContent=t;},1500); } try{toast("Посилання скопійовано");}catch(_){} };
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done).catch(()=>{ window.prompt("Скопіюй посилання:",url); }); }
+  else { window.prompt("Скопіюй посилання:",url); }
 }
 document.querySelector('[data-page="feed"]').addEventListener('click', loadFeed);
 </script>
