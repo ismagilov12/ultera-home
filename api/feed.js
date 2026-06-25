@@ -176,7 +176,9 @@ function googleCategory(p){
 }
 
 function itemGroupId(p){
-  return p.family ? slugify(p.family) : 'misc';
+  // Кожен колір = окремий самостійний товар → унікальний group id по uid,
+  // щоб Facebook НЕ зливав кольори однієї сімʼї в одну картку-варіанти.
+  return String(p.uid || (p.family ? slugify(p.family) : 'misc'));
 }
 
 // === Supabase fetch ===
