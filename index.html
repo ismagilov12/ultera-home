@@ -6215,27 +6215,47 @@ insertWomanDivider();
     var params = new URLSearchParams(window.location.search);
     var slug = params.get('p');
     if (!slug) return;
-    /* v-saledeeplink: reserved tokens jump to the SALE block instead of a product modal */
+    /* v-saledeeplink2: reserved tokens jump to the SALE block instead of a product modal.
+       Re-scrolls after bootstrap + image loads because async rendering shifts layout. */
     var SALE_TOKENS = ['sale','sale-30','sale30','rozprodazh','rozprodaj','rasprodazha','rasprodaja'];
     if (SALE_TOKENS.indexOf(String(slug).toLowerCase()) !== -1){
-      var scrollSale = function(tries){
-        tries = tries || 0;
-        var el = document.getElementById('saleSection');
-        if (el){
-          try { el.scrollIntoView({behavior:'smooth', block:'start'}); }
-          catch(_){ try { el.scrollIntoView(); } catch(__){} }
-          try {
-            var u = new URL(window.location.href);
-            u.searchParams.delete('p');
-            var qs = u.searchParams.toString();
-            history.replaceState(null, '', u.pathname + (qs ? '?' + qs : '') + '#saleSection');
-          } catch(e){}
-          return;
-        }
-        if (tries < 60) setTimeout(function(){ scrollSale(tries+1); }, 150);
+      var saleEl = function(){ return document.getElementById('saleSection'); };
+      var doScroll = function(smooth){
+        var el = saleEl();
+        if (!el) return false;
+        try {
+          var y = el.getBoundingClientRect().top + window.pageYOffset - 8;
+          window.scrollTo({ top: y, behavior: smooth ? 'smooth' : 'auto' });
+        } catch(_){ try { el.scrollIntoView(); } catch(__){} }
+        return true;
       };
-      if (document.readyState === 'complete' || document.readyState === 'interactive') scrollSale(0);
-      else document.addEventListener('DOMContentLoaded', function(){ scrollSale(0); });
+      var cleanUrl = function(){
+        try {
+          var u = new URL(window.location.href);
+          u.searchParams.delete('p');
+          var qs = u.searchParams.toString();
+          history.replaceState(null, '', u.pathname + (qs ? '?' + qs : '') + '#saleSection');
+        } catch(e){}
+      };
+      var settle = function(){
+        cleanUrl();
+        /* multiple passes to correct for layout shifts as content/images load */
+        var delays = [0, 250, 600, 1100, 1800, 2600], k = 0;
+        (function pass(){
+          doScroll(k === 0);
+          k++;
+          if (k < delays.length) setTimeout(pass, delays[k] - delays[k-1]);
+        })();
+        try { window.addEventListener('load', function(){ setTimeout(function(){ doScroll(false); }, 200); }, { once:true }); } catch(_){}
+      };
+      var waitEl = function(tries){
+        tries = tries || 0;
+        if (saleEl()) { waitForBootstrap(settle); return; }
+        if (tries < 80) setTimeout(function(){ waitEl(tries+1); }, 100);
+        else waitForBootstrap(settle);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ waitEl(0); });
+      else waitEl(0);
       return;
     }
     waitForBootstrap(function(){
@@ -6365,6 +6385,7 @@ insertWomanDivider();
   var SALE_PCT=30;
   var saleP=function(p){return Math.ceil(p*(100-SALE_PCT)/100/25)*25;};
   var fmt=function(n){return Number(n).toLocaleString('uk-UA');};
+  var PS='https://ultera-home.vercel.app/photos/sale/';
   var D=[
  {uid:"671974984372",n:"Hunk2 Panda",c:"Panda",p:3590,ph:"https://ultera-home.vercel.app/photos/55942430.webp",sz:["41"]},
  {uid:"469658834434",n:"Hunk Mint",c:"Мʼятний",p:4100,ph:"https://ultera-home.vercel.app/photos/aa0a01576c53f65f8087274daa9ebe54.webp",sz:["39"]},
