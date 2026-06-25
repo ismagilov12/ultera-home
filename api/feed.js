@@ -1,6 +1,11 @@
 // api/feed.js — ULTERA Facebook / Google Merchant Product Feed (XML RSS 2.0)
 // Lives at /api/feed and (via vercel.json rewrites) at /api/feed.xml and /feed.xml.
-// Source of truth: Supabase ulhome_products (published=true) + ulhome_product_media.
+// Source of truth: Supabase ulhome_products + ulhome_product_media.
+//
+// Inclusion rule (managed from admin.html → вкладка «Фід Facebook»):
+//   published = true  AND  family <> 'Tees'  AND  feed_enabled = true
+//   feed_enabled is opt-in (default false) — нова модель НЕ потрапляє у фід,
+//   доки адмін явно не увімкне її перемикачем.
 //
 // Output spec:
 //   Content-Type: application/xml; charset=utf-8
@@ -225,8 +230,10 @@ module.exports = async function handler(req, res){
       'Accept': 'application/json'
     };
 
+    // Inclusion rule: published footwear that the admin has explicitly enabled
+    // (feed_enabled=true). Tees are excluded server-side as a hard guarantee.
     const products = await sbFetch(
-      sbUrl + '/rest/v1/ulhome_products?select=id,uid,family,title,color_name,color_hex,price,price_old,mark,description,desc_short,photo,gender,category,sort_order,published&published=eq.true&order=family.asc,sort_order.asc',
+      sbUrl + '/rest/v1/ulhome_products?select=id,uid,family,title,color_name,color_hex,price,price_old,mark,description,desc_short,photo,gender,category,sort_order,published,feed_enabled&published=eq.true&feed_enabled=eq.true&family=neq.Tees&order=family.asc,sort_order.asc',
       headers
     );
 
@@ -240,6 +247,9 @@ module.exports = async function handler(req, res){
     const items = [];
     let skipped = 0;
     for (const p of products){
+      // Defensive guards (query already filters, but keep belt + suspenders):
+      if (p.family === 'Tees'){ skipped++; continue; }
+      if (p.feed_enabled === false){ skipped++; continue; }
       const mainImg = p.photo;
       if (!mainImg){ skipped++; continue; }
 

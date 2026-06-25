@@ -57,6 +57,20 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 .page-head h1{font-size:26px;font-weight:800;letter-spacing:-.015em}
 .page-head .meta{font-family:var(--font-mono);font-size:11px;color:var(--ink-60);letter-spacing:.06em}
 .fam-order-list{display:flex;flex-direction:column;gap:8px;max-width:560px}
+.feed-list{display:flex;flex-direction:column;gap:6px;max-width:680px}
+.feed-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 14px;cursor:pointer;transition:border-color .15s,background .15s}
+.feed-row.on{border-color:var(--mint);background:#f4fbf3}
+.feed-thumb{width:42px;height:42px;border-radius:8px;overflow:hidden;background:#f5f5f0;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.feed-thumb img{width:100%;height:100%;object-fit:cover}
+.feed-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.feed-info b{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed-info small{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-60);letter-spacing:.04em}
+.feed-sw{position:relative;flex-shrink:0;width:42px;height:24px}
+.feed-sw input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:2}
+.feed-sw i{position:absolute;inset:0;background:#d8d8d2;border-radius:999px;transition:background .15s;pointer-events:none}
+.feed-sw i::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.feed-sw input:checked + i{background:var(--mint)}
+.feed-sw input:checked + i::after{transform:translateX(18px)}
 .fam-ord-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .fam-ord-idx{font-family:var(--font-mono);font-size:12px;color:var(--ink-60);width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:#f5f5f0;border-radius:6px;flex-shrink:0}
 .fam-ord-name{flex:1;font-size:14px;font-weight:600}
@@ -355,6 +369,10 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
         Порядок каталогу
       </a>
+      <a data-page="feed">
+        <svg viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"/></svg>
+        Фід Facebook
+      </a>
       <a data-page="orders">
         <svg viewBox="0 0 24 24"><path d="M6 2l3 7h10l-2 8H8L6 2zM6 2H3M9 20c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1zM20 20c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1z"/></svg>
         Замовлення
@@ -418,6 +436,24 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         <button class="btn primary" id="fam-order-save" onclick="saveFamilyOrder()"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>Зберегти порядок</button>
       </div>
       <div id="fam-order-list" class="fam-order-list"><div class="loading">Завантажую…</div></div>
+    </div>
+
+    <!-- FEED FACEBOOK -->
+    <div class="page" id="page-feed" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Фід Facebook</h1>
+          <div class="meta">Познач моделі, що потрапляють у Facebook product feed (/feed.xml). <span id="feed-count">0</span></div>
+        </div>
+        <button class="btn primary" id="feed-save" onclick="saveFeed()" disabled>Зберегти фід</button>
+      </div>
+      <div class="prod-toolbar">
+        <input type="search" id="feed-search" placeholder="Пошук за назвою, кольором, SKU…" oninput="renderFeed()">
+        <select id="feed-family" onchange="renderFeed()"><option value="">Всі сімʼї</option></select>
+        <button type="button" class="btn ghost" onclick="feedBulk(true)">Увімкнути видимі</button>
+        <button type="button" class="btn ghost" onclick="feedBulk(false)">Вимкнути видимі</button>
+      </div>
+      <div id="feed-list" class="feed-list"><div class="loading">Завантажую…</div></div>
     </div>
 
     <!-- ORDERS -->
@@ -2006,6 +2042,76 @@ async function saveFamilyOrder(){
   finally { if (btn) btn.disabled = false; }
 }
 document.querySelector('[data-page="catalog"]').addEventListener('click', loadFamilyOrder);
+
+/* ==================== FEED FACEBOOK ==================== */
+let FEED_ORIG = {};
+let FEED_WORK = {};
+function feedEligible(){
+  return (PRODUCTS||[]).filter(p=> p.published && String(p.family||'').trim()!=='Tees');
+}
+async function loadFeed(){
+  const wrap=document.getElementById('feed-list'); if(!wrap) return;
+  wrap.innerHTML='<div class="loading">Завантажую\u2026</div>';
+  try{
+    if(!PRODUCTS||!PRODUCTS.length){ try{await loadProducts();}catch(_){} }
+    FEED_ORIG={}; FEED_WORK={};
+    feedEligible().forEach(p=>{ const v=p.feed_enabled===true; FEED_ORIG[p.id]=v; FEED_WORK[p.id]=v; });
+    const fams=[...new Set(feedEligible().map(p=>String(p.family||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'uk'));
+    const sel=document.getElementById('feed-family');
+    if(sel){ const cur=sel.value; sel.innerHTML='<option value="">Всі сімʼї</option>'+fams.map(f=>'<option value="'+escapeHtml(f)+'">'+escapeHtml(f)+'</option>').join(''); sel.value=cur; }
+    renderFeed();
+  }catch(e){ wrap.innerHTML='<div class="loading">Помилка: '+(e&&e.message||e)+'</div>'; }
+}
+function feedFiltered(){
+  const qEl=document.getElementById('feed-search'); const fEl=document.getElementById('feed-family');
+  const q=(qEl?qEl.value:'').trim().toLowerCase(); const fam=fEl?fEl.value:'';
+  return feedEligible().filter(p=>{
+    if(fam && String(p.family||'').trim()!==fam) return false;
+    if(q){ const hay=(String(p.title||'')+' '+String(p.color_name||'')+' '+String(p.family||'')+' '+String(p.uid||'')).toLowerCase(); if(hay.indexOf(q)===-1) return false; }
+    return true;
+  }).sort((a,b)=> String(a.family||'').localeCompare(String(b.family||''),'uk') || ((a.sort_order||0)-(b.sort_order||0)));
+}
+function renderFeed(){
+  const wrap=document.getElementById('feed-list'); if(!wrap) return;
+  const list=feedFiltered();
+  if(!list.length){ wrap.innerHTML='<div class="loading">Немає моделей за фільтром</div>'; updateFeedCount(); return; }
+  wrap.innerHTML=list.map(p=>{
+    const on=FEED_WORK[p.id]===true; const price=Math.round(parseFloat(p.price)||0);
+    const thumb=p.photo?'<img src="'+escapeHtml(p.photo)+'" alt="" loading="lazy">':'';
+    return '<label class="feed-row'+(on?' on':'')+'" data-id="'+p.id+'">'+
+      '<span class="feed-thumb">'+thumb+'</span>'+
+      '<span class="feed-info"><b>'+escapeHtml(p.title||p.family||'\u2014')+'</b>'+
+        '<small>'+escapeHtml(p.family||'')+(p.color_name?' \u00b7 '+escapeHtml(p.color_name):'')+' \u00b7 '+price+' \u20b4</small></span>'+
+      '<span class="feed-sw"><input type="checkbox" class="feed-chk" data-id="'+p.id+'" '+(on?'checked':'')+' onchange="feedToggle(\''+p.id+'\',this.checked)"><i></i></span>'+
+    '</label>';
+  }).join('');
+  updateFeedCount();
+}
+function feedToggle(id,on){ FEED_WORK[id]=!!on; const row=document.querySelector('.feed-row[data-id="'+id+'"]'); if(row) row.classList.toggle('on',!!on); updateFeedCount(); }
+function feedBulk(on){ feedFiltered().forEach(p=>{ FEED_WORK[p.id]=!!on; }); renderFeed(); }
+function updateFeedCount(){
+  const elig=feedEligible(); const total=elig.length; let onCnt=0,dirty=0;
+  elig.forEach(p=>{ if(FEED_WORK[p.id]) onCnt++; if((FEED_WORK[p.id]===true)!==(FEED_ORIG[p.id]===true)) dirty++; });
+  const el=document.getElementById('feed-count');
+  if(el) el.textContent='У фіді: '+onCnt+' з '+total+(dirty?(' \u00b7 незбережених змін: '+dirty):'');
+  const btn=document.getElementById('feed-save'); if(btn) btn.disabled=!dirty;
+}
+async function saveFeed(){
+  const elig=feedEligible();
+  const changed=elig.filter(p=> (FEED_WORK[p.id]===true)!==(FEED_ORIG[p.id]===true));
+  if(!changed.length){ toast('Немає змін'); return; }
+  const btn=document.getElementById('feed-save'); if(btn){ btn.disabled=true; btn.textContent='Зберігаю\u2026'; }
+  try{
+    for(const p of changed){
+      const val=FEED_WORK[p.id]===true;
+      await rest('ulhome_products?id=eq.'+p.id, { method:'PATCH', headers:{Prefer:'return=minimal'}, body: JSON.stringify({ feed_enabled: val }) });
+      p.feed_enabled=val; FEED_ORIG[p.id]=val;
+    }
+    toast('Фід збережено \u2713 ('+changed.length+') — оновиться за ~10 хв');
+  }catch(e){ toast('Помилка: '+(e&&e.message||e),'err'); }
+  finally{ if(btn){ btn.textContent='Зберегти фід'; } updateFeedCount(); }
+}
+document.querySelector('[data-page="feed"]').addEventListener('click', loadFeed);
 </script>
 
 <script>
