@@ -148,7 +148,10 @@ module.exports = async function handler(req, res) {
 
   // Anti-tamper: confirm paid amount + currency match what we recorded (from notes "WB <CUR> <AMOUNT> @ ...").
   const currency = String(process.env.WB_CURRENCY || 'EUR').toUpperCase();
-  const expM = /WB\s+([A-Z]{3})\s+([\d.]+)/.exec(String(order.notes || ''));
+  // Notes format: "WB EUR goods <g> + ship <s> = <total> @ <fx>". WB mc_gross is
+  // the full charged amount (goods + shipping), so compare against <total>.
+  const expM = /WB\s+([A-Z]{3})\b.*?=\s*([\d.]+)/.exec(String(order.notes || '')) ||
+               /WB\s+([A-Z]{3})\s+([\d.]+)/.exec(String(order.notes || ''));
   if (expM) {
     const expCur = expM[1];
     const expAmt = Number(expM[2]);

@@ -116,6 +116,20 @@ async function saveOrder(order) {
 
 function md5(s) { return crypto.createHash('md5').update(String(s), 'utf8').digest('hex'); }
 
+// Nova Global shipping zones (EUR per order). Keep in sync with the frontend.
+const SHIP_Z1 = ['PL','SK','HU','RO','CZ','MD'];
+const SHIP_Z2 = ['DE','AT','FR','IT','ES','NL','BE','LU','PT','IE','DK','SE','FI','GR','LT','LV','EE','SI','HR','BG','CH','NO'];
+const SHIP_Z3 = ['GB'];
+const SHIP_Z4 = ['US','CA'];
+function shippingEur(country) {
+  const c = String(country || '').toUpperCase();
+  if (SHIP_Z1.indexOf(c) >= 0) return 9;
+  if (SHIP_Z2.indexOf(c) >= 0) return 12;
+  if (SHIP_Z3.indexOf(c) >= 0) return 14;
+  if (SHIP_Z4.indexOf(c) >= 0) return 20;
+  return 28;
+}
+
 function splitName(full) {
   const parts = String(full || '').trim().split(/\s+/);
   if (parts.length <= 1) return { first: parts[0] || 'Customer', last: '-' };
@@ -170,6 +184,9 @@ module.exports = async function handler(req, res) {
   if (!(fx > 0)) return res.status(500).json({ ok: false, error: 'FX rate not configured (WB_FX_UAH_PER_UNIT)' });
   const amountNum = Math.round((uahTotal / fx) * 100) / 100;
   const amount = amountNum.toFixed(2);
+  // Shipping (Nova Global zone by destination country); WB charges amount + shipping.
+  const shipEur = shippingEur(body.country);
+  const totalEur = Math.round((amountNum + shipEur) * 100) / 100;
 
   const wbLogin = process.env.WB_LOGIN;
   const wbSecret = process.env.WB_SECRET;
@@ -188,7 +205,7 @@ module.exports = async function handler(req, res) {
     items: body.items,
     total: uahTotal,
     status: 'new',
-    notes: 'WB ' + currency + ' ' + amount + ' @ ' + fx + ' UAH/unit' + (body.comment ? ('\n' + body.comment) : ''),
+    notes: 'WB ' + currency + ' goods ' + amount + ' + ship ' + shipEur.toFixed(2) + ' = ' + totalEur.toFixed(2) + ' @ ' + fx + ' UAH/unit' + (body.comment ? ('\n' + body.comment) : ''),
     session_id:  (typeof body.session_id  === 'string' ? body.session_id  : '').slice(0, 200)  || null,
     referrer:    (typeof body.referrer    === 'string' ? body.referrer    : '').slice(0, 2000) || null,
     landing_url: (typeof body.landing_url === 'string' ? body.landing_url : '').slice(0, 2000) || null
@@ -219,11 +236,20 @@ module.exports = async function handler(req, res) {
     country: String(body.country),
     zip: String(body.zip || ''),
     state: String(body.state || ''),
-    shipping: '0',
+    shipping: shipEur.toFixed(2),
     return: process.env.WB_RETURN_URL || 'https://ultera.in.ua/?paid=1',
     cancel_return: process.env.WB_CANCEL_URL || 'https://ultera.in.ua/?paid=0',
     notify_url: process.env.WB_NOTIFY_URL || 'https://ultera.in.ua/api/westernbid-callback'
   };
+
+  // Payment gateway: default PayPal (which also accepts guest card payments).
+  // Set WB_GATE=stripe.com to route through Stripe once WB support enables it.
+  const gate = String(process.env.WB_GATE || '').trim();
+  if (gate) fields.gate = gate;
+  // Stripe requires a 7% Florida (US) sales tax for FL buyers (per WB docs).
+  if (gate === 'stripe.com' && String(body.state || '').toUpperCase() === 'FL') {
+    fields.sales_tax = (Math.round(amountNum * 0.07 * 100) / 100).toFixed(2);
+  }
 
   // Per-line items. Per WB docs, item_name_x, item_number_x, quantity_x,
   // amount_x, url_x AND description_x are all required.
@@ -249,6 +275,8 @@ module.exports = async function handler(req, res) {
     invoice: invoice,
     amount: amount,
     currency: currency,
+    shipping: shipEur.toFixed(2),
+    total: totalEur.toFixed(2),
     order_number: orderNumber,
     uah_total: uahTotal
   });
