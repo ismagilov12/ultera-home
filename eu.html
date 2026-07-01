@@ -6467,6 +6467,37 @@ insertWomanDivider();
 
   /* ---------- 1. Prices: "N ₴" -> "€M" everywhere (static + dynamic) ---------- */
   var CUR = /([0-9][0-9\u00a0\u202f .,]*)\s*₴/g;
+  var CY = /[Ѐ-ӿ]/;
+  var EU_TR = {
+    "Технологічне взуття з преміум матеріалів, виготовлене вручну.":"Technological footwear from premium materials, handcrafted.",
+    "з преміум матеріалів":"from premium materials","виготовлене вручну":"handcrafted","Технологічне":"Technological","взуття":"footwear",
+    "Легке та зручне взуття для теплої весни і літа.":"Light, comfortable footwear for warm spring and summer.",
+    "забезпечує комфорт навіть у":"ensures comfort even at",
+    "твоя стопа не перегрівається і не пітніє":"your foot won't overheat or sweat",
+    "Преміальна шкіра Nappa + амортизація Bounce EVA — служать роками.":"Premium Nappa leather + Bounce EVA cushioning — they last for years.",
+    "Преміальна шкіра Nappa":"Premium Nappa leather","амортизація":"cushioning","служать роками":"last for years","моделей":"models",
+    "Шкіра Nappa + дихаюча сітка":"Nappa leather + breathable mesh","Шкіра Nappa + рефлектив":"Nappa leather + reflective",
+    "Шкіра Nappa":"Nappa leather","Шкіра":"leather","рефлектив":"reflective",
+    "1000+ пар":"1000+ pairs","понад 1000 пар":"over 1000 pairs",
+    "Ціна діє на залишкові розміри.":"Price applies to remaining sizes.","як на основному сайті":"same as on the main site",
+    "онлайн або наложка (передплата":"online or cash on delivery (prepayment","наложка":"cash on delivery","передплата":"prepayment","онлайн":"online",
+    "ОСТАТОК":"LAST STOCK","Остаток":"Last stock","остаток":"last stock",
+    "технологічного взуття":"technological footwear","ТЕХНОЛОГІЧНОГО ВЗУТТЯ":"TECHNOLOGICAL FOOTWEAR","технологічного":"technological",
+    "саме так можна описати наші кроси":"that's exactly how to describe our sneakers",
+    "Ми підбираємо технологічні матеріали":"We pick technological materials","вологостійкі, легкі, сучасні":"water-resistant, light, modern",
+    "і комбінуємо їх з преміальною шкірою Nappa":"and combine them with premium Nappa leather","преміальною шкірою Nappa":"premium Nappa leather",
+    "вручну та з любов'ю":"by hand and with love","вручну та з любовʼю":"by hand and with love","вручну":"by hand",
+    "гарантію":"warranty","ГАРАНТІЯ":"WARRANTY",
+    "Останні миті з майстерні":"Latest moments from the workshop","Останні миті":"Latest moments",
+    "Що таке підошва Bounce?":"What is a Bounce sole?","Як обрати розмір?":"How to choose a size?",
+    "Розміри повномірні.":"Sizes are true to size.","повномірні":"true to size","Розміри":"Sizes",
+    "Виміряй стопу від п'ятки до великого пальця.":"Measure your foot from heel to the big toe.",
+    "Виміряй стопу від пʼятки до великого пальця.":"Measure your foot from heel to the big toe.",
+    "Виміряй стопу":"Measure your foot","калькулятор підбере ідеальний розмір":"the calculator will pick your perfect size",
+    "Або натисни":"Or tap","у картці":"in the card","натисни":"tap","і т.д.":"etc.","тапочки":"slippers"
+  };
+  var EU_KEYS = Object.keys(EU_TR).sort(function(a,b){return b.length-a.length;});
+  function euTr(str){ var out=str,i,k; for(i=0;i<EU_KEYS.length;i++){ k=EU_KEYS[i]; if(out.indexOf(k)!==-1) out=out.split(k).join(EU_TR[k]); } return out; }
   function toEur(m, num){
     var digits = String(num).replace(/[^0-9]/g, '');
     if(!digits) return m;
@@ -6474,11 +6505,11 @@ insertWomanDivider();
     return '€' + eur.toFixed(2);
   }
   function convText(t){
-    var v = t.nodeValue;
-    if(v && v.indexOf('₴') !== -1){
-      var nv = v.replace(CUR, toEur);
-      if(nv !== v) t.nodeValue = nv;
-    }
+    var v = t.nodeValue; if(!v) return;
+    var nv = v;
+    if(CY.test(nv)) nv = euTr(nv);
+    if(nv.indexOf('₴') !== -1) nv = nv.replace(CUR, toEur);
+    if(nv !== v) t.nodeValue = nv;
   }
   var SKIP = {SCRIPT:1,STYLE:1,NOSCRIPT:1,TEXTAREA:1};
   function convWalk(node){
@@ -6495,7 +6526,7 @@ insertWomanDivider();
       for(var i=0;i<muts.length;i++){
         var m = muts[i];
         if(m.type === 'childList'){ if(m.addedNodes) for(var j=0;j<m.addedNodes.length;j++) convWalk(m.addedNodes[j]); }
-        else if(m.type === 'characterData'){ if(m.target && String(m.target.nodeValue).indexOf('₴') !== -1) convText(m.target); }
+        else if(m.type === 'characterData'){ if(m.target){ var tv=String(m.target.nodeValue); if(CY.test(tv) || tv.indexOf('₴')!==-1) convText(m.target); } }
       }
     });
     mo.observe(document.body, {childList:true, subtree:true, characterData:true});
@@ -6562,7 +6593,7 @@ insertWomanDivider();
     if(btn){ btn.disabled = true; btn.textContent = 'Redirecting to payment…'; }
     var items = C.items.map(function(it){
       return { uid: it.uid, qty: it.qty || 1, title: it.title, color_name: it.color_name, size: it.size,
-               season: it.season || null, promoSecond: !!it.promoSecond,
+               price: it.price, season: it.season || null, promoSecond: !!it.promoSecond,
                promo_pct: (it.promoSecond || it.saleItem) ? 30 : 0 };
     });
     var payload = { fio: fio, phone: phone, email: email, country: country, city: city, zip: zip, address1: addr,
