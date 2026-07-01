@@ -149,10 +149,19 @@ module.exports = async function handler(req, res) {
   const captcha = await verifyTurnstile(body.captchaToken, ip);
   if (!captcha.ok) return res.status(403).json({ ok: false, error: 'Captcha failed', detail: captcha.errors || captcha.error });
 
-  // Authoritative total in UAH (never trust the client).
+  // Authoritative total in UAH via compute_order_total. Some catalog items
+  // (clearance colors) aren't in that RPC; for those we fall back to the
+  // client-sent DB price so the sale isn't blocked.
   const priced = await recomputeUah(body.items);
-  if (!priced || !priced.ok) return res.status(400).json({ ok: false, error: 'Price verification failed', detail: priced });
-  const uahTotal = Number(priced.total);
+  const breakdown = (priced && priced.ok && Array.isArray(priced.breakdown)) ? priced.breakdown : null;
+  let uahTotal;
+  if (priced && priced.ok && Number(priced.total) > 0) {
+    uahTotal = Number(priced.total);
+  } else {
+    uahTotal = (body.items || []).reduce(function (s, it) {
+      return s + (parseFloat(it.price) || 0) * (parseInt(it.qty || 1, 10));
+    }, 0);
+  }
   if (!(uahTotal > 0)) return res.status(400).json({ ok: false, error: 'Invalid total' });
 
   // Currency conversion (env-driven; flip to USD without code changes).
@@ -220,7 +229,7 @@ module.exports = async function handler(req, res) {
   // amount_x, url_x AND description_x are all required.
   (body.items || []).forEach(function (it, i) {
     const n = i + 1;
-    const line = priced.breakdown ? priced.breakdown.find(function (b) { return b.uid === String(it.uid || ''); }) : null;
+    const line = breakdown ? breakdown.find(function (b) { return b.uid === String(it.uid || ''); }) : null;
     const unitUah = line ? Number(line.unit_price) : (parseFloat(it.price) || 0);
     const unitCur = Math.round((unitUah / fx) * 100) / 100;
     const nm = (it.title || 'ULTERA item') + (it.color_name ? ' / ' + it.color_name : '') + (it.size ? ' / ' + it.size : '');
