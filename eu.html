@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ULTERA — Handmade Technological Footwear · EU</title>
+<meta name="description" content="ULTERA handmade sneakers and barefoot slippers. Italian Nappa leather, Bounce EVA. Shipping across Europe. Pay by card or PayPal.">
+<style>
+:root{--bg:#0d0f13;--card:#151922;--line:#242b38;--txt:#eef1f6;--mut:#9aa4b2;--acc:#4f46e5;--acc2:#10b981;--eur:#f5c451}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,-apple-system,system-ui,Segoe UI,Roboto,sans-serif;line-height:1.5}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+header{position:sticky;top:0;z-index:40;background:rgba(13,15,19,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hd{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{font-weight:800;letter-spacing:.14em;font-size:20px}
+.hd-r{display:flex;align-items:center;gap:14px}
+.pill{font-size:12px;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+.cartbtn{display:flex;align-items:center;gap:7px;background:var(--acc);color:#fff;border:0;border-radius:999px;padding:9px 16px;font-weight:600;font-size:14px;cursor:pointer}
+.cartbtn .dot{width:7px;height:7px;border-radius:50%;background:#fff}
+.hero{padding:46px 0 26px;text-align:center}
+.hero h1{font-size:clamp(26px,4.4vw,44px);margin:0 0 10px;font-weight:800;letter-spacing:-.02em}
+.hero p{color:var(--mut);max-width:620px;margin:0 auto;font-size:15.5px}
+.badges{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+.badge{font-size:12px;color:var(--mut);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;padding:14px 0 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s}
+.card:hover{transform:translateY(-3px);border-color:#33405a}
+.card .ph{aspect-ratio:1/1;background:#0a0d12 center/cover no-repeat;display:block}
+.card .in{padding:12px 14px 14px}
+.card .nm{font-weight:700;font-size:15px}
+.card .cl{color:var(--mut);font-size:13px;margin-top:2px;min-height:18px}
+.card .pr{margin-top:9px;display:flex;align-items:baseline;gap:8px}
+.card .eur{color:var(--eur);font-weight:800;font-size:18px}
+.card .uah{color:var(--mut);font-size:12px}
+.tag{display:inline-block;margin-top:8px;font-size:11px;letter-spacing:.06em;color:var(--mut);text-transform:uppercase}
+/* overlay */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);z-index:60;display:none;align-items:flex-end;justify-content:center}
+.ov.on{display:flex}
+@media(min-width:720px){.ov{align-items:center}}
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:92vh;overflow:auto;padding:18px}
+@media(min-width:720px){.sheet{border-radius:18px}}
+.sheet .x{float:right;background:none;border:0;color:var(--mut);font-size:22px;cursor:pointer;line-height:1}
+.mph{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;background:#0a0d12}
+.mnm{font-weight:800;font-size:20px;margin:14px 0 2px}
+.mcl{color:var(--mut);font-size:14px}
+.mpr{margin:12px 0;font-size:22px;font-weight:800;color:var(--eur)}
+.lbl{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px}
+.sizes{display:flex;flex-wrap:wrap;gap:8px}
+.sz{min-width:46px;padding:10px 6px;text-align:center;border:1px solid var(--line);border-radius:10px;background:#0f131a;color:var(--txt);cursor:pointer;font-weight:600}
+.sz.on{border-color:var(--acc);background:#1b1f3a}
+.btn{width:100%;border:0;border-radius:12px;padding:15px;font-size:16px;font-weight:700;cursor:pointer}
+.btn-p{background:var(--acc);color:#fff;margin-top:18px}
+.btn-p:hover{background:#3f38c9}
+.btn-g{background:var(--acc2);color:#04120c}
+.btn-g:hover{filter:brightness(1.05)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+/* cart */
+.citem{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.citem img{width:66px;height:66px;border-radius:10px;object-fit:cover;background:#0a0d12}
+.citem .g{flex:1}
+.citem .t{font-weight:600;font-size:14px}
+.citem .s{color:var(--mut);font-size:12.5px;margin-top:2px}
+.citem .rm{color:var(--mut);background:none;border:0;cursor:pointer;font-size:16px}
+.crow{display:flex;justify-content:space-between;align-items:center;margin:16px 0 4px;font-size:15px}
+.crow b{font-size:20px;color:var(--eur)}
+.field{margin-top:10px}
+.field label{font-size:12px;color:var(--mut)}
+.field input,.field select{width:100%;margin-top:5px;padding:12px;background:#0f131a;border:1px solid var(--line);border-radius:10px;color:var(--txt);font-size:15px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.note{font-size:12px;color:var(--mut);margin-top:10px;text-align:center}
+.pay-ic{display:flex;gap:8px;justify-content:center;margin-top:10px;color:var(--mut);font-size:12px}
+.empty{text-align:center;color:var(--mut);padding:40px 0}
+footer{border-top:1px solid var(--line);padding:26px 0;color:var(--mut);font-size:13px;text-align:center}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#1b2130;border:1px solid var(--line);color:var(--txt);padding:12px 18px;border-radius:12px;opacity:0;transition:.25s;z-index:90;font-size:14px}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header><div class="wrap hd">
+  <a href="/eu.html" class="logo">ULTERA</a>
+  <div class="hd-r">
+    <a href="/" class="pill" title="Ukrainian version">UA ₴</a>
+    <span class="pill" style="border-color:#3a4a63;color:var(--eur)">EU · EUR</span>
+    <button class="cartbtn" id="cartBtn"><span class="dot"></span>Cart <span id="cartCount">0</span></button>
+  </div>
+</div></header>
+
+<section class="hero wrap">
+  <h1>Handmade technological footwear</h1>
+  <p>Premium Italian Nappa leather &amp; suede. Bounce EVA cushioning. Handcrafted in Ukraine, shipped across Europe.</p>
+  <div class="badges">
+    <span class="badge">✦ Handmade</span>
+    <span class="badge">🇪🇺 EU shipping</span>
+    <span class="badge">💳 Card &amp; PayPal</span>
+    <span class="badge">↺ 14-day size exchange</span>
+    <span class="badge">1-year warranty</span>
+  </div>
+</section>
+
+<main class="wrap"><div class="grid" id="grid"></div></main>
+
+<footer><div class="wrap">© 2026 ULTERA · Handmade in Kharkiv, Ukraine · <a href="/" style="color:var(--eur)">Ukrainian site →</a></div></footer>
+
+<!-- product modal -->
+<div class="ov" id="pOv"><div class="sheet" id="pSheet"></div></div>
+<!-- cart modal -->
+<div class="ov" id="cOv"><div class="sheet" id="cSheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const RATE = 54;
+const PRODUCTS = [{"uid": "809858137952", "family": "Hunk3", "name": "ULTERA Hunk3", "color": "All Black", "tag": "Flagship · Bounce EVA", "uah": 3790, "eur": 70.19, "photo": "/photos/36364413.webp", "sizes": ["38", "39", "40", "41", "42", "43", "44", "45"]}, {"uid": "905273291412", "family": "Hunk3", "name": "ULTERA Hunk3", "color": "Wine", "tag": "Flagship · Bounce EVA", "uah": 3990, "eur": 73.89, "photo": "/photos/83729055.webp", "sizes": ["38", "39", "40", "41", "42", "43", "44", "45"]}, {"uid": "798291700932", "family": "Hunk3", "name": "ULTERA Hunk3", "color": "Asphalt", "tag": "Flagship · Bounce EVA", "uah": 3990, "eur": 73.89, "photo": "/photos/62232281.webp", "sizes": ["38", "39", "40", "41", "42", "43", "44", "45"]}, {"uid": "806938391602", "family": "Hunk3", "name": "ULTERA Hunk3", "color": "Brown", "tag": "Flagship · Bounce EVA", "uah": 3990, "eur": 73.89, "photo": "/photos/43b40c2a94e79b6ecba41a12c453f5f8.webp", "sizes": ["38", "39", "40", "41", "42", "43", "44", "45"]}, {"uid": "511313321014", "family": "Hunk3", "name": "ULTERA Hunk3", "color": "White", "tag": "Flagship · Bounce EVA", "uah": 3990, "eur": 73.89, "photo": "/photos/c338d13a62d2bc1a02782ebf9fbb0fbe.webp", "sizes": ["38", "39", "40", "41", "42", "43", "44", "45"]}, {"uid": "254609486864", "family": "Hunk3", "name": "ULTERA Hunk3", "color": "Bronze / White", "tag": "Flagship · Bounce EVA", "uah": 3990, "eur": 73.89, "photo": "/photos/d2e9f6ee162c4edb26ddb6ad1af3291c.webp", "sizes": ["38", "39", "40", "41", "42", "43", "44", "45"]}, {"uid": "924701650982", "family": "Aganta", "name": "ULTERA Aganta", "color": "", "tag": "New · Minimalist", "uah": 3790, "eur": 70.19, "photo": "/photos/79147790.webp", "sizes": ["40", "41", "42", "43", "44", "45"]}, {"uid": "977627506822", "family": "Aganta", "name": "ULTERA Aganta", "color": "Salvia", "tag": "New · Minimalist", "uah": 3790, "eur": 70.19, "photo": "/photos/68403915.webp", "sizes": ["40", "41", "42", "43", "44", "45"]}, {"uid": "260203663062", "family": "Aganta", "name": "ULTERA Aganta", "color": "Aqua", "tag": "New · Minimalist", "uah": 4100, "eur": 75.93, "photo": "/photos/23471110.webp", "sizes": ["40", "41", "42", "43", "44", "45"]}, {"uid": "454860479882", "family": "Aganta", "name": "ULTERA Aganta", "color": "Black nubuck", "tag": "New · Minimalist", "uah": 3790, "eur": 70.19, "photo": "/photos/59635392.webp", "sizes": ["40", "41", "42", "43", "44", "45"]}, {"uid": "340180708714", "family": "SHAPE", "name": "ULTERA SHAPE", "color": "", "tag": "Barefoot slippers · Italian suede", "uah": 2790, "eur": 51.67, "photo": "/photos/98c9e74f7ea3105bf801054f6de02920.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45", "46"]}, {"uid": "482851122304", "family": "SHAPE", "name": "ULTERA SHAPE", "color": "Pistachio", "tag": "Barefoot slippers · Italian suede", "uah": 2890, "eur": 53.52, "photo": "/photos/4de8071c51f227c81fb6f374b3776a20.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45", "46"]}, {"uid": "450276762874", "family": "SHAPE", "name": "ULTERA SHAPE", "color": "Beige", "tag": "Barefoot slippers · Italian suede", "uah": 2890, "eur": 53.52, "photo": "/photos/9a7081366437b732389541f4b62415d6.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45", "46"]}, {"uid": "970030589784", "family": "SHAPE", "name": "ULTERA SHAPE", "color": "Black suede", "tag": "Barefoot slippers · Italian suede", "uah": 2890, "eur": 53.52, "photo": "/photos/5b7898a667624ac716da8f89baab9b9e.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45", "46"]}, {"uid": "184767423395", "family": "SHAPE", "name": "ULTERA SHAPE", "color": "Light Blue", "tag": "Barefoot slippers · Italian suede", "uah": 2790, "eur": 51.67, "photo": "/photos/shape-blue.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45", "46"]}, {"uid": "621792744368", "family": "SHAPE", "name": "ULTERA SHAPE", "color": "Bordeaux", "tag": "Barefoot slippers · Italian suede", "uah": 2790, "eur": 51.67, "photo": "/photos/shape-burgundy.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45", "46"]}, {"uid": "329608071197", "family": "SHAPE", "name": "ULTERA SHAPE", "color": "Grey", "tag": "Barefoot slippers · Italian suede", "uah": 2790, "eur": 51.67, "photo": "/photos/shape-gray.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45", "46"]}, {"uid": "255434553144", "family": "SHAPE", "name": "ULTERA SHAPE", "color": "Orange", "tag": "Barefoot slippers · Italian suede", "uah": 2790, "eur": 51.67, "photo": "/photos/shape-orange.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45", "46"]}, {"uid": "247156876545", "family": "SHAPE", "name": "ULTERA SHAPE", "color": "Red", "tag": "Barefoot slippers · Italian suede", "uah": 2790, "eur": 51.67, "photo": "/photos/shape-red.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45", "46"]}, {"uid": "593008410302", "family": "Hunk", "name": "ULTERA Hunk", "color": "Grey / White", "tag": "Original flagship", "uah": 3590, "eur": 66.48, "photo": "/photos/24273966.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45"]}, {"uid": "244754285902", "family": "Hunk", "name": "ULTERA Hunk", "color": "Black", "tag": "Original flagship", "uah": 3490, "eur": 64.63, "photo": "/photos/94574791.webp", "sizes": ["42", "43"]}, {"uid": "634978737742", "family": "Hunk", "name": "ULTERA Hunk", "color": "Pistachio", "tag": "Original flagship", "uah": 3990, "eur": 73.89, "photo": "/photos/28324109.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45"]}, {"uid": "607421449014", "family": "Hunk", "name": "ULTERA Hunk", "color": "Black / White", "tag": "Original flagship", "uah": 3990, "eur": 73.89, "photo": "/photos/e058852e4cf1997c203e18c70cce2e13.webp", "sizes": ["40", "41", "42", "43", "44", "45"]}, {"uid": "469658834434", "family": "Hunk", "name": "ULTERA Hunk", "color": "Mint", "tag": "Original flagship", "uah": 4100, "eur": 75.93, "photo": "/photos/aa0a01576c53f65f8087274daa9ebe54.webp", "sizes": ["40", "41", "42", "43", "44", "45"]}, {"uid": "671974984372", "family": "Hunk2", "name": "ULTERA Hunk2", "color": "Panda", "tag": "2nd gen", "uah": 3590, "eur": 66.48, "photo": "/photos/55942430.webp", "sizes": ["40", "41", "42", "43", "44", "45"]}, {"uid": "246465477824", "family": "Hunk2", "name": "ULTERA Hunk2", "color": "Olive", "tag": "2nd gen", "uah": 3590, "eur": 66.48, "photo": "/photos/0de5934cc00f03cdfed7a7d9c2697415.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45"]}, {"uid": "901880658842", "family": "Hunk BRFT", "name": "ULTERA Hunk BRFT", "color": "BRFT", "tag": "Barefoot", "uah": 3900, "eur": 72.22, "photo": "/photos/75373133.webp", "sizes": ["40", "41", "42", "43", "44", "45"]}, {"uid": "576555820762", "family": "Hunk BRFT", "name": "ULTERA Hunk BRFT", "color": "Black BRFT", "tag": "Barefoot", "uah": 3900, "eur": 72.22, "photo": "/photos/23016503.webp", "sizes": ["40", "41", "42", "43", "44", "45"]}, {"uid": "576612833084", "family": "Hunk BRFT", "name": "ULTERA Hunk BRFT", "color": "Black / White", "tag": "Barefoot", "uah": 3900, "eur": 72.22, "photo": "/photos/4b2de9f5e283c3d403608668b7b63292.webp", "sizes": ["40", "41", "42", "43", "44", "45"]}, {"uid": "585095123222", "family": "Spider", "name": "ULTERA Spider", "color": "Black", "tag": "Reflective", "uah": 3500, "eur": 64.81, "photo": "/photos/94551688.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45"]}, {"uid": "338179584282", "family": "Lite", "name": "ULTERA Lite", "color": "Black", "tag": "Lightweight sneakers", "uah": 3350, "eur": 62.04, "photo": "/photos/14481420.webp", "sizes": ["39", "40", "41", "42", "43", "44", "45"]}, {"uid": "567516763104", "family": "Lite", "name": "ULTERA Lite", "color": "Black / White", "tag": "Lightweight sneakers", "uah": 3350, "eur": 62.04, "photo": "/photos/ee23cd25f31d39bea0fd4a8873fe172b.webp", "sizes": ["40", "41", "42", "43", "44", "45"]}];
+const PMAP = {};
+PRODUCTS.forEach(function(p){ PMAP[p.uid]=p; });
+let CART = [];
+try{ CART = JSON.parse(localStorage.getItem('ultera_eu_cart')||'[]'); }catch(e){ CART=[]; }
+
+function eur(n){ return '€' + Number(n).toFixed(2); }
+function saveCart(){ try{ localStorage.setItem('ultera_eu_cart', JSON.stringify(CART)); }catch(e){} paintCount(); }
+function paintCount(){ const n=CART.reduce(function(s,i){return s+i.qty;},0); document.getElementById('cartCount').textContent=n; }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('on');},1800); }
+
+function renderGrid(){
+  const g=document.getElementById('grid');
+  g.innerHTML = PRODUCTS.map(function(p){
+    return '<div class="card" onclick="openP(\''+p.uid+'\')">'+
+      '<span class="ph" style="background-image:url('+p.photo+')"></span>'+
+      '<div class="in"><div class="nm">'+p.name+'</div>'+
+      '<div class="cl">'+(p.color||'')+'</div>'+
+      '<div class="pr"><span class="eur">'+eur(p.eur)+'</span><span class="uah">'+p.uah+' ₴</span></div>'+
+      (p.tag?'<span class="tag">'+p.tag+'</span>':'')+
+      '</div></div>';
+  }).join('');
+}
+
+let curUid=null, curSize=null;
+function openP(uid){
+  const p=PMAP[uid]; if(!p) return; curUid=uid; curSize=null;
+  document.getElementById('pSheet').innerHTML =
+    '<button class="x" onclick="closeOv()">✕</button>'+
+    '<img class="mph" src="'+p.photo+'" alt="'+p.name+'">'+
+    '<div class="mnm">'+p.name+'</div>'+
+    '<div class="mcl">'+(p.color||'')+'</div>'+
+    '<div class="mpr">'+eur(p.eur)+' <span style="color:var(--mut);font-size:14px;font-weight:500">· '+p.uah+' ₴</span></div>'+
+    '<div class="lbl">Select size (EU)</div>'+
+    '<div class="sizes">'+p.sizes.map(function(s){return '<button class="sz" data-sz="'+s+'" onclick="pickSize(this)">'+s+'</button>';}).join('')+'</div>'+
+    '<button class="btn btn-p" id="addBtn" onclick="addCart()">Add to cart</button>'+
+    '<div class="note">Production 4–10 business days · EU delivery 5–12 days · tracked</div>';
+  document.getElementById('pOv').classList.add('on');
+}
+function pickSize(el){ curSize=el.dataset.sz; el.parentNode.querySelectorAll('.sz').forEach(function(b){b.classList.remove('on');}); el.classList.add('on'); }
+function addCart(){
+  if(!curSize){ toast('Please select a size'); return; }
+  const p=PMAP[curUid];
+  const ex=CART.find(function(i){return i.uid===curUid && i.size===curSize;});
+  if(ex){ ex.qty++; } else { CART.push({uid:curUid,size:curSize,qty:1,name:p.name,color:p.color,eur:p.eur,photo:p.photo}); }
+  saveCart(); closeOv(); toast('Added · size '+curSize); openC();
+}
+function closeOv(){ document.getElementById('pOv').classList.remove('on'); document.getElementById('cOv').classList.remove('on'); }
+
+function cartTotalEur(){ return CART.reduce(function(s,i){return s + i.eur*i.qty;},0); }
+function openC(){
+  const c=document.getElementById('cSheet');
+  if(!CART.length){
+    c.innerHTML='<button class="x" onclick="closeOv()">✕</button><div class="empty">Your cart is empty.<br>Pick a pair from the collection.</div>';
+  } else {
+    c.innerHTML='<button class="x" onclick="closeOv()">✕</button><h3 style="margin:2px 0 12px">Your cart</h3>'+
+      CART.map(function(i,idx){ return '<div class="citem"><img src="'+i.photo+'">'+
+        '<div class="g"><div class="t">'+i.name+'</div><div class="s">'+(i.color?i.color+' · ':'')+'EU '+i.size+' · '+eur(i.eur)+'</div>'+
+        '<div class="s">Qty: '+i.qty+'</div></div>'+
+        '<button class="rm" onclick="rm('+idx+')">✕</button></div>'; }).join('')+
+      '<div class="crow"><span>Total</span><b>'+eur(cartTotalEur())+'</b></div>'+
+      '<div class="lbl">Shipping details</div>'+
+      '<div class="two"><div class="field"><label>First name</label><input id="f_first" placeholder="John"></div>'+
+      '<div class="field"><label>Last name</label><input id="f_last" placeholder="Smith"></div></div>'+
+      '<div class="field"><label>Email</label><input id="f_email" type="email" placeholder="john@email.com"></div>'+
+      '<div class="field"><label>Phone</label><input id="f_phone" placeholder="+49 ..."></div>'+
+      '<div class="field"><label>Country</label><select id="f_country">'+countryOpts()+'</select></div>'+
+      '<div class="two"><div class="field"><label>City</label><input id="f_city" placeholder="Berlin"></div>'+
+      '<div class="field"><label>ZIP / Postal code</label><input id="f_zip" placeholder="10115"></div></div>'+
+      '<div class="field"><label>Address</label><input id="f_addr" placeholder="Street, house, apt"></div>'+
+      '<button class="btn btn-g" id="payBtn" onclick="pay()">Pay '+eur(cartTotalEur())+' by card / PayPal</button>'+
+      '<div class="pay-ic">Visa · Mastercard · PayPal — secured by Western Bid</div>';
+  }
+  document.getElementById('cOv').classList.add('on');
+}
+function rm(i){ CART.splice(i,1); saveCart(); openC(); }
+
+const COUNTRIES=[['DE','Germany'],['PL','Poland'],['FR','France'],['IT','Italy'],['ES','Spain'],['NL','Netherlands'],['BE','Belgium'],['AT','Austria'],['CZ','Czechia'],['SK','Slovakia'],['SE','Sweden'],['FI','Finland'],['DK','Denmark'],['NO','Norway'],['IE','Ireland'],['PT','Portugal'],['GR','Greece'],['RO','Romania'],['HU','Hungary'],['BG','Bulgaria'],['HR','Croatia'],['SI','Slovenia'],['LT','Lithuania'],['LV','Latvia'],['EE','Estonia'],['LU','Luxembourg'],['CH','Switzerland'],['GB','United Kingdom'],['US','United States'],['CA','Canada']];
+function countryOpts(){ return '<option value="">Select country</option>'+COUNTRIES.map(function(c){return '<option value="'+c[0]+'">'+c[1]+'</option>';}).join(''); }
+
+function val(id){ var e=document.getElementById(id); return e?e.value.trim():''; }
+async function pay(){
+  const first=val('f_first'), last=val('f_last'), email=val('f_email'), phone=val('f_phone');
+  const country=val('f_country'), city=val('f_city'), zip=val('f_zip'), addr=val('f_addr');
+  if(first.length<2||last.length<1){ toast('Enter your name'); return; }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ toast('Enter a valid email'); return; }
+  if(phone.replace(/[^0-9]/g,'').length<7){ toast('Enter a valid phone'); return; }
+  if(!country){ toast('Select a country'); return; }
+  if(!city||!addr){ toast('Enter city and address'); return; }
+  const btn=document.getElementById('payBtn'); btn.disabled=true; btn.innerHTML='<span class="spin"></span>Redirecting to payment…';
+  const items=CART.map(function(i){ return {uid:i.uid,qty:i.qty,title:i.name,color_name:i.color,size:i.size}; });
+  try{
+    const r=await fetch('/api/westernbid',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({fio:first+' '+last,email:email,phone:phone,country:country,city:city,zip:zip,address1:addr,
+        items:items, landing_url:location.href, referrer:document.referrer})});
+    const d=await r.json();
+    if(!r.ok||!d.ok){ toast(d.error||'Payment error'); btn.disabled=false; btn.textContent='Pay '+eur(cartTotalEur())+' by card / PayPal'; return; }
+    // build + submit WB form
+    const f=document.createElement('form'); f.method='POST'; f.action=d.endpoint;
+    Object.keys(d.fields).forEach(function(k){ const inp=document.createElement('input'); inp.type='hidden'; inp.name=k; inp.value=d.fields[k]; f.appendChild(inp); });
+    document.body.appendChild(f); f.submit();
+  }catch(e){ toast('Network error'); btn.disabled=false; btn.textContent='Pay '+eur(cartTotalEur())+' by card / PayPal'; }
+}
+
+document.getElementById('cartBtn').addEventListener('click',openC);
+document.getElementById('pOv').addEventListener('click',function(e){ if(e.target===this) closeOv(); });
+document.getElementById('cOv').addEventListener('click',function(e){ if(e.target===this) closeOv(); });
+renderGrid(); paintCount();
+</script>
+</body>
+</html>
