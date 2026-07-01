@@ -6551,95 +6551,169 @@ insertWomanDivider();
     mo.observe(document.body, {childList:true, subtree:true, characterData:true});
   }
 
-  /* ---------- 2. International checkout ---------- */
-  var COUNTRIES=[['DE','Germany'],['PL','Poland'],['FR','France'],['IT','Italy'],['ES','Spain'],['NL','Netherlands'],['BE','Belgium'],['AT','Austria'],['CZ','Czechia'],['SK','Slovakia'],['SE','Sweden'],['FI','Finland'],['DK','Denmark'],['NO','Norway'],['IE','Ireland'],['PT','Portugal'],['GR','Greece'],['RO','Romania'],['HU','Hungary'],['BG','Bulgaria'],['HR','Croatia'],['SI','Slovenia'],['LT','Lithuania'],['LV','Latvia'],['EE','Estonia'],['LU','Luxembourg'],['CH','Switzerland'],['GB','United Kingdom'],['US','United States'],['CA','Canada']];
-  function countryOpts(){ return '<option value="">Select country</option>' + COUNTRIES.map(function(c){return '<option value="'+c[0]+'">'+c[1]+'</option>';}).join(''); }
+  /* ---------- 2. International checkout: NP Global zones + address ---------- */
+  // Put your Google Places API key here (restricted to ultera.in.ua) to enable
+  // address autocomplete. Leave empty for plain fields — nothing breaks.
+  var GPLACES_KEY = '';
+
+  var COUNTRIES=[['DE','Germany'],['PL','Poland'],['FR','France'],['IT','Italy'],['ES','Spain'],['NL','Netherlands'],['BE','Belgium'],['AT','Austria'],['CZ','Czechia'],['SK','Slovakia'],['SE','Sweden'],['FI','Finland'],['DK','Denmark'],['NO','Norway'],['IE','Ireland'],['PT','Portugal'],['GR','Greece'],['RO','Romania'],['HU','Hungary'],['BG','Bulgaria'],['HR','Croatia'],['SI','Slovenia'],['LT','Lithuania'],['LV','Latvia'],['EE','Estonia'],['LU','Luxembourg'],['CH','Switzerland'],['MD','Moldova'],['GB','United Kingdom'],['US','United States'],['CA','Canada'],['AU','Australia'],['AE','United Arab Emirates'],['SA','Saudi Arabia'],['JP','Japan'],['KR','South Korea'],['SG','Singapore'],['CN','China'],['ZA','South Africa'],['NZ','New Zealand']];
+  var NAME_BY_CODE={}; COUNTRIES.forEach(function(c){ NAME_BY_CODE[c[0]]=c[1]; });
+
+  // NP Global shipping zones (EUR, per order). Editable — adjust to your contract.
+  var Z1=['PL','SK','HU','RO','CZ','MD'];
+  var Z2=['DE','AT','FR','IT','ES','NL','BE','LU','PT','IE','DK','SE','FI','GR','LT','LV','EE','SI','HR','BG','CH','NO'];
+  var Z3=['GB'];
+  var Z4=['US','CA'];
+  var ZINFO={z1:{eur:9,days:'3–6'},z2:{eur:12,days:'4–8'},z3:{eur:14,days:'5–9'},z4:{eur:20,days:'7–14'},z5:{eur:28,days:'10–20'}};
+  function zoneOf(c){ c=String(c||'').toUpperCase(); if(Z1.indexOf(c)>=0)return'z1'; if(Z2.indexOf(c)>=0)return'z2'; if(Z3.indexOf(c)>=0)return'z3'; if(Z4.indexOf(c)>=0)return'z4'; return c?'z5':null; }
+  function shipInfo(c){ var z=zoneOf(c); return z?ZINFO[z]:null; }
+
+  function goodsEur(){ var C=(typeof CART!=='undefined'&&CART)?CART:(window.CART||{items:[]}); return (C.items||[]).reduce(function(s,it){return s+(parseFloat(it.price)||0)*(it.qty||1);},0)/RATE; }
+  function fmt(n){ return '€'+(Math.round(Number(n)*100)/100).toFixed(2); }
+
+  // inject a scoped stylesheet for the combobox
+  function injectStyle(){
+    if(document.getElementById('eu-ck-style')) return;
+    var st=document.createElement('style'); st.id='eu-ck-style';
+    st.textContent='.eu-cbx{position:relative}.eu-cbx-list{position:absolute;left:0;right:0;top:100%;z-index:50;background:#fff;color:#111;border:1px solid #d9d9d9;border-radius:10px;margin-top:4px;max-height:240px;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.14);display:none}.eu-cbx-list.on{display:block}.eu-cbx-opt{padding:10px 12px;cursor:pointer;font-size:14px}.eu-cbx-opt:hover,.eu-cbx-opt.hl{background:#f2f4f8}.eu-ship{margin:10px 0 2px;padding:11px 13px;border:1px solid rgba(0,0,0,.12);border-radius:10px;font-size:13.5px;display:flex;justify-content:space-between;align-items:center;gap:10px}.eu-ship b{white-space:nowrap}.eu-ship .d{opacity:.7;font-size:12.5px}.eu-tot{display:flex;justify-content:space-between;align-items:center;margin:8px 0 2px;font-weight:700}.eu-tot b{font-size:19px}';
+    document.head.appendChild(st);
+  }
 
   function hide(el){ if(el) el.style.display='none'; }
+  function v(id){ var e=document.getElementById(id); return e?String(e.value||'').trim():''; }
+  function selectedCountry(){ var e=document.getElementById('euCountry'); return e?e.value:''; }
+
+  function updateSummary(){
+    var code=selectedCountry();
+    var g=goodsEur();
+    var info=shipInfo(code);
+    var shipEl=document.getElementById('euShip');
+    var totEl=document.getElementById('euTotal');
+    var btn=document.querySelector('#cdWizard .cd-next.submit');
+    if(shipEl){
+      if(info) shipEl.innerHTML='<span>Shipping · Nova Global<br><span class="d">'+info.days+' business days</span></span><b>'+fmt(info.eur)+'</b>';
+      else shipEl.innerHTML='<span>Shipping</span><b class="d">select country</b>';
+    }
+    var total=g+(info?info.eur:0);
+    if(totEl) totEl.innerHTML='<span>Total</span><b>'+fmt(total)+'</b>';
+    if(btn && !btn.disabled) btn.textContent = info ? ('Pay '+fmt(total)+' by card / PayPal') : 'Pay by card / PayPal';
+  }
+
+  function buildCountryCombo(){
+    var input=document.getElementById('euCountryInput');
+    var hidden=document.getElementById('euCountry');
+    var list=document.getElementById('euCountryList');
+    if(!input||!list) return;
+    function render(q){
+      q=(q||'').toLowerCase();
+      var items=COUNTRIES.filter(function(c){ return !q || c[1].toLowerCase().indexOf(q)>=0; });
+      list.innerHTML=items.map(function(c){ return '<div class="eu-cbx-opt" data-code="'+c[0]+'">'+c[1]+'</div>'; }).join('') || '<div class="eu-cbx-opt d">No match</div>';
+    }
+    input.addEventListener('focus',function(){ render(input.value); list.classList.add('on'); });
+    input.addEventListener('input',function(){ hidden.value=''; render(input.value); list.classList.add('on'); updateSummary(); });
+    list.addEventListener('mousedown',function(e){ var o=e.target.closest('.eu-cbx-opt'); if(!o||!o.dataset.code) return; e.preventDefault(); hidden.value=o.dataset.code; input.value=NAME_BY_CODE[o.dataset.code]||o.textContent; list.classList.remove('on'); updateSummary(); });
+    document.addEventListener('click',function(e){ if(!e.target.closest('#euCountryWrap')) list.classList.remove('on'); });
+  }
+
+  function loadPlaces(){
+    if(!GPLACES_KEY || window.__euPlaces) return; window.__euPlaces=true;
+    var s=document.createElement('script');
+    s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(GPLACES_KEY)+'&libraries=places&language=en';
+    s.async=true; s.defer=true;
+    s.onload=function(){ try{ attachPlaces(); }catch(e){} };
+    document.head.appendChild(s);
+  }
+  function attachPlaces(){
+    if(!window.google||!google.maps||!google.maps.places) return;
+    var addr=document.getElementById('euAddr'), city=document.getElementById('euCity'), zip=document.getElementById('euZip');
+    if(addr){
+      var ac=new google.maps.places.Autocomplete(addr,{types:['address'],fields:['address_components','name']});
+      ac.addListener('place_changed',function(){
+        var p=ac.getPlace(); if(!p||!p.address_components) return;
+        var get=function(t){ var c=p.address_components.find(function(x){return x.types.indexOf(t)>=0;}); return c?c.long_name:''; };
+        var getS=function(t){ var c=p.address_components.find(function(x){return x.types.indexOf(t)>=0;}); return c?c.short_name:''; };
+        var route=get('route'), num=get('street_number');
+        if(route) addr.value=(route+(num?' '+num:''));
+        var c1=get('locality')||get('postal_town')||get('administrative_area_level_2'); if(city&&c1) city.value=c1;
+        var z=get('postal_code'); if(zip&&z) zip.value=z;
+        var cc=getS('country'); if(cc){ var h=document.getElementById('euCountry'), inp=document.getElementById('euCountryInput'); if(h){h.value=cc;} if(inp){inp.value=NAME_BY_CODE[cc]||inp.value;} updateSummary(); }
+      });
+    }
+    if(city){ new google.maps.places.Autocomplete(city,{types:['(cities)'],fields:['name']}); }
+  }
 
   function transformWizard(){
-    var pane = document.querySelector('#cdWizard .cd-pane[data-pane="form"]');
-    if(!pane || pane.getAttribute('data-eu') === '1') return;
-    var wCity = document.getElementById('wCity');
-    var wWh = document.getElementById('wWh');
-    if(!wCity) return;
-    var cityField = wCity.closest('.cd-field');
-    var whField = wWh ? wWh.closest('.cd-field') : null;
-    var npSection = cityField ? cityField.previousElementSibling : null; // "3 Місто..."
-    hide(cityField); hide(whField);
-    if(npSection && npSection.classList.contains('cd-section')) hide(npSection);
-    // promo
-    var promoSection = pane.querySelector('.cd-section-promo');
-    var promoField = pane.querySelector('.cd-field-promo');
-    var promoStatus = document.getElementById('wPromoStatus');
-    hide(promoSection); hide(promoField); hide(promoStatus);
-    // payment radios (EU = card/PayPal only) + their section header
-    var radios = pane.querySelectorAll('.cd-radio');
-    if(radios.length){ var paySec = radios[0].previousElementSibling; if(paySec && paySec.classList.contains('cd-section')) hide(paySec); }
+    var pane=document.querySelector('#cdWizard .cd-pane[data-pane="form"]');
+    if(!pane || pane.getAttribute('data-eu')==='1') return;
+    var wCity=document.getElementById('wCity'); if(!wCity) return;
+    injectStyle();
+    var cityField=wCity.closest('.cd-field');
+    var wWh=document.getElementById('wWh'); var whField=wWh?wWh.closest('.cd-field'):null;
+    var npSection=cityField?cityField.previousElementSibling:null;
+    hide(cityField); hide(whField); if(npSection&&npSection.classList.contains('cd-section')) hide(npSection);
+    hide(pane.querySelector('.cd-section-promo')); hide(pane.querySelector('.cd-field-promo')); hide(document.getElementById('wPromoStatus'));
+    var radios=pane.querySelectorAll('.cd-radio');
+    if(radios.length){ var pay=radios[0].previousElementSibling; if(pay&&pay.classList.contains('cd-section')) hide(pay); }
     radios.forEach(function(r){ hide(r); });
-    // force card mode under the hood (in case any legacy code reads it)
-    var cardRadio = pane.querySelector('input[name="pm"][value="card"]');
-    if(cardRadio) cardRadio.checked = true;
+    var cardRadio=pane.querySelector('input[name="pm"][value="card"]'); if(cardRadio) cardRadio.checked=true;
 
-    // insert intl fields before the submit button
-    var submit = pane.querySelector('.cd-next.submit');
-    var html =
+    var submit=pane.querySelector('.cd-next.submit');
+    var html=
       '<div class="cd-section" data-eu-add="1"><b>3</b><span>Contact &amp; shipping</span></div>'+
       '<label class="cd-field" data-eu-add="1"><input type="email" id="euEmail" placeholder="your@email.com" autocomplete="email"></label>'+
-      '<label class="cd-field" data-eu-add="1"><select id="euCountry" style="width:100%">'+countryOpts()+'</select></label>'+
-      '<label class="cd-field" data-eu-add="1"><input type="text" id="euCity" placeholder="City" autocomplete="address-level2"></label>'+
+      '<div class="cd-field eu-cbx" id="euCountryWrap" data-eu-add="1" style="padding:0;border:0;background:transparent">'+
+        '<input type="text" id="euCountryInput" placeholder="Country — start typing…" autocomplete="off" style="width:100%">'+
+        '<input type="hidden" id="euCountry">'+
+        '<div class="eu-cbx-list" id="euCountryList"></div>'+
+      '</div>'+
+      '<label class="cd-field" data-eu-add="1"><input type="text" id="euCity" placeholder="City" autocomplete="off"></label>'+
       '<label class="cd-field" data-eu-add="1"><input type="text" id="euZip" placeholder="ZIP / Postal code" autocomplete="postal-code"></label>'+
-      '<label class="cd-field" data-eu-add="1"><input type="text" id="euAddr" placeholder="Street, house, apartment" autocomplete="street-address"></label>';
-    if(submit){ submit.insertAdjacentHTML('beforebegin', html); submit.innerHTML = 'Pay by card / PayPal'; }
+      '<label class="cd-field" data-eu-add="1"><input type="text" id="euAddr" placeholder="Street, house, apartment" autocomplete="off"></label>'+
+      '<div class="eu-ship" id="euShip" data-eu-add="1"><span>Shipping</span><b class="d">select country</b></div>'+
+      '<div class="eu-tot" id="euTotal" data-eu-add="1"><span>Total</span><b>'+fmt(goodsEur())+'</b></div>';
+    if(submit){ submit.insertAdjacentHTML('beforebegin', html); submit.innerHTML='Pay by card / PayPal'; }
     pane.setAttribute('data-eu','1');
+    buildCountryCombo();
+    updateSummary();
+    loadPlaces();
   }
-
-  function v(id){ var e = document.getElementById(id); return e ? String(e.value||'').trim() : ''; }
 
   async function euSubmit(){
-    transformWizard(); // ensure fields exist
-    var err = document.getElementById('wErr1');
-    function fail(m){ if(err){ err.textContent = m; } else { alert(m); } }
-    var fio = v('wFio'), phone = v('wPhone'), email = v('euEmail'), country = v('euCountry'), city = v('euCity'), zip = v('euZip'), addr = v('euAddr');
-    if(fio.length < 2){ return fail('Please enter your full name'); }
-    if(phone.replace(/[^0-9]/g,'').length < 7){ return fail('Please enter a valid phone number'); }
+    transformWizard();
+    var err=document.getElementById('wErr1');
+    function fail(m){ if(err){err.textContent=m;} else alert(m); }
+    var fio=v('wFio'), phone=v('wPhone'), email=v('euEmail'), country=selectedCountry(), city=v('euCity'), zip=v('euZip'), addr=v('euAddr');
+    if(fio.length<2){ return fail('Please enter your full name'); }
+    if(phone.replace(/[^0-9]/g,'').length<7){ return fail('Please enter a valid phone number'); }
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ return fail('Please enter a valid email'); }
     if(!country){ return fail('Please select a country'); }
-    if(!city || !addr){ return fail('Please enter city and address'); }
-    var C = (typeof CART !== 'undefined' && CART) ? CART : (window.CART || null);
-    if(!C || !C.items || !C.items.length){ return fail('Your cart is empty'); }
-    var btn = document.querySelector('#cdWizard .cd-next.submit');
-    if(btn){ btn.disabled = true; btn.textContent = 'Redirecting to payment…'; }
-    var items = C.items.map(function(it){
-      return { uid: it.uid, qty: it.qty || 1, title: it.title, color_name: it.color_name, size: it.size,
-               price: it.price, season: it.season || null, promoSecond: !!it.promoSecond,
-               promo_pct: (it.promoSecond || it.saleItem) ? 30 : 0 };
-    });
-    var payload = { fio: fio, phone: phone, email: email, country: country, city: city, zip: zip, address1: addr,
-      items: items, landing_url: location.href, referrer: document.referrer,
-      session_id: (C.wizard && C.wizard.session_id) || '' };
+    if(!city||!addr){ return fail('Please enter city and address'); }
+    var C=(typeof CART!=='undefined'&&CART)?CART:(window.CART||null);
+    if(!C||!C.items||!C.items.length){ return fail('Your cart is empty'); }
+    var btn=document.querySelector('#cdWizard .cd-next.submit');
+    if(btn){ btn.disabled=true; btn.textContent='Redirecting to payment…'; }
+    var items=C.items.map(function(it){ return { uid:it.uid, qty:it.qty||1, title:it.title, color_name:it.color_name, size:it.size, price:it.price, season:it.season||null, promoSecond:!!it.promoSecond, promo_pct:(it.promoSecond||it.saleItem)?30:0 }; });
+    var payload={ fio:fio, phone:phone, email:email, country:country, city:city, zip:zip, address1:addr, items:items, landing_url:location.href, referrer:document.referrer, session_id:(C.wizard&&C.wizard.session_id)||'' };
     try{
-      var r = await fetch('/api/westernbid', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-      var d = await r.json();
-      if(!r.ok || !d.ok){ fail((d && d.error) || 'Payment error, please try again'); if(btn){ btn.disabled=false; btn.textContent='Pay by card / PayPal'; } return; }
-      var f = document.createElement('form'); f.method = 'POST'; f.action = d.endpoint;
-      Object.keys(d.fields).forEach(function(k){ var i = document.createElement('input'); i.type='hidden'; i.name=k; i.value=d.fields[k]; f.appendChild(i); });
+      var r=await fetch('/api/westernbid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      var d=await r.json();
+      if(!r.ok||!d.ok){ fail((d&&d.error)||'Payment error, please try again'); if(btn){btn.disabled=false;} updateSummary(); return; }
+      var f=document.createElement('form'); f.method='POST'; f.action=d.endpoint;
+      Object.keys(d.fields).forEach(function(k){ var i=document.createElement('input'); i.type='hidden'; i.name=k; i.value=d.fields[k]; f.appendChild(i); });
       document.body.appendChild(f); f.submit();
-    }catch(e){ fail('Network error, please try again'); if(btn){ btn.disabled=false; btn.textContent='Pay by card / PayPal'; } }
+    }catch(e){ fail('Network error, please try again'); if(btn){btn.disabled=false;} updateSummary(); }
   }
 
-  /* Override the global handler used by onclick="wizardSubmit()" */
-  window.wizardSubmit = euSubmit;
-  /* If startCheckout exists, wrap it so the wizard is transformed when opened */
-  var _sc = window.startCheckout;
-  window.startCheckout = function(){ try{ if(typeof _sc === 'function') _sc.apply(this, arguments); }catch(e){} transformWizard(); };
+  window.wizardSubmit=euSubmit;
+  var _sc=window.startCheckout;
+  window.startCheckout=function(){ try{ if(typeof _sc==='function') _sc.apply(this,arguments); }catch(e){} transformWizard(); };
 
   function init(){
     try{ convWalk(document.body); }catch(e){}
     startPriceObserver();
     try{ transformWizard(); }catch(e){}
   }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
   else init();
 })();
 
