@@ -563,10 +563,10 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 
       <div class="kpi-grid">
         <div class="kpi-card"><div class="l">Замовлення</div><div class="v" id="kpi-orders">—</div><div class="delta" id="kpi-orders-d"></div></div>
+        <div class="kpi-card" title="Кількість апрувнутих замовлень (KeyCRM approved)"><div class="l">Продажі</div><div class="v" id="kpi-sales">—</div></div>
         <div class="kpi-card"><div class="l">Виручка</div><div class="v" id="kpi-revenue">—</div><div class="delta" id="kpi-revenue-d"></div></div>
         <div class="kpi-card"><div class="l">Середній чек</div><div class="v" id="kpi-aov">—</div></div>
         <div class="kpi-card"><div class="l">Сесії</div><div class="v" id="kpi-sess">—</div></div>
-        <div class="kpi-card"><div class="l">Унікальні переходи</div><div class="v" id="kpi-pv">—</div></div>
         <div class="kpi-card"><div class="l">CR (orders/sessions)</div><div class="v" id="kpi-cr">—</div></div>
         <div class="kpi-card" title="Апрув = approved / (approved + rejected) на основі статусів KeyCRM"><div class="l">Апрув % (KeyCRM)</div><div class="v" id="kpi-approval">—</div><div class="delta" id="kpi-approval-d"></div></div>
       </div>
@@ -2376,8 +2376,8 @@ function renderKPI(){
   document.getElementById('kpi-revenue').textContent = fmtMoney(totalRevenue);
   document.getElementById('kpi-aov').textContent = fmtMoney(aov);
   document.getElementById('kpi-sess').textContent = fmtInt(sessions);
-  document.getElementById('kpi-pv').textContent = fmtInt(sessions);  // уникальные сессии, не сырые events
   document.getElementById('kpi-cr').textContent = cr;
+  document.getElementById('kpi-sales').textContent = fmtInt(Number(kpi.approved_orders) || 0);
   // [KeyCRM v1] Апрув % з ulhome_analytics_summary.kpi (RPC)
   try {
     var ar = (kpi && (kpi.approval_rate != null) ? Number(kpi.approval_rate) : null);
