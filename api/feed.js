@@ -176,9 +176,12 @@ function googleCategory(p){
 }
 
 function itemGroupId(p){
-  // Кожен колір = окремий самостійний товар → унікальний group id по uid,
-  // щоб Facebook НЕ зливав кольори однієї сімʼї в одну картку-варіанти.
-  return String(p.uid || (p.family ? slugify(p.family) : 'misc'));
+  // Кожен колір = окремий самостійний товар → унікальний group id по uid.
+  // v2 (2026-07-05): суфікс 'g' — group id НЕ має збігатися з жодним item id
+  // у каталозі (Meta-конфлікт RETAILER_ID_USED_BY_GROUP зі старим фідом від
+  // 13.04, де розмірні варіанти мали item_group_id = uid). Пиксель і набори
+  // фільтрують по g:id, тому їх ця зміна не зачіпає.
+  return String(p.uid || (p.family ? slugify(p.family) : 'misc')) + 'g';
 }
 
 // === Supabase fetch ===
