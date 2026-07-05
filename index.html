@@ -4565,7 +4565,7 @@ async function sendLead(){
       fio: CART.wizard.fio,
       phone: CART.wizard.phone,
       total: CART.total(),
-      items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, priceFull: it.priceFull||null, season: it.season || null}))
+      items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, saleItem: !!it.saleItem, promo_pct: (it.promoSecond || it.saleItem) ? 30 : 0, priceFull: it.priceFull||null, season: it.season || null}))
     };
     const r = await fetch('/api/order', {
       method: 'POST',
@@ -4625,7 +4625,7 @@ async function wizardSubmit(){
     payment: pm,
     promoCode: (CART.wizard && CART.wizard.promo) || null,
     total: CART.total(),
-    items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, priceFull: it.priceFull||null, season: it.season || null}))
+    items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, saleItem: !!it.saleItem, promo_pct: (it.promoSecond || it.saleItem) ? 30 : 0, priceFull: it.priceFull||null, season: it.season || null}))
   };
   try {
     const r = await fetch('/api/order', {
