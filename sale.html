@@ -332,13 +332,14 @@ function loadSold(){fetch('https://fsihlzzjewhxpogvjapu.supabase.co/rest/v1/ulho
 loadSold();
 /* SALE STOCK v1: живі остатки з ulhome_sale_stock (qty>0 = розмір у наявності) */
 function applySaleStock(rows){
-  var by={};
-  (rows||[]).forEach(function(r){ var u=String(r.uid); (by[u]=by[u]||{})[String(r.size)]=Number(r.qty)||0; });
+  var by={},pr={};
+  (rows||[]).forEach(function(r){ var u=String(r.uid); (by[u]=by[u]||{})[String(r.size)]=Number(r.qty)||0; if(r.price!=null&&Number(r.price)>0)pr[u]=Number(r.price); });
   var touched=false;
   D.forEach(function(x){
     var st=by[String(x.uid)];
     if(!st) return;
     touched=true;
+    if(pr[String(x.uid)]) x.p=pr[String(x.uid)];
     var av=Object.keys(st).filter(function(s){return st[s]>0;}).sort(function(a,b){return Number(a)-Number(b);});
     x.sz=av;
     if(!av.length) SOLD.add(String(x.uid)); else SOLD.delete(String(x.uid));
@@ -346,7 +347,7 @@ function applySaleStock(rows){
   if(touched) buildGrid();
 }
 function loadStock(){
-  fetch('https://fsihlzzjewhxpogvjapu.supabase.co/rest/v1/ulhome_sale_stock?select=uid,size,qty',{headers:{apikey:ANON,Authorization:'Bearer '+ANON}})
+  fetch('https://fsihlzzjewhxpogvjapu.supabase.co/rest/v1/ulhome_sale_stock?select=uid,size,qty,price',{headers:{apikey:ANON,Authorization:'Bearer '+ANON}})
     .then(function(r){return r.json();})
     .then(function(rows){ if(Array.isArray(rows)) applySaleStock(rows); })
     .catch(function(){});

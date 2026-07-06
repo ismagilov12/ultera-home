@@ -469,7 +469,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
       <div class="page-head">
         <div>
           <h1>Наявність — сейл остатки</h1>
-          <div class="meta">Кількість пар по розмірах. 0 = розмір зникає з сайту; всі 0 = SOLD OUT. Списується автоматично при замовленні. <span id="stock-count" style="color:#e8a33d"></span></div>
+          <div class="meta">Кількість пар по розмірах. 0 = розмір зникає з сайту; всі 0 = SOLD OUT. Списується автоматично при замовленні. Ціна — повна (перекреслена), −30% рахується сам; зміна ціни оновлює і каталог (ulhome_products). <span id="stock-count" style="color:#e8a33d"></span></div>
         </div>
         <button class="btn primary" id="stock-save" onclick="saveStock()" disabled>Зберегти</button>
       </div>
@@ -2150,14 +2150,20 @@ document.querySelector('[data-page="feed"]').addEventListener('click', loadFeed)
 /* ==================== SALE STOCK (наявність) ==================== */
 let STOCK_ROWS = [];
 let STOCK_ORIG = {};
+let STOCK_PRICE = {};
+let STOCK_PRICE_ORIG = {};
 function stockKey(r){ return r.uid + '|' + r.size; }
+function stockSaleP(p){ p=Number(p)||0; return p>0 ? (Math.ceil(p*0.7/25)*25) : 0; }
 async function loadStock(){
   const wrap=document.getElementById('stock-list'); if(!wrap) return;
   wrap.innerHTML='<div class="loading">Завантажую\u2026</div>';
   try{
-    STOCK_ROWS = await rest('ulhome_sale_stock?select=uid,size,qty,title&order=title.asc.nullslast,uid.asc,size.asc') || [];
-    STOCK_ORIG = {};
-    STOCK_ROWS.forEach(r=>{ STOCK_ORIG[stockKey(r)] = Number(r.qty)||0; });
+    STOCK_ROWS = await rest('ulhome_sale_stock?select=uid,size,qty,title,price&order=title.asc.nullslast,uid.asc,size.asc') || [];
+    STOCK_ORIG = {}; STOCK_PRICE = {}; STOCK_PRICE_ORIG = {};
+    STOCK_ROWS.forEach(r=>{
+      STOCK_ORIG[stockKey(r)] = Number(r.qty)||0;
+      if(!(r.uid in STOCK_PRICE)){ STOCK_PRICE[r.uid]=Number(r.price)||0; STOCK_PRICE_ORIG[r.uid]=Number(r.price)||0; }
+    });
     renderStock();
   }catch(e){ wrap.innerHTML='<div class="loading">Помилка: '+(e&&e.message||e)+'</div>'; }
 }
@@ -2170,10 +2176,16 @@ function renderStock(){
     const rows=byUid[uid];
     const title=rows[0].title||uid;
     const total=rows.reduce((s,r)=>s+(Number(r.qty)||0),0);
+    const price=Number(STOCK_PRICE[uid])||0;
+    const pDirty=price!==(Number(STOCK_PRICE_ORIG[uid])||0);
     return '<div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+      '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px">'+
         '<b>'+escapeHtml(title)+'</b>'+
-        '<span style="font-family:var(--font-mono,monospace);font-size:11px;color:'+(total>0?'#2e8b57':'#c0392b')+'">'+(total>0?('разом: '+total+' шт'):'SOLD OUT')+'</span>'+
+        '<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#666">повна ціна'+
+          '<input type="number" min="0" step="10" value="'+(price||'')+'" style="width:84px;padding:5px;border:1px solid '+(pDirty?'#e8a33d':'var(--line)')+';border-radius:6px" onchange="stockPrice(\''+escapeHtml(uid)+'\',this.value)"> ₴'+
+          '<span style="color:#c0392b;font-family:var(--font-mono,monospace);font-size:11px">−30% = '+(price?stockSaleP(price).toLocaleString('uk-UA'):'—')+' ₴</span>'+
+        '</span>'+
+        '<span style="margin-left:auto;font-family:var(--font-mono,monospace);font-size:11px;color:'+(total>0?'#2e8b57':'#c0392b')+'">'+(total>0?('разом: '+total+' шт'):'SOLD OUT')+'</span>'+
       '</div>'+
       '<div style="display:flex;gap:10px;flex-wrap:wrap">'+rows.map(r=>{
         const k=stockKey(r); const dirty=(Number(r.qty)||0)!==STOCK_ORIG[k];
@@ -2182,7 +2194,9 @@ function renderStock(){
           '<input type="number" min="0" value="'+(Number(r.qty)||0)+'" style="width:60px;padding:5px;border:1px solid var(--line);border-radius:6px" onchange="stockQty(\''+escapeHtml(r.uid)+'\',\''+escapeHtml(String(r.size))+'\',this.value)">'+
           '<button type="button" title="Видалити розмір" onclick="stockDel(\''+escapeHtml(r.uid)+'\',\''+escapeHtml(String(r.size))+'\')" style="border:0;background:none;cursor:pointer;color:#c0392b;font-size:14px">\u00d7</button>'+
         '</span>';
-      }).join('')+'</div>'+
+      }).join('')+
+      '<button type="button" onclick="stockAddSize(\''+escapeHtml(uid)+'\')" style="border:1px dashed #bbb;background:none;border-radius:8px;padding:6px 12px;cursor:pointer;color:#666;font-size:12px">+ розмір</button>'+
+      '</div>'+
       '<div style="margin-top:6px;font-family:var(--font-mono,monospace);font-size:10px;color:#999">uid: '+escapeHtml(uid)+'</div>'+
     '</div>';
   }).join('');
@@ -2191,6 +2205,21 @@ function renderStock(){
 function stockQty(uid,size,val){
   const r=STOCK_ROWS.find(x=>x.uid===uid&&String(x.size)===String(size));
   if(r){ r.qty=Math.max(0,parseInt(val,10)||0); renderStock(); }
+}
+function stockPrice(uid,val){
+  STOCK_PRICE[uid]=Math.max(0,Math.round(parseFloat(val)||0));
+  renderStock();
+}
+async function stockAddSize(uid){
+  const size=(window.prompt('Новий розмір для «'+((STOCK_ROWS.find(x=>x.uid===uid)||{}).title||uid)+'» (напр. 42):')||'').trim();
+  if(!size) return;
+  if(STOCK_ROWS.some(x=>x.uid===uid&&String(x.size)===String(size))){ toast('Розмір '+size+' вже є','err'); return; }
+  const ref=STOCK_ROWS.find(x=>x.uid===uid)||{};
+  try{
+    await rest('ulhome_sale_stock',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({uid:uid,size:size,qty:1,title:ref.title||null,price:(Number(STOCK_PRICE[uid])||null)})});
+    toast('Розмір '+size+' додано \u2713 (1 шт)');
+    loadStock();
+  }catch(e){ toast('Помилка: '+(e&&e.message||e),'err'); }
 }
 async function stockDel(uid,size){
   if(!confirm('Видалити розмір '+size+' ('+uid+') з наявності?')) return;
@@ -2214,23 +2243,36 @@ async function stockAdd(){
     loadStock();
   }catch(e){ toast('Помилка: '+(e&&e.message||e),'err'); }
 }
+function stockDirtyPrices(){
+  return Object.keys(STOCK_PRICE).filter(u=>(Number(STOCK_PRICE[u])||0)!==(Number(STOCK_PRICE_ORIG[u])||0));
+}
 function updateStockCount(){
   let dirty=0;
   STOCK_ROWS.forEach(r=>{ if((Number(r.qty)||0)!==STOCK_ORIG[stockKey(r)]) dirty++; });
+  dirty+=stockDirtyPrices().length;
   const el=document.getElementById('stock-count');
   if(el) el.textContent=dirty?('· незбережених змін: '+dirty):'';
   const btn=document.getElementById('stock-save'); if(btn) btn.disabled=!dirty;
 }
 async function saveStock(){
   const changed=STOCK_ROWS.filter(r=>(Number(r.qty)||0)!==STOCK_ORIG[stockKey(r)]);
-  if(!changed.length){ toast('Немає змін'); return; }
+  const pchanged=stockDirtyPrices();
+  if(!changed.length&&!pchanged.length){ toast('Немає змін'); return; }
   const btn=document.getElementById('stock-save'); if(btn){ btn.disabled=true; btn.textContent='Зберігаю\u2026'; }
   try{
     for(const r of changed){
       await rest('ulhome_sale_stock?uid=eq.'+encodeURIComponent(r.uid)+'&size=eq.'+encodeURIComponent(String(r.size)),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({qty:Number(r.qty)||0})});
       STOCK_ORIG[stockKey(r)]=Number(r.qty)||0;
     }
-    toast('Наявність збережено \u2713 ('+changed.length+')');
+    for(const u of pchanged){
+      const val=Number(STOCK_PRICE[u])||null;
+      await rest('ulhome_sale_stock?uid=eq.'+encodeURIComponent(u),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({price:val})});
+      /* тримаємо бек (KeyCRM/чек) у синхроні: ціна каталогу = повна ціна сейлу */
+      try{ await rest('ulhome_products?uid=eq.'+encodeURIComponent(u),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({price:val})}); }catch(_e){}
+      STOCK_ROWS.forEach(r=>{ if(r.uid===u) r.price=val; });
+      STOCK_PRICE_ORIG[u]=Number(STOCK_PRICE[u])||0;
+    }
+    toast('Збережено \u2713 (кількість: '+changed.length+', ціни: '+pchanged.length+')');
   }catch(e){ toast('Помилка: '+(e&&e.message||e),'err'); }
   finally{ if(btn){ btn.textContent='Зберегти'; } renderStock(); }
 }

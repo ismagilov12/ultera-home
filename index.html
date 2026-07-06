@@ -2098,7 +2098,7 @@ window.ulteraFbq = function(name, params){
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v144 · sale-stock</div>
+<div class="build-tag">v145 · sale-stock-price</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -6477,13 +6477,14 @@ insertWomanDivider();
   };
   /* SALE STOCK v1: живі остатки з ulhome_sale_stock */
   function applySaleStock(rows){
-    var by={};
-    (rows||[]).forEach(function(r){ var u=String(r.uid); (by[u]=by[u]||{})[String(r.size)]=Number(r.qty)||0; });
+    var by={},pr={};
+    (rows||[]).forEach(function(r){ var u=String(r.uid); (by[u]=by[u]||{})[String(r.size)]=Number(r.qty)||0; if(r.price!=null&&Number(r.price)>0)pr[u]=Number(r.price); });
     var touched=false;
     D.forEach(function(x){
       var st=by[String(x.uid)];
       if(!st) return;
       touched=true;
+      if(pr[String(x.uid)]) x.p=pr[String(x.uid)];
       var av=Object.keys(st).filter(function(s){return st[s]>0;}).sort(function(a,b){return Number(a)-Number(b);});
       x.sz=av;
       x._sold=!av.length;
@@ -6491,7 +6492,7 @@ insertWomanDivider();
     if(touched) renderSaleGrid();
   }
   try{
-    fetch('https://fsihlzzjewhxpogvjapu.supabase.co/rest/v1/ulhome_sale_stock?select=uid,size,qty',{headers:{apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU',Authorization:'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU'}})
+    fetch('https://fsihlzzjewhxpogvjapu.supabase.co/rest/v1/ulhome_sale_stock?select=uid,size,qty,price',{headers:{apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU',Authorization:'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU'}})
       .then(function(r){return r.json();})
       .then(function(rows){ if(Array.isArray(rows)) applySaleStock(rows); })
       .catch(function(){});
