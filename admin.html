@@ -435,7 +435,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
       <div class="page-head">
         <div>
           <h1>Порядок сімей у каталозі</h1>
-          <div class="meta">Стрілками ↑/↓ задайте послідовність карток і чипсів-фільтрів на головній</div>
+          <div class="meta">Стрілками ↑/↓ задайте послідовність карток і чипсів-фільтрів на головній. «Сховати» прибирає сімʼю з головної (картки + чипс) — не забудь «Зберегти порядок»</div>
         </div>
         <button class="btn primary" id="fam-order-save" onclick="saveFamilyOrder()"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>Зберегти порядок</button>
       </div>
@@ -2025,8 +2025,9 @@ async function loadFamilyOrder(){
   wrap.innerHTML = '<div class="loading">Завантажую\u2026</div>';
   try {
     if (!PRODUCTS || !PRODUCTS.length){ try { await loadProducts(); } catch(_){} }
-    const rows = await rest('ulhome_family_order?select=family,sort_order&order=sort_order.asc') || [];
-    const orderMap = {}; rows.forEach(r=>{ if(r && r.family!=null) orderMap[String(r.family).trim()] = Number(r.sort_order)||0; });
+    const rows = await rest('ulhome_family_order?select=family,sort_order,hidden&order=sort_order.asc') || [];
+    const orderMap = {}; const hiddenMap = {};
+    rows.forEach(r=>{ if(r && r.family!=null){ orderMap[String(r.family).trim()] = Number(r.sort_order)||0; if(r.hidden===true) hiddenMap[String(r.family).trim()]=1; } });
     const SKIP = { 'Tees':1, 'SaleOstatki':1 };
     const pubFams = {};
     (PRODUCTS||[]).forEach(p=>{ const f=String(p.family||'').trim(); if(p.published && f && !SKIP[f]) pubFams[f]=1; });
@@ -2035,7 +2036,7 @@ async function loadFamilyOrder(){
     Object.keys(pubFams).forEach(f=>{ set[f]=1; });
     let list = Object.keys(set);
     list.sort((a,b)=>{ const oa=orderMap[a]!=null?orderMap[a]:9999, ob=orderMap[b]!=null?orderMap[b]:9999; if(oa!==ob) return oa-ob; return a<b?-1:1; });
-    FAM_ORDER = list.map(f=>({ family:f, published: !!pubFams[f] }));
+    FAM_ORDER = list.map(f=>({ family:f, published: !!pubFams[f], hidden: !!hiddenMap[f] }));
     renderFamOrder();
   } catch(e){ wrap.innerHTML = '<div class="loading">Помилка: '+(e&&e.message||e)+'</div>'; }
 }
@@ -2043,14 +2044,22 @@ function renderFamOrder(){
   const wrap = document.getElementById('fam-order-list');
   if (!wrap) return;
   if (!FAM_ORDER.length){ wrap.innerHTML = '<div class="loading">Немає сімей для впорядкування</div>'; return; }
-  wrap.innerHTML = FAM_ORDER.map((it,i)=>'<div class="fam-ord-row">'+
+  wrap.innerHTML = FAM_ORDER.map((it,i)=>'<div class="fam-ord-row"'+(it.hidden?' style="opacity:.45"':'')+'>'+
     '<span class="fam-ord-idx">'+(i+1)+'</span>'+
-    '<span class="fam-ord-name">'+it.family+(it.published?'':' <small style="color:var(--ink-60)">(прихована)</small>')+'</span>'+
+    '<span class="fam-ord-name">'+it.family+
+      (it.hidden?' <small style="color:#c0392b;font-weight:700">СХОВАНА</small>':'')+
+      (it.published?'':' <small style="color:var(--ink-60)">(немає опублікованих)</small>')+'</span>'+
     '<span class="fam-ord-btns">'+
+      '<button class="btn ghost" onclick="toggleFamHidden('+i+')" title="'+(it.hidden?'Показати сімʼю в каталозі':'Сховати сімʼю з каталогу')+'">'+(it.hidden?'\ud83d\udc41 Показати':'\ud83d\udeab Сховати')+'</button>'+
       '<button class="btn ghost" '+(i===0?'disabled':'')+' onclick="moveFam('+i+',-1)" title="Вгору">\u2191</button>'+
       '<button class="btn ghost" '+(i===FAM_ORDER.length-1?'disabled':'')+' onclick="moveFam('+i+',1)" title="Вниз">\u2193</button>'+
     '</span>'+
   '</div>').join('');
+}
+function toggleFamHidden(i){
+  if (!FAM_ORDER[i]) return;
+  FAM_ORDER[i].hidden = !FAM_ORDER[i].hidden;
+  renderFamOrder();
 }
 function moveFam(i, dir){
   const j = i + dir; if (j<0 || j>=FAM_ORDER.length) return;
@@ -2062,7 +2071,7 @@ async function saveFamilyOrder(){
   const btn = document.getElementById('fam-order-save');
   if (btn) btn.disabled = true;
   const now = new Date().toISOString();
-  const payload = FAM_ORDER.map((it,i)=>({ family: it.family, sort_order: (i+1)*10, updated_at: now }));
+  const payload = FAM_ORDER.map((it,i)=>({ family: it.family, sort_order: (i+1)*10, hidden: !!it.hidden, updated_at: now }));
   try {
     await rest('ulhome_family_order', { method:'POST', headers:{ Prefer:'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(payload) });
     toast('Порядок збережено — оновіть головну (F5)');

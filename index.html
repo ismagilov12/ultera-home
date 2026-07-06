@@ -2098,7 +2098,7 @@ window.ulteraFbq = function(name, params){
 </div>
 
 <!-- HEADER -->
-<div class="build-tag">v145 · sale-stock-price</div>
+<div class="build-tag">v146 · fam-hide</div>
 <header class="hdr" id="hdr">
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
@@ -3104,8 +3104,15 @@ try { renderTeesSection(); } catch(e) { try{ console.warn('renderTeesSection ini
 
   function applyFamilyOrder(rows){
     var map = {};
-    if (Array.isArray(rows)) rows.forEach(function(x){ if (x && x.family != null) map[String(x.family).trim()] = Number(x.sort_order)||0; });
+    var hid = {};
+    if (Array.isArray(rows)) rows.forEach(function(x){
+      if (x && x.family != null){
+        map[String(x.family).trim()] = Number(x.sort_order)||0;
+        if (x.hidden === true) hid[String(x.family).trim()] = 1;
+      }
+    });
     window.FAMILY_ORDER = map;
+    window.FAMILY_HIDDEN = hid;
     try { reorderChips(map); } catch(_){}
   }
   function reorderChips(map){
@@ -3120,6 +3127,12 @@ try { renderTeesSection(); } catch(e) { try{ console.warn('renderTeesSection ini
       return oa-ob;
     });
     chips.forEach(function(c){ box.appendChild(c); });
+    /* v146: chips of hidden families disappear */
+    var hid = window.FAMILY_HIDDEN || {};
+    chips.forEach(function(c){
+      var f = String(c.dataset.fam||'').trim();
+      if (f && f !== 'all') c.style.display = hid[f] ? 'none' : '';
+    });
   }
   function go(){
     Promise.all([
@@ -3127,7 +3140,7 @@ try { renderTeesSection(); } catch(e) { try{ console.warn('renderTeesSection ini
       /* v130: was fetchJSON (capped at PostgREST default page size, дропало
          частину з 282 фото). Тепер fetchAllRows тягне всі рядки через Range. */
       fetchAllRows('/rest/v1/ulhome_product_media?select=product_id,url,type,sort_order&order=product_id.asc,sort_order.asc', 1000),
-      fetchJSON('/rest/v1/ulhome_family_order?select=family,sort_order').catch(function(){ return []; })
+      fetchJSON('/rest/v1/ulhome_family_order?select=family,sort_order,hidden').catch(function(){ return []; })
     ]).then(function(r){
       try {
         try { console.log('[ultera] bootstrap media rows:', (r[1]||[]).length); } catch(_){}
@@ -3291,7 +3304,8 @@ function renderFeatured(){
   // Build merged list of rows to render as feat-cards
   // v133 2026-05-18: tees (family=Tees) рендеряться окремою секцією, не як feat-card
   const _isTees = function(f){ return String(f||'').toLowerCase() === 'tees'; };
-  const rows = [...DATA.featured, ...DATA.grid].filter(r => !_isTees(r && r.family));
+  const _famHid = (window.FAMILY_HIDDEN || {});
+  const rows = [...DATA.featured, ...DATA.grid].filter(r => !_isTees(r && r.family) && !_famHid[String((r && r.family) || '').trim()]);
   (function(){ var _fo=(window.FAMILY_ORDER||{}); rows.sort(function(a,b){ var ka=String((a&&a.family)||'').trim(), kb=String((b&&b.family)||'').trim(); var oa=(_fo[ka]!=null)?_fo[ka]:9999, ob=(_fo[kb]!=null)?_fo[kb]:9999; return oa-ob; }); })();
 
   el.innerHTML = rows.map((row, idx) => {
