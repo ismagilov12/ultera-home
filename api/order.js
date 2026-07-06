@@ -1,4 +1,8 @@
 // api/order.js — proxy ultera-home frontend → KeyCRM
+// STOCK v12 (2026-07-06):
+//   - [v12] SALE OSTATKI: after final (non-lead) order, decrement ulhome_sale_stock
+//           via RPC ulhome_sale_stock_decrement per item (uid+size). Only rows that
+//           exist in the stock table are touched; errors never block the order.
 // ATTRIBUTION v11 (2026-06-03):
 //   - [v11] CABINET: save payment_ref = body.num (ULT-xxxxxxxx orderReference)
 //           so /order?ref=... cabinet can locate the order by its public ref.
@@ -223,6 +227,44 @@ async function patchOrderKeycrmLink(supabaseId, keycrmId, externalId) {
   }
 }
 
+// [v12] Decrement SALE OSTATKI stock. RPC only touches uids/sizes present in
+//       ulhome_sale_stock, so it is safe to send the whole cart.
+async function decrementSaleStock(items) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey) return null;
+  try {
+    const payload = (items || [])
+      .filter(it => it && it.uid && it.size)
+      .map(it => ({
+        uid: String(it.uid),
+        size: String(it.size),
+        qty: parseInt(it.qty || 1, 10)
+      }));
+    if (!payload.length) return null;
+    const r = await fetch(`${supabaseUrl}/rest/v1/rpc/ulhome_sale_stock_decrement`, {
+      method: 'POST',
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': 'Bearer ' + supabaseKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_items: payload })
+    });
+    if (!r.ok) {
+      const t = await r.text().catch(() => '');
+      console.warn('[order] sale-stock decrement failed', r.status, t);
+      return null;
+    }
+    const data = await r.json().catch(() => null);
+    try { console.log('[order] sale-stock decremented', JSON.stringify(data && data.changed)); } catch (_) {}
+    return data;
+  } catch (e) {
+    console.warn('[order] sale-stock exception', e.message);
+    return null;
+  }
+}
+
 module.exports = async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -350,6 +392,9 @@ module.exports = async function handler(req, res) {
       message: 'Lead saved to Supabase; KeyCRM deferred until final stage.'
     });
   }
+
+  // [v12] final order → deduct sale-ostatki stock (await, but never block on errors)
+  try { await decrementSaleStock(body.items); } catch (_) {}
 
   try {
     console.log('[order]', {

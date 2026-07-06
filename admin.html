@@ -373,6 +373,10 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         <svg viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"/></svg>
         Фід Facebook
       </a>
+      <a data-page="stock">
+        <svg viewBox="0 0 24 24"><path d="M20 7L12 3L4 7v10l8 4 8-4V7zM4 7l8 4 8-4M12 11v10"/></svg>
+        Наявність (сейл)
+      </a>
       <a data-page="orders">
         <svg viewBox="0 0 24 24"><path d="M6 2l3 7h10l-2 8H8L6 2zM6 2H3M9 20c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1zM20 20c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1z"/></svg>
         Замовлення
@@ -458,6 +462,26 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         <button type="button" class="btn ghost" onclick="feedBulk(false)">Вимкнути видимі</button>
       </div>
       <div id="feed-list" class="feed-list"><div class="loading">Завантажую…</div></div>
+    </div>
+
+    <!-- SALE STOCK -->
+    <div class="page" id="page-stock" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Наявність — сейл остатки</h1>
+          <div class="meta">Кількість пар по розмірах. 0 = розмір зникає з сайту; всі 0 = SOLD OUT. Списується автоматично при замовленні. <span id="stock-count" style="color:#e8a33d"></span></div>
+        </div>
+        <button class="btn primary" id="stock-save" onclick="saveStock()" disabled>Зберегти</button>
+      </div>
+      <div id="stock-list" class="feed-list"><div class="loading">Завантажую…</div></div>
+      <div style="margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <b style="font-size:13px">Додати позицію:</b>
+        <input id="stock-new-uid" placeholder="uid" style="width:150px;padding:8px;border:1px solid var(--line);border-radius:8px">
+        <input id="stock-new-title" placeholder="назва (модель / колір)" style="width:200px;padding:8px;border:1px solid var(--line);border-radius:8px">
+        <input id="stock-new-size" placeholder="розмір" style="width:80px;padding:8px;border:1px solid var(--line);border-radius:8px">
+        <input id="stock-new-qty" type="number" min="0" value="1" style="width:70px;padding:8px;border:1px solid var(--line);border-radius:8px">
+        <button class="btn ghost" type="button" onclick="stockAdd()">+ Додати</button>
+      </div>
     </div>
 
     <!-- ORDERS -->
@@ -2122,6 +2146,95 @@ function copyFeedUrl(btn){
   else { window.prompt("Скопіюй посилання:",url); }
 }
 document.querySelector('[data-page="feed"]').addEventListener('click', loadFeed);
+
+/* ==================== SALE STOCK (наявність) ==================== */
+let STOCK_ROWS = [];
+let STOCK_ORIG = {};
+function stockKey(r){ return r.uid + '|' + r.size; }
+async function loadStock(){
+  const wrap=document.getElementById('stock-list'); if(!wrap) return;
+  wrap.innerHTML='<div class="loading">Завантажую\u2026</div>';
+  try{
+    STOCK_ROWS = await rest('ulhome_sale_stock?select=uid,size,qty,title&order=title.asc.nullslast,uid.asc,size.asc') || [];
+    STOCK_ORIG = {};
+    STOCK_ROWS.forEach(r=>{ STOCK_ORIG[stockKey(r)] = Number(r.qty)||0; });
+    renderStock();
+  }catch(e){ wrap.innerHTML='<div class="loading">Помилка: '+(e&&e.message||e)+'</div>'; }
+}
+function renderStock(){
+  const wrap=document.getElementById('stock-list'); if(!wrap) return;
+  if(!STOCK_ROWS.length){ wrap.innerHTML='<div class="loading">Порожньо — додай позиції нижче</div>'; updateStockCount(); return; }
+  const byUid={};
+  STOCK_ROWS.forEach(r=>{ (byUid[r.uid]=byUid[r.uid]||[]).push(r); });
+  wrap.innerHTML=Object.keys(byUid).map(uid=>{
+    const rows=byUid[uid];
+    const title=rows[0].title||uid;
+    const total=rows.reduce((s,r)=>s+(Number(r.qty)||0),0);
+    return '<div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+        '<b>'+escapeHtml(title)+'</b>'+
+        '<span style="font-family:var(--font-mono,monospace);font-size:11px;color:'+(total>0?'#2e8b57':'#c0392b')+'">'+(total>0?('разом: '+total+' шт'):'SOLD OUT')+'</span>'+
+      '</div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">'+rows.map(r=>{
+        const k=stockKey(r); const dirty=(Number(r.qty)||0)!==STOCK_ORIG[k];
+        return '<span style="display:inline-flex;align-items:center;gap:6px;border:1px solid '+(dirty?'#e8a33d':'var(--line)')+';border-radius:8px;padding:6px 8px'+((Number(r.qty)||0)<=0?';opacity:.55':'')+'">'+
+          '<b style="min-width:24px;text-align:center">'+escapeHtml(String(r.size))+'</b>'+
+          '<input type="number" min="0" value="'+(Number(r.qty)||0)+'" style="width:60px;padding:5px;border:1px solid var(--line);border-radius:6px" onchange="stockQty(\''+escapeHtml(r.uid)+'\',\''+escapeHtml(String(r.size))+'\',this.value)">'+
+          '<button type="button" title="Видалити розмір" onclick="stockDel(\''+escapeHtml(r.uid)+'\',\''+escapeHtml(String(r.size))+'\')" style="border:0;background:none;cursor:pointer;color:#c0392b;font-size:14px">\u00d7</button>'+
+        '</span>';
+      }).join('')+'</div>'+
+      '<div style="margin-top:6px;font-family:var(--font-mono,monospace);font-size:10px;color:#999">uid: '+escapeHtml(uid)+'</div>'+
+    '</div>';
+  }).join('');
+  updateStockCount();
+}
+function stockQty(uid,size,val){
+  const r=STOCK_ROWS.find(x=>x.uid===uid&&String(x.size)===String(size));
+  if(r){ r.qty=Math.max(0,parseInt(val,10)||0); renderStock(); }
+}
+async function stockDel(uid,size){
+  if(!confirm('Видалити розмір '+size+' ('+uid+') з наявності?')) return;
+  try{
+    await rest('ulhome_sale_stock?uid=eq.'+encodeURIComponent(uid)+'&size=eq.'+encodeURIComponent(size),{method:'DELETE',headers:{Prefer:'return=minimal'}});
+    STOCK_ROWS=STOCK_ROWS.filter(x=>!(x.uid===uid&&String(x.size)===String(size)));
+    delete STOCK_ORIG[uid+'|'+size];
+    renderStock(); toast('Видалено');
+  }catch(e){ toast('Помилка: '+(e&&e.message||e),'err'); }
+}
+async function stockAdd(){
+  const uid=(document.getElementById('stock-new-uid').value||'').trim();
+  const title=(document.getElementById('stock-new-title').value||'').trim();
+  const size=(document.getElementById('stock-new-size').value||'').trim();
+  const qty=Math.max(0,parseInt(document.getElementById('stock-new-qty').value,10)||0);
+  if(!uid||!size){ toast('Вкажи uid і розмір','err'); return; }
+  try{
+    await rest('ulhome_sale_stock',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({uid:uid,size:size,qty:qty,title:title||null})});
+    toast('Додано \u2713');
+    document.getElementById('stock-new-size').value='';
+    loadStock();
+  }catch(e){ toast('Помилка: '+(e&&e.message||e),'err'); }
+}
+function updateStockCount(){
+  let dirty=0;
+  STOCK_ROWS.forEach(r=>{ if((Number(r.qty)||0)!==STOCK_ORIG[stockKey(r)]) dirty++; });
+  const el=document.getElementById('stock-count');
+  if(el) el.textContent=dirty?('· незбережених змін: '+dirty):'';
+  const btn=document.getElementById('stock-save'); if(btn) btn.disabled=!dirty;
+}
+async function saveStock(){
+  const changed=STOCK_ROWS.filter(r=>(Number(r.qty)||0)!==STOCK_ORIG[stockKey(r)]);
+  if(!changed.length){ toast('Немає змін'); return; }
+  const btn=document.getElementById('stock-save'); if(btn){ btn.disabled=true; btn.textContent='Зберігаю\u2026'; }
+  try{
+    for(const r of changed){
+      await rest('ulhome_sale_stock?uid=eq.'+encodeURIComponent(r.uid)+'&size=eq.'+encodeURIComponent(String(r.size)),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({qty:Number(r.qty)||0})});
+      STOCK_ORIG[stockKey(r)]=Number(r.qty)||0;
+    }
+    toast('Наявність збережено \u2713 ('+changed.length+')');
+  }catch(e){ toast('Помилка: '+(e&&e.message||e),'err'); }
+  finally{ if(btn){ btn.textContent='Зберегти'; } renderStock(); }
+}
+document.querySelector('[data-page="stock"]').addEventListener('click', loadStock);
 </script>
 
 <script>

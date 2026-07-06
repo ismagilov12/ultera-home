@@ -330,6 +330,28 @@ async function checkout(){
 renderCart();
 function loadSold(){fetch('https://fsihlzzjewhxpogvjapu.supabase.co/rest/v1/ulhome_settings?key=eq.sale_sold_uids&select=value',{headers:{apikey:ANON,Authorization:'Bearer '+ANON}}).then(r=>r.json()).then(rows=>{var arr=(rows&&rows[0]&&rows[0].value)||[];SOLD=new Set(arr.map(String));buildGrid();}).catch(()=>{});}
 loadSold();
+/* SALE STOCK v1: живі остатки з ulhome_sale_stock (qty>0 = розмір у наявності) */
+function applySaleStock(rows){
+  var by={};
+  (rows||[]).forEach(function(r){ var u=String(r.uid); (by[u]=by[u]||{})[String(r.size)]=Number(r.qty)||0; });
+  var touched=false;
+  D.forEach(function(x){
+    var st=by[String(x.uid)];
+    if(!st) return;
+    touched=true;
+    var av=Object.keys(st).filter(function(s){return st[s]>0;}).sort(function(a,b){return Number(a)-Number(b);});
+    x.sz=av;
+    if(!av.length) SOLD.add(String(x.uid)); else SOLD.delete(String(x.uid));
+  });
+  if(touched) buildGrid();
+}
+function loadStock(){
+  fetch('https://fsihlzzjewhxpogvjapu.supabase.co/rest/v1/ulhome_sale_stock?select=uid,size,qty',{headers:{apikey:ANON,Authorization:'Bearer '+ANON}})
+    .then(function(r){return r.json();})
+    .then(function(rows){ if(Array.isArray(rows)) applySaleStock(rows); })
+    .catch(function(){});
+}
+loadStock();
 
 /* deeplink router: /sale.html?p=<uid> opens the product modal (used by the FB sale feed) */
 (function(){
