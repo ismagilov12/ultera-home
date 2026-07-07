@@ -2161,17 +2161,20 @@ let STOCK_ROWS = [];
 let STOCK_ORIG = {};
 let STOCK_PRICE = {};
 let STOCK_PRICE_ORIG = {};
+let STOCK_SALE = {};
+let STOCK_SALE_ORIG = {};
 function stockKey(r){ return r.uid + '|' + r.size; }
 function stockSaleP(p){ p=Number(p)||0; return p>0 ? (Math.ceil(p*0.7/25)*25) : 0; }
 async function loadStock(){
   const wrap=document.getElementById('stock-list'); if(!wrap) return;
   wrap.innerHTML='<div class="loading">Завантажую\u2026</div>';
   try{
-    STOCK_ROWS = await rest('ulhome_sale_stock?select=uid,size,qty,title,price&order=title.asc.nullslast,uid.asc,size.asc') || [];
-    STOCK_ORIG = {}; STOCK_PRICE = {}; STOCK_PRICE_ORIG = {};
+    STOCK_ROWS = await rest('ulhome_sale_stock?select=uid,size,qty,title,price,sale_price&order=title.asc.nullslast,uid.asc,size.asc') || [];
+    STOCK_ORIG = {}; STOCK_PRICE = {}; STOCK_PRICE_ORIG = {}; STOCK_SALE = {}; STOCK_SALE_ORIG = {};
     STOCK_ROWS.forEach(r=>{
       STOCK_ORIG[stockKey(r)] = Number(r.qty)||0;
       if(!(r.uid in STOCK_PRICE)){ STOCK_PRICE[r.uid]=Number(r.price)||0; STOCK_PRICE_ORIG[r.uid]=Number(r.price)||0; }
+      if(!(r.uid in STOCK_SALE)){ STOCK_SALE[r.uid]=Number(r.sale_price)||0; STOCK_SALE_ORIG[r.uid]=Number(r.sale_price)||0; }
     });
     renderStock();
   }catch(e){ wrap.innerHTML='<div class="loading">Помилка: '+(e&&e.message||e)+'</div>'; }
@@ -2187,12 +2190,19 @@ function renderStock(){
     const total=rows.reduce((s,r)=>s+(Number(r.qty)||0),0);
     const price=Number(STOCK_PRICE[uid])||0;
     const pDirty=price!==(Number(STOCK_PRICE_ORIG[uid])||0);
+    const sale=Number(STOCK_SALE[uid])||0;
+    const sDirty=sale!==(Number(STOCK_SALE_ORIG[uid])||0);
+    const effSale=sale>0?sale:(price?stockSaleP(price):0);
+    const pct=(price>0&&effSale>0&&effSale<price)?Math.round((1-effSale/price)*100):0;
     return '<div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px">'+
       '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px">'+
         '<b>'+escapeHtml(title)+'</b>'+
-        '<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#666">повна ціна'+
+        '<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#666">до знижки'+
           '<input type="number" min="0" step="10" value="'+(price||'')+'" style="width:84px;padding:5px;border:1px solid '+(pDirty?'#e8a33d':'var(--line)')+';border-radius:6px" onchange="stockPrice(\''+escapeHtml(uid)+'\',this.value)"> ₴'+
-          '<span style="color:#c0392b;font-family:var(--font-mono,monospace);font-size:11px">−30% = '+(price?stockSaleP(price).toLocaleString('uk-UA'):'—')+' ₴</span>'+
+        '</span>'+
+        '<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#c0392b">зі знижкою'+
+          '<input type="number" min="0" step="5" value="'+(sale||'')+'" placeholder="'+(price?stockSaleP(price):'')+'" style="width:84px;padding:5px;border:1px solid '+(sDirty?'#e8a33d':'#c0392b')+';border-radius:6px;color:#c0392b;font-weight:700" onchange="stockSale(\''+escapeHtml(uid)+'\',this.value)"> ₴'+
+          '<span style="font-family:var(--font-mono,monospace);font-size:11px">'+(pct?('−'+pct+'%'):'—')+'</span>'+
         '</span>'+
         '<span style="margin-left:auto;font-family:var(--font-mono,monospace);font-size:11px;color:'+(total>0?'#2e8b57':'#c0392b')+'">'+(total>0?('разом: '+total+' шт'):'SOLD OUT')+'</span>'+
       '</div>'+
@@ -2219,13 +2229,17 @@ function stockPrice(uid,val){
   STOCK_PRICE[uid]=Math.max(0,Math.round(parseFloat(val)||0));
   renderStock();
 }
+function stockSale(uid,val){
+  STOCK_SALE[uid]=Math.max(0,Math.round(parseFloat(val)||0));
+  renderStock();
+}
 async function stockAddSize(uid){
   const size=(window.prompt('Новий розмір для «'+((STOCK_ROWS.find(x=>x.uid===uid)||{}).title||uid)+'» (напр. 42):')||'').trim();
   if(!size) return;
   if(STOCK_ROWS.some(x=>x.uid===uid&&String(x.size)===String(size))){ toast('Розмір '+size+' вже є','err'); return; }
   const ref=STOCK_ROWS.find(x=>x.uid===uid)||{};
   try{
-    await rest('ulhome_sale_stock',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({uid:uid,size:size,qty:1,title:ref.title||null,price:(Number(STOCK_PRICE[uid])||null)})});
+    await rest('ulhome_sale_stock',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({uid:uid,size:size,qty:1,title:ref.title||null,price:(Number(STOCK_PRICE[uid])||null),sale_price:(Number(STOCK_SALE[uid])||null)})});
     toast('Розмір '+size+' додано \u2713 (1 шт)');
     loadStock();
   }catch(e){ toast('Помилка: '+(e&&e.message||e),'err'); }
@@ -2255,10 +2269,13 @@ async function stockAdd(){
 function stockDirtyPrices(){
   return Object.keys(STOCK_PRICE).filter(u=>(Number(STOCK_PRICE[u])||0)!==(Number(STOCK_PRICE_ORIG[u])||0));
 }
+function stockDirtySales(){
+  return Object.keys(STOCK_SALE).filter(u=>(Number(STOCK_SALE[u])||0)!==(Number(STOCK_SALE_ORIG[u])||0));
+}
 function updateStockCount(){
   let dirty=0;
   STOCK_ROWS.forEach(r=>{ if((Number(r.qty)||0)!==STOCK_ORIG[stockKey(r)]) dirty++; });
-  dirty+=stockDirtyPrices().length;
+  dirty+=stockDirtyPrices().length+stockDirtySales().length;
   const el=document.getElementById('stock-count');
   if(el) el.textContent=dirty?('· незбережених змін: '+dirty):'';
   const btn=document.getElementById('stock-save'); if(btn) btn.disabled=!dirty;
@@ -2266,7 +2283,8 @@ function updateStockCount(){
 async function saveStock(){
   const changed=STOCK_ROWS.filter(r=>(Number(r.qty)||0)!==STOCK_ORIG[stockKey(r)]);
   const pchanged=stockDirtyPrices();
-  if(!changed.length&&!pchanged.length){ toast('Немає змін'); return; }
+  const schanged=stockDirtySales();
+  if(!changed.length&&!pchanged.length&&!schanged.length){ toast('Немає змін'); return; }
   const btn=document.getElementById('stock-save'); if(btn){ btn.disabled=true; btn.textContent='Зберігаю\u2026'; }
   try{
     for(const r of changed){
@@ -2281,7 +2299,13 @@ async function saveStock(){
       STOCK_ROWS.forEach(r=>{ if(r.uid===u) r.price=val; });
       STOCK_PRICE_ORIG[u]=Number(STOCK_PRICE[u])||0;
     }
-    toast('Збережено \u2713 (кількість: '+changed.length+', ціни: '+pchanged.length+')');
+    for(const u of schanged){
+      const sval=Number(STOCK_SALE[u])||null;
+      await rest('ulhome_sale_stock?uid=eq.'+encodeURIComponent(u),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({sale_price:sval})});
+      STOCK_ROWS.forEach(r=>{ if(r.uid===u) r.sale_price=sval; });
+      STOCK_SALE_ORIG[u]=Number(STOCK_SALE[u])||0;
+    }
+    toast('Збережено \u2713 (кількість: '+changed.length+', ціни: '+(pchanged.length+schanged.length)+')');
   }catch(e){ toast('Помилка: '+(e&&e.message||e),'err'); }
   finally{ if(btn){ btn.textContent='Зберегти'; } renderStock(); }
 }

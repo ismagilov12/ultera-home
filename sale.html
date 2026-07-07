@@ -163,6 +163,8 @@ const SALE_PCT=30;
 const ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU';
 let SOLD=new Set();
 const saleP=p=>Math.ceil(p*(100-SALE_PCT)/100/25)*25;
+const itemSP=x=>((Number(x.sp)||0)>0?Number(x.sp):saleP(x.p));
+const itemPct=x=>{const pc=x.p>0?Math.round((1-itemSP(x)/x.p)*100):SALE_PCT;return pc>0?pc:0;};
 const fmt=n=>Number(n).toLocaleString('uk-UA');
 const PS='https://ultera-home.vercel.app/photos/sale/';
 const D=[
@@ -191,7 +193,7 @@ function buildGrid(){document.getElementById('grid').innerHTML=D.map((x,i)=>`<di
     <div class="card-quick"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>
   </div>
   <div class="card-name">${x.n}</div>
-  <div class="card-price"><s>${fmt(x.p)} ₴</s>${fmt(saleP(x.p))} ₴<span class="pct">−30%</span></div>
+  <div class="card-price"><s>${fmt(x.p)} ₴</s>${fmt(itemSP(x))} ₴<span class="pct">−${itemPct(x)}%</span></div>
   <div class="card-szl">${SOLD.has(String(x.uid))?'Продано':'Розміри в наявності'}</div>
   <div class="card-sz">${x.sz.map(s=>`<span>${s}</span>`).join('')}</div>
 </div>`).join('');}
@@ -224,7 +226,7 @@ function openModal(i){var x=D[i];MV.prod=x;MV.list=mediaFor(x.uid,x.ph);MV.i=0;M
  var _sold=SOLD.has(String(x.uid));var _b=document.getElementById('mBuy');_b.classList.toggle('sold',_sold);_b.disabled=_sold;_b.textContent=_sold?'ПРОДАНО':'В КОШИК';var ch=CHARS[x.uid]||CHARS['_default'];document.getElementById('mSpec').innerHTML=ch?('<div class="spec-h">Характеристики</div><ul>'+ch.c.map(t=>'<li>'+t+'</li>').join('')+'</ul><div class="spec-h">Матеріали</div><ul>'+ch.m.map(t=>'<li>'+t+'</li>').join('')+'</ul>'):'';mRender();document.getElementById('modal').classList.add('on');document.body.style.overflow='hidden';}
 function closeModal(){document.getElementById('modal').classList.remove('on');document.getElementById('mStage').innerHTML='';document.body.style.overflow='';}
 function modalAdd(){var x=MV.prod;if(!x)return;if(SOLD.has(String(x.uid))){alert('Цю модель уже продано');return;}if(!MV.size){alert('Оберіть розмір');return;}
- var f=CART.find(c=>c.uid===x.uid&&c.size===MV.size);if(f)f.qty++;else CART.push({uid:x.uid,title:x.n,color_name:x.c,photo:x.ph,size:MV.size,price:saleP(x.p),qty:1});
+ var f=CART.find(c=>c.uid===x.uid&&c.size===MV.size);if(f)f.qty++;else CART.push({uid:x.uid,title:x.n,color_name:x.c,photo:x.ph,size:MV.size,price:itemSP(x),qty:1});
  renderCart();closeModal();openCart();}
 function selSz(i,s,btn){pick[i]=s;btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');}
 function addCart(i){
@@ -232,7 +234,7 @@ function addCart(i){
   if(!s){alert('Оберіть розмір');return;}
   const found=CART.find(c=>c.uid===x.uid&&c.size===s);
   if(found)found.qty++;
-  else CART.push({uid:x.uid,title:x.n,color_name:x.c,photo:x.ph,size:s,price:saleP(x.p),qty:1});
+  else CART.push({uid:x.uid,title:x.n,color_name:x.c,photo:x.ph,size:s,price:itemSP(x),qty:1});
   renderCart();openCart();
 }
 function rm(idx){CART.splice(idx,1);renderCart();}
@@ -332,14 +334,15 @@ function loadSold(){fetch('https://fsihlzzjewhxpogvjapu.supabase.co/rest/v1/ulho
 loadSold();
 /* SALE STOCK v1: живі остатки з ulhome_sale_stock (qty>0 = розмір у наявності) */
 function applySaleStock(rows){
-  var by={},pr={};
-  (rows||[]).forEach(function(r){ var u=String(r.uid); (by[u]=by[u]||{})[String(r.size)]=Number(r.qty)||0; if(r.price!=null&&Number(r.price)>0)pr[u]=Number(r.price); });
+  var by={},pr={},sp={};
+  (rows||[]).forEach(function(r){ var u=String(r.uid); (by[u]=by[u]||{})[String(r.size)]=Number(r.qty)||0; if(r.price!=null&&Number(r.price)>0)pr[u]=Number(r.price); if(r.sale_price!=null&&Number(r.sale_price)>0)sp[u]=Number(r.sale_price); });
   var touched=false;
   D.forEach(function(x){
     var st=by[String(x.uid)];
     if(!st) return;
     touched=true;
     if(pr[String(x.uid)]) x.p=pr[String(x.uid)];
+    if(sp[String(x.uid)]) x.sp=sp[String(x.uid)];
     var av=Object.keys(st).filter(function(s){return st[s]>0;}).sort(function(a,b){return Number(a)-Number(b);});
     x.sz=av;
     if(!av.length) SOLD.add(String(x.uid)); else SOLD.delete(String(x.uid));
@@ -347,7 +350,7 @@ function applySaleStock(rows){
   if(touched) buildGrid();
 }
 function loadStock(){
-  fetch('https://fsihlzzjewhxpogvjapu.supabase.co/rest/v1/ulhome_sale_stock?select=uid,size,qty,price',{headers:{apikey:ANON,Authorization:'Bearer '+ANON}})
+  fetch('https://fsihlzzjewhxpogvjapu.supabase.co/rest/v1/ulhome_sale_stock?select=uid,size,qty,price,sale_price',{headers:{apikey:ANON,Authorization:'Bearer '+ANON}})
     .then(function(r){return r.json();})
     .then(function(rows){ if(Array.isArray(rows)) applySaleStock(rows); })
     .catch(function(){});

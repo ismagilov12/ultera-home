@@ -6419,6 +6419,8 @@ insertWomanDivider();
 (function(){
   var SALE_PCT=30;
   var saleP=function(p){return Math.ceil(p*(100-SALE_PCT)/100/25)*25;};
+  var itemSP=function(x){return ((Number(x.sp)||0)>0?Number(x.sp):saleP(x.p));};
+  var itemPct=function(x){var pc=x.p>0?Math.round((1-itemSP(x)/x.p)*100):SALE_PCT;return pc>0?pc:0;};
   var fmt=function(n){return Number(n).toLocaleString('uk-UA');};
   var PS='https://ultera-home.vercel.app/photos/sale/';
   var D=[
@@ -6446,13 +6448,13 @@ insertWomanDivider();
     if(!grid) return;
     grid.innerHTML=D.map(function(x,i){
       return '<div class="card" onclick="slOpen('+i+')">'+
-        '<div class="card-img"><div class="badge '+(x._sold?'sold':(x.nw?'new':'sale'))+'"'+(x._sold?' style="background:#c0392b;color:#fff"':'')+'>'+(x._sold?'SOLD OUT':(x.nw?'NEW \u00b7 \u041e\u0421\u0422\u0410\u0422\u041e\u041a':'SALE \u221230%'))+'</div>'+
+        '<div class="card-img"><div class="badge '+(x._sold?'sold':(x.nw?'new':'sale'))+'"'+(x._sold?' style="background:#c0392b;color:#fff"':'')+'>'+(x._sold?'SOLD OUT':(x.nw?'NEW \u00b7 \u041e\u0421\u0422\u0410\u0422\u041e\u041a':'SALE \u2212'+itemPct(x)+'%'))+'</div>'+
         '<img loading="lazy" src="'+x.ph+'" alt="'+x.n+'"'+(x._sold?' style="filter:grayscale(1);opacity:.75"':'')+'>'+
         '<div class="card-quick"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div></div>'+
         '<div class="card-name">'+x.n+'</div>'+
         '<div class="card-sku mono">SKU \u00b7 '+String(x.uid).replace('sale-','').slice(-8)+'</div>'+
         '<div class="card-row"><div class="card-szmini">'+x.sz.map(function(s){return '<span>'+s+'</span>';}).join('')+'</div>'+
-        '<div class="card-price"><s>'+fmt(x.p)+' \u20b4</s>'+fmt(saleP(x.p))+' \u20b4</div></div>'+
+        '<div class="card-price"><s>'+fmt(x.p)+' \u20b4</s>'+fmt(itemSP(x))+' \u20b4</div></div>'+
       '</div>';
     }).join('');
   }
@@ -6471,10 +6473,10 @@ insertWomanDivider();
   window.slThumb=function(k){MV.i=k;mRender();};
   window.slSel=function(s,btn){MV.size=s;document.querySelectorAll('#slSzs button').forEach(function(b){b.classList.remove('sel');});btn.classList.add('sel');};
   window.slOpen=function(i){var x=D[i];MV.prod=x;MV.list=mediaFor(x.uid,x.ph);MV.i=0;MV.size=(x.sz.length===1?x.sz[0]:null);
-    document.getElementById('slEye').textContent='\u0420\u043e\u0437\u043f\u0440\u043e\u0434\u0430\u0436 \u00b7 \u221230%'+(x.nw?' \u00b7 NEW':'');
+    document.getElementById('slEye').textContent='\u0420\u043e\u0437\u043f\u0440\u043e\u0434\u0430\u0436 \u00b7 \u2212'+itemPct(x)+'%'+(x.nw?' \u00b7 NEW':'');
     document.getElementById('slTitle').textContent=x.n;
     document.getElementById('slSku').textContent='SKU \u00b7 '+String(x.uid).replace('sale-','');
-    document.getElementById('slPcur').textContent=fmt(saleP(x.p))+' \u20b4';
+    document.getElementById('slPcur').textContent=fmt(itemSP(x))+' \u20b4';
     document.getElementById('slPold').textContent=fmt(x.p)+' \u20b4';
     document.getElementById('slThumbs').innerHTML=MV.list.map(function(m,k){return '<button onclick="slThumb('+k+')"><img src="'+(m.t==='video'?poster(x):m.u)+'"></button>';}).join('');
     document.getElementById('slSzs').innerHTML=x.sz.map(function(s){return '<button onclick="slSel(\''+s+'\',this)" class="'+(MV.size===s?'sel':'')+'">'+s+'<small>'+(CM[s]||'')+'\u0441\u043c</small></button>';}).join('');
@@ -6483,7 +6485,7 @@ insertWomanDivider();
   window.slClose=function(){document.getElementById('slModal').classList.remove('on');document.getElementById('slStage').innerHTML='';document.body.style.overflow='';};
   window.slAdd=function(){var x=MV.prod;if(!x)return;if(x._sold||!x.sz.length){if(typeof toast==='function')toast('\u0426\u044e \u043c\u043e\u0434\u0435\u043b\u044c \u0432\u0436\u0435 \u043f\u0440\u043e\u0434\u0430\u043d\u043e');else alert('\u0426\u044e \u043c\u043e\u0434\u0435\u043b\u044c \u0432\u0436\u0435 \u043f\u0440\u043e\u0434\u0430\u043d\u043e');return;}if(!MV.size){if(typeof toast==='function')toast('\u041e\u0431\u0435\u0440\u0456\u0442\u044c \u0440\u043e\u0437\u043c\u0456\u0440');else alert('\u041e\u0431\u0435\u0440\u0456\u0442\u044c \u0440\u043e\u0437\u043c\u0456\u0440');return;}
     try{
-      CART.add({uid:String(x.uid),title:x.n,photo:x.ph,color_name:x.c,size:MV.size,price:saleP(x.p),priceFull:x.p,family:'SALE',saleItem:true});
+      CART.add({uid:String(x.uid),title:x.n,photo:x.ph,color_name:x.c,size:MV.size,price:itemSP(x),priceFull:x.p,family:'SALE',saleItem:true});
       if(typeof updateCartBadge==='function')updateCartBadge();
       slClose();
       if(typeof openCart==='function')openCart();
@@ -6491,14 +6493,15 @@ insertWomanDivider();
   };
   /* SALE STOCK v1: живі остатки з ulhome_sale_stock */
   function applySaleStock(rows){
-    var by={},pr={};
-    (rows||[]).forEach(function(r){ var u=String(r.uid); (by[u]=by[u]||{})[String(r.size)]=Number(r.qty)||0; if(r.price!=null&&Number(r.price)>0)pr[u]=Number(r.price); });
+    var by={},pr={},sp={};
+    (rows||[]).forEach(function(r){ var u=String(r.uid); (by[u]=by[u]||{})[String(r.size)]=Number(r.qty)||0; if(r.price!=null&&Number(r.price)>0)pr[u]=Number(r.price); if(r.sale_price!=null&&Number(r.sale_price)>0)sp[u]=Number(r.sale_price); });
     var touched=false;
     D.forEach(function(x){
       var st=by[String(x.uid)];
       if(!st) return;
       touched=true;
       if(pr[String(x.uid)]) x.p=pr[String(x.uid)];
+      if(sp[String(x.uid)]) x.sp=sp[String(x.uid)];
       var av=Object.keys(st).filter(function(s){return st[s]>0;}).sort(function(a,b){return Number(a)-Number(b);});
       x.sz=av;
       x._sold=!av.length;
@@ -6506,7 +6509,7 @@ insertWomanDivider();
     if(touched) renderSaleGrid();
   }
   try{
-    fetch('https://fsihlzzjewhxpogvjapu.supabase.co/rest/v1/ulhome_sale_stock?select=uid,size,qty,price',{headers:{apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU',Authorization:'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU'}})
+    fetch('https://fsihlzzjewhxpogvjapu.supabase.co/rest/v1/ulhome_sale_stock?select=uid,size,qty,price,sale_price',{headers:{apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU',Authorization:'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU'}})
       .then(function(r){return r.json();})
       .then(function(rows){ if(Array.isArray(rows)) applySaleStock(rows); })
       .catch(function(){});
