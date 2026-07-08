@@ -6518,7 +6518,7 @@ insertWomanDivider();
 })();
 </script>
 
-<script>/*INSOLE_UPSELL v149 2026-07-08: попап "додати устілки 249₴" після додавання пари (крім SHAPE/Tees). Товар 900000000249 hidden, family=Insole, RPC v5 bypass.*/
+<script>/*INSOLE_UPSELL v149.1 2026-07-08: попап "додати устілки 249₴" після додавання пари (крім SHAPE/Tees). Товар 900000000249 hidden, family=Insole, RPC v5 bypass.*/
 (function(){
   var INS = {
     uid: '900000000249',
@@ -6586,7 +6586,7 @@ insertWomanDivider();
     if(dismiss){ try{ sessionStorage.setItem('ul_ins_no','1'); }catch(e){} }
   }
   function wrap(){
-    if(!window.CART || typeof CART.add !== 'function' || CART.add.__insWrapped) return !!(window.CART && CART.add && CART.add.__insWrapped);
+    if(typeof CART === 'undefined' || !CART || typeof CART.add !== 'function' || CART.add.__insWrapped) return !!(typeof CART !== 'undefined' && CART && CART.add && CART.add.__insWrapped);
     var orig = CART.add;
     CART.add = function(item){
       var r = orig.apply(this, arguments);
