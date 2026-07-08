@@ -6518,5 +6518,89 @@ insertWomanDivider();
 })();
 </script>
 
+<script>/*INSOLE_UPSELL v149 2026-07-08: попап "додати устілки 249₴" після додавання пари (крім SHAPE/Tees). Товар 900000000249 hidden, family=Insole, RPC v5 bypass.*/
+(function(){
+  var INS = {
+    uid: '900000000249',
+    title: 'Змінні устілки ULTERA',
+    price: '249.00',
+    photo: 'https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776701944802-82whcg.png'
+  };
+  var SKIP_FAM = {'SHAPE':1,'Tees':1,'Insole':1};
+  function qualifies(item){
+    try{
+      if(!item || !item.uid || String(item.uid)===INS.uid) return false;
+      if(SKIP_FAM[String(item.family||'')]) return false;
+      if(/shape/i.test(String(item.title||''))) return false;
+      if(!item.size) return false;
+      try{ if(sessionStorage.getItem('ul_ins_no')==='1') return false; }catch(e){}
+      if(CART.items.some(function(x){ return x && String(x.uid)===INS.uid && String(x.size||'')===String(item.size||''); })) return false;
+      return true;
+    }catch(e){ return false; }
+  }
+  var css = '#insPop{position:fixed;inset:0;z-index:99999;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.45)}' +
+    '#insPop.open{display:flex}' +
+    '#insPop .ins-card{background:#fff;color:#111;border-radius:16px 16px 0 0;max-width:420px;width:100%;padding:20px 18px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 40px rgba(0,0,0,.25);animation:insUp .25s ease}' +
+    '@media(min-width:640px){#insPop{align-items:center}#insPop .ins-card{border-radius:16px;padding-bottom:18px}}' +
+    '@keyframes insUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}' +
+    '#insPop img{width:84px;height:84px;object-fit:cover;border-radius:12px;background:#f4f4f4;flex:none}' +
+    '#insPop .ins-row{display:flex;gap:14px;align-items:center}' +
+    '#insPop .ins-t{font-weight:700;font-size:16px;line-height:1.25;margin-bottom:4px}' +
+    '#insPop .ins-d{font-size:13px;color:#666;line-height:1.35}' +
+    '#insPop .ins-btns{display:flex;gap:10px;margin-top:16px}' +
+    '#insPop .ins-add{flex:1;padding:13px;border:0;border-radius:10px;background:var(--ink,#111);color:#fff;font-weight:700;font-size:14px;cursor:pointer}' +
+    '#insPop .ins-no{padding:13px 14px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#555;font-size:14px;cursor:pointer}';
+  function init(){
+    if(document.getElementById('insPop')) return;
+    var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+    var pop = document.createElement('div'); pop.id = 'insPop';
+    pop.innerHTML = '<div class="ins-card">' +
+      '<div class="ins-row"><img src="' + INS.photo + '" alt="Устілки ULTERA" loading="lazy">' +
+      '<div><div class="ins-t">Додати змінні устілки?</div>' +
+      '<div class="ins-d">Оригінальні устілки ULTERA · розмір <b id="insSz"></b> — як у вашої пари</div></div></div>' +
+      '<div class="ins-btns"><button type="button" class="ins-add" id="insAdd">Додати за 249 ₴</button>' +
+      '<button type="button" class="ins-no" id="insNo">Ні, дякую</button></div></div>';
+    document.body.appendChild(pop);
+    pop.addEventListener('click', function(e){ if(e.target === pop) hide(true); });
+    document.getElementById('insNo').addEventListener('click', function(){ hide(true); });
+    document.getElementById('insAdd').addEventListener('click', function(){
+      hide(false);
+      try{
+        CART.add({uid:INS.uid, title:INS.title, photo:INS.photo, color_name:'', size:pendSize, price:INS.price, family:'Insole'});
+        if(typeof updateCartBadge === 'function') updateCartBadge();
+        var d = document.getElementById('cartDrawer');
+        if(d && d.classList.contains('open') && typeof renderCart === 'function') renderCart();
+        if(typeof toast === 'function') toast('Устілки додано · розмір ' + pendSize);
+      }catch(e){}
+    });
+  }
+  var pendSize = '';
+  function show(size){
+    init();
+    pendSize = String(size);
+    var sz = document.getElementById('insSz'); if(sz) sz.textContent = pendSize;
+    document.getElementById('insPop').classList.add('open');
+  }
+  function hide(dismiss){
+    var p = document.getElementById('insPop'); if(p) p.classList.remove('open');
+    if(dismiss){ try{ sessionStorage.setItem('ul_ins_no','1'); }catch(e){} }
+  }
+  function wrap(){
+    if(!window.CART || typeof CART.add !== 'function' || CART.add.__insWrapped) return !!(window.CART && CART.add && CART.add.__insWrapped);
+    var orig = CART.add;
+    CART.add = function(item){
+      var r = orig.apply(this, arguments);
+      try{ if(qualifies(item)) setTimeout(function(){ show(item.size); }, 450); }catch(e){}
+      return r;
+    };
+    CART.add.__insWrapped = true;
+    return true;
+  }
+  if(!wrap()){
+    var t = setInterval(function(){ if(wrap()) clearInterval(t); }, 300);
+    setTimeout(function(){ clearInterval(t); }, 10000);
+  }
+})();
+</script>
 </body>
 </html>
