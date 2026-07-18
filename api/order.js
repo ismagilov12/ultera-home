@@ -1,4 +1,12 @@
 // api/order.js — proxy ultera-home frontend → KeyCRM
+// CAPI v13 (2026-07-18):
+//   - [v13] FB Conversions API Purchase for COD (наложка) final orders, fired at
+//           order creation. Card orders keep firing Purchase from wayforpay-callback
+//           on Approved (unchanged). event_id = public order ref (ULT-...) so it
+//           dedups with any client-side Pixel event. _fbp/_fbc read from the
+//           request Cookie header (first-party cookies set by the Meta Pixel on the
+//           site domain) with body.fbp/body.fbc/body.fbclid as fallback. Never blocks
+//           the order — all CAPI errors are swallowed.
 // STOCK v12 (2026-07-06):
 //   - [v12] SALE OSTATKI: after final (non-lead) order, decrement ulhome_sale_stock
 //           via RPC ulhome_sale_stock_decrement per item (uid+size). Only rows that
@@ -27,6 +35,9 @@
 //   KEYCRM_TOKEN, KEYCRM_SOURCE_ID, KEYCRM_PM_CARD, KEYCRM_PM_NP, KEYCRM_DS_NP
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   TURNSTILE_SECRET (optional)
+//   FB_PIXEL_ID, FB_CAPI_TOKEN (optional — CAPI is a no-op if unset)
+
+const { sendCAPI } = require('./fb-capi');
 
 // Legacy hardcoded promo codes (server-side truth; extend with DB codes).
 const LEGACY_PROMOS = { 'SALE1': 5, 'ULTERA10': 10 };
@@ -57,6 +68,16 @@ function getClientIp(req) {
   const fwd = req.headers['x-forwarded-for'];
   if (fwd) return String(fwd).split(',')[0].trim();
   return req.headers['x-real-ip'] || req.socket?.remoteAddress || 'unknown';
+}
+
+// [v13] Read a cookie from the request Cookie header (for _fbp / _fbc, which the
+//       Meta Pixel sets as first-party cookies on the site domain).
+function getCookie(req, name) {
+  const raw = req.headers.cookie || '';
+  if (!raw) return null;
+  const safe = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const m = raw.match(new RegExp('(?:^|;\\s*)' + safe + '=([^;]+)'));
+  return m ? decodeURIComponent(m[1]) : null;
 }
 
 async function checkRateLimit(ip, limit) {
@@ -265,6 +286,51 @@ async function decrementSaleStock(items) {
   }
 }
 
+// [v13] Fire a server-side CAPI Purchase for a COD (наложка) order at creation.
+//       No-op if FB_CAPI_TOKEN/FB_PIXEL_ID unset. Never throws.
+async function fireCapiPurchaseCod(req, body, ip, total, eventId) {
+  try {
+    const ua  = req.headers['user-agent'] || '';
+    const fbp = (typeof body.fbp === 'string' && body.fbp) || getCookie(req, '_fbp') || undefined;
+    let   fbc = (typeof body.fbc === 'string' && body.fbc) || getCookie(req, '_fbc') || undefined;
+    if (!fbc && body.fbclid) fbc = 'fb.1.' + Date.now() + '.' + String(body.fbclid);
+
+    const nameParts = String(body.fio || '').trim().split(/\s+/).filter(Boolean);
+    const fn = nameParts[0] || undefined;
+    const ln = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined;
+
+    const contentIds = (body.items || []).map(it => String(it.uid || '')).filter(Boolean);
+    const numItems   = (body.items || []).reduce((s, it) => s + (parseInt(it.qty || 1, 10) || 1), 0);
+
+    const r = await sendCAPI('Purchase', {
+      event_id: eventId,
+      event_source_url: (typeof body.landing_url === 'string' && body.landing_url) || 'https://ultera.in.ua/',
+      user_data: {
+        ph: [body.phone],
+        em: body.email ? [body.email] : undefined,
+        fn, ln,
+        external_id: body.phone,
+        client_ip_address: ip,
+        client_user_agent: ua,
+        fbp, fbc
+      },
+      custom_data: {
+        currency: 'UAH',
+        value: total,
+        content_ids: contentIds,
+        content_type: 'product',
+        num_items: numItems,
+        order_id: eventId
+      }
+    });
+    try { console.log('[order] capi purchase (cod)', JSON.stringify(r)); } catch (_) {}
+    return r;
+  } catch (e) {
+    console.warn('[order] capi purchase (cod) exception', e.message);
+    return null;
+  }
+}
+
 module.exports = async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -396,6 +462,15 @@ module.exports = async function handler(req, res) {
   // [v12] final order → deduct sale-ostatki stock (await, but never block on errors)
   try { await decrementSaleStock(body.items); } catch (_) {}
 
+  const externalId = String(orderRow ? orderRow.number : (body.num || ''));
+
+  // [v13] CAPI Purchase for COD (наложка) final orders — card orders fire Purchase
+  //       from wayforpay-callback on Approved, so skip them here to avoid double
+  //       counting a pay that may not complete. event_id dedups with client Pixel.
+  if (body.payment !== 'card') {
+    try { await fireCapiPurchaseCod(req, body, ip, authoritativeTotal, publicRef || externalId); } catch (_) {}
+  }
+
   try {
     console.log('[order]', {
       num: body.num,
@@ -413,8 +488,6 @@ module.exports = async function handler(req, res) {
   const pmCard = parseInt(process.env.KEYCRM_PM_CARD || '0', 10);
   const pmNp   = parseInt(process.env.KEYCRM_PM_NP   || '0', 10);
   const paymentMethodId = body.payment === 'card' ? pmCard : pmNp;
-
-  const externalId = String(orderRow ? orderRow.number : (body.num || ''));
 
   const crmPayload = {
     source_id: parseInt(process.env.KEYCRM_SOURCE_ID || '1', 10),
