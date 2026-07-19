@@ -6462,6 +6462,7 @@ insertWomanDivider();
     }).join('');
   }
   renderSaleGrid();
+  window.__saleD=D;
   var MV={list:[],i:0,prod:null,size:null};
   function mediaFor(uid,ph){var m=MEDIA[uid];return (m&&m.length)?m:[{t:'photo',u:ph}];}
   function ytEmbed(u){var m=u.match(/shorts\/([A-Za-z0-9_-]+)/)||u.match(/[?&]v=([A-Za-z0-9_-]+)/)||u.match(/youtu\.be\/([A-Za-z0-9_-]+)/);return m?('https://www.youtube.com/embed/'+m[1]):u;}
@@ -6517,6 +6518,95 @@ insertWomanDivider();
       .then(function(rows){ if(Array.isArray(rows)) applySaleStock(rows); })
       .catch(function(){});
   }catch(_){}
+})();
+</script>
+
+<!-- SALE_ITEM_DEEPLINK v154 -->
+<script>
+/* SALE_ITEM_DEEPLINK v154 2026-07-19: прямі лінки на сейл-товари ?p=sale-<uid>.
+   Відкриває sl-модалку сейл-картки; slOpen/slClose синхронізують URL. */
+(function(){
+  function saleD(){ return Array.isArray(window.__saleD) ? window.__saleD : null; }
+  function tokenFor(x){
+    var uid = String(x && x.uid || '');
+    return /^sale-/.test(uid) ? uid : ('sale-' + uid);
+  }
+  function saleIdx(token){
+    var D = saleD(); if (!D) return -1;
+    token = String(token || '').trim();
+    if (!token) return -1;
+    var cand = [token];
+    if (/^sale-/i.test(token)) cand.push(token.replace(/^sale-/i, ''));
+    for (var c = 0; c < cand.length; c++){
+      for (var i = 0; i < D.length; i++){
+        if (D[i] && String(D[i].uid) === cand[c]) return i;
+      }
+    }
+    return -1;
+  }
+  var RESERVED = ['sale','sale-30','sale30','rozprodazh','rozprodaj','rasprodazha','rasprodaja'];
+  function tryOpenFromUrl(){
+    var token = null;
+    try { token = new URLSearchParams(location.search).get('p'); } catch(e){ return; }
+    if (!token) return;
+    token = String(token).trim();
+    if (RESERVED.indexOf(token.toLowerCase()) !== -1) return;
+    if (!/^sale-/i.test(token)) return; /* тільки sale-префікс — решту веде основний роутер */
+    var tries = 0, MAX = 120;
+    (function poll(){
+      tries++;
+      var idx = saleIdx(token);
+      if (idx !== -1 && typeof window.slOpen === 'function'){
+        try { window.slOpen(idx); } catch(e){}
+        return;
+      }
+      if (tries < MAX) setTimeout(poll, 150);
+    })();
+  }
+  function installOpenWrap(){
+    if (typeof window.slOpen !== 'function' || window.__slOpenWrapped) return false;
+    var orig = window.slOpen;
+    window.slOpen = function(i){
+      var r = orig.apply(this, arguments);
+      try {
+        var D = saleD(), x = D && D[i];
+        if (x){
+          var u = new URL(location.href);
+          u.searchParams.set('p', tokenFor(x));
+          history.replaceState(null, '', u.pathname + u.search + u.hash);
+        }
+      } catch(e){}
+      return r;
+    };
+    window.__slOpenWrapped = true;
+    return true;
+  }
+  function installCloseWrap(){
+    if (typeof window.slClose !== 'function' || window.__slCloseWrapped) return false;
+    var orig = window.slClose;
+    window.slClose = function(){
+      var r = orig.apply(this, arguments);
+      try {
+        var u = new URL(location.href);
+        var p = u.searchParams.get('p') || '';
+        if (/^sale-/i.test(p)){
+          u.searchParams.delete('p');
+          var qs = u.searchParams.toString();
+          history.replaceState(null, '', u.pathname + (qs ? '?' + qs : '') + u.hash);
+        }
+      } catch(e){}
+      return r;
+    };
+    window.__slCloseWrapped = true;
+    return true;
+  }
+  var t = 0, iv = setInterval(function(){
+    t++;
+    var a = installOpenWrap(), b = installCloseWrap();
+    if ((window.__slOpenWrapped && window.__slCloseWrapped) || t > 60) clearInterval(iv);
+  }, 100);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tryOpenFromUrl);
+  else setTimeout(tryOpenFromUrl, 0);
 })();
 </script>
 
