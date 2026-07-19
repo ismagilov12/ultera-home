@@ -4253,6 +4253,8 @@ function shapeBonusRound(x){ return Math.ceil(x/25)*25; }
 function renderShapePromo(){
   var el = document.getElementById('cdShapePromo');
   if(!el) return;
+  /* v153: блок вимкнено — крос-сейл SHAPE переїхав у попап після додавання в кошик */
+  if(true){ el.hidden = true; el.innerHTML = ''; return; }
   if(window._shapePromoDismissed){ el.hidden = true; el.innerHTML = ''; return; }
   var st = shapePromoState();
   if(!st.hasFull || st.hasPromo){ el.hidden = true; el.innerHTML = ''; return; }
@@ -4363,7 +4365,7 @@ function confirmShapeBonus(){
   var v = variants[_shapePromo.colorIdx];
   if(!v){ if(typeof toast === 'function') toast('Варіант не знайдено'); return; }
   var full = Math.round(parseFloat(v.price)||0);
-  var disc = shapeBonusRound(full * 0.7);
+  var disc = (typeof window.ULH_SHAPE31==='function') ? window.ULH_SHAPE31(full) : shapeBonusRound(full * 0.7); /* v153 */
   var item = {
     uid: v.uid,
     title: (v.title||'').replace('ULTERA - ','').replace('ULTERA ','') + ' · Друга пара −30%',
@@ -6518,82 +6520,199 @@ insertWomanDivider();
 })();
 </script>
 
-<script>/*INSOLE_UPSELL v149.1 2026-07-08: попап "додати устілки 249₴" після додавання пари (крім SHAPE/Tees). Товар 900000000249 hidden, family=Insole, RPC v5 bypass.*/
+<script>/*SHAPE_UPSELL v153 2026-07-18: попап "тапочки SHAPE −30%" (фактично −31%, ціни authoritative з ulhome_sale_stock.sale_price) після додавання будь-якої пари. Замінює INSOLE_UPSELL v149 та блок cdShapePromo у кошику.*/
 (function(){
-  var INS = {
-    uid: '900000000249',
-    title: 'Змінні устілки ULTERA',
-    price: '249.00',
-    photo: 'https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776701944802-82whcg.png'
-  };
+  var PRICE31 = {3490:2390, 2990:2050, 2890:1990, 2885:1990, 2790:1990};
+  function disc31(full){
+    full = Math.round(parseFloat(full)||0);
+    if(PRICE31[full]) return PRICE31[full];
+    /* fallback = серверна формула promo_pct=30: ceil(x*0.7/25)*25 */
+    return Math.ceil(full*0.7/25)*25;
+  }
+  window.ULH_SHAPE31 = disc31;
+
+  var ST = { colorIdx: 0, size: '' };
   var SKIP_FAM = {'SHAPE':1,'Tees':1,'Insole':1};
+
+  function variants(){
+    try{ return (typeof getShapeVariants === 'function') ? getShapeVariants() : []; }catch(e){ return []; }
+  }
+  function cleanColor(v){
+    var n = (v && v.color_name) || '';
+    return n.replace('ULTERA - SHAPE','').trim() || 'Base';
+  }
   function qualifies(item){
     try{
-      if(!item || !item.uid || String(item.uid)===INS.uid) return false;
+      if(!item || !item.uid || !item.size) return false;
+      if(item.promoSecond || item.saleFree) return false;
       if(SKIP_FAM[String(item.family||'')]) return false;
-      if(/shape/i.test(String(item.title||''))) return false;
-      if(!item.size) return false;
-      try{ if(sessionStorage.getItem('ul_ins_no')==='1') return false; }catch(e){}
-      if(CART.items.some(function(x){ return x && String(x.uid)===INS.uid && String(x.size||'')===String(item.size||''); })) return false;
+      if(/shape|устілк/i.test(String(item.title||''))) return false;
+      try{ if(sessionStorage.getItem('ul_shape_no')==='1') return false; }catch(e){}
+      if(CART.items.some(function(x){ return x && x.promoSecond; })) return false;
+      if(!variants().length) return false;
       return true;
     }catch(e){ return false; }
   }
-  var css = '#insPop{position:fixed;inset:0;z-index:99999;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.45)}' +
-    '#insPop.open{display:flex}' +
-    '#insPop .ins-card{background:#fff;color:#111;border-radius:16px 16px 0 0;max-width:420px;width:100%;padding:20px 18px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 40px rgba(0,0,0,.25);animation:insUp .25s ease}' +
-    '@media(min-width:640px){#insPop{align-items:center}#insPop .ins-card{border-radius:16px;padding-bottom:18px}}' +
-    '@keyframes insUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}' +
-    '#insPop img{width:84px;height:84px;object-fit:cover;border-radius:12px;background:#f4f4f4;flex:none}' +
-    '#insPop .ins-row{display:flex;gap:14px;align-items:center}' +
-    '#insPop .ins-t{font-weight:700;font-size:16px;line-height:1.25;margin-bottom:4px}' +
-    '#insPop .ins-d{font-size:13px;color:#666;line-height:1.35}' +
-    '#insPop .ins-btns{display:flex;gap:10px;margin-top:16px}' +
-    '#insPop .ins-add{flex:1;padding:13px;border:0;border-radius:10px;background:var(--ink,#111);color:#fff;font-weight:700;font-size:14px;cursor:pointer}' +
-    '#insPop .ins-no{padding:13px 14px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#555;font-size:14px;cursor:pointer}';
+
+  var css = ''+
+  '#shpPop{position:fixed;inset:0;z-index:99999;display:none;align-items:flex-end;justify-content:center;background:rgba(10,10,10,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}'+
+  '#shpPop.open{display:flex}'+
+  '#shpPop .shp-card{position:relative;background:#fff;color:#111;border-radius:22px 22px 0 0;max-width:430px;width:100%;padding:22px 20px calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 50px rgba(0,0,0,.3);animation:shpUp .28s cubic-bezier(.2,.8,.25,1)}'+
+  '@media(min-width:640px){#shpPop{align-items:center}#shpPop .shp-card{border-radius:22px;padding-bottom:22px;animation:shpIn .22s ease}}'+
+  '@keyframes shpUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}'+
+  '@keyframes shpIn{from{transform:scale(.96);opacity:0}to{transform:none;opacity:1}}'+
+  '#shpPop .shp-x{position:absolute;top:14px;right:14px;width:32px;height:32px;border:0;border-radius:50%;background:#f2f2f2;color:#555;font-size:15px;line-height:32px;text-align:center;cursor:pointer;padding:0}'+
+  '#shpPop .shp-tag{display:inline-flex;align-items:center;gap:8px;margin-bottom:12px}'+
+  '#shpPop .shp-tag .pct{background:#111;color:#fff;font-weight:800;font-size:13px;padding:4px 10px;border-radius:999px;letter-spacing:.02em}'+
+  '#shpPop .shp-tag .lbl{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#999}'+
+  '#shpPop .shp-hero{display:flex;gap:14px;align-items:stretch}'+
+  '#shpPop .shp-ph{width:132px;height:132px;flex:none;border-radius:14px;background:#f5f5f4;object-fit:cover}'+
+  '#shpPop .shp-info{display:flex;flex-direction:column;justify-content:center;min-width:0}'+
+  '#shpPop .shp-t{font-weight:800;font-size:17px;line-height:1.2;margin-bottom:3px}'+
+  '#shpPop .shp-d{font-size:12.5px;color:#777;line-height:1.4}'+
+  '#shpPop .shp-price{display:flex;align-items:baseline;gap:8px;margin-top:8px;flex-wrap:wrap}'+
+  '#shpPop .shp-price b{font-size:21px;font-weight:800}'+
+  '#shpPop .shp-price s{color:#aaa;font-size:14px}'+
+  '#shpPop .shp-save{font-size:11px;font-weight:700;color:#0a7d38;background:#e8f6ee;padding:3px 8px;border-radius:999px}'+
+  '#shpPop .shp-sec{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#999;margin:16px 0 8px}'+
+  '#shpPop .shp-sec .v{color:#111;margin-left:6px;letter-spacing:0;text-transform:none;font-size:12px}'+
+  '#shpPop .shp-colors{display:flex;gap:9px;flex-wrap:wrap}'+
+  '#shpPop .shp-c{width:46px;height:46px;border-radius:50%;padding:0;border:2px solid #e6e6e6;background:#f5f5f4;overflow:hidden;cursor:pointer;flex:none}'+
+  '#shpPop .shp-c img{width:100%;height:100%;object-fit:cover;display:block}'+
+  '#shpPop .shp-c.sel{border-color:#111;box-shadow:0 0 0 2px #fff inset}'+
+  '#shpPop .shp-sizes{display:flex;gap:7px;flex-wrap:wrap}'+
+  '#shpPop .shp-s{min-width:44px;padding:9px 0;border:1.5px solid #e2e2e2;border-radius:10px;background:#fff;font-size:13px;font-weight:600;color:#333;cursor:pointer;text-align:center}'+
+  '#shpPop .shp-s.sel{border-color:#111;background:#111;color:#fff}'+
+  '#shpPop .shp-btns{display:flex;flex-direction:column;gap:8px;margin-top:18px}'+
+  '#shpPop .shp-add{width:100%;padding:15px;border:0;border-radius:12px;background:var(--ink,#111);color:#fff;font-weight:800;font-size:15px;cursor:pointer;transition:opacity .15s}'+
+  '#shpPop .shp-add[disabled]{opacity:.45;cursor:default}'+
+  '#shpPop .shp-no{width:100%;padding:10px;border:0;background:none;color:#999;font-size:13px;cursor:pointer}';
+
+  function el(id){ return document.getElementById(id); }
+
   function init(){
-    if(document.getElementById('insPop')) return;
+    if(el('shpPop')) return;
     var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
-    var pop = document.createElement('div'); pop.id = 'insPop';
-    pop.innerHTML = '<div class="ins-card">' +
-      '<div class="ins-row"><img src="' + INS.photo + '" alt="Устілки ULTERA" loading="lazy">' +
-      '<div><div class="ins-t">Додати змінні устілки?</div>' +
-      '<div class="ins-d">Оригінальні устілки ULTERA · розмір <b id="insSz"></b> — як у вашої пари</div></div></div>' +
-      '<div class="ins-btns"><button type="button" class="ins-add" id="insAdd">Додати за 249 ₴</button>' +
-      '<button type="button" class="ins-no" id="insNo">Ні, дякую</button></div></div>';
+    var pop = document.createElement('div'); pop.id = 'shpPop';
+    pop.innerHTML = '<div class="shp-card">'+
+      '<button type="button" class="shp-x" id="shpX" aria-label="Закрити">✕</button>'+
+      '<div class="shp-tag"><span class="pct">−30%</span><span class="lbl">Тільки з парою взуття</span></div>'+
+      '<div class="shp-hero">'+
+        '<img class="shp-ph" id="shpPh" src="" alt="SHAPE" loading="lazy">'+
+        '<div class="shp-info">'+
+          '<div class="shp-t">Літні тапочки SHAPE</div>'+
+          '<div class="shp-d">Легкі та м’які — для дому, двору та міста. Ручна робота ULTERA.</div>'+
+          '<div class="shp-price"><b id="shpNew"></b><s id="shpOld"></s><span class="shp-save" id="shpSave"></span></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="shp-sec">Колір<span class="v" id="shpColorName"></span></div>'+
+      '<div class="shp-colors" id="shpColors"></div>'+
+      '<div class="shp-sec">Розмір EU</div>'+
+      '<div class="shp-sizes" id="shpSizes"></div>'+
+      '<div class="shp-btns">'+
+        '<button type="button" class="shp-add" id="shpAdd"></button>'+
+        '<button type="button" class="shp-no" id="shpNo">Ні, дякую</button>'+
+      '</div>'+
+    '</div>';
     document.body.appendChild(pop);
     pop.addEventListener('click', function(e){ if(e.target === pop) hide(true); });
-    document.getElementById('insNo').addEventListener('click', function(){ hide(true); });
-    document.getElementById('insAdd').addEventListener('click', function(){
-      hide(false);
-      try{
-        CART.add({uid:INS.uid, title:INS.title, photo:INS.photo, color_name:'', size:pendSize, price:INS.price, family:'Insole'});
-        if(typeof updateCartBadge === 'function') updateCartBadge();
-        var d = document.getElementById('cartDrawer');
-        if(d && d.classList.contains('open') && typeof renderCart === 'function') renderCart();
-        if(typeof toast === 'function') toast('Устілки додано · розмір ' + pendSize);
-      }catch(e){}
+    el('shpX').addEventListener('click', function(){ hide(true); });
+    el('shpNo').addEventListener('click', function(){ hide(true); });
+    el('shpAdd').addEventListener('click', addToCart);
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && el('shpPop') && el('shpPop').classList.contains('open')) hide(true);
     });
   }
-  var pendSize = '';
-  function show(size){
+
+  function render(){
+    var vs = variants();
+    if(!vs.length) return;
+    if(ST.colorIdx >= vs.length || ST.colorIdx < 0) ST.colorIdx = 0;
+    var cur = vs[ST.colorIdx];
+    var full = Math.round(parseFloat(cur.price)||0);
+    var disc = disc31(full);
+    el('shpPh').src = cur.photo || '';
+    el('shpNew').textContent = disc.toLocaleString('uk-UA') + ' ₴';
+    el('shpOld').textContent = full.toLocaleString('uk-UA') + ' ₴';
+    el('shpSave').textContent = 'Економія ' + (full - disc).toLocaleString('uk-UA') + ' ₴';
+    el('shpColorName').textContent = cleanColor(cur);
+    el('shpColors').innerHTML = vs.map(function(v,i){
+      var name = cleanColor(v);
+      return '<button type="button" class="shp-c'+(i===ST.colorIdx?' sel':'')+'" title="'+name+'" aria-label="'+name+'" data-i="'+i+'">'+
+        (v.photo ? '<img src="'+v.photo+'" alt="'+name+'" loading="lazy">' : '')+'</button>';
+    }).join('');
+    el('shpColors').querySelectorAll('.shp-c').forEach(function(b){
+      b.addEventListener('click', function(){ ST.colorIdx = parseInt(b.getAttribute('data-i'),10)||0; render(); });
+    });
+    var sizes = (cur.size_list && cur.size_list.length)
+      ? cur.size_list.map(function(sl){ return String(sl.eu); })
+      : ['39','40','41','42','43','44','45','46'];
+    if(ST.size && sizes.indexOf(ST.size) === -1) ST.size = '';
+    el('shpSizes').innerHTML = sizes.map(function(sz){
+      return '<button type="button" class="shp-s'+(sz===ST.size?' sel':'')+'" data-sz="'+sz+'">'+sz+'</button>';
+    }).join('');
+    el('shpSizes').querySelectorAll('.shp-s').forEach(function(b){
+      b.addEventListener('click', function(){ ST.size = b.getAttribute('data-sz')||''; render(); });
+    });
+    var btn = el('shpAdd');
+    if(ST.size){ btn.disabled = false; btn.textContent = 'Додати за ' + disc.toLocaleString('uk-UA') + ' ₴'; }
+    else { btn.disabled = true; btn.textContent = 'Оберіть розмір'; }
+  }
+
+  function addToCart(){
+    if(!ST.size) return;
+    var vs = variants();
+    var v = vs[ST.colorIdx];
+    if(!v) return;
+    var full = Math.round(parseFloat(v.price)||0);
+    var disc = disc31(full);
+    var item = {
+      uid: v.uid,
+      title: (v.title||'').replace('ULTERA - ','').replace('ULTERA ','') + ' · До пари −30%',
+      photo: v.photo || '',
+      color_name: cleanColor(v),
+      size: ST.size,
+      price: disc,
+      priceFull: full,
+      family: 'SHAPE',
+      promoSecond: true
+    };
+    hide(false);
+    try{
+      CART.addPromo(item);
+      if(typeof updateCartBadge === 'function') updateCartBadge();
+      var d = document.getElementById('cartDrawer');
+      if(d && d.classList.contains('open') && typeof renderCart === 'function') renderCart();
+      if(typeof toast === 'function') toast('SHAPE додано · −30%');
+      try{ if(typeof ulteraFbq === 'function') ulteraFbq('AddToCart', {content_ids:[item.uid], content_type:'product', content_name:item.title, value: disc, currency:'UAH'}); }catch(_){}
+    }catch(e){}
+  }
+
+  function show(pairSize){
     init();
-    pendSize = String(size);
-    var sz = document.getElementById('insSz'); if(sz) sz.textContent = pendSize;
-    document.getElementById('insPop').classList.add('open');
+    ST.size = '';
+    var vs = variants();
+    if(vs.length){
+      var sl = (vs[0].size_list||[]).map(function(x){ return String(x.eu); });
+      if(pairSize && sl.indexOf(String(pairSize)) !== -1) ST.size = String(pairSize);
+    }
+    render();
+    el('shpPop').classList.add('open');
   }
   function hide(dismiss){
-    var p = document.getElementById('insPop'); if(p) p.classList.remove('open');
-    if(dismiss){ try{ sessionStorage.setItem('ul_ins_no','1'); }catch(e){} }
+    var p = el('shpPop'); if(p) p.classList.remove('open');
+    if(dismiss){ try{ sessionStorage.setItem('ul_shape_no','1'); }catch(e){} }
   }
+
   function wrap(){
-    if(typeof CART === 'undefined' || !CART || typeof CART.add !== 'function' || CART.add.__insWrapped) return !!(typeof CART !== 'undefined' && CART && CART.add && CART.add.__insWrapped);
+    if(typeof CART === 'undefined' || !CART || typeof CART.add !== 'function' || CART.add.__shpWrapped) return !!(typeof CART !== 'undefined' && CART && CART.add && CART.add.__shpWrapped);
     var orig = CART.add;
     CART.add = function(item){
       var r = orig.apply(this, arguments);
       try{ if(qualifies(item)) setTimeout(function(){ show(item.size); }, 450); }catch(e){}
       return r;
     };
-    CART.add.__insWrapped = true;
+    CART.add.__shpWrapped = true;
     return true;
   }
   if(!wrap()){
@@ -6602,5 +6721,6 @@ insertWomanDivider();
   }
 })();
 </script>
+
 </body>
 </html>
