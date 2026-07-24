@@ -16,8 +16,11 @@
 //   SUPABASE_URL              — https://...supabase.co
 //   SUPABASE_SERVICE_ROLE_KEY — service role JWT
 //
-// Версія: v1.4 (2026-04-28) — мінімальний since = 2026-04-25, скидає старий курсор з 2023 (2026-04-28) — include=buyer.contacts (KeyCRM повертає buyer лише з include),
-//             debug=skipped_sample у вiдповiдi для дiагностики
+// Версія: v1.5 (2026-07-24) — include=shipping + extractTtn(): пишемо номер ТТН у ulhome_orders.ttn
+//             (+ сирий shipping у keycrm_shipping_raw для діагностики/НП-статусу).
+//             ttn/shipping додаються у payload лише коли не порожні (не затираємо існуючий ТТН).
+//         v1.4 (2026-04-28) — мінімальний since = 2026-04-25, скидає старий курсор з 2023,
+//             include=buyer.contacts, debug=skipped_sample у вiдповiдi для дiагностики
 
 'use strict';
 
@@ -131,11 +134,26 @@ async function findOurOrdersForKeycrmList(keycrmOrders) {
   return await sbRest(path);
 }
 
+// v1.5: витягнути ТТН (номер накладної) з KeyCRM order.shipping.
+// include=shipping повертає відправлення (масив або обʼєкт); беремо перший непорожній tracking.
+function extractTtn(ko) {
+  const sh = ko && ko.shipping;
+  const arr = Array.isArray(sh) ? sh : (sh ? [sh] : []);
+  for (const s of arr) {
+    if (!s || typeof s !== 'object') continue;
+    const t = s.tracking_code || s.trackingCode || s.tracking_number
+           || s.tracking || s.ttn || s.declaration_id || s.declaration_number;
+    if (t) return String(t).trim();
+  }
+  const top = ko && (ko.tracking_code || ko.ttn || ko.tracking_number);
+  return top ? String(top).trim() : null;
+}
+
 function buildPatchPayload(keycrmOrder, classified) {
   const statusId = parseInt(keycrmOrder.status_id, 10);
   const statusObj = keycrmOrder.status || null;
   const updatedAt = keycrmOrder.updated_at || keycrmOrder.status_updated_at || null;
-  return {
+  const payload = {
     keycrm_id:                parseInt(keycrmOrder.id, 10),
     keycrm_external_id:       keycrmOrder.external_id != null ? String(keycrmOrder.external_id) : null,
     keycrm_status_id:         Number.isFinite(statusId) ? statusId : null,
@@ -145,6 +163,11 @@ function buildPatchPayload(keycrmOrder, classified) {
     keycrm_status_updated_at: updatedAt,
     keycrm_synced_at:         new Date().toISOString()
   };
+  // v1.5: ТТН пишемо лише коли є (щоб не затерти вже відомий номер порожнім значенням).
+  const ttn = extractTtn(keycrmOrder);
+  if (ttn) payload.ttn = ttn;
+  if (keycrmOrder.shipping) payload.keycrm_shipping_raw = keycrmOrder.shipping;
+  return payload;
 }
 
 async function upsertByKeycrmId(payload) {
@@ -262,9 +285,10 @@ async function actionSync({ sinceOverride, limit, force }) {
 
   const pageLimit = Math.min(parseInt(limit || 50, 10), 50);
 
-  // KeyCRM v1: GET /order?include=products&filter[updated_between]=since,now&sort=updated_at,asc
+  // KeyCRM v1: GET /order?include=...&filter[updated_between]=since,now&sort=updated_at,asc
+  // v1.5: додано shipping — щоб отримати tracking_code (ТТН).
   const params = {
-    'include':            'buyer,products',
+    'include':            'buyer,products,shipping',
     'limit':              pageLimit,
     'sort':               'updated_at'
   };
