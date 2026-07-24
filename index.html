@@ -3328,8 +3328,8 @@ function renderFeatured(){
     const minP = Math.min(...row.variants.map(v=>parseFloat(v.price)||99999).filter(Boolean));
     const hasSale = row.variants.some(v=>v.sizes && v.sizes[0] && v.sizes[0].price_old);
     const oldMin = hasSale ? Math.max(...row.variants.map(v=>parseFloat((v.sizes && v.sizes[0] && v.sizes[0].price_old) || 0))) : 0;
-    const priceText = fam === 'SHAPE' ? 'від 2 790 \u20b4' : ('від ' + Math.round(minP).toLocaleString('uk-UA') + ' \u20b4');
-    const priceOld = oldMin > 0 ? '<s>' + Math.round(oldMin).toLocaleString('uk-UA') + ' \u20b4</s>' : '';
+    const priceText = fam === 'SHAPE' ? 'від 1 890 \u20b4' : ('від ' + Math.round(minP).toLocaleString('uk-UA') + ' \u20b4');
+    const priceOld = fam === 'SHAPE' ? '<s>3 780 \u20b4</s>' : (oldMin > 0 ? '<s>' + Math.round(oldMin).toLocaleString('uk-UA') + ' \u20b4</s>' : '');
 
     const serialTxt = meta.serial + '-' + String(photos.length).padStart(2,'0');
     const famSoldOut = Array.isArray(row.variants) && row.variants.length>0 && row.variants.every(v=>isSoldOut(v));
@@ -3614,7 +3614,7 @@ const HERO_DATA = [
     tag2:"[ ANATOMIC · BAREFOOT ]",
     title:'Shape<span class="trade">™</span>',
     ctaLabel:"Open SHAPE site ↗",
-    price:'від 2 790 ₴',
+    price:'від 1 890 ₴',
     colors:[
       {id:"Black",hex:"#0a0a0a",label:"BLACK"},
       {id:"Beige",hex:"#d9c4a6",label:"BEIGE"},
@@ -6809,6 +6809,115 @@ insertWomanDivider();
     var t = setInterval(function(){ if(wrap()) clearInterval(t); }, 300);
     setTimeout(function(){ clearInterval(t); }, 10000);
   }
+})();
+</script>
+
+<!-- SHAPE -50% PROMO BANNER + COUNTDOWN (v156) -->
+<style id="sh50css">
+.sh50{grid-column:1/-1;margin:0 0 24px;border-radius:18px;overflow:hidden;
+  background:#0e0e0e;color:#f4f3ee;border:1px solid #0e0e0e;
+  display:flex;align-items:center;gap:clamp(16px,3vw,40px);
+  padding:clamp(20px,3vw,34px) clamp(20px,3.4vw,44px);flex-wrap:wrap;position:relative}
+.sh50::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 140% at 100% 0%,rgba(255,200,165,.16),transparent 55%)}
+.sh50-l{display:flex;flex-direction:column;gap:10px;min-width:230px;flex:1 1 300px;position:relative;z-index:1}
+.sh50-tag{font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;color:#ffc8a5;text-transform:uppercase}
+.sh50-hrow{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.sh50-off{font-family:var(--font-sans);font-weight:800;font-size:clamp(40px,7vw,66px);line-height:.9;color:#ffc8a5;letter-spacing:-.02em}
+.sh50-tt{font-family:var(--font-sans);font-weight:800;font-size:clamp(20px,2.6vw,30px);line-height:1}
+.sh50-tt sup{font-size:.5em;font-weight:600;vertical-align:super}
+.sh50-sub{font-family:var(--font-mono);font-size:12px;letter-spacing:.02em;color:rgba(244,243,238,.7);max-width:34ch}
+.sh50-price{display:flex;align-items:baseline;gap:10px;font-family:var(--font-sans);margin-top:2px}
+.sh50-price s{color:rgba(244,243,238,.45);font-weight:400;font-size:15px}
+.sh50-price b{font-weight:800;font-size:22px}
+.sh50-price span{font-family:var(--font-mono);font-size:11px;color:rgba(244,243,238,.55);letter-spacing:.02em}
+.sh50-r{display:flex;flex-direction:column;gap:14px;align-items:flex-start;position:relative;z-index:1}
+.sh50-cdlbl{font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;color:rgba(244,243,238,.55);text-transform:uppercase}
+.sh50-cd{display:flex;gap:8px}
+.sh50-box{background:rgba(244,243,238,.06);border:1px solid rgba(244,243,238,.14);border-radius:12px;
+  min-width:60px;padding:10px 8px 8px;text-align:center}
+.sh50-box b{display:block;font-family:var(--font-sans);font-weight:800;font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
+.sh50-box i{display:block;font-style:normal;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;color:rgba(244,243,238,.55);margin-top:6px;text-transform:uppercase}
+.sh50-cta{appearance:none;border:0;cursor:pointer;background:#ffc8a5;color:#0e0e0e;
+  font-family:var(--font-mono);font-weight:700;font-size:13px;letter-spacing:.04em;
+  padding:14px 22px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;transition:transform .2s,background .2s}
+.sh50-cta:hover{transform:translateY(-1px);background:#ffd7bc}
+.sh50-cta svg{width:16px;height:16px}
+@media(max-width:640px){
+  .sh50{padding:20px 18px}
+  .sh50-r{width:100%}
+  .sh50-cd{width:100%}
+  .sh50-box{flex:1}
+  .sh50-cta{width:100%;justify-content:center}
+}
+</style>
+<script>
+/* SHAPE -50% promo banner + 7-day countdown (per-visitor, localStorage) */
+(function(){
+  'use strict';
+  var KEY='ult_shape50_end', DAYS=7;
+  function deadline(){
+    var v=null; try{ v=localStorage.getItem(KEY); }catch(_){}
+    var t=v?parseInt(v,10):0;
+    if(!t || isNaN(t)){ t=Date.now()+DAYS*86400000; try{ localStorage.setItem(KEY,String(t)); }catch(_){ } }
+    return t;
+  }
+  var END=deadline();
+  function bannerHTML(){
+    return '<div class="sh50-l">'
+      + '<div class="sh50-tag">Series : SHAPE · Розпродаж</div>'
+      + '<div class="sh50-hrow"><span class="sh50-off">−50%</span>'
+      +   '<span class="sh50-tt">SHAPE<sup>™</sup> Barefoot</span></div>'
+      + '<div class="sh50-sub">Anatomic · Barefoot силует. Знижка діє лише 7 днів.</div>'
+      + '<div class="sh50-price"><s>3 780 ₴</s><b>від 1 890 ₴</b><span>залежно від кольору</span></div>'
+      + '</div>'
+      + '<div class="sh50-r">'
+      + '<div class="sh50-cdlbl">До кінця акції</div>'
+      + '<div class="sh50-cd">'
+      +   '<div class="sh50-box"><b id="sh50-d">0</b><i>дні</i></div>'
+      +   '<div class="sh50-box"><b id="sh50-h">0</b><i>год</i></div>'
+      +   '<div class="sh50-box"><b id="sh50-m">0</b><i>хв</i></div>'
+      +   '<div class="sh50-box"><b id="sh50-s">0</b><i>сек</i></div>'
+      + '</div>'
+      + '<button class="sh50-cta" type="button" onclick="__sh50pick()">Обрати колір'
+      +   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>'
+      + '</button>'
+      + '</div>';
+  }
+  window.__sh50pick=function(){
+    var c=document.querySelector('.feat-card[data-fam="SHAPE"]');
+    if(c){ c.scrollIntoView({behavior:'smooth',block:'center'}); }
+  };
+  function pad(n){ return n<10?'0'+n:''+n; }
+  function tick(){
+    var left=END-Date.now();
+    var b=document.getElementById('sh50Banner');
+    if(left<=0){ if(b) b.remove(); return; }
+    var d=Math.floor(left/86400000);
+    var h=Math.floor(left%86400000/3600000);
+    var m=Math.floor(left%3600000/60000);
+    var s=Math.floor(left%60000/1000);
+    var E=function(id){ return document.getElementById(id); };
+    if(E('sh50-d')){ E('sh50-d').textContent=d; E('sh50-h').textContent=pad(h); E('sh50-m').textContent=pad(m); E('sh50-s').textContent=pad(s); }
+  }
+  function mount(){
+    if(END-Date.now()<=0) return;
+    if(document.getElementById('sh50Banner')) return;
+    var card=document.querySelector('.feat-card[data-fam="SHAPE"]');
+    if(!card||!card.parentNode) return;
+    var el=document.createElement('div');
+    el.className='sh50'; el.id='sh50Banner';
+    el.innerHTML=bannerHTML();
+    card.parentNode.insertBefore(el, card);
+    tick();
+  }
+  var wrap=document.getElementById('featuredWrap');
+  if(wrap && 'MutationObserver' in window){
+    new MutationObserver(function(){ mount(); }).observe(wrap,{childList:true});
+  }
+  setInterval(function(){ mount(); tick(); }, 1000);
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',mount); }
+  [400,1200,2600].forEach(function(ms){ setTimeout(mount,ms); });
 })();
 </script>
 
