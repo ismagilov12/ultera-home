@@ -6850,6 +6850,20 @@ insertWomanDivider();
   .sh50-box{flex:1}
   .sh50-cta{width:100%;justify-content:center}
 }
+/* compact promo strip inside product modal (SHAPE only) */
+.sh50m{margin:14px 0 6px;border-radius:14px;background:#0e0e0e;color:#f4f3ee;
+  padding:12px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:relative;overflow:hidden}
+.sh50m::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 170% at 100% 0%,rgba(255,200,165,.20),transparent 55%)}
+.sh50m-off{font-family:var(--font-sans);font-weight:800;font-size:24px;line-height:1;color:#ffc8a5;position:relative;z-index:1}
+.sh50m-tx{display:flex;flex-direction:column;gap:2px;position:relative;z-index:1;min-width:110px}
+.sh50m-t1{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#ffc8a5}
+.sh50m-t2{font-family:var(--font-mono);font-size:11px;color:rgba(244,243,238,.7)}
+.sh50m-cd{display:flex;gap:6px;position:relative;z-index:1;margin-left:auto}
+.sh50m-b{background:rgba(244,243,238,.08);border:1px solid rgba(244,243,238,.16);border-radius:9px;min-width:42px;padding:6px 4px 5px;text-align:center}
+.sh50m-b b{display:block;font-family:var(--font-sans);font-weight:800;font-size:17px;line-height:1;font-variant-numeric:tabular-nums}
+.sh50m-b i{display:block;font-style:normal;font-family:var(--font-mono);font-size:8px;letter-spacing:.08em;color:rgba(244,243,238,.55);margin-top:3px;text-transform:uppercase}
+@media(max-width:520px){ .sh50m-cd{margin-left:0;width:100%} .sh50m-b{flex:1} }
 </style>
 <script>
 /* SHAPE -50% promo banner + 7-day countdown (per-visitor, localStorage) */
@@ -6889,16 +6903,46 @@ insertWomanDivider();
     if(c){ c.scrollIntoView({behavior:'smooth',block:'center'}); }
   };
   function pad(n){ return n<10?'0'+n:''+n; }
+  function modalHTML(){
+    return '<span class="sh50m-off">−50%</span>'
+      + '<span class="sh50m-tx"><span class="sh50m-t1">Розпродаж SHAPE</span><span class="sh50m-t2">Поспішай — акція обмежена</span></span>'
+      + '<span class="sh50m-cd">'
+      +   '<span class="sh50m-b"><b id="sh50m-d">0</b><i>дні</i></span>'
+      +   '<span class="sh50m-b"><b id="sh50m-h">0</b><i>год</i></span>'
+      +   '<span class="sh50m-b"><b id="sh50m-m">0</b><i>хв</i></span>'
+      +   '<span class="sh50m-b"><b id="sh50m-s">0</b><i>сек</i></span>'
+      + '</span>';
+  }
+  function isShapeUid(uid){
+    try{ var p=(typeof findProduct==='function')?findProduct(uid):null;
+      if(!p) return false;
+      return String(p.family)==='SHAPE' || /SHAPE/i.test(p.title||''); }
+    catch(_){ return false; }
+  }
+  window.__sh50modal=function(uid){
+    var price=document.getElementById('m_price'); if(!price) return;
+    var box=document.getElementById('sh50mBox');
+    var show = uid && isShapeUid(uid) && (END-Date.now()>0);
+    if(!show){ if(box) box.remove(); return; }
+    if(!box){
+      box=document.createElement('div'); box.id='sh50mBox'; box.className='sh50m';
+      box.innerHTML=modalHTML();
+      price.parentNode.insertBefore(box, price.nextSibling);
+    }
+    tick();
+  };
   function tick(){
     var left=END-Date.now();
     var b=document.getElementById('sh50Banner');
-    if(left<=0){ if(b) b.remove(); return; }
+    var mb=document.getElementById('sh50mBox');
+    if(left<=0){ if(b) b.remove(); if(mb) mb.remove(); return; }
     var d=Math.floor(left/86400000);
     var h=Math.floor(left%86400000/3600000);
     var m=Math.floor(left%3600000/60000);
     var s=Math.floor(left%60000/1000);
     var E=function(id){ return document.getElementById(id); };
     if(E('sh50-d')){ E('sh50-d').textContent=d; E('sh50-h').textContent=pad(h); E('sh50-m').textContent=pad(m); E('sh50-s').textContent=pad(s); }
+    if(E('sh50m-d')){ E('sh50m-d').textContent=d; E('sh50m-h').textContent=pad(h); E('sh50m-m').textContent=pad(m); E('sh50m-s').textContent=pad(s); }
   }
   function mount(){
     if(END-Date.now()<=0) return;
@@ -6911,11 +6955,19 @@ insertWomanDivider();
     card.parentNode.insertBefore(el, card);
     tick();
   }
+  function wrapOpenModal(){
+    if(window.__sh50openWrap) return;
+    if(typeof window.openModal!=='function') return;
+    window.__sh50openWrap=true;
+    var _om=window.openModal;
+    window.openModal=function(uid){ var r=_om.apply(this,arguments); try{ window.__sh50modal(uid); }catch(_){}; return r; };
+  }
+  wrapOpenModal();
   var wrap=document.getElementById('featuredWrap');
   if(wrap && 'MutationObserver' in window){
     new MutationObserver(function(){ mount(); }).observe(wrap,{childList:true});
   }
-  setInterval(function(){ mount(); tick(); }, 1000);
+  setInterval(function(){ wrapOpenModal(); mount(); tick(); }, 1000);
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',mount); }
   [400,1200,2600].forEach(function(ms){ setTimeout(mount,ms); });
 })();
