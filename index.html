@@ -6452,7 +6452,7 @@ insertWomanDivider();
   function renderSaleGrid(){
     if(!grid) return;
     grid.innerHTML=D.map(function(x,i){
-      return '<div class="card" onclick="slOpen('+i+')">'+
+      return '<div class="card" onclick="slRoute('+i+',\''+x.uid+'\')">'+
         '<div class="card-img"><div class="badge '+(x._sold?'sold':(x.nw?'new':'sale'))+'"'+(x._sold?' style="background:#c0392b;color:#fff"':'')+'>'+(x._sold?'SOLD OUT':(x.nw?'NEW \u00b7 \u041e\u0421\u0422\u0410\u0422\u041e\u041a':'SALE \u2212'+itemPct(x)+'%'))+'</div>'+
         '<img loading="lazy" src="'+x.ph+'" alt="'+x.n+'"'+(x._sold?' style="filter:grayscale(1);opacity:.75"':'')+'>'+
         '<div class="card-quick"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div></div>'+
@@ -6976,5 +6976,6 @@ insertWomanDivider();
 </script>
 
 <script id="ulSaleFixV158js">(function(){function pctFix(){try{var m=document.getElementById("slModal");if(!m)return;var c=document.getElementById("slPcur"),o=document.getElementById("slPold"),e=document.getElementById("slEye"),b=m.querySelector(".sl-p-pct");if(!c||!o)return;var cur=parseInt((c.textContent||"").replace(/[^0-9]/g,""),10),old=parseInt((o.textContent||"").replace(/[^0-9]/g,""),10);if(cur&&old&&old>cur){var p=Math.round((1-cur/old)*100);if(b)b.textContent="−"+p+"%";if(e)e.textContent="Розпродаж · −"+p+"%";}}catch(x){}}function vidFix(){try{var st=document.getElementById("slStage");if(!st)return;var v=st.querySelector("video");if(v&&!v.hasAttribute("data-ulfx")){v.setAttribute("data-ulfx","1");v.setAttribute("playsinline","");v.setAttribute("preload","metadata");var th=document.querySelector("#slThumbs img");if(th&&th.getAttribute("src"))v.setAttribute("poster",th.getAttribute("src"));}}catch(x){}}function wrap(n){var o=window[n];if(typeof o!=="function"||o.__ulfx)return;var w=function(){var r=o.apply(this,arguments);pctFix();vidFix();return r;};w.__ulfx=1;window[n]=w;}["slOpen","slNav","slThumb"].forEach(wrap);})();</script>
+<script id="ulSaleRouteV160">window.slRoute=function(i,uid){try{var A=(window.DATA&&window.DATA.all)||[];for(var k=0;k<A.length;k++){if(A[k]&&A[k].uid===uid){return window.openModal(uid);}}}catch(e){}return window.slOpen(i);};</script>
 </body>
 </html>
