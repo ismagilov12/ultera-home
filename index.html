@@ -2077,6 +2077,7 @@ window.ulteraFbq = function(name, params){
 
 <!-- /Meta Pixel -->
 <script>/*SHAPE_NOSALE v151*/(function(){try{var p=new URLSearchParams(location.search).get('p')||'';if(p.toLowerCase().indexOf('shape')===0){var st=document.createElement('style');st.textContent='#saleSection{display:none !important}';(document.head||document.documentElement).appendChild(st);}else{try{sessionStorage.removeItem('ul_nosale');}catch(e){}}}catch(e){}})();</script>
+<style id="ulSaleFrameV158">#saleSection .card{border:1px solid #e5e2db;border-radius:16px;padding:12px;background:#fff;transition:box-shadow .18s ease}#saleSection .card:hover{box-shadow:0 6px 18px rgba(0,0,0,.08)}</style>
 </head>
 <body>
 
@@ -2358,7 +2359,7 @@ window.ulteraFbq = function(name, params){
 <section class="coll" id="saleSection">
   <div class="wide">
     <div class="coll-head reveal">
-      <h1 class="coll-title">Розпродаж<span class="slash">/</span><br><em class="acc">Остатки −30%</em></h1>
+      <h1 class="coll-title">Розпродаж<span class="slash">/</span><br><em class="acc">Залишки −30%</em></h1>
       <div class="coll-meta">
         <div class="tag em">SALE −30%</div>
         <div class="tag">ЗАЛИШКОВІ РОЗМІРИ</div>
@@ -6495,7 +6496,7 @@ insertWomanDivider();
       if(typeof openCart==='function')openCart();
     }catch(e){try{console.warn('slAdd',e);}catch(_){}}
   };
-  /* SALE STOCK v1: живі остатки з ulhome_sale_stock */
+  /* SALE STOCK v1: живі залишки з ulhome_sale_stock */
   function applySaleStock(rows){
     var by={},pr={},sp={};
     (rows||[]).forEach(function(r){ var u=String(r.uid); (by[u]=by[u]||{})[String(r.size)]=Number(r.qty)||0; if(r.price!=null&&Number(r.price)>0)pr[u]=Number(r.price); if(r.sale_price!=null&&Number(r.sale_price)>0)sp[u]=Number(r.sale_price); });
