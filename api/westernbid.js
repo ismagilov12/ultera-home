@@ -181,8 +181,13 @@ module.exports = async function handler(req, res) {
   // Currency conversion (env-driven; flip to USD without code changes).
   const currency = String(process.env.WB_CURRENCY || 'EUR').toUpperCase();
   const fx = Number(process.env.WB_FX_UAH_PER_UNIT || 0);
-  if (!(fx > 0)) return res.status(500).json({ ok: false, error: 'FX rate not configured (WB_FX_UAH_PER_UNIT)' });
-  const amountNum = Math.round((uahTotal / fx) * 100) / 100;
+  // Flat promo price: charge a fixed amount per item (EU clearance). Defaults to
+  // 10; set WB_FLAT_EUR_PER_ITEM=0 to restore FX-based (uahTotal / fx) pricing.
+  const flatPer = (process.env.WB_FLAT_EUR_PER_ITEM !== undefined) ? Number(process.env.WB_FLAT_EUR_PER_ITEM) : 10;
+  const FLAT = Number.isFinite(flatPer) && flatPer > 0;
+  const totalQty = (body.items || []).reduce(function (s, it) { return s + (parseInt(it.qty || 1, 10) || 1); }, 0);
+  if (!FLAT && !(fx > 0)) return res.status(500).json({ ok: false, error: 'FX rate not configured (WB_FX_UAH_PER_UNIT)' });
+  const amountNum = FLAT ? (Math.round(flatPer * totalQty * 100) / 100) : (Math.round((uahTotal / fx) * 100) / 100);
   const amount = amountNum.toFixed(2);
   // Shipping (Nova Global zone by destination country); WB charges amount + shipping.
   const shipEur = shippingEur(body.country);
@@ -205,7 +210,7 @@ module.exports = async function handler(req, res) {
     items: body.items,
     total: uahTotal,
     status: 'new',
-    notes: 'WB ' + currency + ' goods ' + amount + ' + ship ' + shipEur.toFixed(2) + ' = ' + totalEur.toFixed(2) + ' @ ' + fx + ' UAH/unit' + (body.comment ? ('\n' + body.comment) : ''),
+    notes: 'WB ' + currency + ' goods ' + amount + ' + ship ' + shipEur.toFixed(2) + ' = ' + totalEur.toFixed(2) + (FLAT ? (' (flat ' + flatPer + '/item x' + totalQty + ')') : (' @ ' + fx + ' UAH/unit')) + (body.comment ? ('\n' + body.comment) : ''),
     session_id:  (typeof body.session_id  === 'string' ? body.session_id  : '').slice(0, 200)  || null,
     referrer:    (typeof body.referrer    === 'string' ? body.referrer    : '').slice(0, 2000) || null,
     landing_url: (typeof body.landing_url === 'string' ? body.landing_url : '').slice(0, 2000) || null
@@ -257,7 +262,7 @@ module.exports = async function handler(req, res) {
     const n = i + 1;
     const line = breakdown ? breakdown.find(function (b) { return b.uid === String(it.uid || ''); }) : null;
     const unitUah = line ? Number(line.unit_price) : (parseFloat(it.price) || 0);
-    const unitCur = Math.round((unitUah / fx) * 100) / 100;
+    const unitCur = FLAT ? Number(flatPer) : (Math.round((unitUah / fx) * 100) / 100);
     const nm = (it.title || 'ULTERA item') + (it.color_name ? ' / ' + it.color_name : '') + (it.size ? ' / ' + it.size : '');
     fields['item_name_' + n] = nm;
     fields['item_number_' + n] = String(it.uid || '');
