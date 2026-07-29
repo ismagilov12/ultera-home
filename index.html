@@ -6984,5 +6984,62 @@ insertWomanDivider();
 <script id="ulSaleLook161js">(function(){function pctFix(){try{var m=document.getElementById("slModal");if(!m)return;var c=document.getElementById("slPcur"),o=document.getElementById("slPold"),e=document.getElementById("slEye"),b=m.querySelector(".sl-p-pct");if(!c||!o)return;var cur=parseInt((c.textContent||"").replace(/[^0-9]/g,""),10),old=parseInt((o.textContent||"").replace(/[^0-9]/g,""),10);if(cur&&old&&old>cur){var p=Math.round((1-cur/old)*100);if(b)b.textContent="−"+p+"%";if(e)e.textContent="Розпродаж · −"+p+"%";}}catch(x){}}function vidFix(){try{var st=document.getElementById("slStage");if(!st)return;var v=st.querySelector("video");if(v&&!v.hasAttribute("data-ulfx")){v.setAttribute("data-ulfx","1");v.setAttribute("playsinline","");v.setAttribute("preload","metadata");}}catch(x){}}function wrap(n){var o=window[n];if(typeof o!=="function"||o.__ulfx)return;var w=function(){var r=o.apply(this,arguments);pctFix();vidFix();return r;};w.__ulfx=1;window[n]=w;}["slOpen","slNav","slThumb"].forEach(wrap);})();</script>
 <script id="ulSaleNoRoute162">window.slRoute=function(i,uid){return window.slOpen(i);};</script>
 <script id="ulSaleFix163js">(function(){function seasonFix(){try{var sp=document.getElementById("slSpec");if(!sp)return;if(/Сезон/.test(sp.innerHTML))return;sp.insertAdjacentHTML("afterbegin","<div class=\"sl-spec-h\">Сезон</div><ul><li>Літо</li></ul>");}catch(x){}}var o=window.slOpen;if(typeof o==="function"&&!o.__ulseason){var w=function(){var r=o.apply(this,arguments);seasonFix();return r;};w.__ulfx=o.__ulfx;w.__ulseason=1;window.slOpen=w;}})();</script>
+<style id="ulD7css">
+.d7p{display:flex;align-items:center;gap:12px;margin:12px 0 4px;padding:11px 14px;border-radius:13px;
+  background:#0e0e0e;color:#f4f3ee;position:relative;overflow:hidden;border:1px solid rgba(255,200,165,.22)}
+.d7p-ic{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:rgba(255,200,165,.14);
+  display:flex;align-items:center;justify-content:center}
+.d7p-ic svg{width:15px;height:15px;stroke:#ffc8a5;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.d7p-tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.d7p-t1{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#ffc8a5}
+.d7p-t2{font-family:var(--font-mono);font-size:11.5px;color:rgba(244,243,238,.72)}
+.d7p-off{margin-left:auto;font-family:var(--font-sans);font-weight:800;font-size:19px;line-height:1;color:#ffc8a5;white-space:nowrap}
+@media(max-width:420px){ .d7p{gap:10px;padding:10px 12px} .d7p-t2{font-size:11px} }
+</style>
+<script id="ulD7Promo">(function(){
+  var FAMS = /^(aganta|hunk3)$/i;
+  function pick(uid){
+    try{ return (typeof findProduct==='function') ? findProduct(uid) : null; }catch(_){ return null; }
+  }
+  function info(p){
+    if(!p) return null;
+    if(!FAMS.test(String(p.family||'').trim())) return null;
+    var cur = parseFloat(p.price)||0;
+    var old = parseFloat((p.sizes && p.sizes[0] && p.sizes[0].price_old) || 0)||0;
+    if(!(cur>0 && old>cur)) return null;
+    return { pct: Math.round(100-(cur/old)*100) };
+  }
+  function boxHTML(pct){
+    return '<span class="d7p-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>'
+      + '<span class="d7p-tx">'
+      +   '<span class="d7p-t1">Знижка діє лише 7 днів</span>'
+      +   '<span class="d7p-t2">Після акції ціна повертається до попередньої</span>'
+      + '</span>'
+      + '<span class="d7p-off">\u2212' + pct + '%</span>';
+  }
+  window.__d7modal = function(uid){
+    try{
+      var price = document.getElementById('m_price'); if(!price) return;
+      var box = document.getElementById('d7pBox');
+      var d = info(pick(uid));
+      if(!d){ if(box) box.remove(); return; }
+      if(!box){
+        box = document.createElement('div');
+        box.id = 'd7pBox'; box.className = 'd7p';
+        price.parentNode.insertBefore(box, price.nextSibling);
+      }
+      box.innerHTML = boxHTML(d.pct);
+    }catch(_){}
+  };
+  function wrapOpenModal(){
+    if(window.__d7openWrap) return;
+    if(typeof window.openModal!=='function') return;
+    window.__d7openWrap = true;
+    var _om = window.openModal;
+    window.openModal = function(uid){ var r=_om.apply(this,arguments); try{ window.__d7modal(uid); }catch(_){}; return r; };
+  }
+  wrapOpenModal();
+  setInterval(wrapOpenModal, 1000);
+})();</script>
 </body>
 </html>
