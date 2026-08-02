@@ -3334,8 +3334,8 @@ function renderFeatured(){
     const minP = Math.min(...row.variants.map(v=>parseFloat(v.price)||99999).filter(Boolean));
     const hasSale = row.variants.some(v=>v.sizes && v.sizes[0] && v.sizes[0].price_old);
     const oldMin = hasSale ? Math.max(...row.variants.map(v=>parseFloat((v.sizes && v.sizes[0] && v.sizes[0].price_old) || 0))) : 0;
-    const priceText = fam === 'SHAPE' ? 'від 2 190 \u20b4' : ('від ' + Math.round(minP).toLocaleString('uk-UA') + ' \u20b4');
-    const priceOld = fam === 'SHAPE' ? '<s>4 380 \u20b4</s>' : (oldMin > 0 ? '<s>' + Math.round(oldMin).toLocaleString('uk-UA') + ' \u20b4</s>' : '');
+    const priceText = fam === 'SHAPE' ? 'від 1 890 \u20b4' : ('від ' + Math.round(minP).toLocaleString('uk-UA') + ' \u20b4');
+    const priceOld = fam === 'SHAPE' ? '<s>3 780 \u20b4</s>' : (oldMin > 0 ? '<s>' + Math.round(oldMin).toLocaleString('uk-UA') + ' \u20b4</s>' : '');
 
     const serialTxt = meta.serial + '-' + String(photos.length).padStart(2,'0');
     const famSoldOut = Array.isArray(row.variants) && row.variants.length>0 && row.variants.every(v=>isSoldOut(v));
@@ -3620,7 +3620,7 @@ const HERO_DATA = [
     tag2:"[ ANATOMIC · BAREFOOT ]",
     title:'Shape<span class="trade">™</span>',
     ctaLabel:"Open SHAPE site ↗",
-    price:'від 2 190 ₴',
+    price:'від 1 890 ₴',
     colors:[
       {id:"Black",hex:"#0a0a0a",label:"BLACK"},
       {id:"Beige",hex:"#d9c4a6",label:"BEIGE"},
@@ -6889,7 +6889,7 @@ insertWomanDivider();
       + '<div class="sh50-hrow"><span class="sh50-off">−50%</span>'
       +   '<span class="sh50-tt">SHAPE<sup>™</sup> Barefoot</span></div>'
       + '<div class="sh50-sub">Anatomic · Barefoot силует. Знижка діє лише 7 днів.</div>'
-      + '<div class="sh50-price"><s>4 380 ₴</s><b>від 2 190 ₴</b><span>залежно від кольору</span></div>'
+      + '<div class="sh50-price"><s>3 780 ₴</s><b>від 1 890 ₴</b><span>залежно від кольору</span></div>'
       + '</div>'
       + '<div class="sh50-r">'
       + '<div class="sh50-cdlbl">До кінця акції</div>'
