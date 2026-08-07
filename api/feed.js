@@ -131,6 +131,33 @@ function fmtPrice(n){
   return v + '.00 UAH';
 }
 
+// v3 (2026-08-07): ціни фіда мають 1:1 повторювати картку сайту.
+// index.html малює:
+//   поточна ціна  = top-level products.price          (parseFloat(p.price))
+//   закреслена    = sizes[0].price_old                (p.sizes[0].price_old)
+// Раніше фід брав «було» тільки з top-level price_old, а у частини товарів
+// акція проставлена лише всередині jsonb sizes → sale_price не потрапляв у фід
+// і оголошення втрачало «було/стало» (Hunk3 RED −16%, Hunk Black −8% тощо).
+// Порядок: sizes[0].price_old → top-level price_old (фолбек, легасі).
+function toInt(v){
+  if (v === null || v === undefined || v === '') return null;
+  const n = parseFloat(v);
+  if (!isFinite(n) || n <= 0) return null;
+  return Math.round(n);
+}
+
+function pickPrices(p){
+  const priceNew = Math.round(parseFloat(p.price) || 0);
+  const s0 = (Array.isArray(p.sizes) && p.sizes.length) ? p.sizes[0] : null;
+  const sizeOld = s0 ? toInt(s0.price_old) : null;
+  const topOld  = toInt(p.price_old);
+  const priceOld = sizeOld || topOld || null;
+  return {
+    priceNew: priceNew,
+    priceOld: (priceOld && priceOld > priceNew) ? priceOld : null
+  };
+}
+
 function buildTitle(p){
   const t = String(p.title||'').trim();
   if (t) return t;
@@ -237,8 +264,9 @@ module.exports = async function handler(req, res){
 
     // Inclusion rule: published footwear that the admin has explicitly enabled
     // (feed_enabled=true). Tees are excluded server-side as a hard guarantee.
+    // v3: + sizes — джерело закресленої ціни (див. pickPrices).
     const products = await sbFetch(
-      sbUrl + '/rest/v1/ulhome_products?select=id,uid,family,title,color_name,color_hex,price,price_old,mark,description,desc_short,photo,gender,category,sort_order,published,feed_enabled&published=eq.true&feed_enabled=eq.true&family=neq.Tees&order=family.asc,sort_order.asc',
+      sbUrl + '/rest/v1/ulhome_products?select=id,uid,family,title,color_name,color_hex,price,price_old,sizes,mark,description,desc_short,photo,gender,category,sort_order,published,feed_enabled&published=eq.true&feed_enabled=eq.true&family=neq.Tees&order=family.asc,sort_order.asc',
       headers
     );
 
@@ -251,6 +279,7 @@ module.exports = async function handler(req, res){
 
     const items = [];
     let skipped = 0;
+    let onSale = 0;
     for (const p of products){
       // Defensive guards (query already filters, but keep belt + suspenders):
       if (p.family === 'Tees'){ skipped++; continue; }
@@ -265,8 +294,9 @@ module.exports = async function handler(req, res){
       const isTees = p.family === 'Tees';
       const brand = isTees ? 'ULTERA TEES' : 'ULTERA';
       const link = buildLink(p);
-      const priceNew = Math.round(parseFloat(p.price) || 0);
-      const priceOld = p.price_old ? Math.round(parseFloat(p.price_old)) : null;
+      const pr = pickPrices(p);
+      const priceNew = pr.priceNew;
+      const priceOld = pr.priceOld;
 
       const fields = [];
       fields.push('<g:id>' + xescape(p.uid) + '</g:id>');
@@ -279,7 +309,8 @@ module.exports = async function handler(req, res){
       }
       fields.push('<g:availability>in stock</g:availability>');
       fields.push('<g:condition>new</g:condition>');
-      if (priceOld && priceOld > priceNew){
+      if (priceOld){
+        onSale++;
         fields.push('<g:price>' + priceOld + '.00 UAH</g:price>');
         fields.push('<g:sale_price>' + priceNew + '.00 UAH</g:sale_price>');
       } else {
@@ -325,6 +356,7 @@ items.join('\n') + '\n' +
     res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=600, stale-while-revalidate=3600');
     res.setHeader('X-Feed-Items', String(items.length));
     res.setHeader('X-Feed-Skipped', String(skipped));
+    res.setHeader('X-Feed-Sale', String(onSale));
     res.end(xml);
   } catch (e){
     try { console.error('[feed] error', e && e.message); } catch(_){}
