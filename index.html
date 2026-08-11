@@ -7041,5 +7041,76 @@ insertWomanDivider();
   wrapOpenModal();
   setInterval(wrapOpenModal, 1000);
 })();</script>
+<!-- ===== ULTERA CORSO → лендинг передзамовлення (v170, 2026-08-10) ===== -->
+<script id="ulCorsoRedirect">
+(function(){
+  'use strict';
+  var LANDING = '/preorder-classic.html';
+  var FAMS    = ['CORSO'];
+  var UIDS    = ['480291657304'];
+
+  function dataObj(){
+    try { if (window.DATA) return window.DATA; } catch(_){}
+    try { if (typeof DATA !== 'undefined' && DATA) return DATA; } catch(_){}
+    return null;
+  }
+  function famOf(uid){
+    var D = dataObj();
+    if (!D || !Array.isArray(D.all)) return '';
+    for (var i = 0; i < D.all.length; i++){
+      if (D.all[i] && String(D.all[i].uid) === uid) return String(D.all[i].family || '').trim();
+    }
+    return '';
+  }
+  function isCorso(uid){
+    if (!uid) return false;
+    uid = String(uid);
+    if (UIDS.indexOf(uid) !== -1) return true;
+    return FAMS.indexOf(famOf(uid)) !== -1;
+  }
+
+  function hookModal(){
+    if (typeof window.openModal !== 'function' || window.__ulCorsoHooked) return;
+    var orig = window.openModal;
+    window.openModal = function(uid){
+      if (isCorso(uid)){
+        try {
+          if (typeof window.ulteraFbq === 'function'){
+            window.ulteraFbq('ViewContent', {
+              content_ids: [String(uid)], content_type: 'product',
+              content_name: 'ULTERA CORSO', value: 2790, currency: 'UAH'
+            });
+          }
+        } catch(_){}
+        window.location.href = LANDING;
+        return;
+      }
+      return orig.apply(this, arguments);
+    };
+    window.__ulCorsoHooked = true;
+  }
+
+  function addChip(){
+    var box = document.getElementById('chips');
+    if (!box || box.querySelector('[data-fam="CORSO"]')) return;
+    var b = document.createElement('button');
+    b.className = 'coll-chip';
+    b.setAttribute('data-fam', 'CORSO');
+    b.textContent = 'CORSO';
+    var all = box.querySelector('[data-fam="all"]');
+    if (all && all.nextSibling) box.insertBefore(b, all.nextSibling);
+    else if (all) box.appendChild(b);
+    else box.insertBefore(b, box.firstChild);
+  }
+
+  function boot(){ hookModal(); addChip(); }
+
+  boot();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  try { window.addEventListener('ultera:bootstrap:done', boot); } catch(_){}
+  var n = 0, t = setInterval(function(){ boot(); if (++n > 40) clearInterval(t); }, 300);
+})();
+</script>
+
 </body>
 </html>
