@@ -7127,13 +7127,32 @@ insertWomanDivider();
     return Math.ceil(p / PARTS);
   }
   function money(n){ try { return Math.round(n).toLocaleString('uk-UA'); } catch(_){ return String(Math.round(n)); } }
-  function partsLine(price, cls){
+  /* Беремо ТІЛЬКИ поточну ціну: у блоках є ще стара ціна й відсоток,
+     через які регексп по всьому тексту склеював числа. */
+  function currentPrice(box){
+    if (!box) return '';
+    var cur = box.querySelector ? box.querySelector('.cur') : null;
+    if (cur) return cur.textContent;
+    var last = box.lastChild;
+    if (last && last.nodeType === 3 && /\d/.test(last.textContent)) return last.textContent;
+    var m = String(box.textContent || '').match(/[\d\s ]+(?:[.,]\d+)?/);
+    return m ? m[0] : '';
+  }
+  function partsBadge(price, variant){
     var v = partSum(price);
     if (!v) return null;
     var el = document.createElement('div');
-    el.className = cls;
     el.setAttribute('data-parts', '1');
-    el.textContent = 'частинами від ' + money(v) + ' ₴/міс';
+    if (variant === 'modal'){
+      el.className = 'ul-pay';
+      el.innerHTML =
+        '<div class="ul-pay-h"><i>₴</i>Оплата частинами</div>' +
+        '<div class="ul-pay-m"><b>' + money(v) + ' ₴</b> <span>× ' + PARTS + ' платежі</span></div>' +
+        '<div class="ul-pay-s">Без переплат · Монобанк, А-Банк, ПриватБанк, ПУМБ, OTP</div>';
+    } else {
+      el.className = 'ul-parts' + (variant === 'feat' ? ' ul-parts-feat' : '');
+      el.innerHTML = 'частинами <b>' + money(v) + ' ₴</b> × ' + PARTS;
+    }
     return el;
   }
   function decorateCards(){
@@ -7141,16 +7160,14 @@ insertWomanDivider();
       if (card.querySelector('[data-parts]')) return;
       var pr = card.querySelector('.card-price');
       if (!pr) return;
-      var raw = pr.lastChild && pr.lastChild.nodeType === 3 ? pr.lastChild.textContent : pr.textContent;
-      var line = partsLine(raw, 'ul-parts');
+      var line = partsBadge(currentPrice(pr), 'card');
       if (!line) return;
       var row = card.querySelector('.card-row') || pr.parentNode;
       row.parentNode.insertBefore(line, row.nextSibling);
     });
     Array.prototype.forEach.call(document.querySelectorAll('.feat-price'), function(pr){
       if (pr.parentNode.querySelector('[data-parts]')) return;
-      var cur = pr.querySelector('.cur');
-      var line = partsLine(cur ? cur.textContent : pr.textContent, 'ul-parts ul-parts-feat');
+      var line = partsBadge(currentPrice(pr), 'feat');
       if (!line) return;
       pr.parentNode.insertBefore(line, pr.nextSibling);
     });
@@ -7160,10 +7177,9 @@ insertWomanDivider();
     if (!pr) return;
     var old = pr.parentNode.querySelector('[data-parts]');
     if (old) old.parentNode.removeChild(old);
-    var line = partsLine(pr.textContent, 'ul-parts ul-parts-modal');
-    if (!line) return;
-    line.textContent = 'або частинами від ' + line.textContent.replace(/^частинами від /, '');
-    pr.parentNode.insertBefore(line, pr.nextSibling);
+    var box = partsBadge(currentPrice(pr), 'modal');
+    if (!box) return;
+    pr.parentNode.insertBefore(box, pr.nextSibling);
   }
   /* ціна в модалці міняється при виборі кольору/розміру — слухаємо зміни */
   function watchModalPrice(){
@@ -7184,10 +7200,21 @@ insertWomanDivider();
     var st = document.createElement('style');
     st.id = 'ulPartsCss';
     st.textContent =
-      '.ul-parts{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.02em;color:var(--ink-60);' +
-      'background:var(--mint);display:inline-block;padding:3px 7px;border-radius:2px;margin-top:6px;font-weight:600}' +
-      '.ul-parts-feat{font-size:11px;margin-top:8px}' +
-      '.ul-parts-modal{font-size:12px;padding:5px 10px;margin-top:8px}';
+      /* компактний бейдж на картках каталогу */
+      '.ul-parts{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.02em;color:#1d4a2b;' +
+      'background:var(--mint);display:inline-block;padding:4px 8px;border-radius:3px;margin-top:7px;font-weight:600}' +
+      '.ul-parts b{font-weight:800;letter-spacing:-.01em}' +
+      '.ul-parts-feat{font-size:11px;margin-top:9px}' +
+      /* акцентний блок у картці товару */
+      '.ul-pay{background:var(--mint);border-radius:12px;padding:14px 16px;margin:-10px 0 22px}' +
+      '.ul-pay-h{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10.5px;' +
+      'font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#1d4a2b}' +
+      '.ul-pay-h i{font-style:normal;width:20px;height:20px;border-radius:50%;background:#1d4a2b;color:var(--mint);' +
+      'display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}' +
+      '.ul-pay-m{margin-top:9px;color:var(--ink);line-height:1.1}' +
+      '.ul-pay-m b{font-size:24px;font-weight:900;letter-spacing:-.02em}' +
+      '.ul-pay-m span{font-size:14px;color:#2f5c3c;font-weight:600;margin-left:4px}' +
+      '.ul-pay-s{margin-top:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.03em;color:#3f6b4c;line-height:1.5}';
     document.head.appendChild(st);
   }
   function hookRenders(){
