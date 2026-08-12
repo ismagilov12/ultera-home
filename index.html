@@ -7103,7 +7103,22 @@ insertWomanDivider();
     else box.insertBefore(b, box.firstChild);
   }
 
-  function boot(){ hookModal(); addChip(); }
+  /* Нові сім'ї дописуються в кінець D.grid — піднімаємо CORSO на початок
+     каталогу «класики», тобто одразу після featured-блоку (Hunk3/Aganta/SHAPE). */
+  function liftCard(){
+    var D = dataObj();
+    if (!D || !Array.isArray(D.grid) || D.grid.length < 2) return;
+    var idx = -1;
+    for (var i = 0; i < D.grid.length; i++){
+      if (D.grid[i] && FAMS.indexOf(String(D.grid[i].family || '').trim()) !== -1){ idx = i; break; }
+    }
+    if (idx <= 0) return;
+    var row = D.grid.splice(idx, 1)[0];
+    D.grid.unshift(row);
+    try { if (typeof window.renderGrid === 'function') window.renderGrid(); } catch(_){}
+  }
+
+  function boot(){ hookModal(); addChip(); liftCard(); }
 
   boot();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
