@@ -7046,7 +7046,7 @@ insertWomanDivider();
 (function(){
   'use strict';
   var LANDING = '/preorder-classic.html';
-  var FAMS    = ['CORSO'];
+  var FAMS    = ['01', 'CORSO'];
   var UIDS    = ['480291657304'];
 
   function dataObj(){
@@ -7078,7 +7078,7 @@ insertWomanDivider();
           if (typeof window.ulteraFbq === 'function'){
             window.ulteraFbq('ViewContent', {
               content_ids: [String(uid)], content_type: 'product',
-              content_name: 'ULTERA CORSO', value: 2790, currency: 'UAH'
+              content_name: 'ULTERA 01', value: 2790, currency: 'UAH'
             });
           }
         } catch(_){}
@@ -7092,11 +7092,11 @@ insertWomanDivider();
 
   function addChip(){
     var box = document.getElementById('chips');
-    if (!box || box.querySelector('[data-fam="CORSO"]')) return;
+    if (!box || box.querySelector('[data-fam="01"]')) return;
     var b = document.createElement('button');
     b.className = 'coll-chip';
-    b.setAttribute('data-fam', 'CORSO');
-    b.textContent = 'CORSO';
+    b.setAttribute('data-fam', '01');
+    b.textContent = '01';
     var all = box.querySelector('[data-fam="all"]');
     if (all && all.nextSibling) box.insertBefore(b, all.nextSibling);
     else if (all) box.appendChild(b);
@@ -7118,7 +7118,99 @@ insertWomanDivider();
     try { if (typeof window.renderGrid === 'function') window.renderGrid(); } catch(_){}
   }
 
-  function boot(){ hookModal(); addChip(); liftCard(); }
+  /* ===== Ціна частинами як перевага: картки каталогу, featured і модалка =====
+     PARTS = 4 (максимальний розбив у Монобанку / А-Банку / Привату / ПУМБ). */
+  var PARTS = 4;
+  function partSum(price){
+    var p = parseFloat(String(price).replace(/[^\d.,]/g, '').replace(',', '.'));
+    if (!p || p < 1200) return 0; // аксесуари (устілки тощо) не показуємо
+    return Math.ceil(p / PARTS);
+  }
+  function money(n){ try { return Math.round(n).toLocaleString('uk-UA'); } catch(_){ return String(Math.round(n)); } }
+  function partsLine(price, cls){
+    var v = partSum(price);
+    if (!v) return null;
+    var el = document.createElement('div');
+    el.className = cls;
+    el.setAttribute('data-parts', '1');
+    el.textContent = 'частинами від ' + money(v) + ' ₴/міс';
+    return el;
+  }
+  function decorateCards(){
+    Array.prototype.forEach.call(document.querySelectorAll('.card'), function(card){
+      if (card.querySelector('[data-parts]')) return;
+      var pr = card.querySelector('.card-price');
+      if (!pr) return;
+      var raw = pr.lastChild && pr.lastChild.nodeType === 3 ? pr.lastChild.textContent : pr.textContent;
+      var line = partsLine(raw, 'ul-parts');
+      if (!line) return;
+      var row = card.querySelector('.card-row') || pr.parentNode;
+      row.parentNode.insertBefore(line, row.nextSibling);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.feat-price'), function(pr){
+      if (pr.parentNode.querySelector('[data-parts]')) return;
+      var cur = pr.querySelector('.cur');
+      var line = partsLine(cur ? cur.textContent : pr.textContent, 'ul-parts ul-parts-feat');
+      if (!line) return;
+      pr.parentNode.insertBefore(line, pr.nextSibling);
+    });
+  }
+  function decorateModal(){
+    var pr = document.getElementById('m_price');
+    if (!pr) return;
+    var old = pr.parentNode.querySelector('[data-parts]');
+    if (old) old.parentNode.removeChild(old);
+    var line = partsLine(pr.textContent, 'ul-parts ul-parts-modal');
+    if (!line) return;
+    line.textContent = 'або частинами від ' + line.textContent.replace(/^частинами від /, '');
+    pr.parentNode.insertBefore(line, pr.nextSibling);
+  }
+  /* ціна в модалці міняється при виборі кольору/розміру — слухаємо зміни */
+  function watchModalPrice(){
+    if (window.__ulPriceWatch) return;
+    var pr = document.getElementById('m_price');
+    if (!pr || !window.MutationObserver) return;
+    var busy = false;
+    var mo = new MutationObserver(function(){
+      if (busy) return;
+      busy = true;
+      setTimeout(function(){ try { decorateModal(); } catch(_){} busy = false; }, 30);
+    });
+    mo.observe(pr, { childList: true, characterData: true, subtree: true });
+    window.__ulPriceWatch = true;
+  }
+  function injectPartsCss(){
+    if (document.getElementById('ulPartsCss')) return;
+    var st = document.createElement('style');
+    st.id = 'ulPartsCss';
+    st.textContent =
+      '.ul-parts{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.02em;color:var(--ink-60);' +
+      'background:var(--mint);display:inline-block;padding:3px 7px;border-radius:2px;margin-top:6px;font-weight:600}' +
+      '.ul-parts-feat{font-size:11px;margin-top:8px}' +
+      '.ul-parts-modal{font-size:12px;padding:5px 10px;margin-top:8px}';
+    document.head.appendChild(st);
+  }
+  function hookRenders(){
+    if (window.__ulPartsHooked) return;
+    var okG = typeof window.renderGrid === 'function';
+    var okF = typeof window.renderFeatured === 'function';
+    if (!okG && !okF) return;
+    if (okG){
+      var rg = window.renderGrid;
+      window.renderGrid = function(){ var r = rg.apply(this, arguments); try { decorateCards(); } catch(_){} return r; };
+    }
+    if (okF){
+      var rf = window.renderFeatured;
+      window.renderFeatured = function(){ var r = rf.apply(this, arguments); try { decorateCards(); } catch(_){} return r; };
+    }
+    window.__ulPartsHooked = true;
+  }
+
+  function boot(){
+    hookModal(); addChip(); liftCard();
+    injectPartsCss(); hookRenders(); watchModalPrice();
+    try { decorateCards(); decorateModal(); } catch(_){}
+  }
 
   boot();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
