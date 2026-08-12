@@ -73,7 +73,12 @@ h3{font-size:clamp(20px,4.6vw,26px)}
 .brand small{display:block;font-family:var(--sans);font-size:9px;font-weight:500;letter-spacing:.26em;color:var(--ink-45);margin-top:-2px}
 .header-cta{background:var(--ink);color:#fff;font-size:12.5px;font-weight:500;letter-spacing:.04em;padding:0 18px;min-height:42px;display:flex;align-items:center;border-radius:var(--r);transition:.2s}
 .header-cta:hover{background:#000}
-@media(min-width:768px){.header-in{height:72px}.brand{font-size:26px}.header-cta{font-size:13.5px;min-height:46px;padding:0 24px}}
+.header-back{display:flex;align-items:center;gap:7px;min-height:42px;padding:0 14px 0 11px;border:1px solid var(--line);background:var(--white);border-radius:var(--r);font-size:13px;font-weight:500;color:var(--ink-70);transition:.2s;flex:none}
+.header-back:hover{border-color:var(--ink);color:var(--ink)}
+.header-back svg{width:15px;height:15px;flex:none}
+.header-back span{white-space:nowrap}
+@media(max-width:520px){.header-back span{display:none}.header-back{padding:0 12px}.brand small{display:none}}
+@media(min-width:768px){.header-in{height:72px}.brand{font-size:26px}.header-cta{font-size:13.5px;min-height:46px;padding:0 24px}.header-back{min-height:46px;font-size:13.5px}}
 
 /* ================= PRODUCT ================= */
 .product{padding:22px 0 8px}
@@ -118,7 +123,7 @@ h3{font-size:clamp(20px,4.6vw,26px)}
 .sizes-lab b{font-size:14px;font-weight:600}
 .sizes-lab a{font-size:12.5px;color:var(--bronze);border-bottom:1px solid var(--bronze)}
 .sizes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
-@media(min-width:420px){.sizes{grid-template-columns:repeat(8,1fr)}}
+@media(min-width:420px){.sizes{grid-template-columns:repeat(6,1fr)}}
 .size{border:1px solid var(--line);background:var(--white);border-radius:var(--r);min-height:48px;font-size:14.5px;font-weight:500;transition:.15s}
 .size:hover{border-color:var(--ink)}
 .size.on{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -305,7 +310,38 @@ table.spec td:first-child{width:42%;color:var(--ink-45);background:var(--sand);f
 .fc-ok{display:none;text-align:center;padding:26px 6px}
 .fc-ok.on{display:block}
 .fc-ok .tick{width:56px;height:56px;border-radius:50%;background:var(--bronze-soft);color:var(--green);display:grid;place-items:center;margin:0 auto 16px;font-size:26px}
+/* --- чекаут як на основному сайті --- */
+.oc-sec{display:flex;align-items:center;gap:10px;margin:20px 0 9px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.oc-sec b{width:22px;height:22px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:0 0 auto;border-radius:3px}
+.oc-sec span{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.oc-sec i{font-style:normal;margin-left:auto;font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-45)}
+.oc-sec i a{color:var(--bronze);border-bottom:1px solid var(--bronze)}
+.oc-field{display:block;position:relative}
+.oc-field input{width:100%;border:1px solid var(--line);border-radius:var(--r);padding:15px 15px;font-size:16px;background:var(--paper);outline:none;transition:.18s}
+.oc-field input:focus{border-color:var(--ink);background:var(--white)}
+.oc-field input:disabled{background:#f0ece6;color:var(--ink-45)}
+.oc-field input.err{border-color:var(--red);background:#fdf5f3}
+.oc-field.promo-row{display:flex;gap:8px}
+.oc-field.promo-row input{flex:1;min-width:0}
+.promo-apply{flex:none;border:1px solid var(--ink);background:var(--white);border-radius:var(--r);padding:0 18px;font-size:13.5px;font-weight:600;transition:.15s}
+.promo-apply:hover{background:var(--ink);color:#fff}
+.cd-suggest{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--line);border-top:0;margin-top:-1px;max-height:240px;overflow-y:auto;z-index:5;box-shadow:0 10px 30px rgba(26,22,20,.10);display:none;border-radius:0 0 var(--r) var(--r)}
+.cd-suggest.open{display:block}
+.cd-suggest button{width:100%;padding:12px 15px;border:0;background:transparent;text-align:left;font-size:13.5px;cursor:pointer;border-bottom:1px solid var(--line);color:var(--ink);line-height:1.4}
+.cd-suggest button:hover{background:var(--sand)}
+.cd-suggest-empty{padding:14px;color:var(--ink-45);font-size:12.5px;text-align:center}
+.cd-promo-status{min-height:18px;margin-top:7px;font-size:12.5px;line-height:1.45}
+.cd-promo-status.ok{color:var(--green)}
+.cd-promo-status.err{color:var(--red)}
+.pay-radio{display:flex;align-items:flex-start;gap:12px;padding:15px 16px;border:1px solid var(--line);border-radius:var(--r);cursor:pointer;background:var(--white);transition:.18s;margin-bottom:8px}
+.pay-radio:hover{border-color:var(--ink-45)}
+.pay-radio:has(input:checked){border-color:var(--ink);background:var(--sand)}
+.pay-radio input{margin-top:3px;flex:none;width:18px;height:18px;accent-color:var(--ink)}
+.pay-radio b{display:block;font-size:14.5px;font-weight:600}
+.pay-radio span{display:block;font-size:12.5px;color:var(--ink-45);margin-top:3px;line-height:1.45}
+.form-err{color:var(--red);font-size:13px;margin-top:12px;min-height:16px;line-height:1.45}
 .fc-ok h3{font-family:var(--serif);font-size:24px}
+.fc-ok p b{font-family:var(--sans);font-weight:600}
 .fc-ok p{color:var(--ink-70);font-size:14.5px;margin-top:10px;line-height:1.65}
 
 /* sticky */
@@ -339,6 +375,10 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
 
 <header class="header">
   <div class="wrap header-in">
+    <a href="/" class="header-back" id="backBtn" aria-label="Повернутись до каталогу">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      <span>До каталогу</span>
+    </a>
     <a href="/" class="brand">ULTERA<small>CORSO</small></a>
     <a href="#order" class="header-cta">Забронювати</a>
   </div>
@@ -365,7 +405,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
   <div class="pinfo">
     <div class="kicker">Передзамовлення · перша партія</div>
     <h1>Кеди ULTERA CORSO</h1>
-    <div class="sub">Чоловічі · натуральна шкіра · чорний / біла підошва · розміри 39–46</div>
+    <div class="sub">Чоловічі · натуральна шкіра · чорний / біла підошва · розміри 40–45</div>
 
     <div class="tags">
       <span class="tag">Ультралегкі</span>
@@ -396,14 +436,12 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
         <a href="#sizes-sec">Розмірна сітка</a>
       </div>
       <div class="sizes" id="sizes">
-        <button class="size" type="button" data-s="39">39</button>
         <button class="size" type="button" data-s="40">40</button>
         <button class="size" type="button" data-s="41">41</button>
         <button class="size" type="button" data-s="42">42</button>
         <button class="size" type="button" data-s="43">43</button>
         <button class="size" type="button" data-s="44">44</button>
         <button class="size" type="button" data-s="45">45</button>
-        <button class="size" type="button" data-s="46">46</button>
       </div>
 
       <a href="#order" class="btn btn-dark" data-cta="product">Забронювати пару</a>
@@ -556,7 +594,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
         <tr><td>Підошва</td><td>Легка, підвищена, з протиковзким протектором</td></tr>
         <tr><td>Застібка</td><td>Шнурівка</td></tr>
         <tr><td>Сезон</td><td>Осінь / весна</td></tr>
-        <tr><td>Розміри</td><td>39–46</td></tr>
+        <tr><td>Розміри</td><td>40–45</td></tr>
         <tr><td>Гарантія</td><td>1 рік</td></tr>
         <tr><td>Обмін розміру</td><td>Безкоштовний</td></tr>
         <tr><td>Строк поставки</td><td>10–14 днів з моменту замовлення</td></tr>
@@ -618,13 +656,13 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
             <div class="n">Правило 1</div>
             <h4>Міряєте устілку</h4>
             <p>Дістаньте устілку зі свого зручного взуття й виміряйте її довжину. Це і є ваш розмір за таблицею — нічого додавати не треба.</p>
-            <div class="f">устілка 27,5 см → розмір 43</div>
+            <div class="f">устілка 28,5 см → розмір 43</div>
           </div>
           <div class="rule">
             <div class="n">Правило 2</div>
             <h4>Міряєте стопу</h4>
             <p>Станьте на аркуш паперу, обведіть стопу й виміряйте від п'ятки до найдовшого пальця. До результату <b>додайте 1 см</b> — і дивіться таблицю.</p>
-            <div class="f">стопа 26,5 см + 1 = 27,5 → розмір 43</div>
+            <div class="f">стопа 27,5 см + 1 = 28,5 → розмір 43</div>
           </div>
           <div class="rule">
             <div class="n">Підказка</div>
@@ -735,14 +773,14 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
 <section class="dark" id="order">
   <div class="wrap order-wrap">
     <div class="rv">
-      <div class="kicker" style="color:#c8a97a">Бронювання без передоплати</div>
-      <h2 style="margin-top:10px">Забронювати ULTERA CORSO</h2>
-      <p class="lead" style="color:rgba(255,255,255,.62);margin-top:14px">Залиште ім'я та номер телефону — ми зафіксуємо за вами ціну 2 790 ₴ і ваш розмір із першої партії.</p>
+      <div class="kicker" style="color:#c8a97a">Оформлення замовлення</div>
+      <h2 style="margin-top:10px">Замовити ULTERA CORSO</h2>
+      <p class="lead" style="color:rgba(255,255,255,.62);margin-top:14px">Та сама форма, що й на основному сайті: доставка Новою поштою, оплата карткою або на пошті при отриманні.</p>
       <ol class="steps">
-        <li><span class="n">1</span><span class="tx">Ви лишаєте заявку — це займе 20 секунд</span></li>
-        <li><span class="n">2</span><span class="tx">Менеджер телефонує, уточнює розмір і адресу доставки</span></li>
-        <li><span class="n">3</span><span class="tx">Обираєте оплату: на пошті при отриманні або 4 платежі monobank</span></li>
-        <li><span class="n">4</span><span class="tx">Відшиваємо вашу пару в Харкові й відправляємо Новою поштою — 10–14 днів</span></li>
+        <li><span class="n">1</span><span class="tx">Заповнюєте форму — ім'я, телефон, розмір, відділення</span></li>
+        <li><span class="n">2</span><span class="tx">Обираєте оплату: карткою (доступні частини моно/А-банк) або на пошті</span></li>
+        <li><span class="n">3</span><span class="tx">Менеджер телефонує для підтвердження замовлення</span></li>
+        <li><span class="n">4</span><span class="tx">Відшиваємо вашу пару в Харкові й відправляємо — 10–14 днів</span></li>
       </ol>
     </div>
 
@@ -756,46 +794,56 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
           </div>
         </div>
 
-        <form id="preForm" novalidate>
-          <div class="field">
-            <label for="f-name">Ваше ім'я</label>
-            <input type="text" id="f-name" placeholder="Олександр" autocomplete="name">
-          </div>
-          <div class="field">
-            <label for="f-phone">Номер телефону</label>
-            <input type="tel" id="f-phone" placeholder="+380 __ ___ __ __" autocomplete="tel" inputmode="tel" maxlength="19">
-          </div>
-          <div class="field">
-            <label>Розмір <span style="color:var(--ink-45);font-weight:400">— необов'язково, <a href="#sizes-sec" style="color:var(--bronze);border-bottom:1px solid var(--bronze)">розмірна сітка</a></span></label>
-            <div class="sizes" id="sizes2">
-              <button class="size" type="button" data-s="39">39</button>
-              <button class="size" type="button" data-s="40">40</button>
-              <button class="size" type="button" data-s="41">41</button>
-              <button class="size" type="button" data-s="42">42</button>
-              <button class="size" type="button" data-s="43">43</button>
-              <button class="size" type="button" data-s="44">44</button>
-              <button class="size" type="button" data-s="45">45</button>
-              <button class="size" type="button" data-s="46">46</button>
-            </div>
+        <form id="preForm" novalidate autocomplete="on">
+          <div class="oc-sec"><b>1</b><span>Ім'я та прізвище</span></div>
+          <label class="oc-field"><input type="text" id="wFio" placeholder="Шевченко Тарас" autocomplete="name"></label>
+
+          <div class="oc-sec"><b>2</b><span>Номер телефону</span></div>
+          <label class="oc-field"><input type="tel" id="wPhone" placeholder="+380 __ ___ __ __" autocomplete="tel" inputmode="tel" maxlength="19"></label>
+
+          <div class="oc-sec"><b>3</b><span>Розмір</span><i><a href="#sizes-sec">сітка</a></i></div>
+          <div class="sizes" id="sizes2">
+            <button class="size" type="button" data-s="40">40</button>
+            <button class="size" type="button" data-s="41">41</button>
+            <button class="size" type="button" data-s="42">42</button>
+            <button class="size" type="button" data-s="43">43</button>
+            <button class="size" type="button" data-s="44">44</button>
+            <button class="size" type="button" data-s="45">45</button>
           </div>
 
-          <button class="btn btn-dark" type="submit" id="f-btn">Забронювати пару</button>
+          <div class="oc-sec"><b>4</b><span>Місто та відділення Нової Пошти</span></div>
+          <label class="oc-field"><input type="text" id="wCity" placeholder="Місто — почни вводити…" autocomplete="off"><div class="cd-suggest" id="wCitySug"></div></label>
+          <label class="oc-field" style="margin-top:8px"><input type="text" id="wWh" placeholder="Обери спочатку місто" autocomplete="off" disabled><div class="cd-suggest" id="wWhSug"></div></label>
+
+          <div class="oc-sec"><b>5</b><span>Промокод</span><i>Опціонально</i></div>
+          <label class="oc-field promo-row">
+            <input type="text" id="wPromo" autocomplete="off" maxlength="20" style="text-transform:uppercase">
+            <button type="button" class="promo-apply" id="wPromoBtn">OK</button>
+          </label>
+          <div class="cd-promo-status" id="wPromoStatus"></div>
+
+          <div class="oc-sec"><b>6</b><span>Спосіб оплати</span></div>
+          <label class="pay-radio"><input type="radio" name="pm" value="card" checked><div><b>Оплата карткою</b><span>Доступна оплата частинами моно / А-банк — 4 платежі по 697,50 ₴</span></div></label>
+          <label class="pay-radio"><input type="radio" name="pm" value="np"><div><b>Оплата на пошті (наложений платіж)</b><span>Мінімальна передоплата 200 ₴</span></div></label>
+
+          <div class="form-err" id="wErr1"></div>
+          <button class="btn btn-dark" type="submit" id="f-btn">Оформити замовлення</button>
 
           <div class="fc-sum">
-            Розмір: <b id="sumSize">уточнимо по телефону</b><br>
-            Ціна броні: <b>2 790 ₴</b> замість 4 290 ₴<br>
-            Частинами: <b>697,50 ₴ × 4 платежі</b><br>
-            Оплата: <b>на пошті при отриманні</b><br>
+            Товар: <b>ULTERA CORSO</b> · розмір <b id="sumSize">не обрано</b><br>
+            Ціна: <b>2 790 ₴</b> замість 4 290 ₴<br>
+            Частинами карткою: <b>697,50 ₴ × 4 платежі</b><br>
             Поставка: <b>10–14 днів</b> · обмін розміру безкоштовний
           </div>
-          <div class="fc-legal">Натискаючи кнопку, ви погоджуєтесь на обробку даних для зв'язку.<br>Дзвінок ні до чого не зобов'язує.</div>
+          <div class="fc-legal">Натискаючи кнопку, ви погоджуєтесь на обробку даних для зв'язку.</div>
         </form>
       </div>
 
       <div class="fc-ok" id="fcOk">
         <div class="tick">✓</div>
-        <h3>Заявку прийнято</h3>
-        <p>Ми зафіксували за вами ціну <b>2 790 ₴</b>. Менеджер зателефонує найближчим часом — зазвичай протягом години в робочий час.</p>
+        <h3>Замовлення прийнято</h3>
+        <p>№ <b id="wOrderNum">—</b></p>
+        <p>Ми зв'яжемось з вами протягом 30 хвилин для підтвердження.</p>
       </div>
     </div>
   </div>
@@ -830,6 +878,23 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
 
   var PART = PRICE / PARTS;
 
+  /* ---- повернення до каталогу ---- */
+  var backBtn = document.getElementById('backBtn');
+  if (backBtn){
+    backBtn.addEventListener('click', function(e){
+      var sameSite = false;
+      try { sameSite = !!document.referrer && new URL(document.referrer).host === location.host; } catch(_){}
+      if (sameSite && history.length > 1){ e.preventDefault(); history.back(); }
+    });
+  }
+  /* Esc — теж вихід у каталог (якщо не відкритий лайтбокс) */
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Escape') return;
+    var lbOpen = document.getElementById('lb');
+    if (lbOpen && lbOpen.classList.contains('on')) return;
+    if (backBtn) backBtn.click();
+  });
+
   /* ---- галерея ---- */
   var mainImg = document.getElementById('mainImg');
   Array.prototype.forEach.call(document.querySelectorAll('#thumbs button'), function(b){
@@ -848,34 +913,34 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
     Array.prototype.forEach.call(document.querySelectorAll('.size'), function(x){
       x.classList.toggle('on', !!chosenSize && x.getAttribute('data-s') === chosenSize);
     });
-    if (sumSize) sumSize.textContent = chosenSize || 'уточнимо по телефону';
+    if (sumSize) sumSize.textContent = chosenSize || 'не обрано';
   }
   Array.prototype.forEach.call(document.querySelectorAll('.size'), function(b){
     b.addEventListener('click', function(){ setSize(b.getAttribute('data-s')); });
   });
 
-  /* ---- розмірна сітка (та сама, що на ultera.in.ua) ---- */
-  /* min/max — довжина УСТІЛКИ в см. Довжина СТОПИ = устілка − 1 см. */
+  /* ---- розмірна сітка ULTERA CORSO ---- */
+  /* cm — довжина УСТІЛКИ. Довжина СТОПИ = устілка − 1 см. */
   var GRID = [
-    { eu: 39, min: 24.6, max: 25.4 },
-    { eu: 40, min: 25.5, max: 26.0 },
-    { eu: 41, min: 26.1, max: 26.5 },
-    { eu: 42, min: 26.6, max: 27.4 },
-    { eu: 43, min: 27.5, max: 28.0 },
-    { eu: 44, min: 28.1, max: 28.5 },
-    { eu: 45, min: 28.6, max: 29.4 },
-    { eu: 46, min: 29.5, max: 30.0 }
+    { eu: 40, cm: 26.0 },
+    { eu: 41, cm: 27.0 },
+    { eu: 42, cm: 28.0 },
+    { eu: 43, cm: 28.5 },
+    { eu: 44, cm: 29.0 },
+    { eu: 45, cm: 30.0 }
   ];
   var FOOT_DELTA = 1.0; // стопа + 1 см = устілка
 
-  function fmt(v){ return v.toFixed(1).replace('.', ','); }
+  function fmt(v){
+    return (Math.round(v * 10) % 10 === 0 ? String(Math.round(v)) : v.toFixed(1).replace('.', ','));
+  }
 
   var tbody = document.getElementById('sizeTableBody');
   if (tbody){
     tbody.innerHTML = GRID.map(function(r){
       return '<tr><td>' + r.eu + '</td>' +
-             '<td>' + fmt(r.min) + ' – ' + fmt(r.max) + '</td>' +
-             '<td>' + fmt(r.min - FOOT_DELTA) + ' – ' + fmt(r.max - FOOT_DELTA) + '</td></tr>';
+             '<td>' + fmt(r.cm) + ' см</td>' +
+             '<td>' + fmt(r.cm - FOOT_DELTA) + ' см</td></tr>';
     }).join('');
   }
 
@@ -911,24 +976,26 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
     }
 
     var insole = calcMode === 'foot' ? cm + FOOT_DELTA : cm;
+    var last = GRID[GRID.length - 1];
     var hit = null;
+    /* беремо найменший розмір, устілка якого не менша за замір */
     for (var i = 0; i < GRID.length; i++){
-      if (insole >= GRID[i].min - 0.05 && insole <= GRID[i].max + 0.05){ hit = GRID[i]; break; }
+      if (insole <= GRID[i].cm + 0.05){ hit = GRID[i]; break; }
     }
 
-    if (!hit){
+    if (!hit || insole < GRID[0].cm - 1.0){
       calcRes.classList.add('warn');
       lab.textContent = 'Потрібна консультація';
-      val.textContent = insole < GRID[0].min ? 'Менше 39' : 'Більше 46';
-      exp.textContent = 'Ваш замір поза сіткою 39–46. Залиште заявку — менеджер підбере варіант.';
+      val.textContent = insole > last.cm ? 'Більше 45' : 'Менше 40';
+      exp.textContent = 'Ваш замір поза сіткою 40–45. Залиште заявку — менеджер підбере варіант.';
       return;
     }
 
     lab.textContent = 'Ваш розмір';
     val.textContent = hit.eu;
     exp.textContent = calcMode === 'foot'
-      ? 'Стопа ' + fmt(cm) + ' см + 1 см = устілка ' + fmt(insole) + ' см → розмір ' + hit.eu
-      : 'Устілка ' + fmt(insole) + ' см → розмір ' + hit.eu + ' (стопа ≈ ' + fmt(insole - FOOT_DELTA) + ' см)';
+      ? 'Стопа ' + fmt(cm) + ' см + 1 см = устілка ' + fmt(insole) + ' см → розмір ' + hit.eu + ' (устілка ' + fmt(hit.cm) + ' см)'
+      : 'Устілка ' + fmt(insole) + ' см → розмір ' + hit.eu + ' (устілка ' + fmt(hit.cm) + ' см, стопа ' + fmt(hit.cm - FOOT_DELTA) + ' см)';
   }
 
   if (calcVal){
@@ -1012,70 +1079,303 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
     });
   });
 
-  /* ---- маска телефону ---- */
-  var phone = document.getElementById('f-phone');
-  if (phone){
-    phone.addEventListener('input', function(){
-      var v = phone.value.replace(/\D/g, '');
-      if (v.indexOf('380') === 0) v = v.slice(3);
-      else if (v.indexOf('0') === 0) v = v.slice(1);
-      v = v.slice(0, 9);
-      var out = '+380';
-      if (v.length) out += ' ' + v.slice(0, 2);
-      if (v.length > 2) out += ' ' + v.slice(2, 5);
-      if (v.length > 5) out += ' ' + v.slice(5, 7);
-      if (v.length > 7) out += ' ' + v.slice(7, 9);
-      phone.value = out;
+  /* =========================================================
+     ЧЕКАУТ — ідентичний основному сайту (index.html):
+     ПІБ / телефон / розмір / Нова Пошта / промокод / оплата
+     lead + final у /api/order (KeyCRM), оплата через /api/wayforpay
+     ========================================================= */
+  var ITEM = {
+    uid: '480291657304',
+    title: 'ULTERA - CORSO Black',
+    photo: location.origin + '/photos/corso-1.webp',
+    color_name: 'Чорний',
+    family: 'CORSO',
+    price: PRICE,
+    qty: 1
+  };
+  var WIZ = { fio:'', phone:'', city:'', cityRef:null, wh:'', whRef:null, promo:null, promoPct:0, leadNum:null, leadKeycrmId:null };
+
+  var elFio    = document.getElementById('wFio');
+  var elPhone  = document.getElementById('wPhone');
+  var elCity   = document.getElementById('wCity');
+  var elWh     = document.getElementById('wWh');
+  var elCitySug= document.getElementById('wCitySug');
+  var elWhSug  = document.getElementById('wWhSug');
+  var elPromo  = document.getElementById('wPromo');
+  var elPromoSt= document.getElementById('wPromoStatus');
+  var elErr    = document.getElementById('wErr1');
+
+  function phoneMask(v){
+    var d = String(v || '').replace(/\D/g, '');
+    if (d.indexOf('380') === 0) d = d.slice(3);
+    else if (d.indexOf('0') === 0) d = d.slice(1);
+    d = d.slice(0, 9);
+    var out = '+380';
+    if (d.length) out += ' ' + d.slice(0, 2);
+    if (d.length > 2) out += ' ' + d.slice(2, 5);
+    if (d.length > 5) out += ' ' + d.slice(5, 7);
+    if (d.length > 7) out += ' ' + d.slice(7, 9);
+    return out;
+  }
+  function isPhoneValid(v){ var d = (v||'').replace(/\D/g,''); return d.length >= 9 && d.length <= 13; }
+  function isFioValid(v){ return (v||'').trim().length >= 2; }
+  function debounce(fn, ms){ var t; return function(){ var a = arguments, c = this; clearTimeout(t); t = setTimeout(function(){ fn.apply(c, a); }, ms); }; }
+
+  if (elPhone){
+    elPhone.addEventListener('input', function(){ elPhone.value = phoneMask(elPhone.value); });
+    elPhone.addEventListener('focus', function(){ if (!elPhone.value) elPhone.value = '+380 '; });
+    elPhone.addEventListener('blur', function(){
+      var fio = (elFio && elFio.value.trim()) || '';
+      var ph  = elPhone.value.trim();
+      if (isFioValid(fio) && isPhoneValid(ph)){
+        WIZ.fio = fio; WIZ.phone = ph;
+        if (!WIZ.leadKeycrmId) sendLead();
+      }
     });
-    phone.addEventListener('focus', function(){ if (!phone.value) phone.value = '+380 '; });
+  }
+
+  /* ---- Нова Пошта ---- */
+  var NP_API = 'https://api.novaposhta.ua/v2.0/json/';
+  function npPost(body){
+    return fetch(NP_API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      .then(function(r){ return r.json(); });
+  }
+  function npCities(q){
+    if (q.length < 2) return Promise.resolve([]);
+    return npPost({ apiKey:'', modelName:'AddressGeneral', calledMethod:'searchSettlements', methodProperties:{ CityName:q, Limit:8 } })
+      .then(function(d){
+        if (!d.success) throw new Error('NP');
+        var addrs = (d.data && d.data[0] && d.data[0].Addresses) || [];
+        return addrs.map(function(a){
+          return { ref: a.DeliveryCity || a.Ref, title: (a.Present || a.MainDescription) + (a.Area ? ', ' + a.Area + ' обл.' : '') };
+        });
+      })
+      .catch(function(){ return null; });
+  }
+  function npWarehouses(cityRef, q){
+    return npPost({ apiKey:'', modelName:'AddressGeneral', calledMethod:'getWarehouses', methodProperties:{ CityRef: cityRef, FindByString: q || '', Limit: 50 } })
+      .then(function(d){
+        if (!d.success) throw new Error('NP');
+        return (d.data || []).map(function(w){ return { ref: w.Ref, title: w.Description }; });
+      })
+      .catch(function(){ return null; });
+  }
+
+  if (elCity){
+    var onCity = debounce(function(){
+      var q = elCity.value.trim();
+      if (q.length < 2){ elCitySug.classList.remove('open'); return; }
+      elCitySug.innerHTML = '<div class="cd-suggest-empty">Шукаю…</div>';
+      elCitySug.classList.add('open');
+      npCities(q).then(function(data){
+        if (data === null){ elCitySug.innerHTML = '<div class="cd-suggest-empty">Не вдалось звʼязатись з Новою Поштою. Введи вручну.</div>'; return; }
+        if (!data.length){ elCitySug.innerHTML = '<div class="cd-suggest-empty">Нічого не знайдено</div>'; return; }
+        elCitySug.innerHTML = data.map(function(c){ return '<button type="button" data-ref="' + c.ref + '">' + c.title + '</button>'; }).join('');
+        Array.prototype.forEach.call(elCitySug.querySelectorAll('button'), function(b){
+          b.addEventListener('click', function(){
+            elCity.value = b.textContent;
+            WIZ.city = b.textContent; WIZ.cityRef = b.getAttribute('data-ref');
+            WIZ.wh = ''; WIZ.whRef = null;
+            elWh.value = '';
+            elCitySug.classList.remove('open');
+            elWh.disabled = false; elWh.placeholder = 'Назва або № відділення';
+            elWh.focus();
+          });
+        });
+      });
+    }, 280);
+    elCity.addEventListener('input', onCity);
+    elCity.addEventListener('blur', function(){ setTimeout(function(){ elCitySug.classList.remove('open'); }, 180); });
+  }
+
+  if (elWh){
+    var onWh = debounce(function(){
+      if (!WIZ.cityRef) return;
+      var q = elWh.value.trim();
+      elWhSug.innerHTML = '<div class="cd-suggest-empty">Шукаю…</div>';
+      elWhSug.classList.add('open');
+      npWarehouses(WIZ.cityRef, q).then(function(data){
+        if (data === null){ elWhSug.innerHTML = '<div class="cd-suggest-empty">NP API недоступний. Введи вручну.</div>'; return; }
+        if (!data.length){ elWhSug.innerHTML = '<div class="cd-suggest-empty">Нічого не знайдено</div>'; return; }
+        elWhSug.innerHTML = data.slice(0, 30).map(function(w){ return '<button type="button" data-ref="' + w.ref + '">' + w.title + '</button>'; }).join('');
+        Array.prototype.forEach.call(elWhSug.querySelectorAll('button'), function(b){
+          b.addEventListener('click', function(){
+            elWh.value = b.textContent;
+            WIZ.wh = b.textContent; WIZ.whRef = b.getAttribute('data-ref');
+            elWhSug.classList.remove('open');
+          });
+        });
+      });
+    }, 280);
+    elWh.addEventListener('input', onWh);
+    elWh.addEventListener('focus', function(){ if (WIZ.cityRef) onWh(); });
+    elWh.addEventListener('blur', function(){ setTimeout(function(){ elWhSug.classList.remove('open'); }, 180); });
+  }
+
+  /* ---- промокод ---- */
+  var LOCAL_PROMOS = { 'SALE1': 5 };
+  function applyPromo(){
+    if (!elPromo || !elPromoSt) return;
+    var code = String(elPromo.value || '').trim().toUpperCase();
+    if (!code){
+      WIZ.promo = null; WIZ.promoPct = 0;
+      elPromoSt.className = 'cd-promo-status'; elPromoSt.textContent = '';
+      return;
+    }
+    elPromoSt.className = 'cd-promo-status';
+    elPromoSt.textContent = 'Перевіряю…';
+    fetch('/api/validate-promo', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ code: code }) })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .catch(function(){ return null; })
+      .then(function(server){
+        var pct = (server && server.valid) ? server.discount_pct : 0;
+        var remaining = (server && server.valid) ? server.remaining : null;
+        if (!pct && !server && LOCAL_PROMOS[code]) pct = LOCAL_PROMOS[code];
+        if (pct > 0){
+          WIZ.promo = code; WIZ.promoPct = pct;
+          elPromoSt.className = 'cd-promo-status ok';
+          elPromoSt.textContent = '✓ −' + pct + '%' + (remaining != null ? ' · залишилось ' + remaining : '') + ' · діє на оплату карткою';
+        } else {
+          WIZ.promo = null; WIZ.promoPct = 0;
+          elPromoSt.className = 'cd-promo-status err';
+          elPromoSt.textContent = (server && server.valid === false) ? '✗ Код вичерпано або недійсний' : '✗ Невідомий код';
+        }
+      });
+  }
+  var promoBtn = document.getElementById('wPromoBtn');
+  if (promoBtn) promoBtn.addEventListener('click', applyPromo);
+
+  function finalTotal(){
+    var pct = WIZ.promoPct || 0;
+    return pct > 0 ? Math.round(PRICE * (100 - pct) / 100) : PRICE;
+  }
+
+  /* ---- lead у KeyCRM (як на сайті: після заповнення імені+телефону) ---- */
+  function orderItems(){
+    return [{
+      uid: ITEM.uid, title: ITEM.title, photo: ITEM.photo, color_name: ITEM.color_name,
+      size: chosenSize || '', price: String(PRICE), qty: 1, family: ITEM.family,
+      promoSecond: false, priceFull: String(PRICE_OLD), season: null
+    }];
+  }
+  function sendLead(){
+    try {
+      var leadNum = WIZ.leadNum || ('ULT-LEAD-' + Date.now().toString().slice(-8));
+      WIZ.leadNum = leadNum;
+      fetch('/api/order', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          num: leadNum, stage: 'lead', ts: new Date().toISOString(),
+          fio: WIZ.fio, phone: WIZ.phone, total: PRICE, items: orderItems(),
+          session_id: null, referrer: document.referrer || null, landing_url: location.href
+        })
+      }).then(function(r){ return r.json().catch(function(){ return {}; }); })
+        .then(function(res){ if (res && res.keycrm_id) WIZ.leadKeycrmId = res.keycrm_id; })
+        .catch(function(){});
+    } catch(_){}
   }
 
   /* ---- сабміт ---- */
   var form = document.getElementById('preForm');
   var btn  = document.getElementById('f-btn');
+
   form.addEventListener('submit', function(e){
     e.preventDefault();
-    var name = document.getElementById('f-name');
-    var nameV = (name.value || '').trim();
-    var digits = (phone.value || '').replace(/\D/g, '');
-    var bad = false;
+    elErr.textContent = '';
 
-    name.classList.remove('err'); phone.classList.remove('err');
-    if (nameV.length < 2){ name.classList.add('err'); bad = true; }
-    if (digits.length !== 12){ phone.classList.add('err'); bad = true; }
-    if (bad){ (name.classList.contains('err') ? name : phone).focus(); return; }
+    var fio = elFio.value.trim();
+    var ph  = elPhone.value.trim();
+    elFio.classList.remove('err'); elPhone.classList.remove('err');
 
-    btn.textContent = 'Надсилаємо…';
+    if (!isFioValid(fio)){ elErr.textContent = 'Вкажіть імʼя (хоча б 2 символи)'; elFio.classList.add('err'); elFio.focus(); return; }
+    if (!isPhoneValid(ph)){ elErr.textContent = 'Некоректний номер телефону'; elPhone.classList.add('err'); elPhone.focus(); return; }
+    if (!chosenSize){ elErr.textContent = 'Оберіть розмір'; document.getElementById('sizes2').scrollIntoView({behavior:'smooth', block:'center'}); return; }
+
+    var city = elCity.value.trim();
+    var wh   = elWh.value.trim();
+    if (!city || !WIZ.cityRef){ elErr.textContent = 'Оберіть місто зі списку'; elCity.focus(); return; }
+    if (!wh   || !WIZ.whRef){   elErr.textContent = 'Оберіть відділення зі списку'; elWh.focus(); return; }
+
+    var pmInput = document.querySelector('input[name="pm"]:checked');
+    var pm = pmInput ? pmInput.value : null;
+    if (!pm){ elErr.textContent = 'Оберіть спосіб оплати'; return; }
+
+    WIZ.fio = fio; WIZ.phone = ph; WIZ.city = city; WIZ.wh = wh;
+
     btn.disabled = true;
+    btn.textContent = 'Надсилаю…';
 
-    var payload = {
-      name: nameV,
-      phone: '+' + digits,
-      size: chosenSize,
-      product: 'ULTERA CORSO',
-      price: PRICE,
-      price_old: PRICE_OLD,
-      parts: PARTS,
-      part_sum: PART,
-      page: location.pathname + location.search,
-      referrer: document.referrer || '',
-      utm: location.search || ''
-    };
+    var orderNum = 'ULT-' + Date.now().toString().slice(-8);
+    track('InitiateCheckout', { content_ids:[ITEM.uid], content_type:'product', value: finalTotal(), currency:'UAH', num_items: 1 });
 
-    fetch('/api/preorder', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
-      .then(done)
-      .catch(function(err){ console.warn('preorder endpoint unavailable', err, payload); done(); });
-
-    function done(){
-      track('Lead', { content_name: 'ULTERA CORSO preorder', value: PRICE, currency: 'UAH' });
+    fetch('/api/order', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        num: orderNum, stage: 'final',
+        leadNum: WIZ.leadNum || null, leadKeycrmId: WIZ.leadKeycrmId || null,
+        ts: new Date().toISOString(),
+        fio: WIZ.fio, phone: WIZ.phone,
+        city: WIZ.city, cityRef: WIZ.cityRef,
+        wh: WIZ.wh, whRef: WIZ.whRef,
+        payment: pm,
+        promoCode: WIZ.promo || null,
+        total: PRICE,
+        items: orderItems(),
+        session_id: null, referrer: document.referrer || null, landing_url: location.href
+      })
+    })
+    .then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(res){
+        if (!r.ok || res.ok === false) throw new Error(res.error || res.message || ('HTTP ' + r.status));
+        return res;
+      });
+    })
+    .then(function(){
+      var parts = String(WIZ.fio).trim().split(/\s+/);
+      return fetch('/api/wayforpay', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          orderReference: String(orderNum),
+          items: [{ uid: ITEM.uid, qty: 1, promo_pct: 0 }],
+          amount: (pm === 'np') ? 500 : finalTotal(),
+          products: [{ name: ITEM.title, count: 1, price: PRICE }],
+          paymentMode: (pm === 'np' ? 'cod' : 'card'),
+          promoCode: WIZ.promo || null,
+          clientFirstName: parts[0] || '',
+          clientLastName: parts.slice(1).join(' ') || '',
+          clientEmail: '',
+          clientPhone: WIZ.phone || ''
+        })
+      }).then(function(r){ return r.json().catch(function(){ return {}; }); })
+        .then(function(wfp){
+          if (wfp && wfp.ok && wfp.formHtml){
+            try {
+              localStorage.setItem('ulteraPendingOrder', JSON.stringify({
+                num: orderNum, ts: Date.now(),
+                items: [{ uid: ITEM.uid, qty: 1, price: PRICE }],
+                value: finalTotal(), currency: 'UAH', pm: pm
+              }));
+            } catch(_){}
+            document.open(); document.write(wfp.formHtml); document.close();
+            return 'redirect';
+          }
+          return 'done';
+        })
+        .catch(function(){ return 'done'; });
+    })
+    .then(function(state){
+      if (state === 'redirect') return;
+      track('Lead', { content_ids:[ITEM.uid], content_name:'ULTERA CORSO', value: finalTotal(), currency:'UAH' });
+      document.getElementById('wOrderNum').textContent = orderNum;
       document.getElementById('fcForm').style.display = 'none';
       document.getElementById('fcOk').classList.add('on');
-      orderSec.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+      orderSec.scrollIntoView({ behavior:'smooth', block:'center' });
+    })
+    .catch(function(err){
+      elErr.textContent = 'Не вдалось надіслати: ' + (err && err.message ? err.message : 'помилка') + '. Спробуйте ще раз або зателефонуйте нам.';
+      btn.disabled = false;
+      btn.textContent = 'Оформити замовлення';
+    });
   });
 })();
 </script>
