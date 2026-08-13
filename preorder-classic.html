@@ -147,6 +147,11 @@ h3{font-size:clamp(20px,4.6vw,26px)}
 .btn-out:hover{background:var(--sand)}
 .pricecard .btn{margin-top:18px}
 .pc-hint{text-align:center;font-size:12.5px;color:var(--ink-45);margin-top:12px}
+.prepay{display:flex;gap:13px;align-items:flex-start;margin-top:18px;padding:15px 16px;background:var(--ink);color:#fff;border-radius:var(--r)}
+.prepay-ic{font-size:18px;line-height:1.25;flex:none}
+.prepay b{display:block;font-size:15px;font-weight:600;line-height:1.3}
+.prepay span{display:block;font-size:13px;color:rgba(255,255,255,.68);margin-top:5px;line-height:1.55}
+.prepay span b{display:inline;font-size:13px;font-weight:600;color:#fff}
 
 .trust{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
 @media(min-width:520px){.trust{grid-template-columns:repeat(4,1fr)}}
@@ -383,7 +388,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
 </head>
 <body>
 
-<div class="topbar">Передзамовлення першої партії · <b>−30%</b> · оплата частинами <b>до 4 платежів</b> · поставка <b>10–14 днів</b></div>
+<div class="topbar">Передзамовлення першої партії · <b>−30%</b> · оплата частинами <b>до 4 платежів</b> · бронь від <b>200 ₴</b></div>
 
 <header class="header">
   <div class="wrap header-in">
@@ -459,14 +464,22 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
         <button class="size" type="button" data-s="45">45</button>
       </div>
 
-      <a href="#order" class="btn btn-dark" data-cta="product">Забронювати пару</a>
-      <div class="pc-hint">Без передоплати. Менеджер зателефонує для підтвердження.</div>
+      <div class="prepay">
+        <div class="prepay-ic">🔒</div>
+        <div>
+          <b>Передоплата 200 ₴ — і пара ваша</b>
+          <span>Фіксує за вами розмір і ціну 2 990 ₴. Решта <b>2 790 ₴</b> — при отриманні на пошті. Або оплатіть повну суму карткою чи частинами.</span>
+        </div>
+      </div>
+
+      <a href="#order" class="btn btn-dark" data-cta="product">Забронювати за 200 ₴</a>
+      <div class="pc-hint">Менеджер зателефонує для підтвердження перед оплатою.</div>
     </div>
 
     <div class="trust">
       <div><div class="t-ic">🛡</div><div class="t-t">Гарантія</div><div class="t-s">1 рік</div></div>
       <div><div class="t-ic">↺</div><div class="t-t">Обмін і повернення</div><div class="t-s">безкоштовно</div></div>
-      <div><div class="t-ic">📦</div><div class="t-t">Оплата на пошті</div><div class="t-s">при отриманні</div></div>
+      <div><div class="t-ic">🔒</div><div class="t-t">Бронь пари</div><div class="t-s">передоплата 200 ₴</div></div>
       <div><div class="t-ic">🇺🇦</div><div class="t-t">Виробництво</div><div class="t-s">Харків, Україна</div></div>
     </div>
 
@@ -516,8 +529,8 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
       <div class="bcard">
         <div class="ic">✦</div>
         <div>
-          <h3>Преміум шкіра</h3>
-          <p>Натуральна шкіра з щільним лицем: тримає форму, не заламується «гармошкою» на згині й гарно старіє замість того, щоб облазити.</p>
+          <h3>Шкіра зовні та всередині</h3>
+          <p>Натуральна шкіра з щільним лицем — тримає форму й гарно старіє замість того, щоб облазити. Підкладка теж шкіряна: нога дихає, а взуття не «пітніє» зсередини.</p>
         </div>
       </div>
       <div class="bcard">
@@ -624,7 +637,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
         <tr><td>Стать</td><td>Чоловічі</td></tr>
         <tr><td>Колір</td><td>Чорний / біла підошва</td></tr>
         <tr><td>Верх</td><td>Натуральна шкіра, лаковані вставки на п'яті та боковині</td></tr>
-        <tr><td>Підкладка</td><td>Текстиль, посилена п'ята</td></tr>
+        <tr><td>Підкладка</td><td>Натуральна шкіра, посилена п'ята</td></tr>
         <tr><td>Устілка</td><td>Анатомічна, знімна, з амортизацією під п'ятою</td></tr>
         <tr><td>Підошва</td><td>Легка, підвищена, з протиковзким протектором</td></tr>
         <tr><td>Застібка</td><td>Шнурівка</td></tr>
@@ -750,7 +763,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
       <div class="icard">
         <div class="ic">📦</div>
         <h3>Оплата на пошті</h3>
-        <p>Оплата при отриманні на Новій пошті — спочатку дивитесь пару, потім платите. Або частинами: до 4 платежів по 747,50 ₴ без переплат — Монобанк, А-Банк, ПриватБанк, ПУМБ, OTP. Передоплата на етапі броні не потрібна.</p>
+        <p>Оплата при отриманні на Новій пошті — спочатку дивитесь пару, потім платите. Або частинами: до 4 платежів по 747,50 ₴ без переплат — Монобанк, А-Банк, ПриватБанк, ПУМБ, OTP. Бронювання пари — передоплата 200 ₴, решта 2 790 ₴ при отриманні.</p>
       </div>
       <div class="icard">
         <div class="ic">🛡</div>
@@ -779,7 +792,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
         <div><b id="m">00</b><span>хв</span></div>
         <div><b id="s">00</b><span>сек</span></div>
       </div>
-      <a href="#order" class="btn btn-dark" style="margin-top:14px" data-cta="limit">Забронювати за 2 990 ₴</a>
+      <a href="#order" class="btn btn-dark" style="margin-top:14px" data-cta="limit">Забронювати за 200 ₴</a>
     </div>
   </div>
 </section>
@@ -793,7 +806,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
     </div>
     <div class="faq rv">
       <details open><summary>Що таке передзамовлення і коли я отримаю пару?</summary><p>Ви бронюєте пару зі своїм розміром із першої осінньої партії за ціною 2 990 ₴ замість 4 290 ₴. Менеджер зв'яжеться, підтвердить розмір і назве точну дату відправки. Гроші наперед не потрібні.</p></details>
-      <details><summary>Чи потрібно платити зараз?</summary><p>Ні. Зараз ви лише лишаєте заявку: ім'я і телефон. Оплату оформлюєте після дзвінка менеджера — частинами через свій банк або повною сумою при отриманні.</p></details>
+      <details><summary>Скільки треба заплатити при бронюванні?</summary><p><b>200 ₴</b> — це передоплата, яка фіксує за вами розмір із першої партії та ціну 2 990 ₴. Решта 2 790 ₴ — при отриманні на Новій пошті. Якщо зручніше, можна одразу оплатити всю суму карткою або частинами. Менеджер спершу зателефонує й підтвердить замовлення.</p></details>
       <details><summary>Як працює оплата частинами?</summary><p>Сума 2 990 ₴ ділиться на рівні платежі — без відсотків і переплат. При розбитті на 4 частини це 747,50 ₴ на місяць. Доступні Монобанк, А-Банк, ПриватБанк, ПУМБ і OTP Bank — кількість платежів залежить від банку. Перший платіж списується при оформленні, решта щомісяця.</p></details>
       <details><summary>Як зрозуміти свій розмір?</summary><p>Взуття повнорозмірне — розмір у розмір. Якщо ви виміряли <b>устілку</b> свого зручного взуття, це і є ваш розмір за таблицею. Якщо виміряли <b>стопу</b> — додайте 1 см. На бирці язичка вказана довжина стопи: додайте до неї 1 см, отримаєте довжину устілки. Уся сітка й калькулятор — у розділі «Розмірна сітка» вище.</p></details>
       <details><summary>А якщо не підійде розмір?</summary><p>Обмін розміру — безкоштовний. Напишіть менеджеру, і ми відправимо потрібну пару. Повернення — протягом 14 днів, якщо взуття не було в носінні на вулиці. Приміряти вдома й пройтись по квартирі можна, це не позбавляє права на обмін.</p></details>
@@ -808,12 +821,12 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
 <section class="dark" id="order">
   <div class="wrap order-wrap">
     <div class="rv">
-      <div class="kicker" style="color:#c8a97a">Оформлення замовлення</div>
+      <div class="kicker" style="color:#c8a97a">Бронювання · передоплата 200 ₴</div>
       <h2 style="margin-top:10px">Замовити ULTERA 01</h2>
-      <p class="lead" style="color:rgba(255,255,255,.62);margin-top:14px">Та сама форма, що й на основному сайті: доставка Новою поштою, оплата карткою або на пошті при отриманні.</p>
+      <p class="lead" style="color:rgba(255,255,255,.62);margin-top:14px">Передоплата <b style="color:#fff">200 ₴</b> фіксує за вами пару з першої партії. Решта — при отриманні на Новій пошті, або оплатіть повну суму карткою чи частинами.</p>
       <ol class="steps">
         <li><span class="n">1</span><span class="tx">Заповнюєте форму — ім'я, телефон, розмір, відділення</span></li>
-        <li><span class="n">2</span><span class="tx">Обираєте оплату: карткою (доступні частини від 5 банків) або на пошті</span></li>
+        <li><span class="n">2</span><span class="tx">Обираєте: передоплата 200 ₴ + решта на пошті, або повна оплата карткою чи частинами</span></li>
         <li><span class="n">3</span><span class="tx">Менеджер телефонує для підтвердження замовлення</span></li>
         <li><span class="n">4</span><span class="tx">Відшиваємо вашу пару в Харкові й відправляємо — 10–14 днів</span></li>
       </ol>
@@ -858,8 +871,8 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
           <div class="cd-promo-status" id="wPromoStatus"></div>
 
           <div class="oc-sec"><b>6</b><span>Спосіб оплати</span></div>
-          <label class="pay-radio"><input type="radio" name="pm" value="card" checked><div><b>Оплата карткою</b><span>Доступна оплата частинами: Монобанк, А-Банк, ПриватБанк, ПУМБ, OTP Bank — до 4 платежів по 747,50 ₴</span></div></label>
-          <label class="pay-radio"><input type="radio" name="pm" value="np"><div><b>Оплата на пошті (наложений платіж)</b><span>Мінімальна передоплата 200 ₴</span></div></label>
+          <label class="pay-radio"><input type="radio" name="pm" value="card" checked><div><b>Повна оплата карткою</b><span>Доступна оплата частинами: Монобанк, А-Банк, ПриватБанк, ПУМБ, OTP Bank — до 4 платежів по 747,50 ₴</span></div></label>
+          <label class="pay-radio"><input type="radio" name="pm" value="np"><div><b>Передоплата 200 ₴ + решта на пошті</b><span>Бронюєте пару за 200 ₴, решту 2 790 ₴ платите при отриманні</span></div></label>
 
           <div class="form-err" id="wErr1"></div>
           <button class="btn btn-dark" type="submit" id="f-btn">Оформити замовлення</button>
@@ -868,6 +881,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
             Товар: <b>ULTERA 01</b> · розмір <b id="sumSize">не обрано</b><br>
             Ціна: <b>2 990 ₴</b> замість 4 290 ₴<br>
             Частинами: <b>747,50 ₴ × 4 платежі</b> (моно, А-Банк, Приват, ПУМБ, OTP)<br>
+            Бронь: <b>передоплата 200 ₴</b>, решта 2 790 ₴ при отриманні<br>
             Поставка: <b>10–14 днів</b> · обмін розміру безкоштовний
           </div>
           <div class="fc-legal">Натискаючи кнопку, ви погоджуєтесь на обробку даних для зв'язку.</div>
@@ -892,7 +906,7 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
 </footer>
 
 <div class="sticky" id="sticky">
-  <div class="p"><b>2 990 ₴</b><span>або 747,50 ₴ × 4 платежі</span></div>
+  <div class="p"><b>2 990 ₴</b><span>бронь 200 ₴ · або 747,50 ₴ × 4</span></div>
   <a href="#order" data-cta="sticky">Забронювати</a>
 </div>
 
