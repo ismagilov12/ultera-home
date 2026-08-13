@@ -7045,9 +7045,20 @@ insertWomanDivider();
 <script id="ulCorsoRedirect">
 (function(){
   'use strict';
-  var LANDING = '/preorder-classic.html';
-  var FAMS    = ['01', 'CORSO'];
-  var UIDS    = ['480291657304'];
+
+  /* Кожна модель лінії має власний лендинг. Порядок у масиві = порядок
+     чіпсів у каталозі й порядок карток на початку сітки. */
+  var MODELS = [
+    { fam: '01', alias: ['CORSO'], uids: ['480291657304'], landing: '/preorder-classic.html', name: 'ULTERA 01', price: 2990 },
+    { fam: '02', alias: [],        uids: ['571034829116'], landing: '/02.html',               name: 'ULTERA 02', price: 3290 }
+  ];
+
+  function famsOf(m){ return [m.fam].concat(m.alias || []); }
+  function allFams(){
+    var out = [];
+    for (var i = 0; i < MODELS.length; i++) out = out.concat(famsOf(MODELS[i]));
+    return out;
+  }
 
   function dataObj(){
     try { if (window.DATA) return window.DATA; } catch(_){}
@@ -7062,27 +7073,34 @@ insertWomanDivider();
     }
     return '';
   }
-  function isCorso(uid){
-    if (!uid) return false;
+  /* uid → модель лінії або null */
+  function modelOf(uid){
+    if (!uid) return null;
     uid = String(uid);
-    if (UIDS.indexOf(uid) !== -1) return true;
-    return FAMS.indexOf(famOf(uid)) !== -1;
+    var fam = famOf(uid);
+    for (var i = 0; i < MODELS.length; i++){
+      var m = MODELS[i];
+      if ((m.uids || []).indexOf(uid) !== -1) return m;
+      if (fam && famsOf(m).indexOf(fam) !== -1) return m;
+    }
+    return null;
   }
 
   function hookModal(){
     if (typeof window.openModal !== 'function' || window.__ulCorsoHooked) return;
     var orig = window.openModal;
     window.openModal = function(uid){
-      if (isCorso(uid)){
+      var m = modelOf(uid);
+      if (m){
         try {
           if (typeof window.ulteraFbq === 'function'){
             window.ulteraFbq('ViewContent', {
               content_ids: [String(uid)], content_type: 'product',
-              content_name: 'ULTERA 01', value: 2990, currency: 'UAH'
+              content_name: m.name, value: m.price, currency: 'UAH'
             });
           }
         } catch(_){}
-        window.location.href = LANDING;
+        window.location.href = m.landing;
         return;
       }
       return orig.apply(this, arguments);
@@ -7090,31 +7108,45 @@ insertWomanDivider();
     window.__ulCorsoHooked = true;
   }
 
+  /* чіпси «01», «02» одразу після «Усі», у порядку MODELS */
   function addChip(){
     var box = document.getElementById('chips');
-    if (!box || box.querySelector('[data-fam="01"]')) return;
-    var b = document.createElement('button');
-    b.className = 'coll-chip';
-    b.setAttribute('data-fam', '01');
-    b.textContent = '01';
+    if (!box) return;
     var all = box.querySelector('[data-fam="all"]');
-    if (all && all.nextSibling) box.insertBefore(b, all.nextSibling);
-    else if (all) box.appendChild(b);
-    else box.insertBefore(b, box.firstChild);
+    var after = all || null;
+    for (var i = 0; i < MODELS.length; i++){
+      var fam = MODELS[i].fam;
+      var have = box.querySelector('[data-fam="' + fam + '"]');
+      if (have){ after = have; continue; }
+      var b = document.createElement('button');
+      b.className = 'coll-chip';
+      b.setAttribute('data-fam', fam);
+      b.textContent = fam;
+      if (after && after.nextSibling) box.insertBefore(b, after.nextSibling);
+      else if (after) box.appendChild(b);
+      else box.insertBefore(b, box.firstChild);
+      after = b;
+    }
   }
 
-  /* Нові сім'ї дописуються в кінець D.grid — піднімаємо CORSO на початок
-     каталогу «класики», тобто одразу після featured-блоку (Hunk3/Aganta/SHAPE). */
+  /* Нові сім'ї дописуються в кінець D.grid — піднімаємо картки лінії
+     на початок каталогу «класики» (одразу після featured-блоку),
+     зберігаючи порядок 01 → 02. */
   function liftCard(){
     var D = dataObj();
     if (!D || !Array.isArray(D.grid) || D.grid.length < 2) return;
-    var idx = -1;
-    for (var i = 0; i < D.grid.length; i++){
-      if (D.grid[i] && FAMS.indexOf(String(D.grid[i].family || '').trim()) !== -1){ idx = i; break; }
+    var moved = false;
+    for (var k = MODELS.length - 1; k >= 0; k--){
+      var fams = famsOf(MODELS[k]);
+      var idx = -1;
+      for (var i = 0; i < D.grid.length; i++){
+        if (D.grid[i] && fams.indexOf(String(D.grid[i].family || '').trim()) !== -1){ idx = i; break; }
+      }
+      if (idx <= 0) continue;
+      D.grid.unshift(D.grid.splice(idx, 1)[0]);
+      moved = true;
     }
-    if (idx <= 0) return;
-    var row = D.grid.splice(idx, 1)[0];
-    D.grid.unshift(row);
+    if (!moved) return;
     try { if (typeof window.renderGrid === 'function') window.renderGrid(); } catch(_){}
   }
 
