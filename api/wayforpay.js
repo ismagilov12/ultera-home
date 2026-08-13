@@ -252,6 +252,16 @@ module.exports = async function handler(req, res) {
     returnUrl, serviceUrl, language: 'UA'
   };
 
+  // [v174] опційний фільтр платіжних методів для форми WayForPay.
+  // Не входить у merchantSignature, тож підпис лишається валідним.
+  const ALLOWED_PS = ['card', 'privat24', 'payParts', 'payPartsMono', 'payPartsKredit',
+                      'googlePay', 'applePay', 'qrCode', 'masterPass', 'visaCheckout', 'credit', 'lpTerminal'];
+  const psRaw = String(body.paymentSystems || '').trim();
+  if (psRaw) {
+    const ps = psRaw.split(';').map(s => s.trim()).filter(s => ALLOWED_PS.indexOf(s) !== -1);
+    if (ps.length) formData.paymentSystems = ps.join(';');
+  }
+
   const formHtml = buildAutoSubmitForm(formData);
   return res.status(200).json({
     ok: true,

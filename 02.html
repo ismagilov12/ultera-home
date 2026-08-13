@@ -356,6 +356,15 @@ table.spec td:first-child{width:42%;color:var(--ink-45);background:var(--sand);f
 .pay-radio input{margin-top:3px;flex:none;width:18px;height:18px;accent-color:var(--ink)}
 .pay-radio b{display:block;font-size:14.5px;font-weight:600}
 .pay-radio span{display:block;font-size:12.5px;color:var(--ink-45);margin-top:3px;line-height:1.45}
+.pay-radio-hot{border-color:#bcdcc4;background:#f0f8f2;padding:17px 16px}
+.pay-radio-hot:hover{border-color:#7fbf93}
+.pay-radio-hot:has(input:checked){border-color:#1d4a2b;background:#e8f3ea;box-shadow:0 0 0 1px #1d4a2b inset}
+.pay-radio-hot input{accent-color:#1d4a2b}
+.pay-radio-hot b{font-size:15.5px;font-weight:700;color:#12331d}
+.pay-radio-hot span{color:#3f6b4c}
+.pay-hot-tag{display:inline-block;font-family:var(--font-mono,ui-monospace,monospace);font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#e8f3ea;background:#1d4a2b;border-radius:3px;padding:3px 7px;margin-left:7px;vertical-align:2px;font-style:normal}
+.pay-radio .pay-hot-banks{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.pay-radio .pay-hot-banks i{font-style:normal;font-size:10.5px;font-weight:600;color:#1d4a2b;background:#fff;border:1px solid #bcdcc4;border-radius:3px;padding:3px 7px}
 .form-err{color:var(--red);font-size:13px;margin-top:12px;min-height:16px;line-height:1.45}
 .fc-ok h3{font-family:var(--serif);font-size:24px}
 .fc-ok p b{font-family:var(--sans);font-weight:600}
@@ -870,7 +879,8 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
           <div class="cd-promo-status" id="wPromoStatus"></div>
 
           <div class="oc-sec"><b>6</b><span>Спосіб оплати</span></div>
-          <label class="pay-radio"><input type="radio" name="pm" value="card" checked><div><b>Повна оплата карткою</b><span>Доступна оплата частинами: Монобанк, А-Банк, ПриватБанк, ПУМБ, OTP Bank — до 4 платежів по 822,50 ₴</span></div></label>
+          <label class="pay-radio pay-radio-hot"><input type="radio" name="pm" value="parts" checked><div><b>Оплата частинами · 822,50 ₴ × 4<i class="pay-hot-tag">без переплат</i></b><span>Натисніть «Оформити замовлення» — одразу відкриється захищена форма WayForPay із вкладкою «Оплата частинами». Перший платіж сьогодні, решта — щомісяця.</span><span class="pay-hot-banks"><i>Монобанк</i><i>А-Банк</i><i>ПриватБанк</i><i>ПУМБ</i><i>OTP Bank</i></span></div></label>
+          <label class="pay-radio"><input type="radio" name="pm" value="card"><div><b>Повна оплата карткою</b><span>3 290 ₴ одним платежем на формі WayForPay</span></div></label>
           <label class="pay-radio"><input type="radio" name="pm" value="np"><div><b>Передоплата 200 ₴ + решта на пошті</b><span>Бронюєте пару за 200 ₴, решту 3 090 ₴ платите при отриманні</span></div></label>
 
           <div class="form-err" id="wErr1"></div>
@@ -1388,6 +1398,9 @@ footer{background:var(--ink);color:rgba(255,255,255,.55);padding:30px 0;font-siz
           amount: (pm === 'np') ? 500 : finalTotal(),
           products: [{ name: ITEM.title, count: 1, price: PRICE }],
           paymentMode: (pm === 'np' ? 'cod' : 'card'),
+          /* [v174] «Оплата частинами» → на сторінці WayForPay одразу відкрита вкладка частин,
+             картка лишається запасним варіантом. Поле не входить у підпис. */
+          paymentSystems: (pm === 'parts' ? 'payParts;payPartsMono;card' : undefined),
           promoCode: WIZ.promo || null,
           clientFirstName: parts[0] || '',
           clientLastName: parts.slice(1).join(' ') || '',
