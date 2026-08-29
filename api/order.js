@@ -1,4 +1,10 @@
 // api/order.js — proxy ultera-home frontend → KeyCRM
+// SEASON v14 (2026-08-28):
+//   - [v14] FIX: season_id тепер доходить до compute_order_total. Раніше сезон
+//           викидався при пересборці items ({uid, qty, promo_pct}), RPC брав
+//           чисту ціну з БД, і на оплату / в KeyCRM / в CAPI йшла літня сума
+//           без надбавки за осінню (Cordura) версію.
+//           Сума надбавки зашита в RPC — звідси їде лише ознака 'spring'.
 // CAPI v13 (2026-07-18):
 //   - [v13] FB Conversions API Purchase for COD (наложка) final orders, fired at
 //           order creation. Card orders keep firing Purchase from wayforpay-callback
@@ -80,6 +86,15 @@ function getCookie(req, name) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
+// [v14] Витягуємо ознаку осінньої версії з позиції кошика.
+//       Повертає 'spring' або null. Суму надбавки тут НЕ рахуємо — вона в RPC.
+function seasonFlag(it) {
+  const raw = String((it && (it.seasonId || it.season_id)) || '');
+  if (raw === 'spring') return 'spring';
+  if (/осін|весна/i.test(String((it && it.season) || ''))) return 'spring';
+  return null;
+}
+
 async function checkRateLimit(ip, limit) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -123,6 +138,7 @@ async function verifyTurnstile(token, remoteIp) {
 
 // [v10] Forward promoSecond → promo_pct=30 so RPC applies the same Shape discount
 //       the user sees in the cart. Items can carry promo_pct directly too.
+// [v14] Forward season_id so RPC applies the autumn (Cordura) surcharge.
 async function recomputePrices(items) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -136,7 +152,8 @@ async function recomputePrices(items) {
       return {
         uid: String(it.uid || ''),
         qty: parseInt(it.qty || 1, 10),
-        promo_pct: safePct
+        promo_pct: safePct,
+        season_id: seasonFlag(it)
       };
     });
     const r = await fetch(`${supabaseUrl}/rest/v1/rpc/compute_order_total`, {
@@ -481,7 +498,8 @@ module.exports = async function handler(req, res) {
       promoPct: promoPct || 0,
       promoSource,
       promoRemaining,
-      seasons: (body.items || []).map(it => ({ uid: it.uid, season: it.season || null, promoSecond: !!it.promoSecond }))
+      total: authoritativeTotal,
+      seasons: (body.items || []).map(it => ({ uid: it.uid, season: it.season || null, season_id: seasonFlag(it), promoSecond: !!it.promoSecond }))
     });
   } catch(_){}
 

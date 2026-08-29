@@ -1,4 +1,9 @@
 // api/wayforpay.js
+// SEASON v9 (2026-08-28):
+//   - [v9] FIX: season_id тепер доходить до compute_order_total. Раніше карткова
+//          гілка рахувала суму без надбавки за осінню (Cordura) версію: items
+//          пересобирались як {uid, qty, promo_pct} і сезон губився.
+//          Сума надбавки зашита в RPC — з фронту приходить лише ознака.
 // SECURITY v8 (2026-06-22):
 //   - [v8] COD prepayment unified to 200₴ sitewide (was 500₴ for sneakers, 200₴ for tees).
 //          Single env COD_PREPAYMENT_AMOUNT (default 200) now controls all COD orders.
@@ -172,10 +177,15 @@ module.exports = async function handler(req, res) {
     resolvedItems = items.map(it => {
       const pct = Number(it.promo_pct || 0);
       const safePct = Math.max(0, Math.min(90, pct));
+      // [v9] season_id -> RPC. Сума надбавки зашита в compute_order_total,
+      //      з фронту приходить лише ознака, тож підробити суму не можна.
+      const seasonRaw = String(it.season_id || it.seasonId || '');
+      const seasonId = seasonRaw || (/осін|весна/i.test(String(it.season || '')) ? 'spring' : '');
       return {
         uid: String(it.uid || ''),
         qty: Math.max(parseInt(it.qty || 1, 10), 1),
-        promo_pct: safePct
+        promo_pct: safePct,
+        season_id: seasonId === 'spring' ? 'spring' : null
       };
     });
   } else if (Array.isArray(products) && products.length > 0) {
@@ -214,7 +224,10 @@ module.exports = async function handler(req, res) {
     productCount = [];
     productPrice = [];
     for (const line of priceResult.breakdown) {
-      productName.push(names[line.uid] || line.uid);
+      const baseName = names[line.uid] || line.uid;
+      // [v9] показуємо версію в назві позиції, щоб клієнт бачив, за що надбавка
+      const uplift = Number(line.season_uplift || 0);
+      productName.push(uplift > 0 ? (baseName + ' / Весна-Осінь') : baseName);
       productCount.push(String(line.qty));
       let unit = Number(line.unit_price);
       const linePromoPct = Number(line.promo_pct || 0);

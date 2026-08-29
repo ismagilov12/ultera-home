@@ -2077,6 +2077,7 @@ window.ulteraFbq = function(name, params){
 
 <!-- /Meta Pixel -->
 <script>/*SHAPE_NOSALE v151*/(function(){try{var p=new URLSearchParams(location.search).get('p')||'';if(p.toLowerCase().indexOf('shape')===0){var st=document.createElement('style');st.textContent='#saleSection{display:none !important}';(document.head||document.documentElement).appendChild(st);}else{try{sessionStorage.removeItem('ul_nosale');}catch(e){}}}catch(e){}})();</script>
+<style id="ulSaleHideV178">/* v178: секція розпродажу керується ulhome_family_order.SaleOstatki.hidden; bootstrap покаже, якщо hidden=false */#saleSection{display:none}</style>
 <style id="ulSaleFrameV158">#saleSection .card{border:1px solid #e5e2db;border-radius:16px;padding:12px;background:#fff;transition:box-shadow .18s ease}#saleSection .card:hover{box-shadow:0 6px 18px rgba(0,0,0,.08)}</style>
 <style id="ulSaleFixV158">#slModal .sl-panel{border-radius:16px}@media(max-width:820px){#slModal .sl-panel{position:absolute;inset:0;left:0;top:0;transform:none;width:100%;max-width:none;height:100%;max-height:none;border-radius:0;grid-template-columns:1fr;overflow:auto}#slModal .sl-gal{min-height:0}#slModal .sl-stage{aspect-ratio:4/5;max-height:none}#slModal .sl-stage img,#slModal .sl-stage video,#slModal .sl-stage iframe{width:100%;height:100%;max-height:none;object-fit:cover}#slModal .sl-thumbs{padding:10px 12px}#slModal .sl-thumbs button{width:54px;height:54px}#slModal .sl-info{padding:16px 18px 104px}#slModal .sl-title{font-size:22px;line-height:1.2}#slModal .sl-buy{position:fixed;left:0;right:0;bottom:0;width:auto;margin:0;border-radius:0;padding:16px;z-index:8;box-shadow:0 -6px 18px rgba(0,0,0,.10)}#slModal .sl-x{position:fixed;right:12px;top:12px;z-index:9}#slModal .sl-count{bottom:14px}}</style>
 <style id="ulSaleLook161">#slModal .sl-panel{border-radius:16px}#slModal .sl-stage img,#slModal .sl-stage video,#slModal .sl-stage iframe{object-fit:cover;object-position:center}#slModal .sl-thumbs{display:none}#slModal .sl-count{left:50%;right:auto;transform:translateX(-50%);bottom:12px;background:rgba(14,14,14,.7);color:#fff;font:500 11px var(--font-mono,ui-monospace,monospace);letter-spacing:.05em;padding:6px 12px;border-radius:999px}#slModal .sl-szs{grid-template-columns:repeat(4,1fr);gap:6px}#slModal .sl-szs button{padding:12px 0;border:1px solid var(--line,#e3ded4);border-radius:8px;background:#fff;font-size:14px;font-weight:700;color:var(--ink,#0e0e0e)}#slModal .sl-szs button small{font-size:10px;color:var(--ink-60,#77756e);font-weight:400}#slModal .sl-szs button.sel{background:var(--ink,#0e0e0e);color:#fff;border-color:var(--ink,#0e0e0e)}#slModal .sl-szs button.sel small{color:rgba(255,255,255,.7)}#slModal .sl-buy{border-radius:10px;padding:16px;font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}#slModal .sl-spec{margin-top:20px;border-top:1px solid var(--line,#e3ded4)}#slModal .sl-spec-h{font-family:var(--font-mono,ui-monospace,monospace);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--line,#e3ded4);padding:15px 2px;margin:0}#slModal .sl-spec ul{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;padding:10px 0 16px;margin:0;list-style:none;font-size:13px}@media(max-width:820px){#slModal .sl-panel{position:absolute;inset:0;left:0;top:0;transform:none;width:100%;max-width:none;height:100%;max-height:none;border-radius:0;grid-template-columns:1fr;overflow:auto}#slModal .sl-gal{min-height:0}#slModal .sl-stage{aspect-ratio:4/5;max-height:none}#slModal .sl-stage img,#slModal .sl-stage video,#slModal .sl-stage iframe{width:100%;height:100%;max-height:none}#slModal .sl-info{padding:20px 22px 104px}#slModal .sl-title{font-size:22px;line-height:1.2}#slModal .sl-buy{position:fixed;left:0;right:0;bottom:0;width:auto;margin:0;border-radius:0;z-index:8;box-shadow:0 -6px 18px rgba(0,0,0,.10)}#slModal .sl-x{position:fixed;right:12px;top:12px;z-index:9}}</style>
@@ -3121,6 +3122,13 @@ try { renderTeesSection(); } catch(e) { try{ console.warn('renderTeesSection ini
     window.FAMILY_ORDER = map;
     window.FAMILY_HIDDEN = hid;
     try { reorderChips(map); } catch(_){}
+    /* v178: секція «Розпродаж / Залишки −30%». За замовчуванням прихована
+       стилем ulSaleHideV178 — показуємо лише коли в БД hidden !== true.
+       Повернути: update ulhome_family_order set hidden=false where family='SaleOstatki'; */
+    try {
+      var _ss = document.getElementById('saleSection');
+      if (_ss) _ss.style.display = hid['SaleOstatki'] ? 'none' : '';
+    } catch(_){}
   }
   function reorderChips(map){
     map = map || window.FAMILY_ORDER || {};
@@ -3235,7 +3243,7 @@ let currentColor = 'allBlack';
 
 function priceNum(p){return Math.round(parseFloat(p||0)).toLocaleString('uk-UA')}
 
-var SOLD_OUT_UIDS = ['576612833084','938371874105','901880658842','576555820762','671974984372','246465477824','585095123222']; // Hunk Black White BRFT, Hunk3 Grey + SOLD OUT families: Hunk BRFT(all), Hunk2(all), Spider(all) 2026-06-22
+var SOLD_OUT_UIDS = ['576612833084','938371874105','901880658842','576555820762','671974984372','246465477824','585095123222','511313321014','806938391602','375461019313']; // Hunk Black White BRFT, Hunk3 Grey + SOLD OUT families: Hunk BRFT(all), Hunk2(all), Spider(all) 2026-06-22
 function isSoldOut(p){ return !!(p && SOLD_OUT_UIDS.indexOf(String(p.uid)) !== -1); }
 function badgeFor(p){
   if(isSoldOut(p)) return '<div class="badge soldout">SOLD OUT</div>';
@@ -3906,6 +3914,16 @@ function openModal(uid){
   const NO_SEASON = ['SHAPE','Lite','Hunk Summer W'];
   const sw = document.getElementById('m_season_wrap');
   if (sw) sw.style.display = NO_SEASON.includes(p.family) ? 'none' : '';
+  // v178: __modalSeason — глобалка, вона липла між товарами. Скидаємо на «Літо»
+  // при кожному відкритті, інакше наступна модель мовчки їде з надбавкою.
+  try {
+    window.__modalSeason = 'summer';
+    document.querySelectorAll('.season-btn').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-season') === 'summer');
+    });
+    var _sn = document.getElementById('m_season_name');
+    if (_sn) _sn.textContent = 'Літо';
+  } catch(_){}
 
   // Modal intros (fresh-open only):
   //  – Hunk3/Hunk3 Suede -> black-balls + Bounce system logo + stats row
@@ -4045,7 +4063,7 @@ function pickSeason(btn, id, label){
   const p = findProduct(uid);
   if(!p) return;
   const base = parseFloat(p.price) || 0;
-  const extra = (id === 'spring') ? 500 : 0;
+  const extra = (id === 'spring') ? 700 : 0;
   const total = base + extra;
   const oldP = (p.sizes && p.sizes[0] && p.sizes[0].price_old) || '';
   let priceHtml = '<span class="cur">' + priceNum(total) + ' ₴</span>';
@@ -4139,7 +4157,7 @@ function addToCart(){
   const canSeason = !NO_SEASON.includes(p.family);
   const seasonId   = canSeason ? (window.__modalSeason || 'summer') : null;
   const seasonLabel = seasonId === 'spring' ? 'Весна/Осінь' : (seasonId === 'summer' ? 'Літо' : '');
-  const seasonExtra = seasonId === 'spring' ? 500 : 0;
+  const seasonExtra = seasonId === 'spring' ? 700 : 0;  // v178: сума-дубль вітрини; авторитетна — в RPC
   const basePrice  = parseFloat(p.price) || 0;
   const finalPrice = (basePrice + seasonExtra).toFixed(2);
   const item = {
@@ -4667,7 +4685,8 @@ async function wizardSubmit(){
     var clientLastName  = fioParts.slice(1).join(' ') || '';
     var wfpItems = CART.items.map(function(it){
       return { uid: String(it.uid||''), qty: Number(it.qty||1),
-               promo_pct: (it.promoSecond || it.saleItem) ? 30 : 0 };
+               promo_pct: (it.promoSecond || it.saleItem) ? 30 : 0,
+               season_id: it.seasonId || null };   // v178: без цього карта рахує без надбавки
     });
     var products = CART.items.map(function(it){
       return {
@@ -7049,7 +7068,7 @@ insertWomanDivider();
   /* Кожна модель лінії має власний лендинг. Порядок у масиві = порядок
      чіпсів у каталозі й порядок карток на початку сітки. */
   var MODELS = [
-    { fam: '01', alias: ['CORSO'], uids: ['480291657304'], landing: '/preorder-classic.html', name: 'ULTERA 01', price: 2990 },
+    { fam: '01', alias: ['CORSO'], uids: ['480291657304'], landing: null, name: 'ULTERA 01', price: 4200 },
     { fam: '02', alias: [],        uids: ['571034829116'], landing: '/02.html',               name: 'ULTERA 02', price: 3290 }
   ];
 
@@ -7091,7 +7110,7 @@ insertWomanDivider();
     var orig = window.openModal;
     window.openModal = function(uid){
       var m = modelOf(uid);
-      if (m){
+      if (m && m.landing){
         try {
           if (typeof window.ulteraFbq === 'function'){
             window.ulteraFbq('ViewContent', {
