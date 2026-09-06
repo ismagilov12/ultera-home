@@ -2263,7 +2263,7 @@ window.ulteraFbq = function(name, params){
         </button>
         <div class="cta-meta">
           <div class="label" id="heroCtaLabel">Переглянути колекцію</div>
-          <div class="price" id="heroPrice"><s>4 190 ₴</s>від 3 790 ₴</div>
+          <div class="price" id="heroPrice">від 4 890 ₴</div>
         </div>
       </div>
       <div class="hero-social">
@@ -3343,7 +3343,7 @@ function renderFeatured(){
     const hasSale = row.variants.some(v=>v.sizes && v.sizes[0] && v.sizes[0].price_old);
     const oldMin = hasSale ? Math.max(...row.variants.map(v=>parseFloat((v.sizes && v.sizes[0] && v.sizes[0].price_old) || 0))) : 0;
     const priceText = fam === 'SHAPE' ? 'від 1 890 \u20b4' : ('від ' + Math.round(minP).toLocaleString('uk-UA') + ' \u20b4');
-    const priceOld = fam === 'SHAPE' ? '<s>3 780 \u20b4</s>' : (oldMin > 0 ? '<s>' + Math.round(oldMin).toLocaleString('uk-UA') + ' \u20b4</s>' : '');
+    const priceOld = fam === 'SHAPE' ? '' : (oldMin > 0 ? '<s>' + Math.round(oldMin).toLocaleString('uk-UA') + ' \u20b4</s>' : '');
 
     const serialTxt = meta.serial + '-' + String(photos.length).padStart(2,'0');
     const famSoldOut = Array.isArray(row.variants) && row.variants.length>0 && row.variants.every(v=>isSoldOut(v));
@@ -3599,7 +3599,7 @@ const HERO_DATA = [
     tag2:"[ S/S 26 · FLAGSHIP ]",
     title:'Hunk <em>03</em><span class="trade">™</span>',
     ctaLabel:"Discover collection",
-    price:'<s>4 190 ₴</s>від 3 790 ₴',
+    price:'від 4 890 ₴',
     colors:[
       {id:"allBlack",hex:"#0a0a0a",label:"BLACK"},
       {id:"Wine",hex:"#5b1422",label:"WINE"},
@@ -3614,7 +3614,7 @@ const HERO_DATA = [
     tag2:"[ NEW · MINIMAL ]",
     title:'Aganta<span class="trade">™</span>',
     ctaLabel:"Explore model",
-    price:'від 3 790 ₴',
+    price:'від 4 490 ₴',
     colors:[
       {id:"Base",hex:"#1a1a1a",label:"BLACK"},
       {id:"Salvia",hex:"#7a8a6d",label:"SALVIA"},
@@ -6892,8 +6892,10 @@ insertWomanDivider();
 </style>
 <script>
 /* SHAPE -50% promo banner + 7-day countdown (per-visitor, localStorage) */
+/* v179 2026-09-06: сейл прибрано — банер і плашка в модалці вимкнені */
 (function(){
   'use strict';
+  return;
   var KEY='ult_shape50_end', DAYS=7;
   function deadline(){
     var v=null; try{ v=localStorage.getItem(KEY); }catch(_){}
