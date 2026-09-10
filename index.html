@@ -2344,6 +2344,7 @@ window.ulteraFbq = function(name, params){
       <div class="count"><b id="countNum">27</b> <span id="countLbl">моделей</span> · <span>8 сімей</span></div>
       <div class="coll-chips" id="chips">
         <button class="coll-chip active" data-fam="all">Усі</button>
+        <button class="coll-chip" data-fam="Thermo">Thermo ❄</button>
         <button class="coll-chip" data-fam="Hunk3">Hunk3</button>
         <button class="coll-chip" data-fam="Aganta">Aganta</button>
         <button class="coll-chip" data-fam="SHAPE">SHAPE ↗</button>
@@ -2800,7 +2801,7 @@ window.ulteraFbq = function(name, params){
               <div><span>Верх</span><b id="m_spec_top">Nappa + дихаюча сітка</b></div>
               <div><span>Підошва</span><b id="m_spec_sole">Bounce EVA</b></div>
               <div><span>Країна</span><b>Харків, UA</b></div>
-              <div><span>Термін</span><b>4—10 днів</b></div>
+              <div><span>Термін</span><b id="m_spec_eta">4—10 днів</b></div>
             </div>
           </div>
         </details>
@@ -3077,6 +3078,25 @@ window.ulteraFbq = function(name, params){
       injectedCount++;
     });
     try { if (injectedCount) console.log('[ultera] injected new products:', injectedCount); } catch(_){}
+
+    /* v181: після інжекту нові сім'ї опинялися в кінці D.grid (рендер іде
+       порядком масиву), тому нова модель падала під футболки. Пересортовуємо
+       grid і featured за ulhome_family_order; сім'ї без запису — в кінець. */
+    try {
+      var _fo = window.FAMILY_ORDER || {};
+      var _ord = function(f){
+        var k = String((f && f.family) || '').trim();
+        return (_fo[k] != null) ? Number(_fo[k]) : 9999;
+      };
+      var _stable = function(arr){
+        if (!Array.isArray(arr)) return arr;
+        return arr.map(function(x, i){ return {x: x, i: i}; })
+                  .sort(function(a, b){ return (_ord(a.x) - _ord(b.x)) || (a.i - b.i); })
+                  .map(function(w){ return w.x; });
+      };
+      D.grid = _stable(D.grid);
+      D.featured = _stable(D.featured);
+    } catch(e){ try { console.warn('[ultera] grid reorder failed:', e && e.message); } catch(_){} }
 
     /* Update EXTRA media in place */
     var E_EL = document.getElementById('EXTRA');
@@ -3864,6 +3884,14 @@ function openModal(uid){
     '<b>Рефлективні шнурки</b>',
     '<b>Текстильна підкладка</b>'
   ];
+  const MATERIALS_THERMO = [
+    '<b>Cordura® + шкіра</b> — вологостійкий верх, тримає сніг і сльоту',
+    '<b>Утеплювач</b> — тепло до −15 °C',
+    '<b>Тепла підкладка</b>',
+    '<b>Підошва EVA Bounce</b> — зимовий протектор',
+    '<b>Устілка</b> з боковою підтримкою',
+    '<b>Рефлективні шнурки</b>'
+  ];
   const MATERIALS_SHAPE = [
     '<b>Італійська замша</b> — преміум матеріал',
     '<b>Підошва PU anatomic</b> — barefoot-форма',
@@ -3881,15 +3909,18 @@ function openModal(uid){
       'Hunk2':     {top:'Шкіра Nappa + дихаюча сітка', sole:'EVA v2'},
       'Hunk BRFT': {top:'Nappa + Cordura', sole:'PU anatomic'},
       'Lite':      {top:'Шкіра Nappa + дихаюча сітка', sole:'EVA'},
-      'Spider':    {top:'Шкіра Nappa + рефлектив', sole:'EVA'}
+      'Spider':    {top:'Шкіра Nappa + рефлектив', sole:'EVA'},
+      'Thermo':    {top:'Cordura® + шкіра', sole:'EVA Bounce, зимовий протектор'}
     };
     const fm = familyMeta[p.family] || {top:'Nappa + дихаюча сітка', sole:'EVA'};
     const topEl = document.getElementById('m_spec_top'); if(topEl) topEl.textContent = fm.top;
     const soleEl = document.getElementById('m_spec_sole'); if(soleEl) soleEl.textContent = fm.sole;
+    /* v181: Thermo шьётся дольше — 12–14 дней вместо 4–10 */
+    const etaEl = document.getElementById('m_spec_eta'); if(etaEl) etaEl.textContent = (p.family === 'Thermo') ? '12—14 днів' : '4—10 днів';
   } catch(e){}
   const mtEl = document.getElementById('m_materials');
   if(mtEl){
-    const list = (p.family === 'SHAPE') ? MATERIALS_SHAPE : MATERIALS_DEFAULT;
+    const list = (p.family === 'SHAPE') ? MATERIALS_SHAPE : (p.family === 'Thermo') ? MATERIALS_THERMO : MATERIALS_DEFAULT;
     mtEl.innerHTML = '<span class="mm-title">Матеріали</span><ul>' + list.map(x=>'<li>'+x+'</li>').join('') + '</ul>';
   }
   // Опис — прибираємо дублювання з матеріалами (рядки з "-"/"•"/буллетами/Nappa/Cordura/шнурки)
@@ -3911,7 +3942,7 @@ function openModal(uid){
   document.getElementById('shBox').classList.remove('open');
 
   // Моделі без сезонного вибору (всесезонні / одна версія)
-  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W'];
+  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W','Thermo'];
   const sw = document.getElementById('m_season_wrap');
   if (sw) sw.style.display = NO_SEASON.includes(p.family) ? 'none' : '';
   // v178: __modalSeason — глобалка, вона липла між товарами. Скидаємо на «Літо»
@@ -4153,7 +4184,7 @@ function addToCart(){
   if(isSoldOut(p)){ toast('Немає в наявності'); return; }
   // Season: summer (default) | spring (+500 UAH). Families without season selector
   // (SHAPE, Lite) fall through with summer/none.
-  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W'];
+  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W','Thermo'];
   const canSeason = !NO_SEASON.includes(p.family);
   const seasonId   = canSeason ? (window.__modalSeason || 'summer') : null;
   const seasonLabel = seasonId === 'spring' ? 'Весна/Осінь' : (seasonId === 'summer' ? 'Літо' : '');
@@ -4505,7 +4536,7 @@ function renderSummary(){
   ).join('');
   const contactHtml = (w.fio || w.phone) ? ('<div class="s-row">' + icUser + '<div><b>' + (w.fio||'—') + '</b><span>' + (w.phone||'—') + '</span></div></div>') : '';
   const addrHtml    = (w.city || w.wh)   ? ('<div class="s-row">' + icPin  + '<div><b>' + (w.city||'—') + '</b><span>' + (w.wh||'—') + '</span></div></div>' +
-                                             '<div class="s-row s-eta">' + icTruck + '<div><b>4–10 днів</b><span>Нова Пошта</span></div></div>') : '';
+                                             '<div class="s-row s-eta">' + icTruck + '<div><b>' + (((CART.items||[]).some(function(x){ return String(x.family||'') === 'Thermo'; })) ? '12–14 днів' : '4–10 днів') + '</b><span>Нова Пошта</span></div></div>') : '';
   sumEl.innerHTML =
     '<div class="s-card">' +
       contactHtml + addrHtml +
