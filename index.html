@@ -3954,6 +3954,9 @@ function openModal(uid){
     });
     var _sn = document.getElementById('m_season_name');
     if (_sn) _sn.textContent = 'Літо';
+    var _corduraPromo = ['809858137952','924701650982','454860479882'].includes(String(p.uid));
+    var _springLabel = document.querySelector('.season-btn[data-season="spring"] .season-txt b');
+    if (_springLabel) _springLabel.textContent = _corduraPromo ? 'Весна / Осінь' : 'Весна / Осінь · +700 ₴';
   } catch(_){}
 
   // Modal intros (fresh-open only):
@@ -4087,14 +4090,18 @@ function shapeIntroSkip(){
 function pickSeason(btn, id, label){
   document.querySelectorAll('.season-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  const n = document.getElementById('m_season_name'); if(n) n.textContent = label;
+  const n = document.getElementById('m_season_name');
+  if(n){
+    const _promo = ['809858137952','924701650982','454860479882'].includes(String((window.__modalUid || currentColor || '')));
+    n.textContent = (id === 'spring' && _promo) ? 'Весна / Осінь' : label;
+  }
   window.__modalSeason = id;
   // перерахунок ціни (Весна +500 ₴)
   const uid = window.__modalUid || currentColor;
   const p = findProduct(uid);
   if(!p) return;
   const base = parseFloat(p.price) || 0;
-  const extra = (id === 'spring') ? 700 : 0;
+  const extra = (id === 'spring' && !['809858137952','924701650982','454860479882'].includes(String(p.uid))) ? 700 : 0;
   const total = base + extra;
   const oldP = (p.sizes && p.sizes[0] && p.sizes[0].price_old) || '';
   let priceHtml = '<span class="cur">' + priceNum(total) + ' ₴</span>';
@@ -4188,7 +4195,7 @@ function addToCart(){
   const canSeason = !NO_SEASON.includes(p.family);
   const seasonId   = canSeason ? (window.__modalSeason || 'summer') : null;
   const seasonLabel = seasonId === 'spring' ? 'Весна/Осінь' : (seasonId === 'summer' ? 'Літо' : '');
-  const seasonExtra = seasonId === 'spring' ? 700 : 0;  // v178: сума-дубль вітрини; авторитетна — в RPC
+  const seasonExtra = seasonId === 'spring' && !['809858137952','924701650982','454860479882'].includes(String(p.uid)) ? 700 : 0;  // Cordura promo: selected UIDs have no uplift; authoritative total is in RPC
   const basePrice  = parseFloat(p.price) || 0;
   const finalPrice = (basePrice + seasonExtra).toFixed(2);
   const item = {
