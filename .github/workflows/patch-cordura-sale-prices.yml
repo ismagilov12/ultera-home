@@ -1,0 +1,74 @@
+name: Patch Cordura sale prices
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.head_ref == 'fix/cordura-sale-prices'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Patch storefront price logic
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const file = 'index.html';
+          let s = fs.readFileSync(file, 'utf8');
+          const saleUids = "['809858137952','924701650982','454860479882']";
+          const replacements = [
+            [
+              "const extra = (id === 'spring') ? 700 : 0;",
+              `const extra = (id === 'spring' && !${saleUids}.includes(String(p.uid))) ? 700 : 0;`
+            ],
+            [
+              "const seasonExtra = seasonId === 'spring' ? 700 : 0;  // v178: сума-дубль вітрини; авторитетна — в RPC",
+              `const seasonExtra = seasonId === 'spring' && !${saleUids}.includes(String(p.uid)) ? 700 : 0;  // Cordura promo: selected UIDs have no uplift; authoritative total is in RPC`
+            ]
+          ];
+          for (const [from,to] of replacements) {
+            const count = s.split(from).length - 1;
+            if (count !== 1) throw new Error(`Expected exactly one occurrence, got ${count}: ${from}`);
+            s = s.replace(from,to);
+          }
+
+          const anchor = "    if (_sn) _sn.textContent = 'Літо';\n  } catch(_){}";
+          const inject = `    if (_sn) _sn.textContent = 'Літо';\n    var _corduraPromo = ${saleUids}.includes(String(p.uid));\n    var _springLabel = document.querySelector('.season-btn[data-season=\"spring\"] .season-txt b');\n    if (_springLabel) _springLabel.textContent = _corduraPromo ? 'Весна / Осінь' : 'Весна / Осінь · +700 ₴';\n  } catch(_){}`;
+          const anchorCount = s.split(anchor).length - 1;
+          if (anchorCount !== 1) throw new Error(`Expected one openModal season anchor, got ${anchorCount}`);
+          s = s.replace(anchor, inject);
+
+          const labelLine = "  const n = document.getElementById('m_season_name'); if(n) n.textContent = label;";
+          const labelReplacement = `  const n = document.getElementById('m_season_name');\n  if(n){\n    const _promo = ${saleUids}.includes(String((window.__modalUid || currentColor || '')));\n    n.textContent = (id === 'spring' && _promo) ? 'Весна / Осінь' : label;\n  }`;
+          const labelCount = s.split(labelLine).length - 1;
+          if (labelCount !== 1) throw new Error(`Expected one pickSeason label line, got ${labelCount}`);
+          s = s.replace(labelLine, labelReplacement);
+
+          fs.writeFileSync(file, s, 'utf8');
+          NODE
+
+      - name: Verify patch
+        shell: bash
+        run: |
+          grep -F "['809858137952','924701650982','454860479882']" index.html
+          grep -F "const extra = (id === 'spring'" index.html
+          grep -F "const seasonExtra = seasonId === 'spring'" index.html
+
+      - name: Remove temporary files and commit patch
+        shell: bash
+        run: |
+          rm -f .github/workflows/patch-cordura-sale-prices.yml cordura-price-fix-note.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/patch-cordura-sale-prices.yml cordura-price-fix-note.txt
+          git commit -m 'fix: keep promo Cordura prices flat on selected models'
+          git push origin HEAD:${{ github.head_ref }}
