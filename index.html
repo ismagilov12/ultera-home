@@ -5788,7 +5788,8 @@ insertWomanDivider();
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU';
   const TABLE='analytics_events';
   const BATCH_MS=3000, MOUSE_MS=200, SCROLL_MS=500, SECTION_MIN=1000;
-  const sid=(()=>{let s=sessionStorage.getItem('_ut_sid');if(!s){s=Date.now().toString(36)+Math.random().toString(36).slice(2,8);sessionStorage.setItem('_ut_sid',s);}return s;})();
+  // Keep analytics and checkout on one session id so feed visits can be tied to orders.
+  const sid=(()=>{let s=window.ULHOME_SESSION_ID||sessionStorage.getItem('ulh_session_id')||sessionStorage.getItem('_ut_sid');if(!s){s='s-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);}sessionStorage.setItem('ulh_session_id',s);sessionStorage.setItem('_ut_sid',s);window.ULHOME_SESSION_ID=s;return s;})();
   const vw=()=>innerWidth, vh=()=>innerHeight;
   const deviceType=()=>vw()<768?'mobile':vw()<1024?'tablet':'desktop';
   let queue=[];
