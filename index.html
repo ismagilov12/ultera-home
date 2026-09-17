@@ -2349,7 +2349,7 @@ window.ulteraFbq = function(name, params){
     </div>
 
     <div class="coll-toolbar">
-      <div class="count"><b id="countNum">29</b> <span id="countLbl">моделей</span> · <span>10 сімей</span></div>
+      <div class="count"><b id="countNum">30</b> <span id="countLbl">моделей</span> · <span>10 сімей</span></div>
       <div class="coll-chips" id="chips">
         <button class="coll-chip active" data-fam="all">Усі</button>
         <button class="coll-chip" data-fam="Thermo">Thermo ❄</button>
@@ -3023,7 +3023,7 @@ window.ulteraFbq = function(name, params){
     });
     function keepVariant(v, famKey){
       if (!v) return false;
-      if (String(v.uid || '') === '550020260917') return true;
+      if (String(v.uid || '') === '550020260917' || String(v.uid || '') === '550020260918') return true;
       if (!supaFamilies[famKey]) return true;
       if (v.uid && /^sh-/.test(v.uid)) return true;
       return !!(v.uid && supaUids[v.uid]);
@@ -3314,6 +3314,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
 /* Vercel-owned Hunk Thermo launch: dedicated winter model and gallery. */
 (function(){
   var uid = '550020260917';
+  var khakiUid = '550020260918';
   var sizePairs = [['40','26'],['41','27'],['42','28'],['43','28.5'],['44','29'],['45','30']];
   var product = {
     uid: uid,
@@ -3344,19 +3345,50 @@ window.ulteraNormalizeAutumnCopy(DATA);
     characteristics: 'Верх: Cordura® + шкіра; підошва: EVA Bounce із зимовим протектором; сезон: зима; температура: до −15 °C',
     materials: 'Cordura®; натуральна шкіра; утеплювач; тепла текстильна підкладка; EVA Bounce'
   };
+  var khakiProduct = {
+    uid: khakiUid,
+    brand: 'ULTERA',
+    mark: 'NEW',
+    category: 'ULTERA;Зима',
+    title: 'ULTERA - Hunk Thermo Khaki',
+    desc: 'Зимова модель Hunk у кольорі хакі з утепленням до −15 °C, вологостійким верхом та зимовим протектором.',
+    text: 'ULTERA Hunk Thermo Khaki — висока зимова модель для снігу, сльоти та морозної погоди.<br><br>Вологостійкий верх із Cordura® та шкіри допомагає зберігати ноги сухими.<br>Тепла підкладка й утеплювач розраховані на температуру до −15 °C.<br>Підошва EVA Bounce із зимовим протектором забезпечує мʼяку амортизацію та впевнене зчеплення.<br><br>Ручна робота в Харкові.<br>Термін виробництва 12–14 днів.<br>Гарантія 1 рік.',
+    photo: '/photos/hunk-thermo-khaki-01.webp',
+    price: '4400.00',
+    price_old: '5500',
+    mods: '',
+    sizes: sizePairs.map(function(pair){
+      return {
+        parent: khakiUid,
+        title: 'ULTERA - Hunk Thermo Khaki - ' + pair[0] + ' - ' + pair[1] + 'см',
+        price: '4400.00',
+        price_old: '5500',
+        editions: 'Розмір (повномірний):' + pair[0] + ' - ' + pair[1] + 'см',
+        qty: '9999'
+      };
+    }),
+    family: 'Hunk Thermo',
+    swatch: '#77765b',
+    color_name: 'Хакі',
+    size_list: sizePairs.map(function(pair){ return {eu:pair[0], cm:pair[1], qty:'9999'}; }),
+    characteristics: 'Верх: Cordura® + шкіра; підошва: EVA Bounce із зимовим протектором; сезон: зима; температура: до −15 °C',
+    materials: 'Cordura®; натуральна шкіра; утеплювач; тепла текстильна підкладка; EVA Bounce'
+  };
   var family = (DATA.featured || []).find(function(row){ return row && row.family === 'Hunk Thermo'; })
     || (DATA.grid || []).find(function(row){ return row && row.family === 'Hunk Thermo'; });
   if (!family) {
-    family = {family:'Hunk Thermo', hero:product, variants:[product]};
+    family = {family:'Hunk Thermo', hero:product, variants:[product, khakiProduct]};
     var agantaIndex = (DATA.featured || []).findIndex(function(row){ return row && row.family === 'Aganta'; });
     DATA.featured.splice(agantaIndex >= 0 ? agantaIndex + 1 : DATA.featured.length, 0, family);
-  } else if (!(family.variants || []).some(function(item){ return item && item.uid === uid; })) {
+  } else {
     family.variants = family.variants || [];
-    family.variants.unshift(product);
+    if (!family.variants.some(function(item){ return item && item.uid === uid; })) family.variants.unshift(product);
+    if (!family.variants.some(function(item){ return item && item.uid === khakiUid; })) family.variants.push(khakiProduct);
     if (!family.hero) family.hero = product;
   }
   if (!Array.isArray(DATA.all)) DATA.all = [];
   if (!DATA.all.some(function(item){ return item && item.uid === uid; })) DATA.all.push(product);
+  if (!DATA.all.some(function(item){ return item && item.uid === khakiUid; })) DATA.all.push(khakiProduct);
 
   var extraElement = document.getElementById('EXTRA');
   if (extraElement) {
@@ -3367,6 +3399,11 @@ window.ulteraNormalizeAutumnCopy(DATA);
         '/photos/hunk-thermo-black-02.webp',
         '/photos/hunk-thermo-black-03.webp',
         '/photos/hunk-thermo-black-04.webp'
+      ];
+      extra[khakiUid] = [
+        '/photos/hunk-thermo-khaki-01.webp',
+        '/photos/hunk-thermo-khaki-02.webp',
+        '/photos/hunk-thermo-khaki-03.webp'
       ];
       extraElement.textContent = JSON.stringify(extra);
     } catch(_e) {}
