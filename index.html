@@ -2925,6 +2925,21 @@ window.ulteraFbq = function(name, params){
       if (media[k].type === 'video') mediaByUid[uid].videos.push(media[k].url);
       else mediaByUid[uid].photos.push(media[k].url);
     }
+    /* Vercel-owned prices for Aganta Oreo and Black Nubuck. */
+    (function(){
+      var prices = {
+        '454860479882': 3490,
+        '924701650982': 3490
+      };
+      Object.keys(prices).forEach(function(uid){
+        var product = byUid[uid];
+        if (!product) return;
+        product.price = prices[uid];
+        (product.sizes || []).forEach(function(size){
+          if (size) size.price = prices[uid];
+        });
+      });
+    })();
     /* Vercel-owned primary image for the Cordura version of Aganta Black Nubuck. */
     (function(){
       var uid = '454860479882';
@@ -3211,16 +3226,28 @@ try { renderTeesSection(); } catch(e) { try{ console.warn('renderTeesSection ini
 </script>
 <script>
 const DATA = JSON.parse(document.getElementById('DATA').textContent);
-/* Keep the baked fallback aligned with the Vercel-owned Cordura photo. */
+/* Keep the baked fallback aligned with Vercel-owned Aganta data. */
 (function(){
   var uid = '454860479882';
+  var prices = {
+    '454860479882': '3490',
+    '924701650982': '3490'
+  };
   var approved = '/photos/aganta-black-nubuck-cordura.jpg';
   var superseded = [
     'https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776859553465-j97nc3.jpg',
     'https://fsihlzzjewhxpogvjapu.supabase.co/storage/v1/object/public/ulhome-media/p/1776859568133-kskkyu.jpg'
   ];
   function patchVariant(variant){
-    if (variant && String(variant.uid) === uid) variant.photo = approved;
+    if (!variant) return;
+    var variantUid = String(variant.uid);
+    if (variantUid === uid) variant.photo = approved;
+    if (prices[variantUid]) {
+      variant.price = prices[variantUid];
+      (variant.sizes || []).forEach(function(size){
+        if (size) size.price = prices[variantUid];
+      });
+    }
   }
   if (Array.isArray(DATA.all)) DATA.all.forEach(patchVariant);
   ['featured', 'grid'].forEach(function(group){
