@@ -387,6 +387,7 @@ input,textarea,select{font:inherit;color:inherit}
 .feat-card[data-fam="Hunk Summer W"] .feat-right{background:#fff}
 .feat-card[data-fam="Hunk Summer W"] .feat-photo{padding:5% 7%}
 .feat-card[data-fam="Hunk Summer W"] .feat-photo img{width:100%;height:100%;object-fit:contain;object-position:center}
+.feat-card[data-fam="Thermo"] .feat-photo img{width:112%;height:112%;object-fit:cover;object-position:center 42%}
 
 .feat-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
 .feat-serial{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-60)}
@@ -454,6 +455,7 @@ input,textarea,select{font:inherit;color:inherit}
   .feat-card[data-fam="Hunk Summer W"] .feat-right{aspect-ratio:4/5;background:#fff}
   .feat-card[data-fam="Hunk Summer W"] .feat-photo{padding:6% 8%}
   .feat-card[data-fam="Hunk Summer W"] .feat-photo img{width:100%;height:100%;object-fit:contain;object-position:center}
+  .feat-card[data-fam="Thermo"] .feat-photo img{width:108%;height:108%;object-fit:cover;object-position:center 42%}
   .feat-overlay{top:16px;left:18px;max-width:62%}
   .feat-overlay-title{font-size:clamp(38px,11vw,56px)}
   .feat-overlay-tag{font-size:10px}
@@ -670,6 +672,7 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .modal-img[data-fam="Hunk Summer W"]{background:#fff}
 .modal-img[data-fam="Hunk Summer W"] img{object-fit:contain;object-position:center}
 .modal-img[data-fam="Hunk Summer W"]:hover img{transform:none}
+.modal-img[data-fam="Thermo"] img{object-fit:contain;object-position:center}
 .modal-img:hover img{transform:scale(1.04)}
 .ms-swatches-top{margin-top:2px;margin-bottom:16px}
 
@@ -2333,7 +2336,7 @@ window.ulteraFbq = function(name, params){
     </div>
 
     <div class="coll-toolbar">
-      <div class="count"><b id="countNum">27</b> <span id="countLbl">моделей</span> · <span>8 сімей</span></div>
+      <div class="count"><b id="countNum">28</b> <span id="countLbl">моделей</span> · <span>9 сімей</span></div>
       <div class="coll-chips" id="chips">
         <button class="coll-chip active" data-fam="all">Усі</button>
         <button class="coll-chip" data-fam="Hunk3">Hunk3</button>
@@ -2966,6 +2969,7 @@ window.ulteraFbq = function(name, params){
     });
     function keepVariant(v, famKey){
       if (!v) return false;
+      if (String(v.uid || '') === '550020260917') return true;
       if (!supaFamilies[famKey]) return true;
       if (v.uid && /^sh-/.test(v.uid)) return true;
       return !!(v.uid && supaUids[v.uid]);
@@ -3099,6 +3103,12 @@ try { renderTeesSection(); } catch(e) { try{ console.warn('renderTeesSection ini
   function applyFamilyOrder(rows){
     var map = {};
     if (Array.isArray(rows)) rows.forEach(function(x){ if (x && x.family != null) map[String(x.family).trim()] = Number(x.sort_order)||0; });
+    if (map.Thermo == null) {
+      if (map.Aganta != null && map.SHAPE != null) map.Thermo = (map.Aganta + map.SHAPE) / 2;
+      else if (map.Aganta != null) map.Thermo = map.Aganta + 0.5;
+      else if (map.Hunk != null) map.Thermo = map.Hunk - 0.5;
+      else map.Thermo = 25;
+    }
     window.FAMILY_ORDER = map;
     try { reorderChips(map); } catch(_){}
   }
@@ -3166,6 +3176,67 @@ window.ulteraNormalizeAutumnCopy = function(value){
   return value;
 };
 window.ulteraNormalizeAutumnCopy(DATA);
+/* Vercel-owned Hunk Thermo launch: dedicated winter model and gallery. */
+(function(){
+  var uid = '550020260917';
+  var sizePairs = [['40','26'],['41','27'],['42','28'],['43','28.5'],['44','29'],['45','30']];
+  var product = {
+    uid: uid,
+    brand: 'ULTERA',
+    mark: 'NEW',
+    category: 'ULTERA;Winter',
+    title: 'ULTERA - Hunk Thermo',
+    desc: 'Winter Hunk with insulation down to −15 °C, a water-resistant upper and winter tread.',
+    text: 'ULTERA Hunk Thermo — a high-cut winter model for snow, slush and freezing weather.<br><br>The water-resistant Cordura® and leather upper helps keep feet dry.<br>A warm lining and insulation are designed for temperatures down to −15 °C.<br>The EVA Bounce sole with winter tread provides soft cushioning and confident grip.<br><br>Handmade in Kharkiv.<br>Production time: 12–14 days.<br>1-year warranty.',
+    photo: '/photos/hunk-thermo-black-01.webp',
+    price: '4400.00',
+    price_old: '5500',
+    mods: '',
+    sizes: sizePairs.map(function(pair){
+      return {
+        parent: uid,
+        title: 'ULTERA - Hunk Thermo - ' + pair[0] + ' - ' + pair[1] + 'cm',
+        price: '4400.00',
+        price_old: '5500',
+        editions: 'EU size:' + pair[0] + ' - ' + pair[1] + 'cm',
+        qty: '9999'
+      };
+    }),
+    family: 'Thermo',
+    swatch: '#0a0a0a',
+    color_name: 'Black',
+    size_list: sizePairs.map(function(pair){ return {eu:pair[0], cm:pair[1], qty:'9999'}; }),
+    characteristics: 'Upper: Cordura® + leather; sole: EVA Bounce with winter tread; season: winter; temperature: down to −15 °C',
+    materials: 'Cordura®; natural leather; insulation; warm textile lining; EVA Bounce'
+  };
+  var family = (DATA.featured || []).find(function(row){ return row && row.family === 'Thermo'; })
+    || (DATA.grid || []).find(function(row){ return row && row.family === 'Thermo'; });
+  if (!family) {
+    family = {family:'Thermo', hero:product, variants:[product]};
+    var agantaIndex = (DATA.featured || []).findIndex(function(row){ return row && row.family === 'Aganta'; });
+    DATA.featured.splice(agantaIndex >= 0 ? agantaIndex + 1 : DATA.featured.length, 0, family);
+  } else if (!(family.variants || []).some(function(item){ return item && item.uid === uid; })) {
+    family.variants = family.variants || [];
+    family.variants.unshift(product);
+    if (!family.hero) family.hero = product;
+  }
+  if (!Array.isArray(DATA.all)) DATA.all = [];
+  if (!DATA.all.some(function(item){ return item && item.uid === uid; })) DATA.all.push(product);
+
+  var extraElement = document.getElementById('EXTRA');
+  if (extraElement) {
+    try {
+      var extra = JSON.parse(extraElement.textContent || '{}');
+      extra[uid] = [
+        '/photos/hunk-thermo-black-01.webp',
+        '/photos/hunk-thermo-black-02.webp',
+        '/photos/hunk-thermo-black-03.webp',
+        '/photos/hunk-thermo-black-04.webp'
+      ];
+      extraElement.textContent = JSON.stringify(extra);
+    } catch(_e) {}
+  }
+})();
 /* v92: LCP preload — first active photos of featured rows start downloading
    before renderFeatured() runs. Avoids cold-cache delay on first visible card. */
 (function(){
@@ -3268,6 +3339,10 @@ function renderFeatured(){
                    sub:'Мінімалістичні кросівки нового формату. Шкіра Nappa + ПУ-підошва.',
                    specs:[['ПІДОШВА','EVA'],['ВЕРХ','Шкіра Nappa + вологостійка Cordura'],['СЕЗОН','Осінь'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
+    'Thermo':    { serial:'HUNK-TH-01', title:'Hunk Thermo', badge:'PRODUCTION 12–14 DAYS', tag:'WINTER \u00b7 DOWN TO −15°C',
+                   sub:'High-cut winter Hunk with a warm lining, water-resistant upper and winter tread.',
+                   specs:[['SOLE','EVA Bounce'],['UPPER','Cordura® + leather'],['SEASON','Winter · down to −15°C'],['WARRANTY','1 year']],
+                   handler:null },
     'SHAPE':     { serial:'SHAPE-BF', badge:'BAREFOOT', tag:'АНАТОМІЧНІ \u00b7 BAREFOOT',
                    sub:'Анатомічні тапочки з італійської замші. Barefoot-форма, 10 кольорів.',
                    specs:[['ПІДОШВА','PU anatomic'],['ВЕРХ','Італійська замша'],['КОЛЬОРИ','10'],['СЕЗОН','S/S 26']],
@@ -3317,6 +3392,7 @@ function renderFeatured(){
     const meta = META[fam] || { serial:fam.toUpperCase()+'-0'+idx, badge:'ВИРОБНИЦТВО 4-10 ДНІВ', tag:'ULTERA',
                                 sub:'', specs:[['ПІДОШВА','EVA'],['ВЕРХ','Nappa'],['ВИПУЩЕНО','Харків'],['ГАРАНТІЯ','1 рік']],
                                 handler:null };
+    const displayFam = meta.title || fam;
 
     // Photos for right column
     let photos;
@@ -3340,7 +3416,7 @@ function renderFeatured(){
     const initialUid = (row.variants[0] && row.variants[0].uid) || '';
     const handler = meta.handler || `__featOpen(this)`;
 
-    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}" data-uid="${ph.uid}"><img src="${ph.photo}" alt="${fam} ${ph.name}" ${i===0?'loading="eager" fetchpriority="high" decoding="async"':'loading="lazy" decoding="async"'}></div>`).join('');
+    const photosHtml = photos.map((ph,i) => `<div class="feat-photo${i===0?' active':''}" data-idx="${i}" data-uid="${ph.uid}"><img src="${ph.photo}" alt="${displayFam} ${ph.name}" ${i===0?'loading="eager" fetchpriority="high" decoding="async"':'loading="lazy" decoding="async"'}></div>`).join('');
     const swatchHtml = photos.map((ph,i) => `<button class="sw${i===0?' active':''}" data-idx="${i}" data-uid="${ph.uid}" style="background:${ph.swatch}" aria-label="${ph.name}" title="${ph.name}"></button>`).join('');
 
     return `<div class="feat-card${famSoldOut?' feat-soldout':''}" data-fam="${fam}" data-active-uid="${initialUid}">
@@ -3351,7 +3427,7 @@ function renderFeatured(){
         </div>
         <div class="feat-mid">
           <div class="feat-tagline">${meta.tag}</div>
-          <h2 class="feat-title">${fam}<sup>\u2122</sup></h2>
+          <h2 class="feat-title">${displayFam}<sup>\u2122</sup></h2>
           <p class="feat-sub">${meta.sub}</p>
           <div class="feat-specs">
             ${meta.specs.map(s=>`<div class="feat-spec"><span class="k">${s[0]}</span><span class="v">${s[1]}</span></div>`).join('')}
@@ -3368,7 +3444,7 @@ function renderFeatured(){
       <div class="feat-right" onclick="${handler}">
         <div class="feat-overlay">
           <div class="feat-overlay-tag">${meta.tag}</div>
-          <h3 class="feat-overlay-title">${fam}<sup>\u2122</sup></h3>
+          <h3 class="feat-overlay-title">${displayFam}<sup>\u2122</sup></h3>
         </div>
         <div class="feat-colors-tr" onclick="event.stopPropagation()">${swatchHtml}</div>
         <div class="feat-photo-stack">${photosHtml}</div>${famSoldOut?'<div class=\'feat-soldout-badge\'>SOLD OUT</div>':''}
@@ -3852,6 +3928,14 @@ function openModal(uid){
     '<b>Рефлективні шнурки</b>',
     '<b>Текстильна підкладка</b>'
   ];
+  const MATERIALS_THERMO = [
+    '<b>Cordura® + leather</b> — water-resistant upper for snow and slush',
+    '<b>Insulation</b> — warmth down to −15 °C',
+    '<b>Warm textile lining</b>',
+    '<b>EVA Bounce sole</b> — winter tread',
+    '<b>Insole</b> with lateral support',
+    '<b>Reflective laces</b>'
+  ];
   const MATERIALS_SHAPE = [
     '<b>Італійська замша</b> — преміум матеріал',
     '<b>Підошва PU anatomic</b> — barefoot-форма',
@@ -3869,15 +3953,17 @@ function openModal(uid){
       'Hunk2':     {top:'Шкіра Nappa + вологостійка Cordura', sole:'EVA v2'},
       'Hunk BRFT': {top:'Nappa + вологостійка Cordura', sole:'PU anatomic'},
       'Lite':      {top:'Шкіра Nappa + вологостійка Cordura', sole:'EVA'},
-      'Spider':    {top:'Шкіра Nappa + вологостійка Cordura', sole:'EVA'}
+      'Spider':    {top:'Шкіра Nappa + вологостійка Cordura', sole:'EVA'},
+      'Thermo':    {top:'Cordura® + leather', sole:'EVA Bounce, winter tread'}
     };
     const fm = familyMeta[p.family] || {top:'Nappa + вологостійка Cordura', sole:'EVA'};
     const topEl = document.getElementById('m_spec_top'); if(topEl) topEl.textContent = fm.top;
     const soleEl = document.getElementById('m_spec_sole'); if(soleEl) soleEl.textContent = fm.sole;
+    const etaEl = document.getElementById('m_spec_eta'); if(etaEl) etaEl.textContent = (p.family === 'Thermo') ? '12–14 days' : '4—10 days';
   } catch(e){}
   const mtEl = document.getElementById('m_materials');
   if(mtEl){
-    const list = (p.family === 'SHAPE') ? MATERIALS_SHAPE : MATERIALS_DEFAULT;
+    const list = (p.family === 'SHAPE') ? MATERIALS_SHAPE : (p.family === 'Thermo') ? MATERIALS_THERMO : MATERIALS_DEFAULT;
     mtEl.innerHTML = '<span class="mm-title">Матеріали</span><ul>' + list.map(x=>'<li>'+x+'</li>').join('') + '</ul>';
   }
   // Опис — прибираємо дублювання з матеріалами, але залишаємо осінній опис Cordura.
@@ -3900,7 +3986,7 @@ function openModal(uid){
   document.getElementById('shBox').classList.remove('open');
 
   // Моделі без сезонного вибору (всесезонні / одна версія)
-  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W'];
+  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W','Thermo'];
   const sw = document.getElementById('m_season_wrap');
   if (sw) sw.style.display = NO_SEASON.includes(p.family) ? 'none' : '';
   window.__modalSeason = 'autumn';
@@ -4135,10 +4221,11 @@ function addToCart(){
   if(!p){ toast('Помилка товару'); return; }
   if(isSoldOut(p)){ toast('Немає в наявності'); return; }
   // Season: autumn Cordura at the current price.
-  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W'];
+  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W','Thermo'];
+  const isThermo = p.family === 'Thermo';
   const canSeason = !NO_SEASON.includes(p.family);
-  const seasonId   = canSeason ? (window.__modalSeason || 'autumn') : null;
-  const seasonLabel = seasonId === 'autumn' ? 'Осінь' : '';
+  const seasonId   = isThermo ? 'winter' : (canSeason ? (window.__modalSeason || 'autumn') : null);
+  const seasonLabel = isThermo ? 'Winter · down to −15°C' : (seasonId === 'autumn' ? 'Осінь' : '');
   const seasonExtra = 0;
   const basePrice  = parseFloat(p.price) || 0;
   const finalPrice = (basePrice + seasonExtra).toFixed(2);
