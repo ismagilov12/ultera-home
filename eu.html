@@ -3241,7 +3241,6 @@ window.ulteraNormalizeAutumnCopy(DATA);
       extra[blackUid] = [
         '/photos/hunk-renew-black-01.webp',
         '/photos/hunk-renew-black-02.webp',
-        '/photos/hunk-renew-black-03.webp',
         '/photos/hunk-renew-black-04.webp'
       ];
       extra[pistachioUid] = [
@@ -6966,5 +6965,24 @@ insertWomanDivider();
 })();
 </script>
 <style id="eu-flat-price">html[data-market="eu"] #slGrid .card-price s,html[data-market="eu"] .sl-p-old,html[data-market="eu"] .sl-p-pct{display:none!important}</style>
+<style id="ulHunkRenewPhotoFit">
+/* Updated Hunk photos: keep the complete shoe centred on every viewport. */
+.modal-img[data-fam="Hunk"] > #m_img{
+  width:100%;height:100%;object-fit:contain;object-position:center center;
+}
+.modal-img[data-fam="Hunk"]:hover > #m_img{transform:none}
+.feat-card[data-fam="Hunk"] .feat-photo{padding:4% 5%}
+.feat-card[data-fam="Hunk"] .feat-photo img{
+  width:100%;height:100%;object-fit:contain;object-position:center center;
+}
+@media (max-width:900px){
+  .feat-card[data-fam="Hunk"] .feat-photo{padding:6% 7%}
+}
+@media (max-width:760px){
+  .modal-img[data-fam="Hunk"] > #m_img{
+    width:100%;height:100%;object-fit:contain;object-position:center center;
+  }
+}
+</style>
 </body>
 </html>
