@@ -3219,8 +3219,8 @@ window.ulteraNormalizeAutumnCopy(DATA);
       materials: 'Natural Nappa leather; water-resistant Cordura 1000D; textile lining; EVA Bounce'
     };
   }
-  var black = makeProduct(blackUid, 'ULTERA - Hunk Black', 'Black', '#0b0b0b', '/photos/hunk-renew-black-01.webp', '3490.00', '3800');
-  var pistachio = makeProduct(pistachioUid, 'ULTERA - Hunk Pistachio', 'Pistachio', '#a8b89a', '/photos/hunk-renew-pistachio-01.webp', '3990.00', '');
+  var black = makeProduct(blackUid, 'ULTERA - Hunk Black', 'Black', '#0b0b0b', '/photos/hunk-renew-black-01-bg-v2.webp', '3490.00', '3800');
+  var pistachio = makeProduct(pistachioUid, 'ULTERA - Hunk Pistachio', 'Pistachio', '#a8b89a', '/photos/hunk-renew-pistachio-01-bg-v2.webp', '3990.00', '');
   var family = (DATA.featured || []).find(function(row){ return row && row.family === 'Hunk'; })
     || (DATA.grid || []).find(function(row){ return row && row.family === 'Hunk'; });
   if (!family) {
@@ -3239,12 +3239,12 @@ window.ulteraNormalizeAutumnCopy(DATA);
       var extra = JSON.parse(extraElement.textContent || '{}');
       oldUids.forEach(function(oldUid){ delete extra[oldUid]; });
       extra[blackUid] = [
-        '/photos/hunk-renew-black-01.webp',
+        '/photos/hunk-renew-black-01-bg-v2.webp',
         '/photos/hunk-renew-black-02.webp',
         '/photos/hunk-renew-black-04.webp'
       ];
       extra[pistachioUid] = [
-        '/photos/hunk-renew-pistachio-01.webp',
+        '/photos/hunk-renew-pistachio-01-bg-v2.webp',
         '/photos/hunk-renew-pistachio-02.webp',
         '/photos/hunk-renew-pistachio-03.webp',
         '/photos/hunk-renew-pistachio-04.webp',
