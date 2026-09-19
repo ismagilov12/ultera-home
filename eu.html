@@ -2339,7 +2339,7 @@ window.ulteraFbq = function(name, params){
     </div>
 
     <div class="coll-toolbar">
-      <div class="count"><b id="countNum">30</b> <span id="countLbl">моделей</span> · <span>10 сімей</span></div>
+      <div class="count"><b id="countNum">27</b> <span id="countLbl">моделей</span> · <span>10 сімей</span></div>
       <div class="coll-chips" id="chips">
         <button class="coll-chip active" data-fam="all">Усі</button>
         <button class="coll-chip" data-fam="Hunk Thermo">Hunk Thermo ❄</button>
@@ -2973,7 +2973,7 @@ window.ulteraFbq = function(name, params){
     });
     function keepVariant(v, famKey){
       if (!v) return false;
-      if (String(v.uid || '') === '550020260917' || String(v.uid || '') === '550020260918') return true;
+      if (String(v.uid || '') === '550020260917' || String(v.uid || '') === '550020260918' || String(v.uid || '') === '550020260919' || String(v.uid || '') === '550020260920') return true;
       if (!supaFamilies[famKey]) return true;
       if (v.uid && /^sh-/.test(v.uid)) return true;
       return !!(v.uid && supaUids[v.uid]);
@@ -3050,13 +3050,14 @@ window.ulteraFbq = function(name, params){
     });
     var injectedCount = 0;
     sortedProducts.forEach(function(p){
+      var famKey = String(p.family||'').trim();
+      if (famKey === 'Hunk') return;
       if (usedUids[p.uid]) return;
       var v = productToVariant(p);
       var mm = mediaByUid[v.uid];
       if (mm && mm.videos && mm.videos.length) v.video = mm.videos[0];
       if (!Array.isArray(D.all)) D.all = [];
       D.all.push(v);
-      var famKey = String(p.family||'').trim();
       var fam = featuredByFamily[famKey] || gridByFamily[famKey];
       if (!fam){
         fam = { family: p.family || '—', hero: v, variants: [v] };
@@ -3181,6 +3182,79 @@ window.ulteraNormalizeAutumnCopy = function(value){
   return value;
 };
 window.ulteraNormalizeAutumnCopy(DATA);
+/* Vercel-owned Hunk renew: two updated colors replace the old Hunk lineup. */
+(function(){
+  var blackUid = '550020260919';
+  var pistachioUid = '550020260920';
+  var oldUids = ['593008410302','244754285902','634978737742','607421449014','469658834434'];
+  var sizePairs = [['39','25.5'],['40','26'],['41','27'],['42','28'],['43','28.5'],['44','29'],['45','30']];
+  function makeProduct(uid, title, colorName, swatch, photo, price, oldPrice){
+    return {
+      uid: uid,
+      brand: 'ULTERA',
+      mark: 'NEW',
+      category: 'ULTERA;Autumn',
+      title: title,
+      desc: 'Updated Hunk with water-resistant Cordura 1000D, natural leather and soft cushioning.',
+      text: 'ULTERA Hunk — an updated model for the everyday urban rhythm.<br><br>The natural Nappa leather and water-resistant Cordura 1000D upper helps protect feet in autumn weather.<br>The EVA Bounce sole provides lightness, soft cushioning and all-day comfort.<br><br>Handmade in Kharkiv.<br>Production time: 4–10 days.<br>1-year warranty.',
+      photo: photo,
+      price: price,
+      price_old: oldPrice,
+      mods: '',
+      sizes: sizePairs.map(function(pair){
+        return {
+          parent: uid,
+          title: title + ' - ' + pair[0] + ' - ' + pair[1] + 'cm',
+          price: price,
+          price_old: oldPrice,
+          editions: 'EU size:' + pair[0] + ' - ' + pair[1] + 'cm',
+          qty: '9999'
+        };
+      }),
+      family: 'Hunk',
+      swatch: swatch,
+      color_name: colorName,
+      size_list: sizePairs.map(function(pair){ return {eu:pair[0], cm:pair[1], qty:'9999'}; }),
+      characteristics: 'Upper: natural Nappa leather + water-resistant Cordura 1000D; sole: EVA Bounce; season: autumn',
+      materials: 'Natural Nappa leather; water-resistant Cordura 1000D; textile lining; EVA Bounce'
+    };
+  }
+  var black = makeProduct(blackUid, 'ULTERA - Hunk Black', 'Black', '#0b0b0b', '/photos/hunk-renew-black-01.webp', '3490.00', '3800');
+  var pistachio = makeProduct(pistachioUid, 'ULTERA - Hunk Pistachio', 'Pistachio', '#a8b89a', '/photos/hunk-renew-pistachio-01.webp', '3990.00', '');
+  var family = (DATA.featured || []).find(function(row){ return row && row.family === 'Hunk'; })
+    || (DATA.grid || []).find(function(row){ return row && row.family === 'Hunk'; });
+  if (!family) {
+    family = {family:'Hunk', hero:black, variants:[black, pistachio]};
+    DATA.grid = DATA.grid || [];
+    DATA.grid.push(family);
+  } else {
+    family.hero = black;
+    family.variants = [black, pistachio];
+  }
+  DATA.all = (DATA.all || []).filter(function(item){ return item && item.family !== 'Hunk' && oldUids.indexOf(String(item.uid || '')) === -1; });
+  DATA.all.push(black, pistachio);
+  var extraElement = document.getElementById('EXTRA');
+  if (extraElement) {
+    try {
+      var extra = JSON.parse(extraElement.textContent || '{}');
+      oldUids.forEach(function(oldUid){ delete extra[oldUid]; });
+      extra[blackUid] = [
+        '/photos/hunk-renew-black-01.webp',
+        '/photos/hunk-renew-black-02.webp',
+        '/photos/hunk-renew-black-03.webp',
+        '/photos/hunk-renew-black-04.webp'
+      ];
+      extra[pistachioUid] = [
+        '/photos/hunk-renew-pistachio-01.webp',
+        '/photos/hunk-renew-pistachio-02.webp',
+        '/photos/hunk-renew-pistachio-03.webp',
+        '/photos/hunk-renew-pistachio-04.webp',
+        '/photos/hunk-renew-pistachio-05.webp'
+      ];
+      extraElement.textContent = JSON.stringify(extra);
+    } catch(_e) {}
+  }
+})();
 /* Vercel-owned Hunk Thermo launch: dedicated winter model and gallery. */
 (function(){
   var uid = '550020260917';
