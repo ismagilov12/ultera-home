@@ -12,44 +12,23 @@ permissions:
   contents: write
 
 jobs:
-  convert:
+  publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Create a unique Meta image URL
+        run: cp photos/hunk-thermo-black-01.jpg photos/hunk-thermo-black-feed.jpg
 
-      - name: Install image converter
-        run: npm install --no-save sharp@0.33.5
-
-      - name: Convert Hunk Thermo photos to JPEG
-        run: |
-          node <<'NODE'
-          const sharp = require('sharp');
-          Promise.all([
-            sharp('photos/hunk-thermo-black-01.webp')
-              .jpeg({ quality: 92 })
-              .toFile('photos/hunk-thermo-black-01.jpg'),
-            sharp('photos/hunk-thermo-khaki-01.webp')
-              .jpeg({ quality: 92 })
-              .toFile('photos/hunk-thermo-khaki-01.jpg')
-          ]).catch((error) => {
-            console.error(error);
-            process.exit(1);
-          });
-          NODE
-
-      - name: Commit JPEG images
+      - name: Commit Meta image
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add photos/hunk-thermo-black-01.jpg photos/hunk-thermo-khaki-01.jpg
+          git add photos/hunk-thermo-black-feed.jpg
           if git diff --cached --quiet; then
             echo 'Nothing to commit'
           else
-            git commit -m 'Add JPEG feed images for Hunk Thermo'
+            git commit -m 'Add cache-busted Hunk Thermo feed image'
             git push
           fi
