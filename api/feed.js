@@ -9,7 +9,7 @@
 //
 // Output spec:
 //   Content-Type: application/xml; charset=utf-8
-//   Cache-Control: public, max-age=600, s-maxage=600, stale-while-revalidate=3600
+//   Cache-Control: no-store
 //
 // Variants: each color = separate <item> with shared <g:item_group_id> = family.
 // Deep-link format: ?p=<slug>,<uid> — same router as deploy-deeplinks-v1.
@@ -353,7 +353,7 @@ items.join('\n') + '\n' +
 
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=600, stale-while-revalidate=3600');
+    res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Feed-Items', String(items.length));
     res.setHeader('X-Feed-Skipped', String(skipped));
     res.setHeader('X-Feed-Sale', String(onSale));
