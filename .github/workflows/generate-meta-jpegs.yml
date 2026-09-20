@@ -18,17 +18,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create a unique Meta image URL
-        run: cp photos/hunk-thermo-black-01.jpg photos/hunk-thermo-black-feed.jpg
+      - name: Keep dynamic product feed fresh
+        run: |
+          sed -i 's/public, max-age=600, s-maxage=600, stale-while-revalidate=3600/no-store/g' api/feed.js
 
-      - name: Commit Meta image
+      - name: Commit feed cache fix
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add photos/hunk-thermo-black-feed.jpg
+          git add api/feed.js
           if git diff --cached --quiet; then
             echo 'Nothing to commit'
           else
-            git commit -m 'Add cache-busted Hunk Thermo feed image'
+            git commit -m 'Disable stale caching for dynamic product feed'
             git push
           fi
