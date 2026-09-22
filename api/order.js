@@ -1,10 +1,11 @@
 // api/order.js — proxy ultera-home frontend → KeyCRM
+// SEASON v15 (2026-09-22):
+//   - [v15] FIX: pass the exact season to compute_order_total.
+//           Autumn/Cordura uses the catalog price; Winter adds +1000 UAH.
+//           Legacy season_id='spring' is normalized to 'autumn'.
 // SEASON v14 (2026-08-28):
-//   - [v14] FIX: season_id тепер доходить до compute_order_total. Раніше сезон
-//           викидався при пересборці items ({uid, qty, promo_pct}), RPC брав
-//           чисту ціну з БД, і на оплату / в KeyCRM / в CAPI йшла літня сума
-//           без надбавки за осінню (Cordura) версію.
-//           Сума надбавки зашита в RPC — звідси їде лише ознака 'spring'.
+//   - [v14] season_id was forwarded to compute_order_total.
+//           Superseded by v15: the old mapping charged Autumn and dropped Winter.
 // CAPI v13 (2026-07-18):
 //   - [v13] FB Conversions API Purchase for COD (наложка) final orders, fired at
 //           order creation. Card orders keep firing Purchase from wayforpay-callback
@@ -86,12 +87,15 @@ function getCookie(req, name) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-// Autumn is already included in the catalog price. Only the legacy explicit
-// spring flag may request the old Cordura uplift; "Осінь" must never do so.
+// [v15] Preserve the exact season for authoritative server-side pricing.
+//       'spring' is a legacy alias for the current Autumn/Cordura version.
 function seasonFlag(it) {
-  const raw = String((it && (it.seasonId || it.season_id)) || '');
-  if (raw === 'spring') return 'spring';
-  if (/весна/i.test(String((it && it.season) || ''))) return 'spring';
+  const raw = String((it && (it.seasonId || it.season_id)) || '').trim().toLowerCase();
+  if (raw === 'winter') return 'winter';
+  if (raw === 'autumn' || raw === 'spring') return 'autumn';
+  const label = String((it && it.season) || '');
+  if (/зим/i.test(label)) return 'winter';
+  if (/осін|весна/i.test(label)) return 'autumn';
   return null;
 }
 
