@@ -2925,6 +2925,19 @@ window.ulteraFbq = function(name, params){
       if (media[k].type === 'video') mediaByUid[uid].videos.push(media[k].url);
       else mediaByUid[uid].photos.push(media[k].url);
     }
+    /* Vercel-owned product prices. */
+    (function(){
+      var uid = '809858137952';
+      var product = byUid[uid];
+      if (!product) return;
+      product.price = 4190;
+      product.price_old = '';
+      (product.sizes || []).forEach(function(size){
+        if (!size) return;
+        size.price = 4190;
+        size.price_old = '';
+      });
+    })();
     var newExtra = {};
     for (var u in mediaByUid){
       var slides = [];
@@ -3195,6 +3208,28 @@ window.ulteraNormalizeAutumnCopy = function(value){
   return value;
 };
 window.ulteraNormalizeAutumnCopy(DATA);
+/* Keep the baked fallback aligned with Vercel-owned product data. */
+(function(){
+  var uid = '809858137952';
+  function patchVariant(variant){
+    if (!variant || String(variant.uid) !== uid) return;
+    variant.price = '4190';
+    variant.price_old = '';
+    (variant.sizes || []).forEach(function(size){
+      if (!size) return;
+      size.price = '4190';
+      size.price_old = '';
+    });
+  }
+  if (Array.isArray(DATA.all)) DATA.all.forEach(patchVariant);
+  ['featured', 'grid'].forEach(function(group){
+    (DATA[group] || []).forEach(function(product){
+      patchVariant(product);
+      patchVariant(product.hero);
+      (product.variants || []).forEach(patchVariant);
+    });
+  });
+})();
 /* Vercel-owned Hunk renew: two updated colors replace the old Hunk lineup. */
 (function(){
   var blackUid = '550020260919';

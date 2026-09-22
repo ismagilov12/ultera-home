@@ -86,12 +86,12 @@ function getCookie(req, name) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-// [v14] Витягуємо ознаку осінньої версії з позиції кошика.
-//       Повертає 'spring' або null. Суму надбавки тут НЕ рахуємо — вона в RPC.
+// Autumn is already included in the catalog price. Only the legacy explicit
+// spring flag may request the old Cordura uplift; "Осінь" must never do so.
 function seasonFlag(it) {
   const raw = String((it && (it.seasonId || it.season_id)) || '');
   if (raw === 'spring') return 'spring';
-  if (/осін|весна/i.test(String((it && it.season) || ''))) return 'spring';
+  if (/весна/i.test(String((it && it.season) || ''))) return 'spring';
   return null;
 }
 
@@ -138,7 +138,7 @@ async function verifyTurnstile(token, remoteIp) {
 
 // [v10] Forward promoSecond → promo_pct=30 so RPC applies the same Shape discount
 //       the user sees in the cart. Items can carry promo_pct directly too.
-// [v14] Forward season_id so RPC applies the autumn (Cordura) surcharge.
+// Forward only an explicit legacy spring flag; autumn uses the catalog price.
 async function recomputePrices(items) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

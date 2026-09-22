@@ -2943,18 +2943,22 @@ window.ulteraFbq = function(name, params){
       if (media[k].type === 'video') mediaByUid[uid].videos.push(media[k].url);
       else mediaByUid[uid].photos.push(media[k].url);
     }
-    /* Vercel-owned prices for Aganta Oreo and Black Nubuck. */
+    /* Vercel-owned product prices. */
     (function(){
       var prices = {
         '454860479882': 3490,
-        '924701650982': 3490
+        '924701650982': 3490,
+        '809858137952': 4190
       };
       Object.keys(prices).forEach(function(uid){
         var product = byUid[uid];
         if (!product) return;
         product.price = prices[uid];
+        if (uid === '809858137952') product.price_old = '';
         (product.sizes || []).forEach(function(size){
-          if (size) size.price = prices[uid];
+          if (!size) return;
+          size.price = prices[uid];
+          if (uid === '809858137952') size.price_old = '';
         });
       });
     })();
@@ -3282,12 +3286,13 @@ window.ulteraNormalizeAutumnCopy = function(value){
   return value;
 };
 window.ulteraNormalizeAutumnCopy(DATA);
-/* Keep the baked fallback aligned with Vercel-owned Aganta data. */
+/* Keep the baked fallback aligned with Vercel-owned product data. */
 (function(){
   var uid = '454860479882';
   var prices = {
     '454860479882': '3490',
-    '924701650982': '3490'
+    '924701650982': '3490',
+    '809858137952': '4190'
   };
   var approved = '/photos/aganta-black-nubuck-cordura.jpg';
   var superseded = [
@@ -3300,8 +3305,11 @@ window.ulteraNormalizeAutumnCopy(DATA);
     if (variantUid === uid) variant.photo = approved;
     if (prices[variantUid]) {
       variant.price = prices[variantUid];
+      if (variantUid === '809858137952') variant.price_old = '';
       (variant.sizes || []).forEach(function(size){
-        if (size) size.price = prices[variantUid];
+        if (!size) return;
+        size.price = prices[variantUid];
+        if (variantUid === '809858137952') size.price_old = '';
       });
     }
   }
@@ -3309,6 +3317,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
   ['featured', 'grid'].forEach(function(group){
     (DATA[group] || []).forEach(function(product){
       patchVariant(product);
+      patchVariant(product.hero);
       (product.variants || []).forEach(patchVariant);
     });
   });

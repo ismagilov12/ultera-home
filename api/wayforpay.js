@@ -177,10 +177,9 @@ module.exports = async function handler(req, res) {
     resolvedItems = items.map(it => {
       const pct = Number(it.promo_pct || 0);
       const safePct = Math.max(0, Math.min(90, pct));
-      // [v9] season_id -> RPC. Сума надбавки зашита в compute_order_total,
-      //      з фронту приходить лише ознака, тож підробити суму не можна.
+      // season_id -> RPC. Autumn is already included in the catalog price.
       const seasonRaw = String(it.season_id || it.seasonId || '');
-      const seasonId = seasonRaw || (/осін|весна/i.test(String(it.season || '')) ? 'spring' : '');
+      const seasonId = seasonRaw || (/весна/i.test(String(it.season || '')) ? 'spring' : '');
       return {
         uid: String(it.uid || ''),
         qty: Math.max(parseInt(it.qty || 1, 10), 1),
