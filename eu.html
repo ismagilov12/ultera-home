@@ -2348,7 +2348,6 @@ window.ulteraFbq = function(name, params){
         <button class="coll-chip" data-fam="Hunk Thermo">Hunk Thermo ❄</button>
         <button class="coll-chip" data-fam="Hunk3">Hunk3</button>
         <button class="coll-chip" data-fam="Aganta">Aganta</button>
-        <button class="coll-chip" data-fam="Aganta Thermo">Aganta Thermo ❄</button>
         <button class="coll-chip" data-fam="SHAPE">SHAPE ↗</button>
         <button class="coll-chip" data-fam="Hunk">Hunk</button>
         <button class="coll-chip" data-fam="Hunk2">Hunk2</button>
@@ -3361,7 +3360,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
     } catch(_e) {}
   }
 })();
-/* Vercel-owned Aganta Thermo launch: black and blue winter variants. */
+/* Black and blue Aganta Thermo colorways merged into the existing Thermo family. */
 (function(){
   var blackUid = '550020260921';
   var blueUid = '550020260922';
@@ -3389,7 +3388,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
           qty: '9999'
         };
       }),
-      family: 'Aganta Thermo',
+      family: 'Thermo',
       swatch: swatch,
       color_name: colorName,
       size_list: sizePairs.map(function(pair){ return {eu:pair[0], cm:pair[1], qty:'9999'}; }),
@@ -3413,21 +3412,40 @@ window.ulteraNormalizeAutumnCopy(DATA);
     '/photos/aganta-thermo-blue-01.webp',
     'Winter Aganta in blue with insulation down to −15 °C, a water-resistant upper and winter tread.'
   );
-  var family = (DATA.featured || []).find(function(row){ return row && row.family === 'Aganta Thermo'; })
-    || (DATA.grid || []).find(function(row){ return row && row.family === 'Aganta Thermo'; });
-  if (!family) {
-    family = {family:'Aganta Thermo', hero:blackProduct, variants:[blackProduct, blueProduct]};
-    var agantaIndex = (DATA.featured || []).findIndex(function(row){ return row && row.family === 'Aganta'; });
-    DATA.featured.splice(agantaIndex >= 0 ? agantaIndex + 1 : DATA.featured.length, 0, family);
-  } else {
-    family.variants = family.variants || [];
-    if (!family.variants.some(function(item){ return item && item.uid === blackUid; })) family.variants.unshift(blackProduct);
-    if (!family.variants.some(function(item){ return item && item.uid === blueUid; })) family.variants.push(blueProduct);
-    if (!family.hero) family.hero = blackProduct;
+  function mergeIntoThermoFamily(){
+    var localUids = [blackUid, blueUid];
+    blackProduct.family = 'Thermo';
+    blueProduct.family = 'Thermo';
+    ['featured','grid'].forEach(function(section){
+      DATA[section] = (DATA[section] || []).filter(function(row){
+        return row && row.family !== 'Aganta Thermo';
+      });
+    });
+    var family = (DATA.featured || []).find(function(row){ return row && row.family === 'Thermo'; })
+      || (DATA.grid || []).find(function(row){ return row && row.family === 'Thermo'; });
+    if (!family) {
+      family = {family:'Thermo', hero:blackProduct, variants:[]};
+      DATA.featured = DATA.featured || [];
+      DATA.featured.push(family);
+    }
+    var seen = {};
+    var existing = (family.variants || []).filter(function(item){
+      var uid = item && String(item.uid || '');
+      if (!uid || localUids.indexOf(uid) !== -1 || seen[uid]) return false;
+      seen[uid] = true;
+      return true;
+    });
+    var heroUid = family.hero && String(family.hero.uid || '');
+    if (family.hero && heroUid && localUids.indexOf(heroUid) === -1 && !seen[heroUid]) existing.unshift(family.hero);
+    family.family = 'Thermo';
+    family.variants = existing.concat([blackProduct, blueProduct]);
+    if (!family.hero || localUids.indexOf(String(family.hero.uid || '')) !== -1) family.hero = existing[0] || blackProduct;
+    if (!Array.isArray(DATA.all)) DATA.all = [];
+    DATA.all = DATA.all.filter(function(item){ return item && localUids.indexOf(String(item.uid || '')) === -1; });
+    DATA.all.push(blackProduct, blueProduct);
   }
-  if (!Array.isArray(DATA.all)) DATA.all = [];
-  if (!DATA.all.some(function(item){ return item && item.uid === blackUid; })) DATA.all.push(blackProduct);
-  if (!DATA.all.some(function(item){ return item && item.uid === blueUid; })) DATA.all.push(blueProduct);
+  mergeIntoThermoFamily();
+  window.addEventListener('ultera:bootstrap:done', mergeIntoThermoFamily);
 
   var extraElement = document.getElementById('EXTRA');
   if (extraElement) {
