@@ -3764,7 +3764,7 @@ function renderFeatured(){
   const _isTees = function(f){ return String(f||'').toLowerCase() === 'tees'; };
   const _famHid = (window.FAMILY_HIDDEN || {});
   const rows = [...DATA.featured, ...DATA.grid].filter(r => !_isTees(r && r.family) && !_famHid[String((r && r.family) || '').trim()]);
-  (function(){ var _fo=(window.FAMILY_ORDER||{}); rows.sort(function(a,b){ var ka=String((a&&a.family)||'').trim(), kb=String((b&&b.family)||'').trim(); var oa=(_fo[ka]!=null)?_fo[ka]:9999, ob=(_fo[kb]!=null)?_fo[kb]:9999; return oa-ob; }); })();
+  (function(){ var _fo=(window.FAMILY_ORDER||{}); rows.sort(function(a,b){ var ka=String((a&&a.family)||'').trim(), kb=String((b&&b.family)||'').trim(); if(ka==='SHAPE' && kb!=='SHAPE') return 1; if(kb==='SHAPE' && ka!=='SHAPE') return -1; var oa=(_fo[ka]!=null)?_fo[ka]:9999, ob=(_fo[kb]!=null)?_fo[kb]:9999; return oa-ob; }); })();
 
   el.innerHTML = rows.map((row, idx) => {
     const fam = row.family;
