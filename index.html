@@ -388,7 +388,8 @@ input,textarea,select{font:inherit;color:inherit}
 .feat-card[data-fam="Hunk Summer W"] .feat-photo{padding:5% 7%}
 .feat-card[data-fam="Hunk Summer W"] .feat-photo img{width:100%;height:100%;object-fit:contain;object-position:center}
 .feat-card[data-fam="Thermo"] .feat-photo img,
-.feat-card[data-fam="Hunk Thermo"] .feat-photo img{width:112%;height:112%;object-fit:cover;object-position:center 42%}
+.feat-card[data-fam="Hunk Thermo"] .feat-photo img,
+.feat-card[data-fam="Aganta Thermo"] .feat-photo img{width:112%;height:112%;object-fit:cover;object-position:center 42%}
 
 .feat-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
 .feat-serial{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--ink-60)}
@@ -457,7 +458,8 @@ input,textarea,select{font:inherit;color:inherit}
   .feat-card[data-fam="Hunk Summer W"] .feat-photo{padding:6% 8%}
   .feat-card[data-fam="Hunk Summer W"] .feat-photo img{width:100%;height:100%;object-fit:contain;object-position:center}
   .feat-card[data-fam="Thermo"] .feat-photo img,
-  .feat-card[data-fam="Hunk Thermo"] .feat-photo img{width:108%;height:108%;object-fit:cover;object-position:center 42%}
+  .feat-card[data-fam="Hunk Thermo"] .feat-photo img,
+  .feat-card[data-fam="Aganta Thermo"] .feat-photo img{width:108%;height:108%;object-fit:cover;object-position:center 42%}
   .feat-overlay{top:16px;left:18px;max-width:62%}
   .feat-overlay-title{font-size:clamp(38px,11vw,56px)}
   .feat-overlay-tag{font-size:10px}
@@ -675,7 +677,8 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .modal-img[data-fam="Hunk Summer W"] img{object-fit:contain;object-position:center}
 .modal-img[data-fam="Hunk Summer W"]:hover img{transform:none}
 .modal-img[data-fam="Thermo"] img,
-.modal-img[data-fam="Hunk Thermo"] img{object-fit:contain;object-position:center}
+.modal-img[data-fam="Hunk Thermo"] img,
+.modal-img[data-fam="Aganta Thermo"] img{object-fit:contain;object-position:center}
 .modal-img:hover img{transform:scale(1.04)}
 .ms-swatches-top{margin-top:2px;margin-bottom:16px}
 
@@ -2347,13 +2350,14 @@ window.ulteraFbq = function(name, params){
     </div>
 
     <div class="coll-toolbar">
-      <div class="count"><b id="countNum">27</b> <span id="countLbl">моделей</span> · <span>10 сімей</span></div>
+      <div class="count"><b id="countNum">29</b> <span id="countLbl">моделей</span> · <span>11 сімей</span></div>
       <div class="coll-chips" id="chips">
         <button class="coll-chip active" data-fam="all">Усі</button>
         <button class="coll-chip" data-fam="Thermo">Thermo ❄</button>
         <button class="coll-chip" data-fam="Hunk Thermo">Hunk Thermo ❄</button>
         <button class="coll-chip" data-fam="Hunk3">Hunk3</button>
         <button class="coll-chip" data-fam="Aganta">Aganta</button>
+        <button class="coll-chip" data-fam="Aganta Thermo">Aganta Thermo ❄</button>
         <button class="coll-chip" data-fam="SHAPE">SHAPE ↗</button>
         <button class="coll-chip" data-fam="Hunk">Hunk</button>
         <button class="coll-chip" data-fam="Hunk2">Hunk2</button>
@@ -3021,7 +3025,7 @@ window.ulteraFbq = function(name, params){
     });
     function keepVariant(v, famKey){
       if (!v) return false;
-      if (String(v.uid || '') === '550020260917' || String(v.uid || '') === '550020260918' || String(v.uid || '') === '550020260919' || String(v.uid || '') === '550020260920') return true;
+      if (String(v.uid || '') === '550020260917' || String(v.uid || '') === '550020260918' || String(v.uid || '') === '550020260919' || String(v.uid || '') === '550020260920' || String(v.uid || '') === '550020260921' || String(v.uid || '') === '550020260922') return true;
       if (!supaFamilies[famKey]) return true;
       if (v.uid && /^sh-/.test(v.uid)) return true;
       return !!(v.uid && supaUids[v.uid]);
@@ -3181,6 +3185,11 @@ try { renderTeesSection(); } catch(e) { try{ console.warn('renderTeesSection ini
         if (x.hidden === true) hid[String(x.family).trim()] = 1;
       }
     });
+    if (map['Aganta Thermo'] == null) {
+      if (map.Aganta != null) map['Aganta Thermo'] = map.Aganta + 0.25;
+      else if (map.Thermo != null) map['Aganta Thermo'] = map.Thermo + 0.25;
+      else map['Aganta Thermo'] = 24.75;
+    }
     if (map['Hunk Thermo'] == null) {
       if (map.Thermo != null) map['Hunk Thermo'] = map.Thermo + 0.5;
       else if (map.Aganta != null && map.SHAPE != null) map['Hunk Thermo'] = (map.Aganta + map.SHAPE) / 2;
@@ -3480,6 +3489,96 @@ window.ulteraNormalizeAutumnCopy(DATA);
     } catch(_e) {}
   }
 })();
+/* Vercel-owned Aganta Thermo launch: black and blue winter variants. */
+(function(){
+  var blackUid = '550020260921';
+  var blueUid = '550020260922';
+  var sizePairs = [['40','26'],['41','27'],['42','28'],['43','28.5'],['44','29'],['45','30']];
+  function makeProduct(uid, title, colorName, swatch, photo, desc){
+    return {
+      uid: uid,
+      brand: 'ULTERA',
+      mark: 'NEW',
+      category: 'ULTERA;Зима',
+      title: title,
+      desc: desc,
+      text: title + ' — зимова версія Aganta для снігу, сльоти та морозної погоди.<br><br>Вологостійкий верх із Cordura® та шкіри допомагає зберігати ноги сухими.<br>Тепла підкладка й утеплювач розраховані на температуру до −15 °C.<br>Підошва EVA Bounce із зимовим протектором забезпечує мʼяку амортизацію та впевнене зчеплення.<br><br>Ручна робота в Харкові.<br>Термін виробництва 12–14 днів.<br>Гарантія 1 рік.',
+      photo: photo,
+      price: '4400.00',
+      price_old: '5500',
+      mods: '',
+      sizes: sizePairs.map(function(pair){
+        return {
+          parent: uid,
+          title: title + ' - ' + pair[0] + ' - ' + pair[1] + 'см',
+          price: '4400.00',
+          price_old: '5500',
+          editions: 'Розмір (повномірний):' + pair[0] + ' - ' + pair[1] + 'см',
+          qty: '9999'
+        };
+      }),
+      family: 'Aganta Thermo',
+      swatch: swatch,
+      color_name: colorName,
+      size_list: sizePairs.map(function(pair){ return {eu:pair[0], cm:pair[1], qty:'9999'}; }),
+      characteristics: 'Верх: Cordura® + шкіра; підошва: EVA Bounce із зимовим протектором; сезон: зима; температура: до −15 °C',
+      materials: 'Cordura®; натуральна шкіра; утеплювач; тепла текстильна підкладка; EVA Bounce'
+    };
+  }
+  var blackProduct = makeProduct(
+    blackUid,
+    'ULTERA - Aganta Thermo Black',
+    'Чорний',
+    '#0a0a0a',
+    '/photos/aganta-thermo-black-01.webp',
+    'Зимова модель Aganta в чорному кольорі з утепленням до −15 °C, вологостійким верхом та зимовим протектором.'
+  );
+  var blueProduct = makeProduct(
+    blueUid,
+    'ULTERA - Aganta Thermo Blue',
+    'Блакитний',
+    '#8fc7f2',
+    '/photos/aganta-thermo-blue-01.webp',
+    'Зимова модель Aganta в блакитному кольорі з утепленням до −15 °C, вологостійким верхом та зимовим протектором.'
+  );
+  var family = (DATA.featured || []).find(function(row){ return row && row.family === 'Aganta Thermo'; })
+    || (DATA.grid || []).find(function(row){ return row && row.family === 'Aganta Thermo'; });
+  if (!family) {
+    family = {family:'Aganta Thermo', hero:blackProduct, variants:[blackProduct, blueProduct]};
+    var agantaIndex = (DATA.featured || []).findIndex(function(row){ return row && row.family === 'Aganta'; });
+    DATA.featured.splice(agantaIndex >= 0 ? agantaIndex + 1 : DATA.featured.length, 0, family);
+  } else {
+    family.variants = family.variants || [];
+    if (!family.variants.some(function(item){ return item && item.uid === blackUid; })) family.variants.unshift(blackProduct);
+    if (!family.variants.some(function(item){ return item && item.uid === blueUid; })) family.variants.push(blueProduct);
+    if (!family.hero) family.hero = blackProduct;
+  }
+  if (!Array.isArray(DATA.all)) DATA.all = [];
+  if (!DATA.all.some(function(item){ return item && item.uid === blackUid; })) DATA.all.push(blackProduct);
+  if (!DATA.all.some(function(item){ return item && item.uid === blueUid; })) DATA.all.push(blueProduct);
+
+  var extraElement = document.getElementById('EXTRA');
+  if (extraElement) {
+    try {
+      var extra = JSON.parse(extraElement.textContent || '{}');
+      extra[blackUid] = [
+        '/photos/aganta-thermo-black-01.webp',
+        '/photos/aganta-thermo-black-02.webp',
+        '/photos/aganta-thermo-black-03.webp',
+        '/photos/aganta-thermo-black-04.webp',
+        '/photos/aganta-thermo-black-05.webp'
+      ];
+      extra[blueUid] = [
+        '/photos/aganta-thermo-blue-01.webp',
+        '/photos/aganta-thermo-blue-02.webp',
+        '/photos/aganta-thermo-blue-03.webp',
+        '/photos/aganta-thermo-blue-04.webp',
+        '/photos/aganta-thermo-blue-05.webp'
+      ];
+      extraElement.textContent = JSON.stringify(extra);
+    } catch(_e) {}
+  }
+})();
 /* v92: LCP preload — first active photos of featured rows start downloading
    before renderFeatured() runs. Avoids cold-cache delay on first visible card. */
 (function(){
@@ -3581,6 +3680,10 @@ function renderFeatured(){
     'Aganta':    { serial:'AG-TR-02', badge:'ВИРОБНИЦТВО 4-10 ДНІВ', tag:'НОВЕ \u00b7 МІНІМАЛІЗМ',
                    sub:'Мінімалістичні кросівки нового формату. Шкіра Nappa + ПУ-підошва.',
                    specs:[['ПІДОШВА','EVA'],['ВЕРХ','Шкіра Nappa + вологостійка Cordura'],['СЕЗОН','Осінь'],['ГАРАНТІЯ','1 рік']],
+                   handler:null },
+    'Aganta Thermo': { serial:'AG-TH-03', title:'Aganta Thermo', badge:'ВИРОБНИЦТВО 12-14 ДНІВ', tag:'ЗИМА \u00b7 ДО −15°C',
+                   sub:'Зимова версія Aganta з теплою підкладкою, вологостійким верхом та зимовим протектором.',
+                   specs:[['ПІДОШВА','EVA Bounce'],['ВЕРХ','Cordura® + шкіра'],['СЕЗОН','Зима · до −15°C'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
     'Hunk Thermo': { serial:'HUNK-TH-01', title:'Hunk Thermo', badge:'ВИРОБНИЦТВО 12-14 ДНІВ', tag:'ЗИМА \u00b7 ДО −15°C',
                    sub:'Висока зимова версія Hunk із теплою підкладкою, вологостійким верхом та зимовим протектором.',
@@ -4199,17 +4302,18 @@ function openModal(uid){
       'Lite':      {top:'Шкіра Nappa + вологостійка Cordura', sole:'EVA'},
       'Spider':    {top:'Шкіра Nappa + вологостійка Cordura', sole:'EVA'},
       'Thermo':    {top:'Cordura® + шкіра', sole:'EVA Bounce, зимовий протектор'},
-      'Hunk Thermo':{top:'Cordura® + шкіра', sole:'EVA Bounce, зимовий протектор'}
+      'Hunk Thermo':{top:'Cordura® + шкіра', sole:'EVA Bounce, зимовий протектор'},
+      'Aganta Thermo':{top:'Cordura® + шкіра', sole:'EVA Bounce, зимовий протектор'}
     };
     const fm = familyMeta[p.family] || {top:'Nappa + вологостійка Cordura', sole:'EVA'};
     const topEl = document.getElementById('m_spec_top'); if(topEl) topEl.textContent = fm.top;
     const soleEl = document.getElementById('m_spec_sole'); if(soleEl) soleEl.textContent = fm.sole;
     /* v181: Thermo шьётся дольше — 12–14 дней вместо 4–10 */
-    const etaEl = document.getElementById('m_spec_eta'); if(etaEl) etaEl.textContent = (p.family === 'Thermo' || p.family === 'Hunk Thermo') ? '12—14 днів' : '4—10 днів';
+    const etaEl = document.getElementById('m_spec_eta'); if(etaEl) etaEl.textContent = (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? '12—14 днів' : '4—10 днів';
   } catch(e){}
   const mtEl = document.getElementById('m_materials');
   if(mtEl){
-    const list = (p.family === 'SHAPE') ? MATERIALS_SHAPE : (p.family === 'Thermo' || p.family === 'Hunk Thermo') ? MATERIALS_THERMO : MATERIALS_DEFAULT;
+    const list = (p.family === 'SHAPE') ? MATERIALS_SHAPE : (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? MATERIALS_THERMO : MATERIALS_DEFAULT;
     mtEl.innerHTML = '<span class="mm-title">Матеріали</span><ul>' + list.map(x=>'<li>'+x+'</li>').join('') + '</ul>';
   }
   // Опис — прибираємо дублювання з матеріалами, але залишаємо осінній опис Cordura.
@@ -4232,7 +4336,7 @@ function openModal(uid){
   document.getElementById('shBox').classList.remove('open');
 
   // Моделі без сезонного вибору (всесезонні / одна версія)
-  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo'];
+  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo'];
   const sw = document.getElementById('m_season_wrap');
   if (sw) sw.style.display = NO_SEASON.includes(p.family) ? 'none' : '';
   // Seasonal choice must not leak between products. Default is Autumn at the current price.
@@ -4475,8 +4579,8 @@ function addToCart(){
   if(!p){ toast('Помилка товару'); return; }
   if(isSoldOut(p)){ toast('Немає в наявності'); return; }
   // Season: Autumn at the current price | Winter thermo (+1000 UAH).
-  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo'];
-  const isThermo = p.family === 'Thermo' || p.family === 'Hunk Thermo';
+  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo'];
+  const isThermo = p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo';
   const canSeason = !NO_SEASON.includes(p.family);
   const seasonId   = isThermo ? 'winter' : (canSeason ? (window.__modalSeason || 'autumn') : null);
   const seasonLabel = isThermo ? 'Зима · до −15°C' : (seasonId === 'winter' ? 'Зимові термо · до −7°C' : (seasonId === 'autumn' ? 'Осінь' : ''));
