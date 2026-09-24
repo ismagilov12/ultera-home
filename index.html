@@ -3033,7 +3033,7 @@ window.ulteraFbq = function(name, params){
     });
     function keepVariant(v, famKey){
       if (!v) return false;
-      if (String(v.uid || '') === '550020260917' || String(v.uid || '') === '550020260918' || String(v.uid || '') === '550020260919' || String(v.uid || '') === '550020260920' || String(v.uid || '') === '550020260921' || String(v.uid || '') === '550020260922') return true;
+      if (String(v.uid || '') === '550020260917' || String(v.uid || '') === '550020260918' || String(v.uid || '') === '550020260919' || String(v.uid || '') === '550020260920' || String(v.uid || '') === '550020260921' || String(v.uid || '') === '550020260922' || String(v.uid || '') === '550020260923' || String(v.uid || '') === '550020260924') return true;
       if (!supaFamilies[famKey]) return true;
       if (v.uid && /^sh-/.test(v.uid)) return true;
       return !!(v.uid && supaUids[v.uid]);
@@ -3502,10 +3502,12 @@ window.ulteraNormalizeAutumnCopy(DATA);
     } catch(_e) {}
   }
 })();
-/* Black and blue Aganta Thermo colorways merged into the existing Thermo family. */
+/* Aganta Thermo colorways merged into the existing Thermo family. */
 (function(){
   var blackUid = '550020260921';
   var blueUid = '550020260922';
+  var pistachioWhiteUid = '550020260923';
+  var beigeUid = '550020260924';
   var sizePairs = [['40','26'],['41','27'],['42','28'],['43','28.5'],['44','29'],['45','30']];
   function makeProduct(uid, title, colorName, swatch, photo, desc){
     return {
@@ -3554,10 +3556,28 @@ window.ulteraNormalizeAutumnCopy(DATA);
     '/photos/aganta-thermo-blue-01.webp',
     'Зимова модель Aganta в блакитному кольорі з утепленням до −15 °C, вологостійким верхом та зимовим протектором.'
   );
+  var pistachioWhiteProduct = makeProduct(
+    pistachioWhiteUid,
+    'ULTERA - Aganta Thermo Pistachio White',
+    'Фісташково-білий',
+    'linear-gradient(135deg,#111214 0 34%,#f3f2ee 34% 67%,#d9ddbd 67%)',
+    '/photos/aganta-thermo-pistachio-white-01.webp',
+    'Зимова модель Aganta у фісташково-білому кольорі з чорним верхом, утепленням до −15 °C, вологостійкими матеріалами та зимовим протектором.'
+  );
+  var beigeProduct = makeProduct(
+    beigeUid,
+    'ULTERA - Aganta Thermo Beige',
+    'Бежевий',
+    'linear-gradient(135deg,#b9a68f 0 58%,#f4f2ec 58%)',
+    '/photos/aganta-thermo-beige-01.webp',
+    'Зимова модель Aganta у бежево-білому кольорі з утепленням до −15 °C, вологостійкими матеріалами та зимовим протектором.'
+  );
   function mergeIntoThermoFamily(){
-    var localUids = [blackUid, blueUid];
+    var localUids = [blackUid, blueUid, pistachioWhiteUid, beigeUid];
     blackProduct.family = 'Thermo';
     blueProduct.family = 'Thermo';
+    pistachioWhiteProduct.family = 'Thermo';
+    beigeProduct.family = 'Thermo';
     ['featured','grid'].forEach(function(section){
       DATA[section] = (DATA[section] || []).filter(function(row){
         return row && row.family !== 'Aganta Thermo';
@@ -3580,11 +3600,11 @@ window.ulteraNormalizeAutumnCopy(DATA);
     var heroUid = family.hero && String(family.hero.uid || '');
     if (family.hero && heroUid && localUids.indexOf(heroUid) === -1 && !seen[heroUid]) existing.unshift(family.hero);
     family.family = 'Thermo';
-    family.variants = existing.concat([blackProduct, blueProduct]);
+    family.variants = existing.concat([blackProduct, blueProduct, pistachioWhiteProduct, beigeProduct]);
     if (!family.hero || localUids.indexOf(String(family.hero.uid || '')) !== -1) family.hero = existing[0] || blackProduct;
     if (!Array.isArray(DATA.all)) DATA.all = [];
     DATA.all = DATA.all.filter(function(item){ return item && localUids.indexOf(String(item.uid || '')) === -1; });
-    DATA.all.push(blackProduct, blueProduct);
+    DATA.all.push(blackProduct, blueProduct, pistachioWhiteProduct, beigeProduct);
   }
   mergeIntoThermoFamily();
   window.addEventListener('ultera:bootstrap:done', mergeIntoThermoFamily);
@@ -3607,6 +3627,8 @@ window.ulteraNormalizeAutumnCopy(DATA);
         '/photos/aganta-thermo-blue-04.webp',
         '/photos/aganta-thermo-blue-05.webp'
       ];
+      extra[pistachioWhiteUid] = ['/photos/aganta-thermo-pistachio-white-01.webp'];
+      extra[beigeUid] = ['/photos/aganta-thermo-beige-01.webp'];
       extraElement.textContent = JSON.stringify(extra);
     } catch(_e) {}
   }
