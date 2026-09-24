@@ -3406,6 +3406,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
   var blueUid = '550020260922';
   var pistachioWhiteUid = '550020260923';
   var beigeUid = '550020260924';
+  var sageUid = '550020260925';
   var sizePairs = [['40','26'],['41','27'],['42','28'],['43','28.5'],['44','29'],['45','30']];
   function makeProduct(uid, title, colorName, swatch, photo, desc){
     return {
@@ -3470,12 +3471,21 @@ window.ulteraNormalizeAutumnCopy(DATA);
     '/photos/aganta-thermo-beige-bg-01.webp',
     'Winter Aganta in beige and white with insulation down to −15 °C, water-resistant materials and winter tread.'
   );
+  var sageProduct = makeProduct(
+    sageUid,
+    'ULTERA - Aganta Thermo Sage',
+    'Sage',
+    'linear-gradient(135deg,#a8afa3 0 62%,#f4f4f1 62%)',
+    '/photos/aganta-thermo-sage-01.webp',
+    'Winter Aganta in sage with a white sole, insulation down to −15 °C, water-resistant materials and winter tread.'
+  );
   function mergeIntoThermoFamily(){
-    var localUids = [blackUid, blueUid, pistachioWhiteUid, beigeUid];
+    var localUids = [blackUid, blueUid, pistachioWhiteUid, beigeUid, sageUid];
     blackProduct.family = 'Thermo';
     blueProduct.family = 'Thermo';
     pistachioWhiteProduct.family = 'Thermo';
     beigeProduct.family = 'Thermo';
+    sageProduct.family = 'Thermo';
     ['featured','grid'].forEach(function(section){
       DATA[section] = (DATA[section] || []).filter(function(row){
         return row && row.family !== 'Aganta Thermo';
@@ -3498,11 +3508,11 @@ window.ulteraNormalizeAutumnCopy(DATA);
     var heroUid = family.hero && String(family.hero.uid || '');
     if (family.hero && heroUid && localUids.indexOf(heroUid) === -1 && !seen[heroUid]) existing.unshift(family.hero);
     family.family = 'Thermo';
-    family.variants = existing.concat([blackProduct, blueProduct, pistachioWhiteProduct, beigeProduct]);
+    family.variants = existing.concat([blackProduct, blueProduct, pistachioWhiteProduct, beigeProduct, sageProduct]);
     if (!family.hero || localUids.indexOf(String(family.hero.uid || '')) !== -1) family.hero = existing[0] || blackProduct;
     if (!Array.isArray(DATA.all)) DATA.all = [];
     DATA.all = DATA.all.filter(function(item){ return item && localUids.indexOf(String(item.uid || '')) === -1; });
-    DATA.all.push(blackProduct, blueProduct, pistachioWhiteProduct, beigeProduct);
+    DATA.all.push(blackProduct, blueProduct, pistachioWhiteProduct, beigeProduct, sageProduct);
   }
   mergeIntoThermoFamily();
   window.addEventListener('ultera:bootstrap:done', mergeIntoThermoFamily);
@@ -3527,6 +3537,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
       ];
       extra[pistachioWhiteUid] = ['/photos/aganta-thermo-pistachio-white-01.webp'];
       extra[beigeUid] = ['/photos/aganta-thermo-beige-bg-01.webp'];
+      extra[sageUid] = ['/photos/aganta-thermo-sage-01.webp'];
       extraElement.textContent = JSON.stringify(extra);
     } catch(_e) {}
   }
