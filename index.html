@@ -2872,7 +2872,7 @@ window.ulteraFbq = function(name, params){
   function fetchJSON(path){
     return fetch(SB + path, {
       headers: { 'apikey': K, 'Authorization': 'Bearer ' + K },
-      cache: 'default',
+      cache: 'no-store',
       credentials: 'omit'
     }).then(function(r){
       if (!r.ok) throw new Error('HTTP ' + r.status);
