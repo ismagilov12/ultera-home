@@ -3016,6 +3016,8 @@ window.ulteraFbq = function(name, params){
       if (Array.isArray(D[sec])) D[sec].forEach(function(fam){
         if (fam.hero) merge(fam.hero);
         if (Array.isArray(fam.variants)) fam.variants.forEach(merge);
+        /* Keep the featured/grid family key in sync when Supabase renames every variant in that family. */
+        if (fam.family === 'Thermo' && fam.hero && fam.hero.family === 'Aganta Thermo') fam.family = 'Aganta Thermo';
       });
     });
 
