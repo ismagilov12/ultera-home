@@ -7843,30 +7843,6 @@ insertWomanDivider();
   }
 }
 </style>
-<script id="ulThermoCardPriority">
-(function(){
-  var order = {'Hunk Thermo':0,'Aganta Thermo':1,'Thermo':1,'Thermo Ked':2};
-  function lift(){
-    var wrap = document.getElementById('featuredWrap');
-    if(!wrap) return;
-    var cards = Array.prototype.slice.call(wrap.querySelectorAll(':scope > .feat-card'));
-    var thermo = cards.filter(function(card){ return Object.prototype.hasOwnProperty.call(order, String(card.getAttribute('data-fam')||'').trim()); });
-    if(!thermo.length) return;
-    thermo.sort(function(a,b){
-      return order[String(a.getAttribute('data-fam')||'').trim()] - order[String(b.getAttribute('data-fam')||'').trim()];
-    });
-    var firstRegular = cards.find(function(card){ return !Object.prototype.hasOwnProperty.call(order, String(card.getAttribute('data-fam')||'').trim()); });
-    if(!firstRegular) return;
-    var currentFirst = cards.slice(0,thermo.length);
-    if(currentFirst.every(function(card,i){ return card===thermo[i]; })) return;
-    thermo.forEach(function(card){ wrap.insertBefore(card, firstRegular); });
-  }
-  var wrap = document.getElementById('featuredWrap');
-  if(wrap && window.MutationObserver){
-    new MutationObserver(lift).observe(wrap,{childList:true});
-  }
-  lift();
-})();
-</script>
+
 </body>
 </html>
