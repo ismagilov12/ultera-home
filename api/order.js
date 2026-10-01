@@ -49,6 +49,22 @@ const { sendCAPI } = require('./fb-capi');
 // Legacy hardcoded promo codes (server-side truth; extend with DB codes).
 const LEGACY_PROMOS = { 'SALE1': 5, 'ULTERA10': 10 };
 
+// CRM-only price adjustment for the winter-only Thermo products.
+// Keep this list aligned with the currently published ULTERA Thermo SKUs.
+const CRM_THERMO_ONLY_UIDS = new Set([
+  '571204839061', // Aganta Thermo Black/White
+  '550020260921', // Aganta Thermo Black
+  '550020260922', // Aganta Thermo Blue
+  '550020260923', // Aganta Thermo Pistachio White
+  '550020260924', // Aganta Thermo Beige
+  '550020260925', // Aganta Thermo Sage
+  '550020260917', // Hunk Thermo Black
+  '550020260918', // Hunk Thermo Khaki
+  '613028471955', // Thermo Ked Black
+  '613028471956'  // Thermo Ked Khaki
+]);
+const CRM_THERMO_ONLY_UPLIFT_UAH = 1000;
+
 const ALLOWED_ORIGINS_EXACT = new Set([
   'https://ultera.in.ua',
   'https://www.ultera.in.ua',
@@ -511,6 +527,44 @@ module.exports = async function handler(req, res) {
   const pmNp   = parseInt(process.env.KEYCRM_PM_NP   || '0', 10);
   const paymentMethodId = body.payment === 'card' ? pmCard : pmNp;
 
+  // KeyCRM gets a Thermo-only +1000 UAH per pair. This is CRM-only:
+  // authoritativeTotal below remains the amount used by the storefront/payment flow.
+  const crmProducts = (body.items || []).map(it => {
+    const uid = String(it.uid || '');
+    const thermoOnly = CRM_THERMO_ONLY_UIDS.has(uid);
+    const line = priced && Array.isArray(priced.breakdown)
+      ? priced.breakdown.find(b => b.uid === uid)
+      : null;
+    let unitPrice = line ? Number(line.unit_price) : (parseFloat(it.price) || 0);
+    const linePromoPct = line ? Number(line.promo_pct || 0) : (it.promoSecond ? 30 : 0);
+
+    if (thermoOnly) {
+      // The pricing RPC can already include a selectable-season uplift for newer
+      // Thermo family names. Strip it here, then apply exactly one CRM-only uplift.
+      const priorWinterUplift = line
+        ? Number(line.season_uplift || 0)
+        : (/зимові термо/i.test(String(it.season || '')) ? CRM_THERMO_ONLY_UPLIFT_UAH : 0);
+      unitPrice -= priorWinterUplift;
+    }
+    // SALE1 applies only to lines without per-line promo; same discount logic as before.
+    if (promoPct > 0 && linePromoPct <= 0) {
+      unitPrice = Math.round(unitPrice * (100 - promoPct)) / 100;
+    }
+    if (thermoOnly) unitPrice += CRM_THERMO_ONLY_UPLIFT_UAH;
+
+    return {
+      sku: uid,
+      name: it.title + (it.color_name ? ' / ' + it.color_name : '') + (it.size ? ' / р.' + it.size : '') + (it.season ? ' / ' + it.season : ''),
+      price: unitPrice,
+      quantity: parseInt(it.qty || 1, 10),
+      picture: it.photo || null
+    };
+  });
+  const crmTotal = crmProducts.reduce(
+    (sum, product) => sum + (Number(product.price) || 0) * (Number(product.quantity) || 0),
+    0
+  );
+
   const crmPayload = {
     source_id: parseInt(process.env.KEYCRM_SOURCE_ID || '1', 10),
     external_id: externalId,
@@ -526,28 +580,11 @@ module.exports = async function handler(req, res) {
     },
     payments: paymentMethodId ? [{
       payment_method_id: paymentMethodId,
-      amount: authoritativeTotal,
+      amount: crmTotal,
       status: 'not_paid',
       description: body.payment === 'card' ? 'Оплата карткою' : 'Наложений платіж'
     }] : [],
-    products: (body.items || []).map(it => {
-      const line = priced && priced.breakdown
-        ? priced.breakdown.find(b => b.uid === String(it.uid || ''))
-        : null;
-      let unitPrice = line ? Number(line.unit_price) : (parseFloat(it.price) || 0);
-      const linePromoPct = line ? Number(line.promo_pct || 0) : (it.promoSecond ? 30 : 0);
-      // [v10] SALE1 applies only to lines without per-line promo
-      if (promoPct > 0 && linePromoPct <= 0) {
-        unitPrice = Math.round(unitPrice * (100 - promoPct)) / 100;
-      }
-      return {
-        sku: String(it.uid || ''),
-        name: it.title + (it.color_name ? ' / ' + it.color_name : '') + (it.size ? ' / р.' + it.size : '') + (it.season ? ' / ' + it.season : ''),
-        price: unitPrice,
-        quantity: parseInt(it.qty || 1, 10),
-        picture: it.photo || null
-      };
-    })
+products: crmProducts
   };
 
   const token = process.env.KEYCRM_TOKEN;
