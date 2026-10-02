@@ -3736,6 +3736,10 @@ function renderFeatured(){
 
   // Family meta — tagline, sub, spec rows per family
   const META = {
+    '02':       { serial:'02-01', badge:'ВИРОБНИЦТВО 10-14 ДНІВ', tag:'ШКІРЯНІ КЕДИ',
+                   sub:'Підвищений комір, натуральна шкіра та біла cupsole-підошва.',
+                   specs:[['ПІДОШВА','Cupsole'],['ВЕРХ','Натуральна шкіра'],['СЕЗОН','Осінь / весна'],['ГАРАНТІЯ','1 рік']],
+                   handler:null },
     'Hunk3':     { serial:'HUNK3-01', badge:'ВИРОБНИЦТВО 4-10 ДНІВ', tag:'ФЛАГМАН \u00b7 BOUNCE TECH',
                    sub:'Третя генерація флагмана з підошвою Bounce. +32% повернення енергії.',
                    specs:[['ПІДОШВА','Bounce EVA'],['ВЕРХ','Шкіра Nappa + вологостійка Cordura'],['СЕЗОН','Осінь'],['ГАРАНТІЯ','1 рік']],
@@ -4335,7 +4339,14 @@ function openModal(uid){
     setTimeout(_preloadBurst, 180);
   }
 
-  // Матеріали (однакові для всіх моделей, окрім SHAPE)
+  // Матеріали для поточної моделі
+  const MATERIALS_02 = [
+    '<b>Натуральна шкіра</b> — фактурні вставки й перфорація на носку',
+    '<b>Шкіряна підкладка</b> — підвищений комір і посилена п’ята',
+    '<b>Біла cupsole-підошва</b> — легка, з протектором',
+    '<b>Анатомічна устілка</b> — знімна, з амортизацією під п’ятою',
+    '<b>Шнурівка</b>'
+  ];
   const MATERIALS_DEFAULT = [
     '<b>Nappa</b> — натуральна шкіра (Італія)',
     '<b>Cordura 1000D</b> — вологостійка, осіння версія',
@@ -4361,6 +4372,7 @@ function openModal(uid){
   // заповнити характеристики з META для поточної сім'ї
   try {
     const familyMeta = {
+      '02':       {top:'Натуральна шкіра', sole:'Легка cupsole'},
       'Hunk3':     {top:'Nappa + вологостійка Cordura', sole:'Bounce EVA'},
       'Hunk3 Suede':{top:'Замша + вологостійка Cordura', sole:'Bounce EVA'},
       'Aganta':    {top:'Шкіра Nappa + вологостійка Cordura', sole:'EVA'},
@@ -4378,11 +4390,11 @@ function openModal(uid){
     const topEl = document.getElementById('m_spec_top'); if(topEl) topEl.textContent = fm.top;
     const soleEl = document.getElementById('m_spec_sole'); if(soleEl) soleEl.textContent = fm.sole;
     /* v181: Thermo шьётся дольше — 12–14 дней вместо 4–10 */
-    const etaEl = document.getElementById('m_spec_eta'); if(etaEl) etaEl.textContent = (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? '12—14 днів' : '4—10 днів';
+    const etaEl = document.getElementById('m_spec_eta'); if(etaEl) etaEl.textContent = p.family === '02' ? '10—14 днів' : (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? '12—14 днів' : '4—10 днів';
   } catch(e){}
   const mtEl = document.getElementById('m_materials');
   if(mtEl){
-    const list = (p.family === 'SHAPE') ? MATERIALS_SHAPE : (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? MATERIALS_THERMO : MATERIALS_DEFAULT;
+    const list = (p.family === '02') ? MATERIALS_02 : (p.family === 'SHAPE') ? MATERIALS_SHAPE : (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? MATERIALS_THERMO : MATERIALS_DEFAULT;
     mtEl.innerHTML = '<span class="mm-title">Матеріали</span><ul>' + list.map(x=>'<li>'+x+'</li>').join('') + '</ul>';
   }
   // Опис — прибираємо дублювання з матеріалами, але залишаємо осінній опис Cordura.
@@ -4405,7 +4417,7 @@ function openModal(uid){
   document.getElementById('shBox').classList.remove('open');
 
   // Моделі без сезонного вибору (всесезонні / одна версія)
-  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo'];
+  const NO_SEASON = ['02','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo'];
   const sw = document.getElementById('m_season_wrap');
   if (sw) sw.style.display = NO_SEASON.includes(p.family) ? 'none' : '';
   // Seasonal choice must not leak between products. Default is Autumn at the current price.
@@ -4648,7 +4660,7 @@ function addToCart(){
   if(!p){ toast('Помилка товару'); return; }
   if(isSoldOut(p)){ toast('Немає в наявності'); return; }
   // Season: Autumn at the current price | Winter thermo (+1000 UAH).
-  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo'];
+  const NO_SEASON = ['02','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo'];
   const isThermo = p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo';
   const canSeason = !NO_SEASON.includes(p.family);
   const seasonId   = isThermo ? 'winter' : (canSeason ? (window.__modalSeason || 'autumn') : null);
@@ -7585,16 +7597,16 @@ insertWomanDivider();
   wrapOpenModal();
   setInterval(wrapOpenModal, 1000);
 })();</script>
-<!-- ===== ULTERA CORSO → лендинг передзамовлення (v170, 2026-08-10) ===== -->
+<!-- ===== ULTERA 01 / 02 — каталог та стандартні картки товарів ===== -->
 <script id="ulCorsoRedirect">
 (function(){
   'use strict';
 
-  /* Кожна модель лінії має власний лендинг. Порядок у масиві = порядок
+  /* Моделі лінії відкривають стандартні картки. Порядок у масиві = порядок
      чіпсів у каталозі й порядок карток на початку сітки. */
   var MODELS = [
     { fam: '01', alias: ['CORSO'], uids: ['480291657304'], landing: null, name: 'ULTERA 01', price: 4200 },
-    { fam: '02', alias: [],        uids: ['571034829116'], landing: '/02.html',               name: 'ULTERA 02', price: 3290 }
+    { fam: '02', alias: [],        uids: ['571034829116'], landing: null, name: 'ULTERA 02', price: 3790 }
   ];
 
   function famsOf(m){ return [m.fam].concat(m.alias || []); }

@@ -1,5 +1,12 @@
 {
   "ignoreCommand": "exit 1",
+  "redirects": [
+    {
+      "source": "/02.html",
+      "destination": "/?p=02-black%2C571034829116",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/tproduct/:path*",
