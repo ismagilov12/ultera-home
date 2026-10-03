@@ -99,6 +99,15 @@ function seasonFlag(it) {
   return null;
 }
 
+// New native-thermo cards have one KeyCRM offer per colour and EU size.
+// Preserve legacy SKU behaviour for every existing product.
+function keycrmCatalogSku(it) {
+  const uid = String((it && it.uid) || '');
+  if (!['550020261003','590020261003','590020261004'].includes(uid)) return uid;
+  const size = String((it && it.size) || '').trim().match(/^(4[0-5])(?:\D|$)/);
+  return size ? uid + '-' + size[1] : uid;
+}
+
 async function checkRateLimit(ip, limit) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -541,7 +550,7 @@ module.exports = async function handler(req, res) {
         unitPrice = Math.round(unitPrice * (100 - promoPct)) / 100;
       }
       return {
-        sku: String(it.uid || ''),
+        sku: keycrmCatalogSku(it),
         name: it.title + (it.color_name ? ' / ' + it.color_name : '') + (it.size ? ' / р.' + it.size : '') + (it.season ? ' / ' + it.season : ''),
         price: unitPrice,
         quantity: parseInt(it.qty || 1, 10),

@@ -2360,6 +2360,8 @@ window.ulteraFbq = function(name, params){
         <button class="coll-chip active" data-fam="all">Усі</button>
         <button class="coll-chip" data-fam="Thermo">Thermo ❄</button>
         <button class="coll-chip" data-fam="Hunk Thermo">Hunk Thermo ❄</button>
+        <button class="coll-chip" data-fam="Travel Thermo">Travel Thermo ❄</button>
+        <button class="coll-chip" data-fam="WAVE2 Thermo">WAVE2 Thermo ❄</button>
         <button class="coll-chip" data-fam="Hunk3">Hunk3</button>
         <button class="coll-chip" data-fam="Aganta">Aganta</button>
         <button class="coll-chip" data-fam="SHAPE">SHAPE ↗</button>
@@ -3730,6 +3732,10 @@ function findFamily(fam){
   return DATA.featured.find(r=>r.family===fam) || DATA.grid.find(r=>r.family===fam);
 }
 
+function isNativeThermoFamily(family){
+  return ['Thermo','Hunk Thermo','Aganta Thermo','Thermo Ked','Travel Thermo','WAVE2 Thermo'].includes(family);
+}
+
 /* ————— FEATURED (Hunk3, Aganta, SHAPE) ————— */
 function renderFeatured(){
   const el = document.getElementById('featuredWrap');
@@ -3761,6 +3767,14 @@ function renderFeatured(){
     'Hunk Thermo': { serial:'HUNK-TH-01', title:'Hunk Thermo', badge:'ВИРОБНИЦТВО 12-14 ДНІВ', tag:'ЗИМА \u00b7 ДО −15°C',
                    sub:'Висока зимова версія Hunk із теплою підкладкою, вологостійким верхом та зимовим протектором.',
                    specs:[['ПІДОШВА','EVA Bounce'],['ВЕРХ','Cordura® + шкіра'],['СЕЗОН','Зима · до −15°C'],['ГАРАНТІЯ','1 рік']],
+                   handler:null },
+    'Travel Thermo': { serial:'TRAVEL-TH-01', title:'Travel Thermo', badge:'ТЕРМО', tag:'ЗИМА · НОВИНКА',
+                   sub:'Висока термо-модель із верхом Cordura® та шкіряними вставками. Чорний колір і рельєфний протектор.',
+                   specs:[['ПІДОШВА','Рельєфний протектор'],['ВЕРХ','Cordura® + шкіра'],['СЕЗОН','Зима · термо'],['РОЗМІРИ','40–45']],
+                   handler:null },
+    'WAVE2 Thermo': { serial:'WAVE2-TH-01', title:'WAVE2 Thermo', badge:'ТЕРМО', tag:'ЗИМА · НОВИНКА',
+                   sub:'Термо-модель із хвилястими вставками, блискавкою спереду та регулюванням посадки. All Black і Salvia.',
+                   specs:[['ПІДОШВА','Рельєфний протектор'],['ВЕРХ','Текстиль + шкіра'],['СЕЗОН','Зима · термо'],['РОЗМІРИ','40–45']],
                    handler:null },
     'SHAPE':     { serial:'SHAPE-BF', badge:'BAREFOOT', tag:'АНАТОМІЧНІ \u00b7 BAREFOOT',
                    sub:'Анатомічні тапочки з італійської замші. Barefoot-форма, 10 кольорів.',
@@ -4363,6 +4377,18 @@ function openModal(uid){
     '<b>Устілка</b> з боковою підтримкою',
     '<b>Рефлективні шнурки</b>'
   ];
+  const MATERIALS_TRAVEL = [
+    '<b>Cordura® + шкіра</b> — текстильний верх зі шкіряними вставками',
+    '<b>Термо-версія</b> — входить у вартість моделі',
+    '<b>Високий комір</b> та шнурівка',
+    '<b>Підошва</b> з рельєфним протектором'
+  ];
+  const MATERIALS_WAVE2 = [
+    '<b>Текстиль + шкіра</b> — хвилясті вставки та фактурний носок',
+    '<b>Термо-версія</b> — входить у вартість моделі',
+    '<b>Блискавка спереду</b> та шнур із фіксатором',
+    '<b>Підошва</b> з рельєфним протектором'
+  ];
   const MATERIALS_SHAPE = [
     '<b>Італійська замша</b> — преміум матеріал',
     '<b>Підошва PU anatomic</b> — barefoot-форма',
@@ -4384,17 +4410,19 @@ function openModal(uid){
       'Spider':    {top:'Шкіра Nappa + вологостійка Cordura', sole:'EVA'},
       'Thermo':    {top:'Cordura® + шкіра', sole:'EVA Bounce, зимовий протектор'},
       'Hunk Thermo':{top:'Cordura® + шкіра', sole:'EVA Bounce, зимовий протектор'},
-      'Aganta Thermo':{top:'Cordura® + шкіра', sole:'EVA Bounce, зимовий протектор'}
+      'Aganta Thermo':{top:'Cordura® + шкіра', sole:'EVA Bounce, зимовий протектор'},
+      'Travel Thermo':{top:'Cordura® + шкіра', sole:'Рельєфний протектор'},
+      'WAVE2 Thermo':{top:'Текстиль + шкіра', sole:'Рельєфний протектор'}
     };
     const fm = familyMeta[p.family] || {top:'Nappa + вологостійка Cordura', sole:'EVA'};
     const topEl = document.getElementById('m_spec_top'); if(topEl) topEl.textContent = fm.top;
     const soleEl = document.getElementById('m_spec_sole'); if(soleEl) soleEl.textContent = fm.sole;
     /* v181: Thermo шьётся дольше — 12–14 дней вместо 4–10 */
-    const etaEl = document.getElementById('m_spec_eta'); if(etaEl) etaEl.textContent = p.family === '02' ? '10—14 днів' : (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? '12—14 днів' : '4—10 днів';
+    const etaEl = document.getElementById('m_spec_eta'); if(etaEl) etaEl.textContent = p.family === '02' ? '10—14 днів' : isNativeThermoFamily(p.family) ? '12—14 днів' : '4—10 днів';
   } catch(e){}
   const mtEl = document.getElementById('m_materials');
   if(mtEl){
-    const list = (p.family === '02') ? MATERIALS_02 : (p.family === 'SHAPE') ? MATERIALS_SHAPE : (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? MATERIALS_THERMO : MATERIALS_DEFAULT;
+    const list = (p.family === 'Travel Thermo') ? MATERIALS_TRAVEL : (p.family === 'WAVE2 Thermo') ? MATERIALS_WAVE2 : (p.family === '02') ? MATERIALS_02 : (p.family === 'SHAPE') ? MATERIALS_SHAPE : (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? MATERIALS_THERMO : MATERIALS_DEFAULT;
     mtEl.innerHTML = '<span class="mm-title">Матеріали</span><ul>' + list.map(x=>'<li>'+x+'</li>').join('') + '</ul>';
   }
   // Опис — прибираємо дублювання з матеріалами, але залишаємо осінній опис Cordura.
@@ -4417,7 +4445,7 @@ function openModal(uid){
   document.getElementById('shBox').classList.remove('open');
 
   // Моделі без сезонного вибору (всесезонні / одна версія)
-  const NO_SEASON = ['02','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo'];
+  const NO_SEASON = ['02','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo','Thermo Ked','Travel Thermo','WAVE2 Thermo'];
   const sw = document.getElementById('m_season_wrap');
   if (sw) sw.style.display = NO_SEASON.includes(p.family) ? 'none' : '';
   // Seasonal choice must not leak between products. Default is Autumn at the current price.
@@ -4660,11 +4688,12 @@ function addToCart(){
   if(!p){ toast('Помилка товару'); return; }
   if(isSoldOut(p)){ toast('Немає в наявності'); return; }
   // Season: Autumn at the current price | Winter thermo (+1000 UAH).
-  const NO_SEASON = ['02','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo'];
-  const isThermo = p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo';
+  const NO_SEASON = ['02','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo','Thermo Ked','Travel Thermo','WAVE2 Thermo'];
+  const isThermo = isNativeThermoFamily(p.family);
   const canSeason = !NO_SEASON.includes(p.family);
   const seasonId   = isThermo ? 'winter' : (canSeason ? (window.__modalSeason || 'autumn') : null);
-  const seasonLabel = isThermo ? 'Зима · до −15°C' : (seasonId === 'winter' ? 'Зимові термо · до −7°C' : (seasonId === 'autumn' ? 'Осінь' : ''));
+  const isNewThermo = ['Travel Thermo','WAVE2 Thermo','Thermo Ked'].includes(p.family);
+  const seasonLabel = isNewThermo ? 'Зима · термо' : isThermo ? 'Зима · до −15°C' : (seasonId === 'winter' ? 'Зимові термо · до −7°C' : (seasonId === 'autumn' ? 'Осінь' : ''));
   const seasonExtra = !isThermo && seasonId === 'winter' ? 1000 : 0;
   const basePrice  = parseFloat(p.price) || 0;
   const finalPrice = (basePrice + seasonExtra).toFixed(2);
@@ -5013,7 +5042,7 @@ function renderSummary(){
   ).join('');
   const contactHtml = (w.fio || w.phone) ? ('<div class="s-row">' + icUser + '<div><b>' + (w.fio||'—') + '</b><span>' + (w.phone||'—') + '</span></div></div>') : '';
   const addrHtml    = (w.city || w.wh)   ? ('<div class="s-row">' + icPin  + '<div><b>' + (w.city||'—') + '</b><span>' + (w.wh||'—') + '</span></div></div>' +
-                                             '<div class="s-row s-eta">' + icTruck + '<div><b>' + (((CART.items||[]).some(function(x){ return String(x.family||'') === 'Thermo'; })) ? '12–14 днів' : '4–10 днів') + '</b><span>Нова Пошта</span></div></div>') : '';
+                                             '<div class="s-row s-eta">' + icTruck + '<div><b>' + (((CART.items||[]).some(function(x){ return isNativeThermoFamily(String(x.family||'')); })) ? '12–14 днів' : '4–10 днів') + '</b><span>Нова Пошта</span></div></div>') : '';
   sumEl.innerHTML =
     '<div class="s-card">' +
       contactHtml + addrHtml +
@@ -7871,6 +7900,19 @@ insertWomanDivider();
 .swatch img[src*="/photos/m02-side-gray-20261003.webp"]{
   object-fit:contain;object-position:center;background:#dedede;
 }
+</style>
+
+<style id="ulTravelWave2PhotoFit">
+/* Full product composition, including the WAVE2 rear drawcord. */
+.feat-card[data-fam="Travel Thermo"] .feat-photo img,
+.feat-card[data-fam="WAVE2 Thermo"] .feat-photo img,
+.modal-img[data-fam="Travel Thermo"] > #m_img,
+.modal-img[data-fam="WAVE2 Thermo"] > #m_img{
+  width:100%;height:100%;object-fit:contain;object-position:center;
+  background:#e6e6e6;filter:none;transform:none;
+}
+.modal-img[data-fam="Travel Thermo"]:hover > #m_img,
+.modal-img[data-fam="WAVE2 Thermo"]:hover > #m_img{transform:none}
 </style>
 
 </body>
