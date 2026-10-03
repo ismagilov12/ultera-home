@@ -7857,14 +7857,17 @@ insertWomanDivider();
 </style>
 
 <style id="ulModel02PackshotFit">
-/* Keep the complete side-profile packshot visible at every card size. */
+/* Keep the model 02 cover and workshop photos fully visible. */
 .feat-card[data-fam="02"] .feat-photo img[src*="/photos/m02-side-gray-20261003.webp"],
-.modal-img[data-fam="02"] > #m_img[src*="/photos/m02-side-gray-20261003.webp"]{
+.modal-img[data-fam="02"] > #m_img[src*="/photos/m02-side-gray-20261003.webp"],
+.modal-img[data-fam="02"] > #m_img[src*="/photos/m02-workshop-"]{
   width:100%;height:100%;object-fit:contain;object-position:center;
   background:#dedede;filter:none;transform:none;
 }
-.modal-img[data-fam="02"]:hover > #m_img[src*="/photos/m02-side-gray-20261003.webp"]{transform:none}
+.modal-img[data-fam="02"]:hover > #m_img[src*="/photos/m02-side-gray-20261003.webp"],
+.modal-img[data-fam="02"]:hover > #m_img[src*="/photos/m02-workshop-"]{transform:none}
 .modal-strip img[src*="/photos/m02-side-gray-20261003.webp"],
+.modal-strip img[src*="/photos/m02-workshop-"],
 .swatch img[src*="/photos/m02-side-gray-20261003.webp"]{
   object-fit:contain;object-position:center;background:#dedede;
 }
