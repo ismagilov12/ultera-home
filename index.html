@@ -7918,6 +7918,16 @@ insertWomanDivider();
 }
 </style>
 
+<style id="ulHunkPistachioPackshotFit">
+/* Preserve the complete 4:3 Pistachio packshot on desktop and mobile. */
+.feat-card[data-fam="Hunk"] .feat-photo img[src*="/photos/hunk-renew-pistachio-01.webp"],
+.modal-img[data-fam="Hunk"] > #m_img[src*="/photos/hunk-renew-pistachio-01.webp"]{
+  width:100%;height:100%;object-fit:contain;object-position:center;
+  background:#e4e4e4;transform:none;
+}
+.modal-img[data-fam="Hunk"]:hover > #m_img[src*="/photos/hunk-renew-pistachio-01.webp"]{transform:none}
+</style>
+
 <style id="ulModel02PackshotFit">
 /* Keep the model 02 cover and workshop photos fully visible. */
 .feat-card[data-fam="02"] .feat-photo img[src*="/photos/m02-side-gray-20261003.webp"],
