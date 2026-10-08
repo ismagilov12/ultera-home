@@ -1,7 +1,7 @@
 // api/order.js — proxy ultera-home frontend → KeyCRM
 // SEASON v15 (2026-09-22):
 //   - [v15] FIX: pass the exact season to compute_order_total.
-//           Autumn/Cordura uses the catalog price; Winter adds +1000 UAH.
+//           Autumn/Cordura uses the catalog price; Winter adds +700 UAH.
 //           Legacy season_id='spring' is normalized to 'autumn'.
 // SEASON v14 (2026-08-28):
 //   - [v14] season_id was forwarded to compute_order_total.
@@ -151,7 +151,7 @@ async function verifyTurnstile(token, remoteIp) {
 
 // [v10] Forward promoSecond → promo_pct=30 so RPC applies the same Shape discount
 //       the user sees in the cart. Items can carry promo_pct directly too.
-// Forward only an explicit legacy spring flag; autumn uses the catalog price.
+// Preserve winter for the authoritative surcharge; autumn uses the catalog price.
 async function recomputePrices(items) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -539,9 +539,9 @@ module.exports = async function handler(req, res) {
       status: 'not_paid',
       description: body.payment === 'card' ? 'Оплата карткою' : 'Наложений платіж'
     }] : [],
-    products: (body.items || []).map(it => {
-      const line = priced && priced.breakdown
-        ? priced.breakdown.find(b => b.uid === String(it.uid || ''))
+    products: (body.items || []).map((it, index) => {
+      const line = priced && priced.ok && priced.breakdown
+        ? priced.breakdown[index]
         : null;
       let unitPrice = line ? Number(line.unit_price) : (parseFloat(it.price) || 0);
       const linePromoPct = line ? Number(line.promo_pct || 0) : (it.promoSecond ? 30 : 0);

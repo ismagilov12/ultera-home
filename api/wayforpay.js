@@ -178,13 +178,14 @@ module.exports = async function handler(req, res) {
       const pct = Number(it.promo_pct || 0);
       const safePct = Math.max(0, Math.min(90, pct));
       // season_id -> RPC. Autumn is already included in the catalog price.
-      const seasonRaw = String(it.season_id || it.seasonId || '');
-      const seasonId = seasonRaw || (/весна/i.test(String(it.season || '')) ? 'spring' : '');
+      const seasonRaw = String(it.season_id || it.seasonId || '').trim().toLowerCase();
+      const seasonLabel = String(it.season || '');
+      const seasonId = seasonRaw || (/зим/i.test(seasonLabel) ? 'winter' : (/осін|весна/i.test(seasonLabel) ? 'autumn' : ''));
       return {
         uid: String(it.uid || ''),
         qty: Math.max(parseInt(it.qty || 1, 10), 1),
         promo_pct: safePct,
-        season_id: seasonId === 'spring' ? 'spring' : null
+        season_id: seasonId === 'winter' ? 'winter' : (seasonId === 'spring' || seasonId === 'autumn' ? 'autumn' : null)
       };
     });
   } else if (Array.isArray(products) && products.length > 0) {
@@ -226,7 +227,7 @@ module.exports = async function handler(req, res) {
       const baseName = names[line.uid] || line.uid;
       // [v9] показуємо версію в назві позиції, щоб клієнт бачив, за що надбавка
       const uplift = Number(line.season_uplift || 0);
-      productName.push(uplift > 0 ? (baseName + ' / Весна-Осінь') : baseName);
+      productName.push(uplift > 0 ? (baseName + ' / Зимові термо') : baseName);
       productCount.push(String(line.qty));
       let unit = Number(line.unit_price);
       const linePromoPct = Number(line.promo_pct || 0);
