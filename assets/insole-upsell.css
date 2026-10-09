@@ -1,0 +1,16 @@
+.cd-insole[hidden]{display:none!important}
+.cd-insole{margin:18px 0;padding:16px;border:1px solid #d5e4dc;border-radius:16px;background:#f1f7f3;color:#18281f}
+.cd-insole-main{display:flex;gap:13px;align-items:center}
+.cd-insole-photo{width:78px;height:92px;object-fit:contain;flex-shrink:0;border-radius:10px;background:#fff}
+.cd-insole-copy{min-width:0;flex:1}
+.cd-insole-eyebrow{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#53715f;margin:0 0 6px}
+.cd-insole-title{font-size:16px;font-weight:700;line-height:1.25;margin:0 0 6px}
+.cd-insole-text{font-size:12px;line-height:1.5;margin:0;color:#526258}
+.cd-insole-size{display:flex;align-items:center;gap:10px;margin-top:13px;font-size:12px;flex-wrap:wrap}
+.cd-insole-size select{flex:1;min-width:100px;max-width:100%;padding:9px;border:1px solid #c9d7ce;border-radius:8px;background:#fff;color:#18281f;font:inherit;font-size:14px}
+.cd-insole-add{display:block;width:100%;min-height:44px;margin-top:12px;padding:11px 12px;border:0;border-radius:10px;background:#18281f;color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.cd-insole-add:hover{background:#2d4837}
+.cd-insole-add:disabled{background:#dce9df;color:#355d43;cursor:default}
+.cd-insole-add:focus-visible,.cd-insole-size select:focus-visible{outline:2px solid #355d43;outline-offset:3px}
+.cd-insole-status{font-size:11px;line-height:1.4;color:#526258;margin:8px 0 0}
+@media(max-width:380px){.cd-insole{padding:12px}.cd-insole-photo{width:60px;height:78px}.cd-insole-title{font-size:15px}}

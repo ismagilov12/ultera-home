@@ -2569,6 +2569,7 @@ window.ulteraFbq = function(name, params){
       </div>
       <div class="cd-list-wrap" id="cdListWrap" style="display:none">
         <div class="cd-list" id="cdList"></div>
+        <section id="cdInsoleUpsell" class="cd-insole" aria-label="Додати змінні устілки" hidden></section>
         <div id="cdShapePromo" class="cd-promo" hidden></div>
         <div class="cd-foot">
           <div class="cd-sum"><span>Сума</span><b id="cdSum">0 ₴</b></div>
@@ -4797,6 +4798,7 @@ function renderCart(){
   ).join('');
   document.getElementById('cdSum').textContent = Math.round(CART.total()).toLocaleString('uk-UA') + ' ₴';
   renderShapePromo();
+  if(window.ULTERA_INSOLES) window.ULTERA_INSOLES.render();
 }
 function cartQty(i, d){ CART.setQty(i, (CART.items[i]?.qty||1) + d); CART.reconcilePromo(); updateCartBadge(); renderCart(); }
 function cartRm(i){ CART.remove(i); CART.reconcilePromo(); updateCartBadge(); renderCart(); }
@@ -7958,5 +7960,7 @@ insertWomanDivider();
 .modal-img[data-fam="WAVE2 Thermo"]:hover > #m_img{transform:none}
 </style>
 
+<link rel="stylesheet" href="/assets/insole-upsell.css?v=20261009">
+<script src="/assets/insole-upsell.js?v=20261009" defer></script>
 </body>
 </html>
