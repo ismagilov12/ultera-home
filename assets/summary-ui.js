@@ -6,7 +6,7 @@
   const uah=n=>n===null||n===undefined?'—':nf(n)+' ₴';
   const pct=n=>n===null||n===undefined?'—':new Intl.NumberFormat('uk-UA',{style:'percent',maximumFractionDigits:1}).format(n);
   const names={standard:'Звичайна',thermal:'Низька термо',boot:'Високий термо',insole:'Устілки',other:'Інше / сейл'};
-  let data=null,result=null,prior=null,config={...C.DEFAULTS},activeTab='models',trendDate=null,loaded=false,requestVersion=0;
+  let data=null,result=null,prior=null,config={...C.DEFAULTS},activeTab='models',trendDate=null,loaded=false,requestVersion=0,sourceFilter='all',loading=false;
   const today=C.day(new Date()),yesterday=new Date(today+'T12:00Z');yesterday.setUTCDate(yesterday.getUTCDate()-1);
   const y=yesterday.toISOString().slice(0,10), start=new Date(y+'T12:00Z');start.setUTCDate(start.getUTCDate()-6);
   let range={from:start.toISOString().slice(0,10),to:y};
@@ -15,6 +15,7 @@
   function tile(label,value,sub,d,featured){return '<article class="s-kpi '+(featured?'featured':'')+'"><div class="label">'+label+'</div><div class="value">'+value+'</div><div class="sub">'+sub+'</div>'+d+'</article>';}
   root.innerHTML='<div class="s-head"><div><div class="s-eyebrow">ULTERA / Бізнес-аналітика</div><h1>Зведення</h1></div><span class="s-badge" id="s-fresh"><i class="s-dot"></i> Дані захищені входом</span></div><div class="s-toolbar"><button data-preset="today">Сьогодні</button><button data-preset="7" class="active">7 завершених днів</button><button data-preset="month">Цей місяць</button><button data-preset="30">30 завершених днів</button><label>Від <input id="s-from" type="date" aria-label="Початок періоду" value="'+range.from+'"></label><label>До <input id="s-to" type="date" aria-label="Кінець періоду" value="'+range.to+'"></label><button id="s-apply">Показати</button><span class="s-spacer"></span><button id="s-refresh" class="primary">Оновити дані</button></div><div id="s-error" role="alert"></div><div id="s-content"><div class="s-loading">Завантажую продажі та витрати…</div></div><details class="s-panel s-settings" hidden><summary>Параметри розрахунку <span class="s-muted">Курс, собівартість, загальні витрати</span></summary><form id="s-config"><div class="s-settings-grid">'+[['fx','Курс грн / $'],['standard','Звичайна пара, грн'],['thermal','Низька термо, грн'],['boot','Високий термо, грн'],['insole','Устілки, грн (якщо відомо)'],['overhead','Загальні витрати за місяць, грн'],['extra','Додаткові витрати за період, грн']].map(([k,label])=>'<label>'+label+'<input name="'+k+'" type="number" min="'+(k==='fx'?'.01':'0')+'" step=".01" value="'+(config[k]??'')+'" '+(k==='insole'?'':'required')+'></label>').join('')+'</div><p class="s-muted">Собівартість і загальні витрати нижче — ваші планові вводні, не перевірені фактичні витрати. Якщо в позиції є собівартість CRM, пріоритет має вона. Не дублюйте зарплату виробництва у нормі та загальних витратах. Зміни тут не змінюють ціни чи замовлення.</p><button type="submit" style="margin-top:14px">Перерахувати</button></form></details>';
   const el=id=>document.getElementById(id);
+  root.querySelector('.s-toolbar').insertAdjacentHTML('afterend','<div class="s-toolbar"><label>Джерело <select id="s-source" aria-label="Джерело замовлень"><option value="all">Усі джерела KeyCRM</option></select></label><span class="s-muted" id="s-source-note">Усі замовлення читаються безпосередньо з CRM, без дублювання сайтом.</span></div>');
   function notices(r){
     const b=r.buckets,parts=[];
     if(!r.advertising.complete)parts.push('Реклама покриває '+r.advertising.coveredDays+' із '+r.days+' днів. Прибуток і ціна апрува приховані до повного покриття.');
@@ -23,6 +24,11 @@
     if(b.waiting.orders)parts.push(nf(b.waiting.orders)+' апрувів ще очікують викупу. Результат від викупів у цій молодій когорті не є остаточним прибутком або збитком бізнесу.');
     if(r.metadata.adSourceReady===false)parts.push('Захищене джерело реклами ще не підключене або тимчасово недоступне.');
     if(r.metadata.ordersComplete===false)parts.push('Замовлення не покривають увесь вибраний період. Фінансові підсумки приховані; доступні дати: '+(r.metadata.earliestOrderDate||'—')+' — '+(r.metadata.latestOrderDate||'—')+'.');
+    if(r.metadata.sourceFiltered)parts.push('Окреме джерело: витрати Meta та загальні витрати показані для всього бізнесу. Прибуток, ціна клієнта й ROAS джерела приховані — розподілу реклами між джерелами немає.');
+    if(r.metadata.currencyComplete===false)parts.push('Є джерела з невідомою або іншою валютою. Фінансові результати потребують звірки.');
+    if(r.metadata.quality?.unknownCategoryUnits)parts.push('Для '+nf(r.metadata.quality.unknownCategoryUnits)+' од. у завантаженні немає категорії CRM; вони не зараховані до пар ОБУВЬ.');
+    if(r.metadata.quality?.unknownSizeUnits)parts.push('Для '+nf(r.metadata.quality.unknownSizeUnits)+' пар у завантаженні не вказано розмір.');
+    if(r.reconciliation.crmExpensesApproved)parts.push('Окремо в CRM записано витрат на '+uah(r.reconciliation.crmExpensesApproved)+'. Вони не віднімаються повторно: перевірте, чи включені у ваші загальні / додаткові витрати.');
     if(!r.metadata.preview&&r.metadata.advertisingMode==='stored_days'){const days=(data.adDays||[]).map(d=>d.date).sort();const fetched=(data.adDays||[]).map(d=>d.fetched_at).filter(Boolean).sort().at(-1);parts.push('Meta: збережені імпортовані дні'+(days.length?' до '+days.at(-1):' відсутні')+'. Автоматичне оновлення реклами ще не підключене.'+(fetched?' Дані отримано '+new Date(fetched).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv'})+'.':''));}
     if(r.metadata.preview)parts.push('Це локальний знімок на '+new Date(r.metadata.fetchedAt).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv'})+'. Оновлення кнопкою перечитує знімок, а не CRM. Ручні замовлення менеджера поза сайтом сюди не входять.');
     if(r.to===today)parts.push('Сьогодні ще не завершено. Для порівняння темпу оберіть завершені дні.');
@@ -30,19 +36,22 @@
   }
   function render(){
     if(!data)return;
-    result=C.summarize(data.orders,data.adDays,range.from,range.to,config,data.metadata);
+    const filtered=sourceFilter!=='all',source=data.sources?.find(s=>String(s.id)===sourceFilter);
+    const orders=filtered?data.orders.filter(o=>String(o.source_id)===sourceFilter):data.orders;
+    const metadata={...data.metadata,sourceFiltered:filtered,scopeLabel:filtered?(source?.site?'Сайт / ':'')+(source?.name||sourceFilter)+' · KeyCRM':data.metadata?.scopeLabel};
+    result=C.summarize(orders,data.adDays,range.from,range.to,config,metadata);
     const pr=C.previous(range.from,range.to);
-    prior=range.to>=today||(data.metadata?.earliestOrderDate&&pr.from<data.metadata.earliestOrderDate)?null:C.summarize(data.orders,data.adDays,pr.from,pr.to,{...config,extra:0},data.metadata);
+    prior=range.to>=today||(metadata.earliestOrderDate&&pr.from<metadata.earliestOrderDate)?null:C.summarize(orders,data.adDays,pr.from,pr.to,{...config,extra:0},metadata);
     const r=result,b=r.buckets,p=prior?.buckets;
-    el('s-fresh').innerHTML='<i class="s-dot"></i>'+esc(data.metadata?.preview?'Локальний знімок':'KeyCRM + сайт');
+    el('s-fresh').innerHTML='<i class="s-dot"></i>'+esc(data.metadata?.preview?'Локальний знімок':'KeyCRM наживо · '+new Date(data.metadata.fetchedAt).toLocaleTimeString('uk-UA',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'}));
     const costNote=b.approved.estimatedCostUnits?'Норма застосована до '+nf(b.approved.estimatedCostUnits)+' од.':'Із позицій CRM';
-    el('s-content').innerHTML='<div class="s-panel-head"><h2>Продажі та прибуток</h2><p class="s-muted">'+esc((data.metadata?.scopeLabel||'Замовлення сайту · статуси KeyCRM')+' · '+r.from+' — '+r.to)+'</p></div><div class="s-kpis">'+
+    el('s-content').innerHTML='<div class="s-panel-head"><h2>Продажі та прибуток</h2><p class="s-muted">'+esc((metadata.scopeLabel||'Замовлення сайту · статуси KeyCRM')+' · '+r.from+' — '+r.to)+'</p></div>'+reconciliationPanel(r)+'<div class="s-kpis">'+
       tile('Апрувнуто',nf(b.approved.orders),nf(b.approved.pairs)+' пар · '+uah(b.approved.revenue),delta(b.approved.orders,p?.approved.orders??null),true)+
       tile('Викуплено',nf(b.redeemed.orders),uah(b.redeemed.revenue)+' · '+pct(r.redemptionRate)+' від апрувів','')+
       tile('Очікують викупу',nf(b.waiting.orders),uah(b.waiting.revenue),'')+
       tile('Нові / відмови',nf(b.pending.orders)+' / '+nf(b.rejected.orders),nf(b.all.orders)+' комерційних заявок','')+
       tile('Середній чек апрува',uah(r.aov),'Сума після знижок / замовлення',delta(r.aov,prior?.aov??null))+
-      tile('Ціна апрува',uah(r.cpo),r.cpo===null?'Потрібні повні дані реклами':'$'+(r.cpo/config.fx).toFixed(2)+' · сукупна реклама / апруви',delta(r.cpo,prior?.cpo??null,true))+
+      tile('Ціна апрува',uah(r.cpo),r.cpo===null?(filtered?'Немає розподілу реклами за джерелами':'Потрібні повні дані реклами'):'$'+(r.cpo/config.fx).toFixed(2)+' · сукупна реклама / апруви',delta(r.cpo,prior?.cpo??null,true))+
       tile('Апрув по клієнтах',pct(r.customerApprovalRate),nf(b.approved.customers)+' із '+nf(b.all.customers)+' · по заявках '+pct(r.approvalRate),'')+
       tile('Частка термо',pct(r.thermalShare),'Низька термо + високі ботинки','')+'</div>'+
       '<section class="s-panel"><div class="s-finance">'+[
@@ -52,11 +61,16 @@
         ['Очікуваний чистий · оцінка',uah(r.profit.expected),'Якщо всі апруви викуплять'],
         ['Від викупів · оцінка',uah(r.profit.redeemed),'Собівартість викупів: '+(b.redeemed.missingCostUnits?'неповна':uah(b.redeemed.cost))]
       ].map(([l,v,s])=>'<div><div class="s-muted">'+l+'</div><div class="amount">'+v+'</div><p class="s-muted">'+s+'</p></div>').join('')+'</div>'+notices(r)+
-      '<div class="s-efficiency">'+[['Маржа до реклами',uah(r.grossMargin)],['Маржинальність',pct(r.grossMarginRate)],['Реклама / клієнт з апрувом',uah(r.cac)],['Сума апрувів / реклама',r.roas===null?'—':r.roas.toFixed(2)+'×']].map(([l,v])=>'<div><span class="s-muted">'+l+'</span><b>'+v+'</b></div>').join('')+'</div><p class="s-fineprint">Когорта за датою створення замовлення, часовий пояс — Київ. Апрув: не «Новий», не відмова; «12 / 15 / 20+ днів» включені. Викуп: CRM «Виконано» (12). «Немає в наявності» — загальна причина відмови, не висновок про склад. Прибуток = сума − собівартість − реклама − загальні − додаткові витрати. Не є рухом грошей; податки, комісії та повернення не враховані, якщо їх не внесено у витрати. Реклама / клієнт — змішаний показник, а не вартість залучення нового покупця. Ідентичний клієнт визначається за телефоном без його показу.</p></section>'+
+      '<div class="s-efficiency">'+[['Маржа до реклами',uah(r.grossMargin)],['Маржинальність',pct(r.grossMarginRate)],['Реклама / клієнт з апрувом',uah(r.cac)],['Сума апрувів / реклама',r.roas===null?'—':r.roas.toFixed(2)+'×']].map(([l,v])=>'<div><span class="s-muted">'+l+'</span><b>'+v+'</b></div>').join('')+'</div><p class="s-fineprint">Когорта за датою оформлення на джерелі (KeyCRM ordered_at), часовий пояс — Київ. Апрув: не «Новий», не відмова; «12 / 15 / 20+ днів» включені. Викуп: CRM «Виконано» (12). «Немає в наявності» — загальна причина відмови, не висновок про склад. Прибуток = сума − собівартість − реклама − загальні − додаткові витрати. Не є рухом грошей; податки, комісії та повернення не враховані, якщо їх не внесено у витрати. Реклама / клієнт — змішаний показник, а не вартість залучення нового покупця. Клієнт визначається за повним телефоном, за його відсутності — ID покупця CRM, без показу особистих даних. Назви моделей і розміри — з CRM.</p></section>'+
       '<section class="s-panel"><div class="s-panel-head"><div><h2>Динаміка продажів</h2><p class="s-muted">Апруви та викуп за датою створення</p></div><div class="s-legend"><span><i class="s-key" style="background:#97ba3c"></i>Апруви</span><span><i class="s-key" style="background:#536aec"></i>Викуп</span></div></div>'+chart(r.daily)+'</section>'+
       '<section class="s-panel" id="s-trends" aria-labelledby="s-trends-title"></section>'+
       '<section class="s-panel"><div class="s-tabs" role="tablist" aria-label="Деталі продажів">'+[['models','Топ моделей і розміри'],['sizes','Розміри та версії'],['channels','UTM та міста']].map(([k,label])=>'<button role="tab" id="s-tab-'+k+'" aria-controls="s-pane" aria-selected="'+(activeTab===k)+'" data-tab="'+k+'">'+label+'</button>').join('')+'</div><div id="s-pane" role="tabpanel" aria-labelledby="s-tab-'+activeTab+'"></div></section><p class="s-muted" style="margin:5px 0 22px">Оновлено: '+esc(data.metadata?.fetchedAt?new Date(data.metadata.fetchedAt).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv'}):'—')+' · '+esc(data.metadata?.sourceLabel||'Сайт → синхронізація KeyCRM; реклама Windsor.ai')+'. '+(prior?'Порівняння: '+pr.from+' — '+pr.to+'.':'Порівняння приховане: неповний поточний день або немає попереднього періоду.')+'</p>';
     renderTrends();renderTab();
+  }
+  function reconciliationPanel(r){
+    if(!r.metadata.allCRMOrders)return '';
+    const v=r.reconciliation;
+    return '<section class="s-panel" aria-label="Звірка з KeyCRM"><div class="s-panel-head"><div><h2>Звірка з KeyCRM · ОБУВЬ</h2><p class="s-muted">Категорія 22 · нескасовані замовлення · нові показані окремо</p></div><strong style="font-size:28px">'+nf(v.pairs)+' пар</strong></div><div class="s-efficiency"><div><span class="s-muted">Пари в апрувах</span><b>'+nf(v.approvedPairs)+'</b></div><div><span class="s-muted">Пари в нових / статус невідомий</span><b>'+nf(v.pendingPairs)+' / '+nf(v.unknownPairs)+'</b></div><div><span class="s-muted">Сума товарів CRM</span><b>'+uah(v.missingProductRevenue?null:v.productRevenue)+'</b></div><div><span class="s-muted">Закупівля товарів CRM</span><b>'+uah(v.missingProductCost?null:v.productCost)+'</b></div></div><details style="margin-top:18px"><summary>Розподіл за джерелами</summary><div class="s-table-wrap"><table><thead><tr><th>Джерело</th><th class="num">Пари без відмов</th><th class="num">Пари в апрувах</th><th class="num">Апрув-замовлення</th><th class="num">Клієнти з апрувом</th><th class="num">Сума апрувів</th></tr></thead><tbody>'+r.sources.map(s=>'<tr><td>'+esc(s.name)+'</td><td class="num">'+nf(s.pairs)+'</td><td class="num">'+nf(s.approvedPairs)+'</td><td class="num">'+nf(s.approved)+'</td><td class="num">'+nf(s.approvedCustomers)+'</td><td class="num">'+uah(s.revenue)+'</td></tr>').join('')+'</tbody></table></div></details><p class="s-fineprint">Пари ≠ замовлення ≠ клієнти. Тут суми товарів категорії ОБУВЬ за ціною продажу CRM; нижче — повні суми замовлень з допродажами та іншими складовими. Нульова закупівля у звірці — значення CRM, не підтверджена нульова собівартість у прибутку.</p></section>';
   }
   const trendSpecs=[
     {key:'cac',title:'Ціна апрувнутого клієнта',color:'#7b9625',formula:'Витрати Meta / унікальні клієнти з апрувом за день'},
@@ -66,6 +80,7 @@
   const shortDate=d=>d.slice(8)+'.'+d.slice(5,7);
   const preciseUAH=n=>new Intl.NumberFormat('uk-UA',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' ₴';
   function trendReason(row,key){
+    if(key==='cac'&&result.metadata.sourceFiltered)return 'Немає розподілу реклами за джерелами';
     if(key!=='adSpend'&&result.metadata.ordersComplete===false)return 'Неповні дані замовлень';
     if(key!=='aov'&&row.adSpend===null)return 'Немає даних реклами за цей день';
     return 'Немає апрувів за цей день';
@@ -125,20 +140,29 @@
   function renderProducts(){const rows=selectedProducts();el('s-model-list').innerHTML=rows.length?rows.map((p,index)=>'<details class="s-product"><summary><span class="s-rank">'+String(index+1).padStart(2,'0')+'</span><span><span class="s-product-name">'+esc(p.title)+'</span><br>'+p.variants.map(v=>'<span class="s-pill">'+names[v.kind]+' '+v.qty+'</span>').join('')+'</span><span class="s-product-num">'+p.qty+'<small>апрув, од.</small></span><span class="s-product-num s-product-redeemed">'+p.redeemedQty+'<small>викуп, од.</small></span><span class="s-product-num s-product-revenue">'+uah(p.revenue)+'<small>сума апрувів</small></span><span class="s-product-num s-product-margin">'+uah(p.margin)+'<small>маржа до реклами</small></span><span class="s-chevron">›</span></summary><div class="s-product-detail"><div class="s-table-wrap"><table><thead><tr><th>Розмір</th><th>Версія</th><th class="num">Апрув, од.</th><th class="num">Викуп, од.</th><th class="num">Сума апрувів</th></tr></thead><tbody>'+p.sizes.map(s=>'<tr><td><b>'+esc(s.size)+'</b></td><td>'+names[s.kind]+'</td><td class="num">'+s.qty+'</td><td class="num">'+s.redeemed+'</td><td class="num">'+uah(s.revenue)+'</td></tr>').join('')+'</tbody></table></div><p class="s-muted" style="margin-top:8px">Собівартість: '+(p.missingCostUnits?'неповна':uah(p.cost))+'. '+(p.estimatedCostUnits?'Для '+p.estimatedCostUnits+' од. використано розрахункову норму.':'')+'</p></div></details>').join(''):'<div class="s-empty">Немає моделей за цим запитом.</div>';}
   function exportCSV(){const rows=[['Модель','Розмір','Версія','Апрув, од.','Викуп, од.','Сума апрувів, грн']];for(const p of selectedProducts())for(const s of p.sizes)rows.push([p.title,s.size,names[s.kind],s.qty,s.redeemed,C.money(s.revenue)]);const cell=v=>'"'+String(v).replace(/^[=+@-]/,"'$&").replace(/"/g,'""')+'"';const blob=new Blob(['\ufeff'+rows.map(r=>r.map(cell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download='ULTERA-models-sizes-'+range.from+'-'+range.to+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   async function load(force){
+    if(loading)return;
+    loading=true;
     const version=++requestVersion;
     const refresh=el('s-refresh');refresh.disabled=true;el('s-error').innerHTML='';
+    for(const control of root.querySelectorAll('.s-toolbar button,.s-toolbar input,.s-toolbar select'))control.disabled=true;
+    el('s-content').innerHTML='<div class="s-loading">Читаю всі джерела KeyCRM і звіряю товари… Зазвичай до хвилини; великий період — довше.</div>';
     try{
       const previous=C.previous(range.from,range.to);
       if(window.ULTERA_SUMMARY_PREVIEW){data=window.ULTERA_SUMMARY_PREVIEW;el('s-refresh').textContent='Перечитати знімок';}
       else {await ensureFreshSession();const response=await fetch('/api/summary?from='+previous.from+'&to='+range.to+(force?'&refresh=1':''),{headers:authHeaders(),cache:'no-store'});const body=await response.json();if(!response.ok)throw new Error(body.error||'Не вдалося завантажити зведення');data=body;}
       if(version!==requestVersion)return;
+      const sources=data.sources||[];
+      if(sourceFilter!=='all'&&!sources.some(s=>String(s.id)===sourceFilter))sourceFilter='all';
+      el('s-source').innerHTML='<option value="all">Усі джерела KeyCRM</option>'+sources.map(s=>'<option value="'+s.id+'">'+esc((s.site?'Сайт / ':'')+s.name)+'</option>').join('');
+      el('s-source').value=sourceFilter;
+      el('s-source-note').textContent=data.metadata?.preview?'Локальний знімок лише сайту; повна CRM доступна в опублікованій адмінці.':'Усі замовлення читаються безпосередньо з CRM, без дублювання сайтом.';
       let saved={};try{saved=JSON.parse(localStorage.getItem('ultera_summary_assumptions_v1')||'{}')||{};}catch{}
       config=C.settings({...data.assumptions,...saved});
       for(const [key,value] of Object.entries(config)){const input=el('s-config').elements.namedItem(key);if(input)input.value=value??'';}
       root.querySelector('.s-settings').hidden=false;
       loaded=true;render();
     }catch(e){if(version!==requestVersion)return;root.querySelector('.s-settings').hidden=true;el('s-error').innerHTML='<div class="s-notice s-error">'+esc(e.message)+'</div>';data=null;result=null;prior=null;loaded=false;el('s-content').innerHTML='<div class="s-empty">Не вдалося завантажити вибраний період. Перевірте дати та доступ адміністратора. Дані не замінюються нулями.</div>';}
-    finally{if(version===requestVersion)refresh.disabled=false;}
+    finally{loading=false;if(version===requestVersion)for(const control of root.querySelectorAll('.s-toolbar button,.s-toolbar input,.s-toolbar select'))control.disabled=false;}
   }
   root.addEventListener('click',async e=>{
     const tab=e.target.closest('[data-tab]');if(tab){activeTab=tab.dataset.tab;root.querySelectorAll('[data-tab]').forEach(t=>t.setAttribute('aria-selected',t===tab));renderTab();return;}
@@ -146,6 +170,7 @@
   });
   el('s-apply').onclick=async()=>{try{C.dates(el('s-from').value,el('s-to').value);range={from:el('s-from').value,to:el('s-to').value};root.querySelectorAll('[data-preset]').forEach(b=>b.classList.remove('active'));await load(false);}catch(e){el('s-error').innerHTML='<div class="s-notice s-error">'+esc(e.message)+'</div>';}};
   el('s-refresh').onclick=()=>load(true);
+  el('s-source').onchange=e=>{sourceFilter=e.target.value;render();};
   el('s-config').onsubmit=e=>{e.preventDefault();try{config=C.settings(Object.fromEntries(new FormData(e.target)));localStorage.setItem('ultera_summary_assumptions_v1',JSON.stringify(config));render();el('s-error').innerHTML='';}catch(e){el('s-error').innerHTML='<div class="s-notice s-error">'+esc(e.message)+'</div>';}};
   document.getElementById('logout-btn')?.addEventListener('click',()=>{requestVersion++;data=null;result=null;prior=null;config={...C.DEFAULTS};loaded=false;localStorage.removeItem('ultera_summary_assumptions_v1');root.querySelector('.s-settings').hidden=true;for(const input of el('s-config').querySelectorAll('input'))input.value='';el('s-content').innerHTML='';el('s-error').innerHTML='';});
   if(typeof ResizeObserver!=='undefined'){

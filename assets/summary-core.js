@@ -48,6 +48,7 @@
     const title=String(i.title||i.name||'').toLowerCase();
     if(f==='insole'||/устіл|стельк|insole/.test(title))return 'insole';
     if(f==='tees'||/футболк|t-shirt/.test(title))return 'other';
+    if(i.crm_item&&i.is_footwear===false)return 'other';
     if(/^(thermo|hunk thermo|aganta thermo|thermo ked|travel thermo|wave2 thermo)$/.test(f)||/(?:hunk|aganta|travel|wave2)\s*thermo|thermo\s*ked|термо\s*(бот|кед)/.test(title))return 'boot';
     if(i.seasonId==='winter'||/зим|winter|термо|thermo/.test(String(i.season||'')))return 'thermal';
     return 'standard';
@@ -57,7 +58,7 @@
     const k=kind(i), value=cfg[k];
     return {value:valid(value)?Number(value):null,estimated:true};
   }
-  function footwear(i) {return kind(i)!=='insole'&&!/^(tees)$/i.test(String(i.family||''))&&!/футболк|t-shirt/i.test(String(i.title||i.name||''));}
+  function footwear(i) {if(typeof i.is_footwear==='boolean')return i.is_footwear;return kind(i)!=='insole'&&!/^(tees)$/i.test(String(i.family||''))&&!/футболк|t-shirt/i.test(String(i.title||i.name||''));}
   function campaign(value) {try{return decodeURIComponent(String(value||'').replace(/\+/g,' ')).trim()||'Без UTM';}catch{return String(value||'Без UTM');}}
   function normalize(input,cfg) {
     const out=[],byId=new Map(),excluded={leads:0,empty:0,duplicate:0,tests:0};
@@ -77,9 +78,10 @@
       const normalizedLines=lines.map((i,index)=>{
         const c=unitCost(i,cfg),revenue=index===lines.length-1?money(total-allocated):money(raw?total*(i.qty*i.price/raw):total*i.qty/lines.reduce((s,l)=>s+l.qty,0));allocated+=revenue;
         const title=String(i.title||i.name||'Товар без назви').replace(/^ULTERA\s*[-–]\s*/i,'');
-        return {uid:String(i.uid||i.sku||title),title,family:String(i.family||''),size:String(i.size||'Не вказано'),kind:kind(i),footwear:footwear(i),qty:i.qty,revenue,cost:c.value===null?null:money(c.value*i.qty),estimatedCost:c.estimated,photo:String(i.photo||'')};
+        return {uid:String(i.uid||i.sku||title),title,family:String(i.family||''),size:String(i.size||'Не вказано'),kind:kind(i),footwear:footwear(i),qty:i.qty,revenue,productRevenue:valid(i.product_revenue)?Number(i.product_revenue):null,crmCost:valid(i.purchased_price)?money(Number(i.purchased_price)*i.qty):null,cost:c.value===null?null:money(c.value*i.qty),estimatedCost:c.estimated,photo:String(i.photo||'')};
       });
       out.push({id:key,number:o.keycrm_id||o.number,day:day(o.created_at),created_at:o.created_at,customer:String(o.customer_key||key),status:st,total,
+        sourceId:String(o.source_id??'site'),sourceName:String(o.source_name||'Сайт'),crmExpenses:Number(o.crm_expenses)||0,
         city:String(o.delivery_city||'Не вказано'),campaign:campaign(o.campaign_tag),lines:normalizedLines,synced:o.keycrm_synced_at||null});
     }
     return {orders:out,excluded};
@@ -95,9 +97,20 @@
     const products=new Map(),daily=new Map(ds.map(d=>[d,{date:d,approved:0,approvedCustomers:0,redeemed:0,revenue:0,redeemedRevenue:0,pairs:0,adSpend:null,adSpendUSD:null,aov:null,cac:null}]));
     const dailyCustomers=new Map(ds.map(d=>[d,new Set()]));
     const cities=new Map(),campaigns=new Map(),variants=new Map(),sizes=new Map();
+    const sources=new Map(),reconciliation={pairs:0,approvedPairs:0,pendingPairs:0,unknownPairs:0,productRevenue:0,productCost:0,missingProductRevenue:0,missingProductCost:0,crmExpensesApproved:0};
     for(const o of os) {
       accumulate(b.all,o);customers.all.add(o.customer);
       const approved=o.status==='approved'||o.status==='redeemed';
+      if(!sources.has(o.sourceId))sources.set(o.sourceId,{id:o.sourceId,name:o.sourceName,orders:0,approved:0,pairs:0,approvedPairs:0,revenue:0,approvedCustomers:new Set()});
+      const source=sources.get(o.sourceId);source.orders++;
+      if(approved){source.approved++;source.revenue+=o.total;source.approvedCustomers.add(o.customer);reconciliation.crmExpensesApproved+=o.crmExpenses;}
+      for(const i of o.lines)if(i.footwear&&o.status!=='rejected'){
+        source.pairs+=i.qty;reconciliation.pairs+=i.qty;
+        if(approved){source.approvedPairs+=i.qty;reconciliation.approvedPairs+=i.qty;}
+        else if(o.status==='pending')reconciliation.pendingPairs+=i.qty;else reconciliation.unknownPairs+=i.qty;
+        if(i.productRevenue===null)reconciliation.missingProductRevenue+=i.qty;else reconciliation.productRevenue+=i.productRevenue;
+        if(i.crmCost===null)reconciliation.missingProductCost+=i.qty;else reconciliation.productCost+=i.crmCost;
+      }
       const groups=approved?['approved',o.status==='redeemed'?'redeemed':'waiting']:[o.status];
       for(const g of groups){accumulate(b[g],o);customers[g].add(o.customer);}
       if(!campaigns.has(o.campaign))campaigns.set(o.campaign,{name:o.campaign,submitted:0,approved:0,redeemed:0,revenue:0,customers:new Set(),approvedCustomers:new Set()});
@@ -131,11 +144,11 @@
       // No approvals means an undefined ratio, never a zero-cost customer.
       if(metadata.ordersComplete!==false){
         row.aov=row.approved?money(row.revenue/row.approved):null;
-        row.cac=row.approvedCustomers&&row.adSpend!==null?money(row.adSpend/row.approvedCustomers):null;
+        row.cac=metadata.sourceFiltered!==true&&metadata.currencyComplete!==false&&row.approvedCustomers&&row.adSpend!==null?money(row.adSpend/row.approvedCustomers):null;
       }
     }
     const overhead=money(ds.reduce((s,d)=>{const dt=new Date(d+'T12:00Z');return s+cfg.overhead/new Date(Date.UTC(dt.getUTCFullYear(),dt.getUTCMonth()+1,0)).getUTCDate();},0));
-    const coverageOK=!missingAdDays.length&&(!metadata||metadata.ordersComplete!==false);
+    const coverageOK=!missingAdDays.length&&metadata.ordersComplete!==false&&metadata.sourceFiltered!==true&&metadata.currencyComplete!==false;
     function profit(group){return coverageOK&&!b[group].missingCostUnits?money(b[group].revenue-b[group].cost-spend-overhead-cfg.extra):null;}
     return {from,to,days:ds.length,settings:cfg,buckets:b,excluded:norm.excluded,
       advertising:{usd:spendUSD,uah:spend,missingDays:missingAdDays,coveredDays:ds.length-missingAdDays.length,complete:!missingAdDays.length},
@@ -149,6 +162,8 @@
       grossMargin:b.approved.missingCostUnits?null:money(b.approved.revenue-b.approved.cost),
       grossMarginRate:b.approved.missingCostUnits||!b.approved.revenue?null:(b.approved.revenue-b.approved.cost)/b.approved.revenue,
       thermalShare:b.approved.pairs?[...variants.values()].filter(v=>v.kind==='thermal'||v.kind==='boot').reduce((s,v)=>s+v.qty,0)/b.approved.pairs:null,
+      reconciliation:{...reconciliation,productRevenue:money(reconciliation.productRevenue),productCost:money(reconciliation.productCost),crmExpensesApproved:money(reconciliation.crmExpensesApproved)},
+      sources:[...sources.values()].map(s=>({...s,revenue:money(s.revenue),approvedCustomers:s.approvedCustomers.size})).sort((a,b)=>b.pairs-a.pairs),
       daily:[...daily.values()],products:[...products.values()].map(p=>({...p,revenue:money(p.revenue),cost:money(p.cost),margin:p.missingCostUnits?null:money(p.revenue-p.cost),sizes:[...p.sizes.values()].sort((a,b)=>a.size.localeCompare(b.size,'uk',{numeric:true})||a.kind.localeCompare(b.kind)),variants:[...p.variants].map(([kind,qty])=>({kind,qty}))})).sort((a,b)=>b.qty-a.qty||b.revenue-a.revenue),
       sizes:[...sizes].map(([size,qty])=>({size,qty})).sort((a,b)=>a.size.localeCompare(b.size,'uk',{numeric:true})),
       variants:[...variants.values()],cities:[...cities.values()].sort((a,b)=>b.orders-a.orders),
