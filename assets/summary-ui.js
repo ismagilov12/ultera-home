@@ -5,7 +5,7 @@
   const nf=n=>new Intl.NumberFormat('uk-UA',{maximumFractionDigits:0}).format(n);
   const uah=n=>n===null||n===undefined?'—':nf(n)+' ₴';
   const pct=n=>n===null||n===undefined?'—':new Intl.NumberFormat('uk-UA',{style:'percent',maximumFractionDigits:1}).format(n);
-  const names={standard:'Звичайна',thermal:'Низька термо',boot:'Високий термо',insole:'Устілки',other:'Інше / сейл'};
+  const names={standard:'Звичайна',thermal:'Низька термо',boot:'Високий термо',insole:'Устілки',other:'Інше / сейл',unknown:'Версію не вказано'};
   let data=null,result=null,prior=null,config={...C.DEFAULTS},activeTab='models',trendDate=null,loaded=false,requestVersion=0,sourceFilter='all',loading=false;
   const today=C.day(new Date()),yesterday=new Date(today+'T12:00Z');yesterday.setUTCDate(yesterday.getUTCDate()-1);
   const y=yesterday.toISOString().slice(0,10), start=new Date(y+'T12:00Z');start.setUTCDate(start.getUTCDate()-6);
@@ -26,8 +26,9 @@
     if(r.metadata.ordersComplete===false)parts.push('Замовлення не покривають увесь вибраний період. Фінансові підсумки приховані; доступні дати: '+(r.metadata.earliestOrderDate||'—')+' — '+(r.metadata.latestOrderDate||'—')+'.');
     if(r.metadata.sourceFiltered)parts.push('Окреме джерело: витрати Meta та загальні витрати показані для всього бізнесу. Прибуток, ціна клієнта й ROAS джерела приховані — розподілу реклами між джерелами немає.');
     if(r.metadata.currencyComplete===false)parts.push('Є джерела з невідомою або іншою валютою. Фінансові результати потребують звірки.');
-    if(r.metadata.quality?.unknownCategoryUnits)parts.push('Для '+nf(r.metadata.quality.unknownCategoryUnits)+' од. у завантаженні немає категорії CRM; вони не зараховані до пар ОБУВЬ.');
-    if(r.metadata.quality?.unknownSizeUnits)parts.push('Для '+nf(r.metadata.quality.unknownSizeUnits)+' пар у завантаженні не вказано розмір.');
+    if(r.quality.unknownCategoryUnits)parts.push('Для '+nf(r.quality.unknownCategoryUnits)+' од. без відмов у цьому періоді немає категорії CRM; вони не зараховані до пар ОБУВЬ.');
+    if(r.quality.unknownSizePairs)parts.push('Для '+nf(r.quality.unknownSizePairs)+' пар в апрувах не вказано розмір.');
+    if(r.quality.unknownVersionPairs)parts.push('Для '+nf(r.quality.unknownVersionPairs)+' пар в апрувах CRM не вказує однозначно сезон / термо-версію. Частку термо приховано, це не 0%.');
     if(r.reconciliation.crmExpensesApproved)parts.push('Окремо в CRM записано витрат на '+uah(r.reconciliation.crmExpensesApproved)+'. Вони не віднімаються повторно: перевірте, чи включені у ваші загальні / додаткові витрати.');
     if(!r.metadata.preview&&r.metadata.advertisingMode==='stored_days'){const days=(data.adDays||[]).map(d=>d.date).sort();const fetched=(data.adDays||[]).map(d=>d.fetched_at).filter(Boolean).sort().at(-1);parts.push('Meta: збережені імпортовані дні'+(days.length?' до '+days.at(-1):' відсутні')+'. Автоматичне оновлення реклами ще не підключене.'+(fetched?' Дані отримано '+new Date(fetched).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv'})+'.':''));}
     if(r.metadata.preview)parts.push('Це локальний знімок на '+new Date(r.metadata.fetchedAt).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv'})+'. Оновлення кнопкою перечитує знімок, а не CRM. Ручні замовлення менеджера поза сайтом сюди не входять.');
@@ -44,7 +45,7 @@
     prior=range.to>=today||(metadata.earliestOrderDate&&pr.from<metadata.earliestOrderDate)?null:C.summarize(orders,data.adDays,pr.from,pr.to,{...config,extra:0},metadata);
     const r=result,b=r.buckets,p=prior?.buckets;
     el('s-fresh').innerHTML='<i class="s-dot"></i>'+esc(data.metadata?.preview?'Локальний знімок':'KeyCRM наживо · '+new Date(data.metadata.fetchedAt).toLocaleTimeString('uk-UA',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'}));
-    const costNote=b.approved.estimatedCostUnits?'Норма застосована до '+nf(b.approved.estimatedCostUnits)+' од.':'Із позицій CRM';
+    const costNote=b.approved.estimatedCostUnits?'Норма застосована до '+nf(b.approved.estimatedCostUnits)+' од.':'Із позицій CRM; може відрізнятися від вашої поточної норми';
     el('s-content').innerHTML='<div class="s-panel-head"><h2>Продажі та прибуток</h2><p class="s-muted">'+esc((metadata.scopeLabel||'Замовлення сайту · статуси KeyCRM')+' · '+r.from+' — '+r.to)+'</p></div>'+reconciliationPanel(r)+'<div class="s-kpis">'+
       tile('Апрувнуто',nf(b.approved.orders),nf(b.approved.pairs)+' пар · '+uah(b.approved.revenue),delta(b.approved.orders,p?.approved.orders??null),true)+
       tile('Викуплено',nf(b.redeemed.orders),uah(b.redeemed.revenue)+' · '+pct(r.redemptionRate)+' від апрувів','')+
@@ -53,7 +54,7 @@
       tile('Середній чек апрува',uah(r.aov),'Сума після знижок / замовлення',delta(r.aov,prior?.aov??null))+
       tile('Ціна апрува',uah(r.cpo),r.cpo===null?(filtered?'Немає розподілу реклами за джерелами':'Потрібні повні дані реклами'):'$'+(r.cpo/config.fx).toFixed(2)+' · сукупна реклама / апруви',delta(r.cpo,prior?.cpo??null,true))+
       tile('Апрув по клієнтах',pct(r.customerApprovalRate),nf(b.approved.customers)+' із '+nf(b.all.customers)+' · по заявках '+pct(r.approvalRate),'')+
-      tile('Частка термо',pct(r.thermalShare),'Низька термо + високі ботинки','')+'</div>'+
+      tile('Частка термо',pct(r.thermalShare),r.quality.unknownVersionPairs?'Немає версії для '+nf(r.quality.unknownVersionPairs)+' із '+nf(b.approved.pairs)+' пар':'Низька термо + високі ботинки','')+'</div>'+
       '<section class="s-panel"><div class="s-finance">'+[
         ['Реклама Meta',r.advertising.complete?uah(r.advertising.uah):'—','$'+r.advertising.usd.toFixed(2)+' завантажено · курс '+config.fx],
         ['Собівартість апрувів',b.approved.missingCostUnits?'—':uah(b.approved.cost),costNote],
@@ -70,7 +71,7 @@
   function reconciliationPanel(r){
     if(!r.metadata.allCRMOrders)return '';
     const v=r.reconciliation;
-    return '<section class="s-panel" aria-label="Звірка з KeyCRM"><div class="s-panel-head"><div><h2>Звірка з KeyCRM · ОБУВЬ</h2><p class="s-muted">Категорія 22 · нескасовані замовлення · нові показані окремо</p></div><strong style="font-size:28px">'+nf(v.pairs)+' пар</strong></div><div class="s-efficiency"><div><span class="s-muted">Пари в апрувах</span><b>'+nf(v.approvedPairs)+'</b></div><div><span class="s-muted">Пари в нових / статус невідомий</span><b>'+nf(v.pendingPairs)+' / '+nf(v.unknownPairs)+'</b></div><div><span class="s-muted">Сума товарів CRM</span><b>'+uah(v.missingProductRevenue?null:v.productRevenue)+'</b></div><div><span class="s-muted">Закупівля товарів CRM</span><b>'+uah(v.missingProductCost?null:v.productCost)+'</b></div></div><details style="margin-top:18px"><summary>Розподіл за джерелами</summary><div class="s-table-wrap"><table><thead><tr><th>Джерело</th><th class="num">Пари без відмов</th><th class="num">Пари в апрувах</th><th class="num">Апрув-замовлення</th><th class="num">Клієнти з апрувом</th><th class="num">Сума апрувів</th></tr></thead><tbody>'+r.sources.map(s=>'<tr><td>'+esc(s.name)+'</td><td class="num">'+nf(s.pairs)+'</td><td class="num">'+nf(s.approvedPairs)+'</td><td class="num">'+nf(s.approved)+'</td><td class="num">'+nf(s.approvedCustomers)+'</td><td class="num">'+uah(s.revenue)+'</td></tr>').join('')+'</tbody></table></div></details><p class="s-fineprint">Пари ≠ замовлення ≠ клієнти. Тут суми товарів категорії ОБУВЬ за ціною продажу CRM; нижче — повні суми замовлень з допродажами та іншими складовими. Нульова закупівля у звірці — значення CRM, не підтверджена нульова собівартість у прибутку.</p></section>';
+    return '<section class="s-panel" aria-label="Звірка з KeyCRM"><div class="s-panel-head"><div><h2>Звірка з KeyCRM · ОБУВЬ</h2><p class="s-muted">Категорія 22 · нескасовані замовлення · нові показані окремо</p></div><strong style="font-size:28px">'+nf(v.pairs)+' пар</strong></div><div class="s-efficiency"><div><span class="s-muted">Пари в апрувах</span><b>'+nf(v.approvedPairs)+'</b></div><div><span class="s-muted">Пари в нових / статус невідомий</span><b>'+nf(v.pendingPairs)+' / '+nf(v.unknownPairs)+'</b></div><div><span class="s-muted">Сума товарів CRM</span><b>'+(v.missingProductRevenue?'—':preciseUAH(v.productRevenue))+'</b></div><div><span class="s-muted">Закупівля товарів CRM</span><b>'+(v.missingProductCost?'—':preciseUAH(v.productCost))+'</b></div></div><details style="margin-top:18px"><summary>Розподіл за джерелами</summary><div class="s-table-wrap"><table><thead><tr><th>Джерело</th><th class="num">Пари без відмов</th><th class="num">Пари в апрувах</th><th class="num">Апрув-замовлення</th><th class="num">Клієнти з апрувом</th><th class="num">Сума апрувів</th></tr></thead><tbody>'+r.sources.map(s=>'<tr><td>'+esc(s.name)+'</td><td class="num">'+nf(s.pairs)+'</td><td class="num">'+nf(s.approvedPairs)+'</td><td class="num">'+nf(s.approved)+'</td><td class="num">'+nf(s.approvedCustomers)+'</td><td class="num">'+uah(s.revenue)+'</td></tr>').join('')+'</tbody></table></div></details><p class="s-fineprint">Пари ≠ замовлення ≠ клієнти. Тут суми товарів категорії ОБУВЬ за ціною продажу CRM; нижче — повні суми замовлень з допродажами та іншими складовими. Нульова закупівля у звірці — значення CRM, не підтверджена нульова собівартість у прибутку.</p></section>';
   }
   const trendSpecs=[
     {key:'cac',title:'Ціна апрувнутого клієнта',color:'#7b9625',formula:'Витрати Meta / унікальні клієнти з апрувом за день'},

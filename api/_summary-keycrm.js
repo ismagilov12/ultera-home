@@ -11,6 +11,15 @@ function utc(value){
   return Number.isFinite(+d)?d.toISOString():null;
 }
 function publicError(code,message){const error=new Error(message);error.publicCode=code;return error;}
+function variant(name,season,footwear){
+  const text=String(name||'')+' '+String(season||'');
+  if(/устіл|стельк|insole/i.test(text))return 'insole';
+  if(!footwear)return 'other';
+  if(/(?:hunk|aganta|travel|wave2)\s*thermo|thermo\s*ked|термо\s*(?:бот|кед)/i.test(text))return 'boot';
+  if(/термо|thermo|зим|winter/i.test(text))return 'thermal';
+  if(/осін|осен|весн|демі|деми|літн|летн|autumn|spring|summer/i.test(text))return 'standard';
+  return 'unknown';
+}
 function createReader({fetcher,token,sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)),clock=()=>Date.now()}){
   let lastRequest=null,requests=0;
   async function get(path,params){
@@ -70,7 +79,7 @@ function normalizeCRM(rows,catalog,sources,siteSourceId,fetchedAt){
         purchased_price:defined(p.purchased_price)?Number(p.purchased_price):null,
         product_revenue:round(Number(p.price_sold)*Number(p.quantity)),category_id:category??null,
         is_footwear:Number(category)===22,family:insole?'Insole':Number(category)===22?'':'Other',
-        crm_item:true};
+        crm_item:true,kind_hint:variant(String(p.name||title),season,Number(category)===22)};
     });
     orders.push({id:'crm-'+o.id,keycrm_id:o.id,created_at:utc(o.ordered_at||o.created_at),updated_at:utc(o.updated_at),
       keycrm_status_id:Number(o.status_id),total:Number(o.grand_total),items,
@@ -98,4 +107,4 @@ async function loadCRM({fetcher,token,start,end,siteSourceId,fetchedAt,sleep,clo
   if(result.orders.some(o=>o.created_at<start||o.created_at>=end))throw publicError('CRM_DATE_MISMATCH','Дати відповіді KeyCRM не збігаються з вибраним періодом. Підсумки приховано.');
   return result;
 }
-module.exports={loadCRM,normalizeCRM,createReader,utc};
+module.exports={loadCRM,normalizeCRM,createReader,utc,variant};

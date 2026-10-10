@@ -44,6 +44,7 @@
     return 'unknown';
   }
   function kind(i) {
+    if(['standard','thermal','boot','insole','other','unknown'].includes(i.kind_hint))return i.kind_hint;
     const f=String(i.family||'').toLowerCase();
     const title=String(i.title||i.name||'').toLowerCase();
     if(f==='insole'||/устіл|стельк|insole/.test(title))return 'insole';
@@ -78,7 +79,7 @@
       const normalizedLines=lines.map((i,index)=>{
         const c=unitCost(i,cfg),revenue=index===lines.length-1?money(total-allocated):money(raw?total*(i.qty*i.price/raw):total*i.qty/lines.reduce((s,l)=>s+l.qty,0));allocated+=revenue;
         const title=String(i.title||i.name||'Товар без назви').replace(/^ULTERA\s*[-–]\s*/i,'');
-        return {uid:String(i.uid||i.sku||title),title,family:String(i.family||''),size:String(i.size||'Не вказано'),kind:kind(i),footwear:footwear(i),qty:i.qty,revenue,productRevenue:valid(i.product_revenue)?Number(i.product_revenue):null,crmCost:valid(i.purchased_price)?money(Number(i.purchased_price)*i.qty):null,cost:c.value===null?null:money(c.value*i.qty),estimatedCost:c.estimated,photo:String(i.photo||'')};
+        return {uid:String(i.uid||i.sku||title),title,family:String(i.family||''),size:String(i.size||'Не вказано'),kind:kind(i),footwear:footwear(i),qty:i.qty,revenue,categoryUnknown:i.crm_item&&i.category_id==null&&kind(i)!=='insole',productRevenue:valid(i.product_revenue)?Number(i.product_revenue):null,crmCost:valid(i.purchased_price)?money(Number(i.purchased_price)*i.qty):null,cost:c.value===null?null:money(c.value*i.qty),estimatedCost:c.estimated,photo:String(i.photo||'')};
       });
       out.push({id:key,number:o.keycrm_id||o.number,day:day(o.created_at),created_at:o.created_at,customer:String(o.customer_key||key),status:st,total,
         sourceId:String(o.source_id??'site'),sourceName:String(o.source_name||'Сайт'),crmExpenses:Number(o.crm_expenses)||0,
@@ -98,12 +99,17 @@
     const dailyCustomers=new Map(ds.map(d=>[d,new Set()]));
     const cities=new Map(),campaigns=new Map(),variants=new Map(),sizes=new Map();
     const sources=new Map(),reconciliation={pairs:0,approvedPairs:0,pendingPairs:0,unknownPairs:0,productRevenue:0,productCost:0,missingProductRevenue:0,missingProductCost:0,crmExpensesApproved:0};
+    const quality={unknownCategoryUnits:0,unknownSizePairs:0,unknownVersionPairs:0};
     for(const o of os) {
       accumulate(b.all,o);customers.all.add(o.customer);
       const approved=o.status==='approved'||o.status==='redeemed';
       if(!sources.has(o.sourceId))sources.set(o.sourceId,{id:o.sourceId,name:o.sourceName,orders:0,approved:0,pairs:0,approvedPairs:0,revenue:0,approvedCustomers:new Set()});
       const source=sources.get(o.sourceId);source.orders++;
       if(approved){source.approved++;source.revenue+=o.total;source.approvedCustomers.add(o.customer);reconciliation.crmExpensesApproved+=o.crmExpenses;}
+      for(const i of o.lines){
+        if(o.status!=='rejected'&&i.categoryUnknown)quality.unknownCategoryUnits+=i.qty;
+        if(approved&&i.footwear){if(i.size==='Не вказано')quality.unknownSizePairs+=i.qty;if(i.kind==='unknown')quality.unknownVersionPairs+=i.qty;}
+      }
       for(const i of o.lines)if(i.footwear&&o.status!=='rejected'){
         source.pairs+=i.qty;reconciliation.pairs+=i.qty;
         if(approved){source.approvedPairs+=i.qty;reconciliation.approvedPairs+=i.qty;}
@@ -161,7 +167,7 @@
       roas:coverageOK&&spend>0?b.approved.revenue/spend:null,
       grossMargin:b.approved.missingCostUnits?null:money(b.approved.revenue-b.approved.cost),
       grossMarginRate:b.approved.missingCostUnits||!b.approved.revenue?null:(b.approved.revenue-b.approved.cost)/b.approved.revenue,
-      thermalShare:b.approved.pairs?[...variants.values()].filter(v=>v.kind==='thermal'||v.kind==='boot').reduce((s,v)=>s+v.qty,0)/b.approved.pairs:null,
+      quality,thermalShare:b.approved.pairs&&!quality.unknownVersionPairs?[...variants.values()].filter(v=>v.kind==='thermal'||v.kind==='boot').reduce((s,v)=>s+v.qty,0)/b.approved.pairs:null,
       reconciliation:{...reconciliation,productRevenue:money(reconciliation.productRevenue),productCost:money(reconciliation.productCost),crmExpensesApproved:money(reconciliation.crmExpensesApproved)},
       sources:[...sources.values()].map(s=>({...s,revenue:money(s.revenue),approvedCustomers:s.approvedCustomers.size})).sort((a,b)=>b.pairs-a.pairs),
       daily:[...daily.values()],products:[...products.values()].map(p=>({...p,revenue:money(p.revenue),cost:money(p.cost),margin:p.missingCostUnits?null:money(p.revenue-p.cost),sizes:[...p.sizes.values()].sort((a,b)=>a.size.localeCompare(b.size,'uk',{numeric:true})||a.kind.localeCompare(b.kind)),variants:[...p.variants].map(([kind,qty])=>({kind,qty}))})).sort((a,b)=>b.qty-a.qty||b.revenue-a.revenue),
