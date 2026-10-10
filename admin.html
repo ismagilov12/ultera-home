@@ -361,20 +361,21 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 #pv-tbl th{padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #e4e3dc;color:#0e0e0e80;font-size:12px}
 #pv-tbl th.num,#pv-tbl td.num{text-align:right}
 </style>
+<link rel="stylesheet" href="/assets/summary.css">
 </head>
 <body>
 
 <div id="auth" class="auth-wrap">
   <div class="auth-box">
     <h1><b>ULTERA</b> admin</h1>
-    <p id="auth-sub">Натисни «Увійти».</p>
+    <p id="auth-sub">Введіть email і пароль адміністратора.</p>
     <div class="mail">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <input id="email" type="text" placeholder="email" autocomplete="username" value="ulteracompany@gmail.com">
+      <input id="email" type="text" placeholder="email" autocomplete="username">
     </div>
     <div class="mail">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <input id="password" type="password" placeholder="Пароль" autocomplete="current-password" value="iseasy94">
+      <input id="password" type="password" placeholder="Пароль" autocomplete="current-password">
     </div>
     <button id="login-btn" class="btn-primary">Увійти</button>
 
@@ -389,6 +390,10 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
   <aside class="side">
     <div class="logo">ULTERA<span>ADMIN</span></div>
     <nav class="nav" id="nav">
+      <a data-page="summary" href="#summary">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Зведення
+      </a>
       <a data-page="products" class="active">
         <svg viewBox="0 0 24 24"><path d="M20 7L12 3L4 7M20 7v10l-8 4-8-4V7M20 7l-8 4M4 7l8 4M12 11v10"/></svg>
         Товари
@@ -433,6 +438,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
   </aside>
 
   <main class="main">
+    <div class="page" id="page-summary" style="display:none"><div id="ultera-summary"></div></div>
     <!-- PRODUCTS -->
     <div class="page" id="page-products">
       <div class="page-head">
@@ -3536,5 +3542,7 @@ function bindPvChips(){
 })();
 </script>
 <!-- ULTERA_DEEPLINK_JS_END -->
+<script src="/assets/summary-core.js"></script>
+<script src="/assets/summary-ui.js"></script>
 </body>
 </html>
