@@ -92,7 +92,8 @@
     if((metadata.earliestOrderDate&&from<metadata.earliestOrderDate)||(metadata.latestOrderDate&&to>metadata.latestOrderDate))metadata.ordersComplete=false;
     const b={all:blank(),approved:blank(),redeemed:blank(),waiting:blank(),pending:blank(),rejected:blank(),unknown:blank()};
     const customers=Object.fromEntries(Object.keys(b).map(k=>[k,new Set()]));
-    const products=new Map(),daily=new Map(ds.map(d=>[d,{date:d,approved:0,redeemed:0,revenue:0,redeemedRevenue:0,pairs:0,adSpend:null}]));
+    const products=new Map(),daily=new Map(ds.map(d=>[d,{date:d,approved:0,approvedCustomers:0,redeemed:0,revenue:0,redeemedRevenue:0,pairs:0,adSpend:null,adSpendUSD:null,aov:null,cac:null}]));
+    const dailyCustomers=new Map(ds.map(d=>[d,new Set()]));
     const cities=new Map(),campaigns=new Map(),variants=new Map(),sizes=new Map();
     for(const o of os) {
       accumulate(b.all,o);customers.all.add(o.customer);
@@ -102,7 +103,7 @@
       if(!campaigns.has(o.campaign))campaigns.set(o.campaign,{name:o.campaign,submitted:0,approved:0,redeemed:0,revenue:0,customers:new Set(),approvedCustomers:new Set()});
       const cam=campaigns.get(o.campaign);cam.submitted++;cam.customers.add(o.customer);if(approved){cam.approved++;cam.revenue+=o.total;cam.approvedCustomers.add(o.customer);}if(o.status==='redeemed')cam.redeemed++;
       if(!approved)continue;
-      const d=daily.get(o.day);d.approved++;d.revenue+=o.total;if(o.status==='redeemed'){d.redeemed++;d.redeemedRevenue+=o.total;}
+      const d=daily.get(o.day);d.approved++;d.revenue+=o.total;dailyCustomers.get(o.day).add(o.customer);if(o.status==='redeemed'){d.redeemed++;d.redeemedRevenue+=o.total;}
       if(!cities.has(o.city))cities.set(o.city,{name:o.city,orders:0,revenue:0});const city=cities.get(o.city);city.orders++;city.revenue+=o.total;
       for(const i of o.lines) {
         const productKey=i.uid;
@@ -121,7 +122,18 @@
     const ads=new Map((adRows||[]).filter(r=>r.account_id==='1095942551692734'&&r.timezone==='Europe/Kyiv').map(r=>[r.date,r]));
     const missingAdDays=ds.filter(d=>!ads.has(d)||!valid(ads.get(d).spend_usd));
     const spendUSD=money(ds.reduce((s,d)=>s+(valid(ads.get(d)?.spend_usd)?Number(ads.get(d).spend_usd):0),0)),spend=money(spendUSD*cfg.fx);
-    for(const d of ds)if(valid(ads.get(d)?.spend_usd))daily.get(d).adSpend=money(Number(ads.get(d).spend_usd)*cfg.fx);
+    for(const d of ds){
+      const row=daily.get(d);
+      row.approvedCustomers=dailyCustomers.get(d).size;
+      row.revenue=money(row.revenue);row.redeemedRevenue=money(row.redeemedRevenue);
+      if(valid(ads.get(d)?.spend_usd)){row.adSpendUSD=money(Number(ads.get(d).spend_usd));row.adSpend=money(Number(ads.get(d).spend_usd)*cfg.fx);}
+      // A gap in another day's ads must not hide this day's verified values.
+      // No approvals means an undefined ratio, never a zero-cost customer.
+      if(metadata.ordersComplete!==false){
+        row.aov=row.approved?money(row.revenue/row.approved):null;
+        row.cac=row.approvedCustomers&&row.adSpend!==null?money(row.adSpend/row.approvedCustomers):null;
+      }
+    }
     const overhead=money(ds.reduce((s,d)=>{const dt=new Date(d+'T12:00Z');return s+cfg.overhead/new Date(Date.UTC(dt.getUTCFullYear(),dt.getUTCMonth()+1,0)).getUTCDate();},0));
     const coverageOK=!missingAdDays.length&&(!metadata||metadata.ordersComplete!==false);
     function profit(group){return coverageOK&&!b[group].missingCostUnits?money(b[group].revenue-b[group].cost-spend-overhead-cfg.extra):null;}

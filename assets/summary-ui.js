@@ -6,7 +6,7 @@
   const uah=n=>n===null||n===undefined?'—':nf(n)+' ₴';
   const pct=n=>n===null||n===undefined?'—':new Intl.NumberFormat('uk-UA',{style:'percent',maximumFractionDigits:1}).format(n);
   const names={standard:'Звичайна',thermal:'Низька термо',boot:'Високий термо',insole:'Устілки',other:'Інше / сейл'};
-  let data=null,result=null,prior=null,config={...C.DEFAULTS},activeTab='models',loaded=false,requestVersion=0;
+  let data=null,result=null,prior=null,config={...C.DEFAULTS},activeTab='models',trendDate=null,loaded=false,requestVersion=0;
   const today=C.day(new Date()),yesterday=new Date(today+'T12:00Z');yesterday.setUTCDate(yesterday.getUTCDate()-1);
   const y=yesterday.toISOString().slice(0,10), start=new Date(y+'T12:00Z');start.setUTCDate(start.getUTCDate()-6);
   let range={from:start.toISOString().slice(0,10),to:y};
@@ -53,9 +53,58 @@
         ['Від викупів · оцінка',uah(r.profit.redeemed),'Собівартість викупів: '+(b.redeemed.missingCostUnits?'неповна':uah(b.redeemed.cost))]
       ].map(([l,v,s])=>'<div><div class="s-muted">'+l+'</div><div class="amount">'+v+'</div><p class="s-muted">'+s+'</p></div>').join('')+'</div>'+notices(r)+
       '<div class="s-efficiency">'+[['Маржа до реклами',uah(r.grossMargin)],['Маржинальність',pct(r.grossMarginRate)],['Реклама / клієнт з апрувом',uah(r.cac)],['Сума апрувів / реклама',r.roas===null?'—':r.roas.toFixed(2)+'×']].map(([l,v])=>'<div><span class="s-muted">'+l+'</span><b>'+v+'</b></div>').join('')+'</div><p class="s-fineprint">Когорта за датою створення замовлення, часовий пояс — Київ. Апрув: не «Новий», не відмова; «12 / 15 / 20+ днів» включені. Викуп: CRM «Виконано» (12). «Немає в наявності» — загальна причина відмови, не висновок про склад. Прибуток = сума − собівартість − реклама − загальні − додаткові витрати. Не є рухом грошей; податки, комісії та повернення не враховані, якщо їх не внесено у витрати. Реклама / клієнт — змішаний показник, а не вартість залучення нового покупця. Ідентичний клієнт визначається за телефоном без його показу.</p></section>'+
-      '<section class="s-panel"><div class="s-panel-head"><div><h2>Динаміка продажів</h2><p class="s-muted">Апруви та викуп за датою створення</p></div><div class="s-legend"><span><i class="s-key" style="background:#97ba3c"></i>Апруви</span><span><i class="s-key" style="background:#536aec"></i>Викуп</span></div></div>'+chart(r.daily)+'<details><summary style="cursor:pointer;padding-top:12px">Таблиця за днями</summary><div class="s-table-wrap"><table><thead><tr><th>День</th><th class="num">Апруви</th><th class="num">Викуп</th><th class="num">Сума апрувів</th><th class="num">Середній чек</th><th class="num">Реклама</th></tr></thead><tbody>'+r.daily.map(d=>'<tr><td>'+d.date+'</td><td class="num">'+d.approved+'</td><td class="num">'+d.redeemed+'</td><td class="num">'+uah(d.revenue)+'</td><td class="num">'+uah(d.approved?d.revenue/d.approved:null)+'</td><td class="num">'+uah(d.adSpend)+'</td></tr>').join('')+'</tbody></table></div></details></section>'+
+      '<section class="s-panel"><div class="s-panel-head"><div><h2>Динаміка продажів</h2><p class="s-muted">Апруви та викуп за датою створення</p></div><div class="s-legend"><span><i class="s-key" style="background:#97ba3c"></i>Апруви</span><span><i class="s-key" style="background:#536aec"></i>Викуп</span></div></div>'+chart(r.daily)+'</section>'+
+      '<section class="s-panel" id="s-trends" aria-labelledby="s-trends-title"></section>'+
       '<section class="s-panel"><div class="s-tabs" role="tablist" aria-label="Деталі продажів">'+[['models','Топ моделей і розміри'],['sizes','Розміри та версії'],['channels','UTM та міста']].map(([k,label])=>'<button role="tab" id="s-tab-'+k+'" aria-controls="s-pane" aria-selected="'+(activeTab===k)+'" data-tab="'+k+'">'+label+'</button>').join('')+'</div><div id="s-pane" role="tabpanel" aria-labelledby="s-tab-'+activeTab+'"></div></section><p class="s-muted" style="margin:5px 0 22px">Оновлено: '+esc(data.metadata?.fetchedAt?new Date(data.metadata.fetchedAt).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv'}):'—')+' · '+esc(data.metadata?.sourceLabel||'Сайт → синхронізація KeyCRM; реклама Windsor.ai')+'. '+(prior?'Порівняння: '+pr.from+' — '+pr.to+'.':'Порівняння приховане: неповний поточний день або немає попереднього періоду.')+'</p>';
-    renderTab();
+    renderTrends();renderTab();
+  }
+  const trendSpecs=[
+    {key:'cac',title:'Ціна апрувнутого клієнта',color:'#7b9625',formula:'Витрати Meta / унікальні клієнти з апрувом за день'},
+    {key:'aov',title:'Середній чек апрува',color:'#536aec',formula:'Сума апрувів після знижок / кількість замовлень за день'},
+    {key:'adSpend',title:'Рекламний бюджет · витрачено',color:'#b47329',formula:'Фактичні витрати Meta за день, не встановлений ліміт'}
+  ];
+  const shortDate=d=>d.slice(8)+'.'+d.slice(5,7);
+  const preciseUAH=n=>new Intl.NumberFormat('uk-UA',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' ₴';
+  function trendReason(row,key){
+    if(key!=='adSpend'&&result.metadata.ordersComplete===false)return 'Неповні дані замовлень';
+    if(key!=='aov'&&row.adSpend===null)return 'Немає даних реклами за цей день';
+    return 'Немає апрувів за цей день';
+  }
+  function trendSvg(rows,spec){
+    const host=el('s-trend-cards'),columns=getComputedStyle(host).gridTemplateColumns.split(' ').length;
+    const w=Math.max(230,Math.round((host.clientWidth-(columns-1)*16)/columns)-32),h=230,left=56,right=18,top=20,bottom=38,plotW=w-left-right,plotH=h-top-bottom;
+    const available=rows.filter(r=>Number.isFinite(r[spec.key]));
+    const rawMax=Math.max(4,...available.map(r=>r[spec.key])),magnitude=10**Math.floor(Math.log10(rawMax/4));
+    const ratio=rawMax/4/magnitude,step=magnitude*(ratio<=1?1:ratio<=2?2:ratio<=5?5:10),max=step*4;
+    const x=i=>left+(rows.length===1?.5:i/(rows.length-1))*plotW,y=v=>top+plotH-v/max*plotH;
+    let svg='<svg class="s-trend-svg" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+esc(spec.title)+' — щодня, гривні"><title>'+esc(spec.title)+'. Оберіть день для точного значення; усі значення доступні в таблиці нижче.</title>';
+    for(let i=0;i<=4;i++){const value=step*i;svg+='<line x1="'+left+'" x2="'+(w-right)+'" y1="'+y(value)+'" y2="'+y(value)+'" class="s-trend-gridline"/><text x="'+(left-9)+'" y="'+(y(value)+5)+'" text-anchor="end">'+esc(nf(value))+'</text>';}
+    const selected=rows.findIndex(r=>r.date===trendDate);
+    if(selected>=0)svg+='<line x1="'+x(selected)+'" x2="'+x(selected)+'" y1="'+top+'" y2="'+(h-bottom)+'" class="s-trend-guide"/>';
+    const segments=[];let segment=[];
+    for(let i=0;i<rows.length;i++){const value=rows[i][spec.key];if(Number.isFinite(value))segment.push(x(i)+','+y(value));else if(segment.length){segments.push(segment);segment=[];}}
+    if(segment.length)segments.push(segment);
+    for(const points of segments)if(points.length>1)svg+='<polyline class="s-trend-line" fill="none" stroke="'+spec.color+'" points="'+points.join(' ')+'"/>';
+    rows.forEach((row,i)=>{const value=row[spec.key];if(!Number.isFinite(value))return;const chosen=row.date===trendDate;svg+='<circle cx="'+x(i)+'" cy="'+y(value)+'" r="'+(chosen?6:rows.length>60?2:3.5)+'" fill="'+spec.color+'" '+(chosen?'stroke="#fff" stroke-width="2" ':'')+'data-date="'+row.date+'" data-trend-value="'+value+'"><title>'+esc(row.date+': '+preciseUAH(value))+'</title></circle>';});
+    const tickCount=Math.min(w<340?3:5,rows.length);
+    const ticks=[...new Set(Array.from({length:tickCount},(_,i)=>Math.round(i*(rows.length-1)/Math.max(1,tickCount-1))))];
+    for(const i of ticks)svg+='<text x="'+x(i)+'" y="'+(h-10)+'" text-anchor="middle">'+shortDate(rows[i].date)+'</text>';
+    if(!available.length)svg+='<text x="'+(left+plotW/2)+'" y="'+(top+plotH/2)+'" text-anchor="middle" class="s-trend-empty">Немає значень для графіка</text>';
+    return svg+'</svg>';
+  }
+  function renderTrendCards(){
+    const row=result.daily.find(d=>d.date===trendDate);
+    el('s-trend-cards').innerHTML=trendSpecs.map(spec=>{
+      const value=row[spec.key],known=Number.isFinite(value);
+      const context=spec.key==='cac'?'Клієнтів з апрувом: '+nf(row.approvedCustomers):spec.key==='aov'?'Апрувнутих замовлень: '+nf(row.approved):'$'+Number(row.adSpendUSD||0).toFixed(2)+' · курс '+config.fx;
+      return '<article class="s-trend-card" data-metric="'+spec.key+'"><h3><i class="s-key" style="background:'+spec.color+'"></i>'+spec.title+'</h3><div class="s-trend-reading"><strong>'+uah(value)+'</strong><span>'+shortDate(row.date)+(row.date===today?' · день триває':'')+'</span></div><p class="s-trend-context">'+esc(known?context:trendReason(row,spec.key))+'</p>'+trendSvg(result.daily,spec)+'<p class="s-muted">'+spec.formula+'</p></article>';
+    }).join('');
+  }
+  function renderTrends(){
+    const rows=result.daily;
+    if(!rows.some(d=>d.date===trendDate))trendDate=[...rows].reverse().find(d=>d.date<today&&Number.isFinite(d.cac))?.date||rows.at(-1).date;
+    el('s-trends').innerHTML='<div class="s-panel-head"><div><h2 id="s-trends-title">Ціна клієнта, чек і реклама</h2><p class="s-muted">Щоденна динаміка · гривні · дати за Києвом</p></div><label for="s-trend-day">Показати день <select id="s-trend-day" aria-label="День на графіках">'+rows.map(d=>'<option value="'+d.date+'" '+(d.date===trendDate?'selected':'')+'>'+d.date+(d.date===today?' · день триває':'')+'</option>').join('')+'</select></label></div><div class="s-trend-cards" id="s-trend-cards" aria-live="polite"></div><p class="s-fineprint">Окрема шкала для кожного графіка. Пропуск — немає даних або апрувів; це не нуль. Клієнт рахується один раз у межах дня, але може повторитися в інші дні. Ціна клієнта — змішаний показник за датою створення заявки, не атрибуція нового покупця.</p><details class="s-daily-details"><summary>Таблиця за днями</summary><div class="s-table-wrap"><table><thead><tr><th>День</th><th class="num">Апруви</th><th class="num">Клієнти з апрувом</th><th class="num">Викуп</th><th class="num">Сума апрувів</th><th class="num">Ціна клієнта</th><th class="num">Середній чек</th><th class="num">Реклама, ₴</th><th class="num">Реклама, $</th></tr></thead><tbody>'+rows.map(d=>'<tr><td>'+d.date+(d.date===today?' *':'')+'</td><td class="num">'+d.approved+'</td><td class="num">'+d.approvedCustomers+'</td><td class="num">'+d.redeemed+'</td><td class="num">'+uah(d.revenue)+'</td><td class="num">'+uah(d.cac)+'</td><td class="num">'+uah(d.aov)+'</td><td class="num">'+uah(d.adSpend)+'</td><td class="num">'+(d.adSpendUSD===null?'—':d.adSpendUSD.toFixed(2))+'</td></tr>').join('')+'</tbody></table></div></details>';
+    renderTrendCards();el('s-trend-day').onchange=e=>{trendDate=e.target.value;renderTrendCards();};
   }
   function chart(rows){const w=1000,h=210,pad=30,max=Math.max(1,...rows.map(x=>x.approved));const x=i=>pad+(rows.length===1?(.5):(i/(rows.length-1)))*(w-2*pad),yy=v=>h-pad-v/max*(h-2*pad);let s='<svg class="s-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Графік щоденної кількості апрувів та викупів">';for(let i=0;i<=4;i++){const v=max*i/4;s+='<line x1="30" x2="970" y1="'+yy(v)+'" y2="'+yy(v)+'" stroke="#e6ece0"/><text x="22" y="'+(yy(v)+4)+'" text-anchor="end" font-size="11" fill="#74806a">'+Math.round(v)+'</text>';}
     for(const [key,color] of [['approved','#97ba3c'],['redeemed','#536aec']]){s+='<polyline fill="none" stroke="'+color+'" stroke-width="3" points="'+rows.map((r,i)=>x(i)+','+yy(r[key])).join(' ')+'"/>';s+=rows.map((r,i)=>'<circle cx="'+x(i)+'" cy="'+yy(r[key])+'" r="4" fill="'+color+'"><title>'+r.date+': '+(key==='approved'?'апруви':'викуп')+' '+r[key]+'</title></circle>').join('');}
@@ -99,6 +148,10 @@
   el('s-refresh').onclick=()=>load(true);
   el('s-config').onsubmit=e=>{e.preventDefault();try{config=C.settings(Object.fromEntries(new FormData(e.target)));localStorage.setItem('ultera_summary_assumptions_v1',JSON.stringify(config));render();el('s-error').innerHTML='';}catch(e){el('s-error').innerHTML='<div class="s-notice s-error">'+esc(e.message)+'</div>';}};
   document.getElementById('logout-btn')?.addEventListener('click',()=>{requestVersion++;data=null;result=null;prior=null;config={...C.DEFAULTS};loaded=false;localStorage.removeItem('ultera_summary_assumptions_v1');root.querySelector('.s-settings').hidden=true;for(const input of el('s-config').querySelectorAll('input'))input.value='';el('s-content').innerHTML='';el('s-error').innerHTML='';});
+  if(typeof ResizeObserver!=='undefined'){
+    let lastWidth=0;
+    new ResizeObserver(entries=>{const width=Math.round(entries[0].contentRect.width);if(width!==lastWidth){lastWidth=width;if(result&&el('s-trend-cards'))renderTrendCards();}}).observe(root);
+  }
   const link=document.querySelector('[data-page="summary"]');if(link)link.addEventListener('click',()=>load(false));
   if(window.ULTERA_SUMMARY_PREVIEW)load(false);
   else if(location.hash==='#summary'){const check=()=>{if(typeof SESSION!=='undefined'&&SESSION?.access_token){link?.click();clearInterval(timer);}};const timer=setInterval(check,700);setTimeout(()=>clearInterval(timer),20000);check();}
