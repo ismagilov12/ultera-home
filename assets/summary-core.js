@@ -126,8 +126,9 @@
       if(!cities.has(o.city))cities.set(o.city,{name:o.city,orders:0,revenue:0});const city=cities.get(o.city);city.orders++;city.revenue+=o.total;
       for(const i of o.lines) {
         const productKey=i.uid;
-        if(!products.has(productKey))products.set(productKey,{uid:i.uid,title:i.title,family:i.family,photo:i.photo,qty:0,redeemedQty:0,revenue:0,cost:0,missingCostUnits:0,estimatedCostUnits:0,sizes:new Map(),variants:new Map()});
+        if(!products.has(productKey))products.set(productKey,{uid:i.uid,title:i.title,family:i.family,photo:i.photo,footwear:i.footwear,qty:0,redeemedQty:0,revenue:0,cost:0,missingCostUnits:0,estimatedCostUnits:0,sizes:new Map(),variants:new Map(),daily:new Map(ds.map(date=>[date,{date,qty:0,redeemedQty:0,revenue:0}]))});
         const p=products.get(productKey);p.qty+=i.qty;p.revenue+=i.revenue;p.cost+=i.cost||0;if(i.cost===null)p.missingCostUnits+=i.qty;if(i.estimatedCost&&i.cost!==null)p.estimatedCostUnits+=i.qty;if(o.status==='redeemed')p.redeemedQty+=i.qty;
+        const pd=p.daily.get(o.day);pd.qty+=i.qty;pd.revenue+=i.revenue;if(o.status==='redeemed')pd.redeemedQty+=i.qty;
         const sizeKey=i.size+'|'+i.kind;
         if(!p.sizes.has(sizeKey))p.sizes.set(sizeKey,{size:i.size,kind:i.kind,qty:0,redeemed:0,revenue:0});
         const sz=p.sizes.get(sizeKey);sz.qty+=i.qty;sz.revenue+=i.revenue;if(o.status==='redeemed')sz.redeemed+=i.qty;
@@ -155,7 +156,10 @@
     }
     const overhead=money(ds.reduce((s,d)=>{const dt=new Date(d+'T12:00Z');return s+cfg.overhead/new Date(Date.UTC(dt.getUTCFullYear(),dt.getUTCMonth()+1,0)).getUTCDate();},0));
     const coverageOK=!missingAdDays.length&&metadata.ordersComplete!==false&&metadata.sourceFiltered!==true&&metadata.currencyComplete!==false;
-    function profit(group){return coverageOK&&!b[group].missingCostUnits?money(b[group].revenue-b[group].cost-spend-overhead-cfg.extra):null;}
+    // Use the imported spend for profit even before all ad days arrive.
+    // Incomplete orders, unknown costs/currencies and unallocated source costs remain invalid.
+    const profitOK=metadata.ordersComplete!==false&&metadata.sourceFiltered!==true&&metadata.currencyComplete!==false;
+    function profit(group){return profitOK&&!b[group].missingCostUnits?money(b[group].revenue-b[group].cost-spend-overhead-cfg.extra):null;}
     return {from,to,days:ds.length,settings:cfg,buckets:b,excluded:norm.excluded,
       advertising:{usd:spendUSD,uah:spend,missingDays:missingAdDays,coveredDays:ds.length-missingAdDays.length,complete:!missingAdDays.length},
       overhead,extra:cfg.extra,profit:{expected:profit('approved'),redeemed:profit('redeemed')},
@@ -170,10 +174,11 @@
       quality,thermalShare:b.approved.pairs&&!quality.unknownVersionPairs?[...variants.values()].filter(v=>v.kind==='thermal'||v.kind==='boot').reduce((s,v)=>s+v.qty,0)/b.approved.pairs:null,
       reconciliation:{...reconciliation,productRevenue:money(reconciliation.productRevenue),productCost:money(reconciliation.productCost),crmExpensesApproved:money(reconciliation.crmExpensesApproved)},
       sources:[...sources.values()].map(s=>({...s,revenue:money(s.revenue),approvedCustomers:s.approvedCustomers.size})).sort((a,b)=>b.pairs-a.pairs),
-      daily:[...daily.values()],products:[...products.values()].map(p=>({...p,revenue:money(p.revenue),cost:money(p.cost),margin:p.missingCostUnits?null:money(p.revenue-p.cost),sizes:[...p.sizes.values()].sort((a,b)=>a.size.localeCompare(b.size,'uk',{numeric:true})||a.kind.localeCompare(b.kind)),variants:[...p.variants].map(([kind,qty])=>({kind,qty}))})).sort((a,b)=>b.qty-a.qty||b.revenue-a.revenue),
+      daily:[...daily.values()],products:[...products.values()].map(p=>({...p,revenue:money(p.revenue),cost:money(p.cost),margin:p.missingCostUnits?null:money(p.revenue-p.cost),daily:[...p.daily.values()].map(d=>({...d,revenue:money(d.revenue)})),sizes:[...p.sizes.values()].sort((a,b)=>a.size.localeCompare(b.size,'uk',{numeric:true})||a.kind.localeCompare(b.kind)),variants:[...p.variants].map(([kind,qty])=>({kind,qty}))})).sort((a,b)=>b.qty-a.qty||b.revenue-a.revenue),
       sizes:[...sizes].map(([size,qty])=>({size,qty})).sort((a,b)=>a.size.localeCompare(b.size,'uk',{numeric:true})),
       variants:[...variants.values()],cities:[...cities.values()].sort((a,b)=>b.orders-a.orders),
       campaigns:[...campaigns.values()].map(c=>({...c,customers:c.customers.size,approvedCustomers:c.approvedCustomers.size})).sort((a,b)=>b.approved-a.approved),metadata:metadata||{}};
   }
   return {DEFAULTS,money,day,dates,previous,settings,status,kind,footwear,unitCost,normalize,summarize};
 });
+

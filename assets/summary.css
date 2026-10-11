@@ -20,3 +20,24 @@
 #ultera-summary .s-trend-svg .s-trend-empty{font-size:12px;fill:var(--s-ink)}
 #ultera-summary .s-daily-details{margin-top:12px}#ultera-summary .s-daily-details>summary{cursor:pointer;font-weight:650;padding:12px 0}
 @media(max-width:1080px){#ultera-summary .s-trend-cards{grid-template-columns:1fr}#ultera-summary .s-trend-svg{max-height:280px}#ultera-summary .s-trend-card h3,#ultera-summary .s-trend-context{min-height:0}}
+#ultera-summary #s-model-chart{scroll-margin-top:20px}
+#ultera-summary .s-model-controls{display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap}
+#ultera-summary .s-model-picker{flex:1;min-width:230px;max-width:520px}
+#ultera-summary .s-model-picker select{flex:1;min-width:0;width:100%}
+#ultera-summary .s-model-selection{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+#ultera-summary .s-model-chip{display:flex;align-items:center;gap:5px;background:#f5f8f0;font-size:12px;text-align:left;max-width:100%}
+#ultera-summary .s-model-chip span{font-size:21px;line-height:1;margin-left:9px;color:var(--s-muted)}
+#ultera-summary .s-model-day{display:flex;justify-content:flex-end;margin-top:10px}
+#ultera-summary .s-model-svg{display:block;width:100%;height:auto;margin:12px 0;overflow:visible}
+#ultera-summary .s-model-svg text{fill:var(--s-muted);font:12px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-variant-numeric:tabular-nums}
+#ultera-summary .s-model-svg circle{cursor:pointer}
+#ultera-summary .s-model-readings{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+#ultera-summary .s-model-reading{min-width:0;border:1px solid var(--s-line);border-radius:10px;padding:13px 15px;background:#fafcf8;font-variant-numeric:tabular-nums}
+#ultera-summary .s-model-reading div{font-size:12px;font-weight:650;overflow-wrap:anywhere}
+#ultera-summary .s-model-reading strong{display:block;font-size:25px;margin:5px 0 1px}
+#ultera-summary .s-model-reading span{display:block;font-size:12px;color:var(--s-muted)}
+#ultera-summary .s-model-empty{padding:35px 15px;text-align:center;color:var(--s-muted)}
+#ultera-summary .s-product-chart-button{display:block;margin-top:8px;padding:5px 10px;font-size:11px;background:#f1f7e6;border-color:#d5dfc9}
+#ultera-summary .s-product-chart-button[aria-pressed=true]{background:#d7fa53;border-color:#c6e451}
+@media(max-width:760px){#ultera-summary .s-model-picker{max-width:none;flex-basis:100%;min-width:0}#ultera-summary .s-model-controls>button{flex:1}#ultera-summary .s-model-readings{grid-template-columns:repeat(2,minmax(0,1fr))}#ultera-summary .s-model-reading{padding:11px}#ultera-summary .s-model-reading strong{font-size:21px}#ultera-summary .s-model-chip{flex:1;min-width:140px}}
+
