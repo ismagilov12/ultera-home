@@ -20,6 +20,17 @@ function variant(name,season,footwear){
   if(/осін|осен|весн|демі|деми|літн|летн|autumn|spring|summer/i.test(text))return 'standard';
   return 'unknown';
 }
+function paymentSummary(order,sourceCurrency){
+  if(!Array.isArray(order.payments))return {known:false,paidAmount:null};
+  const seen=new Set();let amount=0;
+  for(const p of order.payments){
+    if(p.id!=null){const key=String(p.id);if(seen.has(key))continue;seen.add(key);}
+    if(p.status!=='paid')continue;
+    if(!defined(p.amount)||Number(p.amount)<0||(p.actual_currency||sourceCurrency)!=='UAH')return {known:false,paidAmount:null};
+    amount+=Number(p.amount);
+  }
+  return {known:true,paidAmount:round(Math.max(0,amount))};
+}
 function createReader({fetcher,token,sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)),clock=()=>Date.now()}){
   let lastRequest=null,requests=0;
   async function get(path,params){
@@ -74,7 +85,7 @@ function normalizeCRM(rows,catalog,sources,siteSourceId,fetchedAt){
       if(category===null||category===undefined)unknownCategoryUnits+=Number(p.quantity);
       if(Number(category)===22&&!size)unknownSizeUnits+=Number(p.quantity);
       const insole=/устіл|стельк|insole/i.test(title);
-      return {uid:product?'crm-product:'+product.id:'crm-name:'+String(p.name||p.sku),sku:String(p.sku||''),title,
+      return {uid:product?'crm-product:'+product.id:'crm-name:'+String(p.name||p.sku),sku:String(p.sku||p.offer?.sku||''),title,
         size:size?String(size):'Не вказано',season:season?String(season):'',qty:Number(p.quantity),price:Number(p.price_sold),
         purchased_price:defined(p.purchased_price)?Number(p.purchased_price):null,
         product_revenue:round(Number(p.price_sold)*Number(p.quantity)),category_id:category??null,
@@ -85,6 +96,7 @@ function normalizeCRM(rows,catalog,sources,siteSourceId,fetchedAt){
       keycrm_status_id:Number(o.status_id),total:Number(o.grand_total),items,
       source_id:Number(o.source_id),source_name:String(source?.name||'Джерело '+o.source_id),
       customer_key:customers.get(identity),campaign_tag:o.marketing?.utm_campaign||null,
+      payment:paymentSummary(o,source?.currency_code),
       delivery_city:String(o.shipping?.shipping_address_city||''),keycrm_synced_at:fetchedAt,
       // Kept separate from general operating costs to avoid silently deducting twice.
       crm_expenses:defined(o.expenses_sum)?Number(o.expenses_sum):0});
@@ -96,7 +108,7 @@ async function loadCRM({fetcher,token,start,end,siteSourceId,fetchedAt,sleep,clo
   if(!token)throw publicError('CRM_NOT_CONFIGURED','Серверний доступ до KeyCRM не налаштовано. Дані лише сайту не видаються за всю CRM.');
   const reader=createReader({fetcher,token,sleep,clock});
   const format=d=>new Date(d).toISOString().slice(0,19).replace('T',' ');
-  const rows=await reader.pages('/order',{include:'buyer,products.offer,status,marketing,shipping',sort:'id',
+  const rows=await reader.pages('/order',{include:'buyer,products.offer,status,marketing,shipping,payments',sort:'id',
     'filter[created_between]':format(start)+','+format(new Date(Date.parse(end)-1000))});
   const sources=await reader.pages('/order/source',{sort:'id'},4);
   const productIds=[...new Set(rows.flatMap(o=>(o.products||[]).map(p=>p.offer?.product_id)).filter(Boolean))];
@@ -107,4 +119,5 @@ async function loadCRM({fetcher,token,start,end,siteSourceId,fetchedAt,sleep,clo
   if(result.orders.some(o=>o.created_at<start||o.created_at>=end))throw publicError('CRM_DATE_MISMATCH','Дати відповіді KeyCRM не збігаються з вибраним періодом. Підсумки приховано.');
   return result;
 }
-module.exports={loadCRM,normalizeCRM,createReader,utc,variant};
+module.exports={loadCRM,normalizeCRM,createReader,utc,variant,paymentSummary};
+

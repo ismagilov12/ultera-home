@@ -81,7 +81,9 @@
         const title=String(i.title||i.name||'Товар без назви').replace(/^ULTERA\s*[-–]\s*/i,'');
         return {uid:String(i.uid||i.sku||title),title,family:String(i.family||''),size:String(i.size||'Не вказано'),kind:kind(i),footwear:footwear(i),qty:i.qty,revenue,categoryUnknown:i.crm_item&&i.category_id==null&&kind(i)!=='insole',productRevenue:valid(i.product_revenue)?Number(i.product_revenue):null,crmCost:valid(i.purchased_price)?money(Number(i.purchased_price)*i.qty):null,cost:c.value===null?null:money(c.value*i.qty),estimatedCost:c.estimated,photo:String(i.photo||'')};
       });
+      const payment=o.payment||{},paymentKnown=payment.known===true&&valid(payment.paidAmount)&&Number(payment.paidAmount)>=0;
       out.push({id:key,number:o.keycrm_id||o.number,day:day(o.created_at),created_at:o.created_at,customer:String(o.customer_key||key),status:st,total,
+        payment:{known:paymentKnown,paidAmount:paymentKnown?money(payment.paidAmount):null,installment:paymentKnown&&payment.installment===true,wfpPaid:paymentKnown&&payment.wfpPaid===true},
         sourceId:String(o.source_id??'site'),sourceName:String(o.source_name||'Сайт'),crmExpenses:Number(o.crm_expenses)||0,
         city:String(o.delivery_city||'Не вказано'),campaign:campaign(o.campaign_tag),lines:normalizedLines,synced:o.keycrm_synced_at||null});
     }
@@ -100,6 +102,7 @@
     const cities=new Map(),campaigns=new Map(),variants=new Map(),sizes=new Map();
     const sources=new Map(),reconciliation={pairs:0,approvedPairs:0,pendingPairs:0,unknownPairs:0,productRevenue:0,productCost:0,missingProductRevenue:0,missingProductCost:0,crmExpensesApproved:0};
     const quality={unknownCategoryUnits:0,unknownSizePairs:0,unknownVersionPairs:0};
+    const payments={orders:0,full:0,minimum:0,partial:0,unpaid:0,unknown:0,receivedAmount:0,installments:0,installmentsFull:0,installmentsMinimum:0,wfpPaidOrders:0,wfpReady:metadata.payments?.wfpReady===true};
     for(const o of os) {
       accumulate(b.all,o);customers.all.add(o.customer);
       const approved=o.status==='approved'||o.status==='redeemed';
@@ -122,6 +125,16 @@
       if(!campaigns.has(o.campaign))campaigns.set(o.campaign,{name:o.campaign,submitted:0,approved:0,redeemed:0,revenue:0,customers:new Set(),approvedCustomers:new Set()});
       const cam=campaigns.get(o.campaign);cam.submitted++;cam.customers.add(o.customer);if(approved){cam.approved++;cam.revenue+=o.total;cam.approvedCustomers.add(o.customer);}if(o.status==='redeemed')cam.redeemed++;
       if(!approved)continue;
+      payments.orders++;
+      const payment=o.payment;
+      if(!payment.known)payments.unknown++;
+      else{
+        payments.receivedAmount+=payment.paidAmount;
+        const full=payment.paidAmount>0&&Math.round(payment.paidAmount*100)>=Math.round(o.total*100),minimum=!full&&payment.paidAmount===200;
+        if(full)payments.full++;else if(minimum)payments.minimum++;else if(payment.paidAmount>0)payments.partial++;else payments.unpaid++;
+        if(payment.installment){payments.installments++;if(full)payments.installmentsFull++;if(minimum)payments.installmentsMinimum++;}
+        if(payment.wfpPaid)payments.wfpPaidOrders++;
+      }
       const d=daily.get(o.day);d.approved++;d.revenue+=o.total;dailyCustomers.get(o.day).add(o.customer);if(o.status==='redeemed'){d.redeemed++;d.redeemedRevenue+=o.total;}
       if(!cities.has(o.city))cities.set(o.city,{name:o.city,orders:0,revenue:0});const city=cities.get(o.city);city.orders++;city.revenue+=o.total;
       for(const i of o.lines) {
@@ -160,6 +173,9 @@
     // Incomplete orders, unknown costs/currencies and unallocated source costs remain invalid.
     const profitOK=metadata.ordersComplete!==false&&metadata.sourceFiltered!==true&&metadata.currencyComplete!==false;
     function profit(group){return profitOK&&!b[group].missingCostUnits?money(b[group].revenue-b[group].cost-spend-overhead-cfg.extra):null;}
+    payments.receivedAmount=money(payments.receivedAmount);
+    const thermalKnownPairs=b.approved.pairs-quality.unknownVersionPairs;
+    const thermalPairs=[...variants.values()].filter(v=>v.kind==='thermal'||v.kind==='boot').reduce((s,v)=>s+v.qty,0);
     return {from,to,days:ds.length,settings:cfg,buckets:b,excluded:norm.excluded,
       advertising:{usd:spendUSD,uah:spend,missingDays:missingAdDays,coveredDays:ds.length-missingAdDays.length,complete:!missingAdDays.length},
       overhead,extra:cfg.extra,profit:{expected:profit('approved'),redeemed:profit('redeemed')},
@@ -171,7 +187,7 @@
       roas:coverageOK&&spend>0?b.approved.revenue/spend:null,
       grossMargin:b.approved.missingCostUnits?null:money(b.approved.revenue-b.approved.cost),
       grossMarginRate:b.approved.missingCostUnits||!b.approved.revenue?null:(b.approved.revenue-b.approved.cost)/b.approved.revenue,
-      quality,thermalShare:b.approved.pairs&&!quality.unknownVersionPairs?[...variants.values()].filter(v=>v.kind==='thermal'||v.kind==='boot').reduce((s,v)=>s+v.qty,0)/b.approved.pairs:null,
+      quality,payments,thermalPairs,thermalKnownPairs,thermalShare:thermalKnownPairs?thermalPairs/thermalKnownPairs:null,
       reconciliation:{...reconciliation,productRevenue:money(reconciliation.productRevenue),productCost:money(reconciliation.productCost),crmExpensesApproved:money(reconciliation.crmExpensesApproved)},
       sources:[...sources.values()].map(s=>({...s,revenue:money(s.revenue),approvedCustomers:s.approvedCustomers.size})).sort((a,b)=>b.pairs-a.pairs),
       daily:[...daily.values()],products:[...products.values()].map(p=>({...p,revenue:money(p.revenue),cost:money(p.cost),margin:p.missingCostUnits?null:money(p.revenue-p.cost),daily:[...p.daily.values()].map(d=>({...d,revenue:money(d.revenue)})),sizes:[...p.sizes.values()].sort((a,b)=>a.size.localeCompare(b.size,'uk',{numeric:true})||a.kind.localeCompare(b.kind)),variants:[...p.variants].map(([kind,qty])=>({kind,qty}))})).sort((a,b)=>b.qty-a.qty||b.revenue-a.revenue),
@@ -181,4 +197,5 @@
   }
   return {DEFAULTS,money,day,dates,previous,settings,status,kind,footwear,unitCost,normalize,summarize};
 });
+
 

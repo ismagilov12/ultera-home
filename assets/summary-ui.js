@@ -30,7 +30,8 @@
     if(r.metadata.currencyComplete===false)parts.push('Є джерела з невідомою або іншою валютою. Фінансові результати потребують звірки.');
     if(r.quality.unknownCategoryUnits)parts.push('Для '+nf(r.quality.unknownCategoryUnits)+' од. без відмов у цьому періоді немає категорії CRM; вони не зараховані до пар ОБУВЬ.');
     if(r.quality.unknownSizePairs)parts.push('Для '+nf(r.quality.unknownSizePairs)+' пар в апрувах не вказано розмір.');
-    if(r.quality.unknownVersionPairs)parts.push('Для '+nf(r.quality.unknownVersionPairs)+' пар в апрувах CRM не вказує однозначно сезон / термо-версію. Частку термо приховано, це не 0%.');
+    if(r.quality.unknownVersionPairs)parts.push('Для '+nf(r.quality.unknownVersionPairs)+' пар не підтверджено сезон / термо-версію. Частка термо рахується лише серед '+nf(r.thermalKnownPairs)+' пар з відомою версією, не серед усіх пар.');
+    if(r.metadata.siteReady===false)parts.push('Первинні версії замовлень сайту тимчасово недоступні. Невідомі версії не замінюються звичайними.');
     if(r.reconciliation.crmExpensesApproved)parts.push('Окремо в CRM записано витрат на '+uah(r.reconciliation.crmExpensesApproved)+'. Вони не віднімаються повторно: перевірте, чи включені у ваші загальні / додаткові витрати.');
     if(!r.metadata.preview&&r.metadata.advertisingMode==='stored_days'){const days=(data.adDays||[]).map(d=>d.date).sort();const fetched=(data.adDays||[]).map(d=>d.fetched_at).filter(Boolean).sort().at(-1);parts.push('Meta: збережені імпортовані дні'+(days.length?' до '+days.at(-1):' відсутні')+'. Автоматичне оновлення реклами ще не підключене.'+(fetched?' Дані отримано '+new Date(fetched).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv'})+'.':''));}
     if(r.metadata.preview)parts.push('Це локальний знімок на '+new Date(r.metadata.fetchedAt).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv'})+'. Оновлення кнопкою перечитує знімок, а не CRM. Ручні замовлення менеджера поза сайтом сюди не входять.');
@@ -57,7 +58,7 @@
       tile('Середній чек апрува',uah(r.aov),'Сума після знижок / замовлення',delta(r.aov,prior?.aov??null))+
       tile('Ціна апрува',uah(r.cpo),r.cpo===null?(filtered?'Немає розподілу реклами за джерелами':'Потрібні повні дані реклами'):'$'+(r.cpo/config.fx).toFixed(2)+' · сукупна реклама / апруви',delta(r.cpo,prior?.cpo??null,true))+
       tile('Апрув по клієнтах',pct(r.customerApprovalRate),nf(b.approved.customers)+' із '+nf(b.all.customers)+' · по заявках '+pct(r.approvalRate),'')+
-      tile('Частка термо',pct(r.thermalShare),r.quality.unknownVersionPairs?'Немає версії для '+nf(r.quality.unknownVersionPairs)+' із '+nf(b.approved.pairs)+' пар':'Низька термо + високі ботинки','')+'</div>'+
+      tile('Частка термо',pct(r.thermalShare),r.thermalKnownPairs?nf(r.thermalPairs)+' термо із '+nf(r.thermalKnownPairs)+' пар з відомою версією'+(r.quality.unknownVersionPairs?' · '+nf(r.quality.unknownVersionPairs)+' без версії':''):'Немає версії для '+nf(r.quality.unknownVersionPairs)+' із '+nf(b.approved.pairs)+' пар','')+'</div>'+
       '<section class="s-panel"><div class="s-finance">'+[
         ['Реклама Meta',uah(r.advertising.uah),'$'+r.advertising.usd.toFixed(2)+' · курс '+config.fx],
         ['Собівартість апрувів',b.approved.missingCostUnits?'—':uah(b.approved.cost),costNote],
@@ -66,11 +67,22 @@
         ['Прибуток від викупів',uah(r.profit.redeemed),'']
       ].map(([l,v,s])=>'<div><div class="s-muted">'+l+'</div><div class="amount">'+v+'</div>'+(s?'<p class="s-muted">'+s+'</p>':'')+'</div>').join('')+'</div>'+notices(r)+
       '<div class="s-efficiency">'+[['Маржа до реклами',uah(r.grossMargin)],['Маржинальність',pct(r.grossMarginRate)],['Реклама / клієнт з апрувом',uah(r.cac)],['Сума апрувів / реклама',r.roas===null?'—':r.roas.toFixed(2)+'×']].map(([l,v])=>'<div><span class="s-muted">'+l+'</span><b>'+v+'</b></div>').join('')+'</div><p class="s-fineprint">Когорта за датою оформлення на джерелі (KeyCRM ordered_at), часовий пояс — Київ. Апрув: не «Новий», не відмова; «12 / 15 / 20+ днів» включені. Викуп: CRM «Виконано» (12). «Немає в наявності» — загальна причина відмови, не висновок про склад. Прибуток = сума − собівартість − реклама − загальні − додаткові витрати. Не є рухом грошей; податки, комісії та повернення не враховані, якщо їх не внесено у витрати. Реклама / клієнт — змішаний показник, а не вартість залучення нового покупця. Клієнт визначається за повним телефоном, за його відсутності — ID покупця CRM, без показу особистих даних. Назви моделей і розміри — з CRM.</p></section>'+
+      paymentsPanel(r)+
       '<section class="s-panel"><div class="s-panel-head"><div><h2>Динаміка продажів</h2><p class="s-muted">Апруви та викуп за датою створення</p></div><div class="s-legend"><span><i class="s-key" style="background:#97ba3c"></i>Апруви</span><span><i class="s-key" style="background:#536aec"></i>Викуп</span></div></div>'+chart(r.daily)+'</section>'+
       '<section class="s-panel" id="s-model-chart" aria-labelledby="s-model-chart-title"></section>'+
       '<section class="s-panel" id="s-trends" aria-labelledby="s-trends-title"></section>'+
       '<section class="s-panel"><div class="s-tabs" role="tablist" aria-label="Деталі продажів">'+[['models','Топ моделей і розміри'],['sizes','Розміри та версії'],['channels','UTM та міста']].map(([k,label])=>'<button role="tab" id="s-tab-'+k+'" aria-controls="s-pane" aria-selected="'+(activeTab===k)+'" data-tab="'+k+'">'+label+'</button>').join('')+'</div><div id="s-pane" role="tabpanel" aria-labelledby="s-tab-'+activeTab+'"></div></section><p class="s-muted" style="margin:5px 0 22px">Оновлено: '+esc(data.metadata?.fetchedAt?new Date(data.metadata.fetchedAt).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv'}):'—')+' · '+esc(data.metadata?.sourceLabel||'Сайт → синхронізація KeyCRM; реклама Windsor.ai')+'. '+(prior?'Порівняння: '+pr.from+' — '+pr.to+'.':'Порівняння приховане: неповний поточний день або немає попереднього періоду.')+'</p>';
     renderModelChart();renderTrends();renderTab();
+  }
+  function paymentsPanel(r){
+    const p=r.payments,share=n=>p.orders?n/p.orders:null;
+    return '<section class="s-panel" id="s-payments" aria-labelledby="s-payments-title"><div class="s-panel-head"><div><h2 id="s-payments-title">Оплати замовлень</h2><p class="s-muted">Фактично проведені оплати · частки від '+nf(p.orders)+' апрувнутих замовлень</p></div><div><span class="s-muted">Підтверджено оплат</span><strong style="display:block;font-size:23px">'+uah(p.receivedAmount)+'</strong></div></div><div class="s-kpis">'+
+      tile('Повна оплата',pct(share(p.full)),nf(p.full)+' із '+nf(p.orders)+' замовлень','')+
+      tile('Передоплата 200 грн',pct(share(p.minimum)),nf(p.minimum)+' із '+nf(p.orders)+' замовлень · тільки рівно 200 грн','')+
+      tile('Частинами WayForPay',p.wfpReady?nf(p.installments):'—',p.wfpReady?pct(share(p.installments))+' апрувів · повна: '+nf(p.installmentsFull)+' · 200 грн: '+nf(p.installmentsMinimum):'Джерело WayForPay недоступне, це не 0','')+
+      tile('Інша часткова / без оплати',nf(p.partial)+' / '+nf(p.unpaid),nf(p.unknown)+' замовлень з невідомою сумою оплати','')+'</div>'+
+      (!p.wfpReady?'<div class="s-notice">WayForPay не підтверджено за весь запитаний період. Суми й частки доступні за проведеними оплатами CRM; платежі, які ще не записані в CRM, можуть не потрапити сюди.</div>':'')+
+      '<p class="s-fineprint">Повна: проведена сума не менша за суму замовлення. Мінімальна: рівно 200 грн, якщо це не повна вартість. Інша часткова: більше нуля, але не повна й не 200 грн. Оплата частинами — тільки підтверджений платіж WayForPay, зв’язаний з апрувом за рахунком сайту; обрана в кошику опція не рахується оплатою. Дубль того самого платежу у CRM та WayForPay не додається двічі. Статус замовлення не підтверджує оплату. Відсотки рахуються від усіх апрувів, включно з невідомими оплатами; це стан на зараз для замовлень вибраного періоду.</p></section>';
   }
   function reconciliationPanel(r){
     if(!r.metadata.allCRMOrders)return '';
@@ -239,4 +251,5 @@
   if(window.ULTERA_SUMMARY_PREVIEW)load(false);
   else if(location.hash==='#summary'){const check=()=>{if(typeof SESSION!=='undefined'&&SESSION?.access_token){link?.click();clearInterval(timer);}};const timer=setInterval(check,700);setTimeout(()=>clearInterval(timer),20000);check();}
 })();
+
 
