@@ -10,6 +10,7 @@ function siteSku(item){const uid=keyPart(item.uid);const size=keyPart(item.size)
 function siteKind(item){
   const label=String(item.season||''),family=String(item.family||''),season=String(item.seasonId||item.season_id||'').toLowerCase();
   if(/устіл|стельк|insole/i.test(family+' '+item.title))return 'insole';
+  if(/^(tees)$/i.test(family)||/футболк|t-shirt/i.test(String(item.title||'')))return 'other';
   if(BOOT_UIDS.has(keyPart(item.uid))||/^(thermo|hunk thermo|aganta thermo|thermo ked|travel thermo|wave2 thermo)$/i.test(family))return 'boot';
   if(season==='winter'||/зим|winter|термо|thermo/i.test(label))return 'thermal';
   if(['autumn','spring','summer'].includes(season)||/осін|осен|весн|демі|деми|літн|летн|autumn|spring|summer/i.test(label))return 'standard';
@@ -32,6 +33,13 @@ function enrichVersions(orders,siteRows){
   }
   for(const order of orders){
     const row=byOrder.get(String(order.keycrm_id));if(!row||!Array.isArray(row.items))continue;
+    // Original site selection is a separate measure: a manager can replace the CRM SKU
+    // or size. Never mislabel the current CRM line using an approximate model match.
+    const original=row.items.map(i=>({qty:Number(i.qty??i.quantity),kind:siteKind(i)}));
+    if(original.every(i=>Number.isSafeInteger(i.qty)&&i.qty>0)){
+      const footwear=original.filter(i=>!['insole','other'].includes(i.kind));
+      order.site_version={pairs:footwear.reduce((s,i)=>s+i.qty,0),knownPairs:footwear.filter(i=>i.kind!=='unknown').reduce((s,i)=>s+i.qty,0),thermalPairs:footwear.filter(i=>i.kind==='thermal'||i.kind==='boot').reduce((s,i)=>s+i.qty,0)};
+    }
     const groups=new Map(),crmGroups=new Map();
     for(const item of row.items){
       const qty=Number(item.qty??item.quantity);if(!(qty>0))continue;
