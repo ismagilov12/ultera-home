@@ -2734,14 +2734,14 @@ window.ulteraFbq = function(name, params){
             </span>
             <span class="season-txt"><b>Осінь</b><span>Вологостійка Cordura · поточна ціна</span></span>
           </button>
-          <button class="season-btn" data-season="winter" onclick="pickSeason(this,'winter','Зимові термо · +700 ₴')">
+          <button class="season-btn" data-season="winter" onclick="pickSeason(this,'winter','Зимові термо · +900 ₴')">
             <span class="season-ic" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2v20M4.2 6.5l15.6 11M19.8 6.5l-15.6 11"/>
                 <path d="M12 2l-2 2M12 2l2 2M12 22l-2-2M12 22l2-2M4.2 6.5l2.7.2M4.2 6.5l.9 2.5M19.8 17.5l-2.7-.2M19.8 17.5l-.9-2.5M19.8 6.5l-2.7.2M19.8 6.5l-.9 2.5M4.2 17.5l2.7-.2M4.2 17.5l.9-2.5"/>
               </svg>
             </span>
-            <span class="season-txt"><b>Зимові термо · +700 ₴</b><span>Термо-підкладка · до −7°C</span></span>
+            <span class="season-txt"><b>Зимові термо · +900 ₴</b><span>Термо-підкладка · до −7°C</span></span>
           </button>
         </div>
       </div>
@@ -3757,7 +3757,7 @@ function isNativeThermoFamily(family){
   return ['Thermo','Hunk Thermo','Aganta Thermo','Thermo Ked','Travel Thermo','WAVE2 Thermo'].includes(family);
 }
 
-const WINTER_SURCHARGE_UAH = 700;
+const WINTER_SURCHARGE_UAH = 900;
 function winterExtra(family, seasonId){
   return seasonId === 'winter' && !isNativeThermoFamily(family) ? WINTER_SURCHARGE_UAH : 0;
 }
@@ -4627,7 +4627,7 @@ function pickSeason(btn, id, label){
     n.textContent = label;
   }
   window.__modalSeason = id;
-  // Перерахунок ціни: Осінь = поточна ціна, Зимові термо = +700 ₴
+  // Перерахунок ціни: Осінь = поточна ціна, Зимові термо = +900 ₴
   const uid = window.__modalUid || currentColor;
   const p = findProduct(uid);
   if(!p) return;
@@ -4720,7 +4720,7 @@ function addToCart(){
   const p = findProduct(uid);
   if(!p){ toast('Помилка товару'); return; }
   if(isSoldOut(p)){ toast('Немає в наявності'); return; }
-  // Season: Autumn at the current price | Winter thermo (+700 UAH).
+  // Season: Autumn at the current price | Winter thermo (+900 UAH).
   const NO_SEASON = ['02','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo','Thermo Ked','Travel Thermo','WAVE2 Thermo'];
   const isThermo = isNativeThermoFamily(p.family);
   const canSeason = !NO_SEASON.includes(p.family);
