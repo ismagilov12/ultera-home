@@ -83,9 +83,10 @@
       });
       const payment=o.payment||{},paymentKnown=payment.known===true&&valid(payment.paidAmount)&&Number(payment.paidAmount)>=0;
       const sv=o.site_version,siteVersion=sv&&['pairs','knownPairs','thermalPairs'].every(k=>valid(sv[k])&&Number(sv[k])>=0)&&sv.thermalPairs<=sv.knownPairs&&sv.knownPairs<=sv.pairs?{pairs:Number(sv.pairs),knownPairs:Number(sv.knownPairs),thermalPairs:Number(sv.thermalPairs)}:null;
+      const siteItems=Array.isArray(o.site_items)?o.site_items.filter(i=>i&&String(i.uid||'').trim()&&String(i.title||'').trim()&&Number.isSafeInteger(i.qty)&&i.qty>0&&i.is_footwear===true).map(i=>({uid:'site-model:'+String(i.uid),title:String(i.title),size:String(i.size||'Не вказано'),qty:i.qty,kind:kind(i)})):[];
       out.push({id:key,number:o.keycrm_id||o.number,day:day(o.created_at),created_at:o.created_at,customer:String(o.customer_key||key),status:st,total,
         payment:{known:paymentKnown,paidAmount:paymentKnown?money(payment.paidAmount):null,installment:paymentKnown&&payment.installment===true,wfpPaid:paymentKnown&&payment.wfpPaid===true},
-        siteVersion,
+        siteVersion,siteItems,
         sourceId:String(o.source_id??'site'),sourceName:String(o.source_name||'Сайт'),crmExpenses:Number(o.crm_expenses)||0,
         city:String(o.delivery_city||'Не вказано'),campaign:campaign(o.campaign_tag),lines:normalizedLines,synced:o.keycrm_synced_at||null});
     }
@@ -93,19 +94,41 @@
   }
   function blank() {return {orders:0,customers:0,pairs:0,units:0,revenue:0,cost:0,missingCostUnits:0,estimatedCostUnits:0};}
   function accumulate(bucket,o) {bucket.orders++;bucket.revenue+=o.total;for(const i of o.lines){bucket.units+=i.qty;if(i.footwear)bucket.pairs+=i.qty;if(i.cost===null)bucket.missingCostUnits+=i.qty;else bucket.cost+=i.cost;if(i.estimatedCost&&i.cost!==null)bucket.estimatedCostUnits+=i.qty;}}
+  function planProgress(input,month,target,asOf,config,metadata={}) {
+    if(!/^\d{4}-\d{2}$/.test(month)||!Number.isSafeInteger(target)||target<=0)throw new Error('Некоректний план');
+    const from=month+'-01';dates(from,from);
+    const first=new Date(from+'T12:00Z'),to=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+1,0,12)).toISOString().slice(0,10),ds=dates(from,to),today=day(asOf);
+    if(!today)throw new Error('Некоректна дата плану');
+    const through=today<to?today:to,started=today>=from;
+    const complete=!started||(metadata.ordersComplete!==false&&metadata.earliestOrderDate<=from&&metadata.latestOrderDate>=through);
+    const result={month,target,from,to,through:started?through:null,asOf:new Date(asOf).toISOString(),complete,actual:null,remaining:null,share:null,completedDays:0,remainingDays:started?ds.filter(d=>d>=today).length:ds.length,pace:null,requiredPace:null,projection:null,pendingPairs:null};
+    if(!complete)return result;
+    let actual=0,completedPairs=0,pendingPairs=0;
+    for(const o of normalize(input,settings(config)).orders){
+      if(o.day<from||o.day>through||!started)continue;
+      const pairs=o.lines.filter(i=>i.footwear).reduce((s,i)=>s+i.qty,0);
+      if(o.status==='approved'||o.status==='redeemed'){actual+=pairs;if(o.day<today)completedPairs+=pairs;}
+      else if(o.status==='pending')pendingPairs+=pairs;
+    }
+    const completedDays=ds.filter(d=>d<today).length,pace=completedDays?completedPairs/completedDays:null;
+    return {...result,actual,pendingPairs,completedDays,completedPairs,remaining:Math.max(0,target-actual),share:actual/target,pace,
+      requiredPace:result.remainingDays?Math.max(0,target-actual)/result.remainingDays:null,
+      projection:today>to?actual:pace===null?null:Math.round(pace*ds.length)};
+  }
   function summarize(input,adRows,from,to,config,metadata) {
     const cfg=settings(config),ds=dates(from,to),norm=normalize(input,cfg),os=norm.orders.filter(o=>o.day>=from&&o.day<=to);
     metadata={...(metadata||{})};
     if((metadata.earliestOrderDate&&from<metadata.earliestOrderDate)||(metadata.latestOrderDate&&to>metadata.latestOrderDate))metadata.ordersComplete=false;
     const b={all:blank(),approved:blank(),redeemed:blank(),waiting:blank(),pending:blank(),rejected:blank(),unknown:blank()};
     const customers=Object.fromEntries(Object.keys(b).map(k=>[k,new Set()]));
-    const products=new Map(),daily=new Map(ds.map(d=>[d,{date:d,approved:0,approvedCustomers:0,redeemed:0,revenue:0,redeemedRevenue:0,pairs:0,adSpend:null,adSpendUSD:null,aov:null,cac:null}]));
+    const products=new Map(),siteProducts=new Map(),daily=new Map(ds.map(d=>[d,{date:d,approved:0,approvedCustomers:0,redeemed:0,revenue:0,redeemedRevenue:0,pairs:0,adSpend:null,adSpendUSD:null,aov:null,cac:null,sitePairs:0,knownVersionPairs:0,thermalPairs:0,thermalShare:null}]));
     const dailyCustomers=new Map(ds.map(d=>[d,new Set()]));
     const cities=new Map(),campaigns=new Map(),variants=new Map(),sizes=new Map();
     const sources=new Map(),reconciliation={pairs:0,approvedPairs:0,pendingPairs:0,unknownPairs:0,productRevenue:0,productCost:0,missingProductRevenue:0,missingProductCost:0,crmExpensesApproved:0};
     const quality={unknownCategoryUnits:0,unknownSizePairs:0,unknownVersionPairs:0};
     const payments={orders:0,full:0,minimum:0,partial:0,unpaid:0,unknown:0,receivedAmount:0,installments:0,installmentsFull:0,installmentsMinimum:0,wfpPaidOrders:0,wfpReady:metadata.payments?.wfpReady===true};
     const primaryVersions={orders:0,pairs:0,knownPairs:0,thermalPairs:0,unknownPairs:0,share:null};
+    const originalModels={orders:0,pairs:0,withoutSnapshotOrders:0};
     for(const o of os) {
       accumulate(b.all,o);customers.all.add(o.customer);
       const approved=o.status==='approved'||o.status==='redeemed';
@@ -128,7 +151,15 @@
       if(!campaigns.has(o.campaign))campaigns.set(o.campaign,{name:o.campaign,submitted:0,approved:0,redeemed:0,revenue:0,customers:new Set(),approvedCustomers:new Set()});
       const cam=campaigns.get(o.campaign);cam.submitted++;cam.customers.add(o.customer);if(approved){cam.approved++;cam.revenue+=o.total;cam.approvedCustomers.add(o.customer);}if(o.status==='redeemed')cam.redeemed++;
       if(!approved)continue;
-      if(o.siteVersion){primaryVersions.orders++;primaryVersions.pairs+=o.siteVersion.pairs;primaryVersions.knownPairs+=o.siteVersion.knownPairs;primaryVersions.thermalPairs+=o.siteVersion.thermalPairs;}
+      const dailyRow=daily.get(o.day);
+      if(o.siteVersion){primaryVersions.orders++;primaryVersions.pairs+=o.siteVersion.pairs;primaryVersions.knownPairs+=o.siteVersion.knownPairs;primaryVersions.thermalPairs+=o.siteVersion.thermalPairs;dailyRow.sitePairs+=o.siteVersion.pairs;dailyRow.knownVersionPairs+=o.siteVersion.knownPairs;dailyRow.thermalPairs+=o.siteVersion.thermalPairs;}
+      if(o.siteItems.length)originalModels.orders++;else if(o.lines.some(i=>i.footwear))originalModels.withoutSnapshotOrders++;
+      for(const i of o.siteItems){
+        originalModels.pairs+=i.qty;
+        if(!siteProducts.has(i.uid))siteProducts.set(i.uid,{uid:i.uid,title:i.title,footwear:true,qty:0,redeemedQty:0,daily:new Map(ds.map(date=>[date,{date,qty:0,redeemedQty:0}]))});
+        const model=siteProducts.get(i.uid),date=model.daily.get(o.day);model.qty+=i.qty;date.qty+=i.qty;
+        if(o.status==='redeemed'){model.redeemedQty+=i.qty;date.redeemedQty+=i.qty;}
+      }
       payments.orders++;
       const payment=o.payment;
       if(!payment.known)payments.unknown++;
@@ -163,6 +194,7 @@
       const row=daily.get(d);
       row.approvedCustomers=dailyCustomers.get(d).size;
       row.revenue=money(row.revenue);row.redeemedRevenue=money(row.redeemedRevenue);
+      row.thermalShare=metadata.ordersComplete!==false&&row.knownVersionPairs?row.thermalPairs/row.knownVersionPairs:null;
       if(valid(ads.get(d)?.spend_usd)){row.adSpendUSD=money(Number(ads.get(d).spend_usd));row.adSpend=money(Number(ads.get(d).spend_usd)*cfg.fx);}
       // A gap in another day's ads must not hide this day's verified values.
       // No approvals means an undefined ratio, never a zero-cost customer.
@@ -193,7 +225,7 @@
       roas:coverageOK&&spend>0?b.approved.revenue/spend:null,
       grossMargin:b.approved.missingCostUnits?null:money(b.approved.revenue-b.approved.cost),
       grossMarginRate:b.approved.missingCostUnits||!b.approved.revenue?null:(b.approved.revenue-b.approved.cost)/b.approved.revenue,
-      quality,payments,primaryVersions,thermalPairs,thermalKnownPairs,thermalShare:thermalKnownPairs?thermalPairs/thermalKnownPairs:null,
+      quality,payments,primaryVersions,originalModels,siteProducts:[...siteProducts.values()].map(p=>({...p,daily:[...p.daily.values()]})).sort((a,b)=>b.qty-a.qty||a.title.localeCompare(b.title,'uk')),thermalPairs,thermalKnownPairs,thermalShare:thermalKnownPairs?thermalPairs/thermalKnownPairs:null,
       reconciliation:{...reconciliation,productRevenue:money(reconciliation.productRevenue),productCost:money(reconciliation.productCost),crmExpensesApproved:money(reconciliation.crmExpensesApproved)},
       sources:[...sources.values()].map(s=>({...s,revenue:money(s.revenue),approvedCustomers:s.approvedCustomers.size})).sort((a,b)=>b.pairs-a.pairs),
       daily:[...daily.values()],products:[...products.values()].map(p=>({...p,revenue:money(p.revenue),cost:money(p.cost),margin:p.missingCostUnits?null:money(p.revenue-p.cost),daily:[...p.daily.values()].map(d=>({...d,revenue:money(d.revenue)})),sizes:[...p.sizes.values()].sort((a,b)=>a.size.localeCompare(b.size,'uk',{numeric:true})||a.kind.localeCompare(b.kind)),variants:[...p.variants].map(([kind,qty])=>({kind,qty}))})).sort((a,b)=>b.qty-a.qty||b.revenue-a.revenue),
@@ -201,7 +233,8 @@
       variants:[...variants.values()],cities:[...cities.values()].sort((a,b)=>b.orders-a.orders),
       campaigns:[...campaigns.values()].map(c=>({...c,customers:c.customers.size,approvedCustomers:c.approvedCustomers.size})).sort((a,b)=>b.approved-a.approved),metadata:metadata||{}};
   }
-  return {DEFAULTS,money,day,dates,previous,settings,status,kind,footwear,unitCost,normalize,summarize};
+  return {DEFAULTS,money,day,dates,previous,settings,status,kind,footwear,unitCost,normalize,planProgress,summarize};
 });
+
 
 

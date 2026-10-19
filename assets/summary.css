@@ -5,7 +5,20 @@
 #ultera-summary .s-efficiency{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:18px;padding-top:16px;border-top:1px solid var(--s-line)}#ultera-summary .s-efficiency b{display:block;font-size:17px;margin-top:4px}#ultera-summary .s-settings>summary{gap:15px;flex-wrap:wrap}
 @media(max-width:760px){#ultera-summary .s-efficiency{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){#ultera-summary *{animation:none!important;transition:none!important}}
-#ultera-summary .s-trend-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+#ultera-summary .s-trend-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+#ultera-summary .s-plan{background:#f3f8e8;border-color:#cddda9}
+#ultera-summary .s-plan-badge{background:white;border:1px solid #cddda9;border-radius:30px;padding:7px 12px;font-size:12px;white-space:nowrap}
+#ultera-summary .s-plan-main{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
+#ultera-summary .s-plan-main strong{font-size:52px;letter-spacing:-2px;line-height:1.15}
+#ultera-summary .s-plan-main span{font-size:21px;color:var(--s-muted)}
+#ultera-summary .s-plan-main>b{font-size:34px;color:#4d6b1b}
+#ultera-summary .s-plan-track{height:13px;overflow:hidden;border-radius:20px;background:#dfe9cd;margin:16px 0 23px}
+#ultera-summary .s-plan-track>div{height:100%;background:#8eb628;border-radius:20px}
+#ultera-summary .s-plan-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+#ultera-summary .s-plan-stats>div{min-width:0}
+#ultera-summary .s-plan-stats span,#ultera-summary .s-plan-stats small{display:block;font-size:12px;color:var(--s-muted)}
+#ultera-summary .s-plan-stats b{display:block;font-size:22px;margin:6px 0;font-variant-numeric:tabular-nums}
+@media(max-width:760px){#ultera-summary .s-plan-main strong{font-size:40px}#ultera-summary .s-plan-main span{font-size:16px}#ultera-summary .s-plan-main>b{font-size:27px}#ultera-summary .s-plan-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px}#ultera-summary .s-plan-stats b{font-size:19px}}
 #ultera-summary .s-trend-card{min-width:0;border:1px solid var(--s-line);border-radius:12px;padding:17px 15px;background:#fafcf8}
 #ultera-summary .s-trend-card h3{min-height:44px;line-height:1.4;font-size:14px}
 #ultera-summary .s-trend-reading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:5px;font-variant-numeric:tabular-nums}
@@ -19,7 +32,7 @@
 #ultera-summary .s-trend-line{stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
 #ultera-summary .s-trend-svg .s-trend-empty{font-size:12px;fill:var(--s-ink)}
 #ultera-summary .s-daily-details{margin-top:12px}#ultera-summary .s-daily-details>summary{cursor:pointer;font-weight:650;padding:12px 0}
-@media(max-width:1080px){#ultera-summary .s-trend-cards{grid-template-columns:1fr}#ultera-summary .s-trend-svg{max-height:280px}#ultera-summary .s-trend-card h3,#ultera-summary .s-trend-context{min-height:0}}
+@media(max-width:760px){#ultera-summary .s-trend-cards{grid-template-columns:1fr}#ultera-summary .s-trend-svg{max-height:280px}#ultera-summary .s-trend-card h3,#ultera-summary .s-trend-context{min-height:0}}
 #ultera-summary #s-model-chart{scroll-margin-top:20px}
 #ultera-summary .s-model-controls{display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap}
 #ultera-summary .s-model-picker{flex:1;min-width:230px;max-width:520px}
@@ -40,4 +53,5 @@
 #ultera-summary .s-product-chart-button{display:block;margin-top:8px;padding:5px 10px;font-size:11px;background:#f1f7e6;border-color:#d5dfc9}
 #ultera-summary .s-product-chart-button[aria-pressed=true]{background:#d7fa53;border-color:#c6e451}
 @media(max-width:760px){#ultera-summary .s-model-picker{max-width:none;flex-basis:100%;min-width:0}#ultera-summary .s-model-controls>button{flex:1}#ultera-summary .s-model-readings{grid-template-columns:repeat(2,minmax(0,1fr))}#ultera-summary .s-model-reading{padding:11px}#ultera-summary .s-model-reading strong{font-size:21px}#ultera-summary .s-model-chip{flex:1;min-width:140px}}
+
 

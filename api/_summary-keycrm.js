@@ -104,9 +104,9 @@ function normalizeCRM(rows,catalog,sources,siteSourceId,fetchedAt){
   return {orders,sources:sources.map(s=>({id:Number(s.id),name:String(s.name),site:Number(s.id)===siteSourceId})),
     quality:{excludedTests:tests,unknownCategoryUnits,unknownSizeUnits,unknownCurrencyOrders}};
 }
-async function loadCRM({fetcher,token,start,end,siteSourceId,fetchedAt,sleep,clock}){
+async function loadCRM({fetcher,token,start,end,siteSourceId,fetchedAt,sleep,clock,reader:sharedReader}){
   if(!token)throw publicError('CRM_NOT_CONFIGURED','Серверний доступ до KeyCRM не налаштовано. Дані лише сайту не видаються за всю CRM.');
-  const reader=createReader({fetcher,token,sleep,clock});
+  const reader=sharedReader||createReader({fetcher,token,sleep,clock});
   const format=d=>new Date(d).toISOString().slice(0,19).replace('T',' ');
   const rows=await reader.pages('/order',{include:'buyer,products.offer,status,marketing,shipping,payments',sort:'id',
     'filter[created_between]':format(start)+','+format(new Date(Date.parse(end)-1000))});
@@ -120,4 +120,5 @@ async function loadCRM({fetcher,token,start,end,siteSourceId,fetchedAt,sleep,clo
   return result;
 }
 module.exports={loadCRM,normalizeCRM,createReader,utc,variant,paymentSummary};
+
 

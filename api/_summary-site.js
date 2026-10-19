@@ -1,5 +1,6 @@
 'use strict';
-// Read-only enrichment. Site rows supply versions and exact invoice links, never CRM sales/status.
+// Read-only enrichment. Site snapshots supply original models/versions and invoice links,
+// never CRM approval, revenue or current fulfillment truth.
 const crypto=require('node:crypto');
 const finite=n=>n!==null&&n!==undefined&&n!==''&&Number.isFinite(Number(n));
 const money=n=>Math.round(n*100)/100;
@@ -33,6 +34,13 @@ function enrichVersions(orders,siteRows){
   }
   for(const order of orders){
     const row=byOrder.get(String(order.keycrm_id));if(!row||!Array.isArray(row.items))continue;
+    // Explicit allowlist only. Do not copy arbitrary stored JSON, notes, URLs or PII.
+    // Model identity/title come from the order snapshot, never the current catalog/CRM.
+    order.site_items=row.items.flatMap(item=>{
+      const qty=Number(item.qty??item.quantity),uid=keyPart(item.uid),title=keyPart(item.title||item.name),kind=siteKind(item);
+      if(!Number.isSafeInteger(qty)||qty<=0||!uid||!title||['insole','other'].includes(kind))return [];
+      return [{uid:uid.slice(0,160),title:title.slice(0,300),size:keyPart(item.size).slice(0,80)||'Не вказано',qty,kind_hint:kind,is_footwear:true}];
+    });
     // Original site selection is a separate measure: a manager can replace the CRM SKU
     // or size. Never mislabel the current CRM line using an approximate model match.
     const original=row.items.map(i=>({qty:Number(i.qty??i.quantity),kind:siteKind(i)}));
@@ -106,3 +114,4 @@ function mergePayments(orders,refs,transactions,wfpReady){
   return {unmatchedInstallments};
 }
 module.exports={loadSiteRows,enrichVersions,loadWayfp,compactTransactions,mergePayments,siteSku,siteKind,INSTALLMENT_SYSTEMS};
+
