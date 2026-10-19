@@ -115,6 +115,40 @@
       requiredPace:result.remainingDays?Math.max(0,target-actual)/result.remainingDays:null,
       projection:today>to?actual:pace===null?null:Math.round(pace*ds.length)};
   }
+  function profitPlan(input,adRows,plan,config,metadata,assumptions) {
+    // Financial targets are supplied only by the private, authenticated API.
+    if(!assumptions)return null;
+    const {marginPerPair,adCostPerPair,operatingExpense}=assumptions;
+    for(const n of [marginPerPair,adCostPerPair,operatingExpense])if(!valid(n)||Number(n)<0)throw new Error('Некоректні параметри плану прибутку');
+    const cfg={...settings(config),overhead:Number(operatingExpense),extra:0};
+    const overrides=assumptions.costOverrides||{};
+    for(const [title,value] of Object.entries(overrides))if(!title.trim()||title.length>300||!valid(value)||Number(value)<=0)throw new Error('Некоректна собівартість моделі');
+    // An explicit owner-supplied cost may fill an exact named model's missing
+    // cost. It must not overwrite an actual CRM cost or mutate any CRM record.
+    const calculationInput=input.map(o=>({...o,items:(o.items||[]).map(i=>{
+      const title=String(i.title||i.name||'');
+      return unitCost(i,cfg).value===null&&Object.hasOwn(overrides,title)?{...i,unit_cost:Number(overrides[title])}:i;
+    })}));
+    const target={margin:money(plan.target*marginPerPair),advertising:money(plan.target*adCostPerPair),operatingExpense:Number(operatingExpense)};
+    target.afterAds=money(target.margin-target.advertising);target.net=money(target.afterAds-target.operatingExpense);
+    const answer={assumptions:{marginPerPair:Number(marginPerPair),adCostPerPair:Number(adCostPerPair),operatingExpense:Number(operatingExpense)},target,current:null,forecast:null,paceScenario:plan.projection===null?null:money(plan.projection*(marginPerPair-adCostPerPair)-operatingExpense)};
+    if(!plan.complete)return answer;
+    if(!plan.through||plan.through<plan.from)return {...answer,current:{net:0,share:target.net>0?0:null,expenses:0,margin:0,advertising:0,missingCostUnits:0,missingAdDays:[],days:0}};
+    const meta={...metadata,sourceFiltered:false};
+    const current=summarize(calculationInput,adRows,plan.from,plan.through,cfg,meta);
+    function checkedNet(report){return report.metadata.ordersComplete!==false&&report.metadata.currencyComplete!==false&&report.advertising.complete&&!report.buckets.approved.missingCostUnits?report.profit.expected:null;}
+    const net=checkedNet(current);
+    answer.current={through:plan.through,net,share:net!==null&&target.net>0?net/target.net:null,expenses:current.overhead,margin:current.grossMargin,advertising:current.advertising.uah,revenue:current.buckets.approved.revenue,cost:current.buckets.approved.missingCostUnits?null:current.buckets.approved.cost,missingCostUnits:current.buckets.approved.missingCostUnits,missingAdDays:current.advertising.missingDays,days:current.days};
+    if(plan.completedDays){
+      const last=dates(plan.from,plan.to)[plan.completedDays-1];
+      const completed=summarize(calculationInput,adRows,plan.from,last,cfg,meta),completedNet=checkedNet(completed);
+      // Project contribution (margin minus ads), then deduct fixed monthly
+      // expenses once. Never multiply today's incomplete profit by month length.
+      const projection=completedNet===null?null:money((completed.grossMargin-completed.advertising.uah)/completed.days*dates(plan.from,plan.to).length-Number(operatingExpense));
+      answer.forecast={net:projection,share:projection!==null&&target.net>0?projection/target.net:null,days:completed.days,through:last,missingCostUnits:completed.buckets.approved.missingCostUnits,missingAdDays:completed.advertising.missingDays};
+    }
+    return answer;
+  }
   function summarize(input,adRows,from,to,config,metadata) {
     const cfg=settings(config),ds=dates(from,to),norm=normalize(input,cfg),os=norm.orders.filter(o=>o.day>=from&&o.day<=to);
     metadata={...(metadata||{})};
@@ -233,7 +267,7 @@
       variants:[...variants.values()],cities:[...cities.values()].sort((a,b)=>b.orders-a.orders),
       campaigns:[...campaigns.values()].map(c=>({...c,customers:c.customers.size,approvedCustomers:c.approvedCustomers.size})).sort((a,b)=>b.approved-a.approved),metadata:metadata||{}};
   }
-  return {DEFAULTS,money,day,dates,previous,settings,status,kind,footwear,unitCost,normalize,planProgress,summarize};
+  return {DEFAULTS,money,day,dates,previous,settings,status,kind,footwear,unitCost,normalize,planProgress,profitPlan,summarize};
 });
 
 

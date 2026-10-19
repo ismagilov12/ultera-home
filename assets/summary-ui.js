@@ -91,8 +91,23 @@
     return '<section class="s-panel s-plan" id="s-plan" aria-labelledby="s-plan-title">'+head+
       '<div class="s-plan-main"><div><strong>'+nf(plan.actual)+'</strong><span> / '+nf(plan.target)+' пар</span></div><b>'+pct(plan.share)+'</b></div>'+
       '<div class="s-plan-track" role="progressbar" aria-label="Виконання плану жовтня" aria-valuemin="0" aria-valuemax="'+Math.max(plan.target,plan.actual)+'" aria-valuenow="'+plan.actual+'" aria-valuetext="'+nf(plan.actual)+' із '+plan.target+' пар, '+pct(plan.share)+'"><div style="width:'+Math.min(100,Math.max(0,plan.share*100))+'%"></div></div>'+
-      '<div class="s-plan-stats">'+stats.map(([label,value,note])=>'<div><span>'+label+'</span><b>'+value+'</b><small>'+note+'</small></div>').join('')+'</div>'+
+      '<div class="s-plan-stats">'+stats.map(([label,value,note])=>'<div><span>'+label+'</span><b>'+value+'</b><small>'+note+'</small></div>').join('')+'</div>'+profitPlanPanel(plan)+
       '<p class="s-fineprint">Апрувнуті пари ОБУВЬ з усіх джерел за весь жовтень, станом на '+esc(plan.through||'початок місяця')+'. Фільтр дат і джерела нижче не змінює цей план. Нові, відмови, тести й устілки не включені. '+(!finished?'Сьогоднішній день ще триває; прогноз — за завершеними днями, не гарантія.':'')+'</p></section>';
+  }
+  function profitPlanPanel(plan){
+    const f=plan.financials;if(!f)return '';
+    const a=f.assumptions,current=f.current,forecast=f.forecast;
+    const missing=part=>!part?'Ще немає завершених днів':part.missingCostUnits?'Потрібна собівартість '+nf(part.missingCostUnits)+' од.':part.missingAdDays?.length?'Немає реклами за '+nf(part.missingAdDays.length)+' днів':'Неповні дані замовлень';
+    const value=part=>part?.net===null||part?.net===undefined?'Уточнюється':uah(part.net);
+    const rows=[
+      ['План чистого прибутку',uah(f.target.net),uah(f.target.afterAds)+' після реклами − '+uah(a.operatingExpense)+' витрат','target'],
+      ['Поточний прибуток',value(current),current?.net!==null&&current?.net!==undefined?'За апрувами до '+(current.through?shortDate(current.through):'початку місяця')+' · витрати '+uah(current.expenses):missing(current),'current'],
+      [forecast?.net===null&&f.paceScenario!==null?'Прогноз за плановою маржею':'Прогноз на 31.10',forecast?.net===null&&f.paceScenario!==null?uah(f.paceScenario):value(forecast),forecast?.net!==null&&forecast?.net!==undefined?'За маржею й рекламою '+nf(forecast.days)+' завершених днів':f.paceScenario!==null?'За темпом '+nf(plan.projection)+' пар; фактичний прогноз — після уточнення собівартості':missing(forecast),'forecast'],
+      ['Витрати на місяць',uah(a.operatingExpense),'Ваш прогноз · без собівартості та реклами','expenses']
+    ];
+    return '<section class="s-plan-profit" aria-labelledby="s-plan-profit-title"><div class="s-panel-head"><h3 id="s-plan-profit-title">План та динаміка прибутку</h3><span class="s-muted">Увесь жовтень · усі джерела</span></div><div class="s-plan-profit-grid">'+rows.map(([label,amount,note,key])=>'<article data-plan-profit="'+key+'"><span>'+label+'</span><strong>'+amount+'</strong><small>'+note+'</small></article>').join('')+'</div>'+
+      '<div class="s-profit-attainment"><span>Виконання плану прибутку: <b>'+pct(current?.share)+'</b></span><span>Прогноз виконання: <b>'+pct(forecast?.share)+'</b></span>'+(f.paceScenario!==null?'<span>За плановою маржею та прогнозом '+nf(plan.projection)+' пар: <b>'+uah(f.paceScenario)+'</b></span>':'')+'</div>'+
+      '<details class="s-plan-formula"><summary>Формула та складові</summary><p>'+nf(plan.target)+' × ('+nf(a.marginPerPair)+' − '+nf(a.adCostPerPair)+') − '+nf(a.operatingExpense)+' = <b>'+uah(f.target.net)+'</b></p><p>План: маржа '+uah(a.marginPerPair)+'/пара до реклами; реклама '+uah(a.adCostPerPair)+'/пара. Поточний результат: сума апрувів − собівартість − реклама − '+uah(a.operatingExpense)+' × дні / 31. Прогноз: (маржа − реклама) / завершені дні × 31 − '+uah(a.operatingExpense)+'. Сьогодні не масштабується як завершений день. Це прибуток за апрувами, не рух коштів; передбачає їх викуп. Витрати тут — прогноз для плану, окремий від параметрів звіту нижче.</p></details></section>';
   }
   function paymentsPanel(r){
     const p=r.payments,share=n=>p.orders?n/p.orders:null;

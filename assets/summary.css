@@ -18,6 +18,19 @@
 #ultera-summary .s-plan-stats>div{min-width:0}
 #ultera-summary .s-plan-stats span,#ultera-summary .s-plan-stats small{display:block;font-size:12px;color:var(--s-muted)}
 #ultera-summary .s-plan-stats b{display:block;font-size:22px;margin:6px 0;font-variant-numeric:tabular-nums}
+#ultera-summary .s-plan-profit{margin-top:24px;padding-top:20px;border-top:1px solid #d8e3c5}
+#ultera-summary .s-plan-profit-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#ultera-summary .s-plan-profit-grid article{background:#fff;border:1px solid #d9e2cc;border-radius:12px;padding:15px;min-width:0}
+#ultera-summary .s-plan-profit-grid span,#ultera-summary .s-plan-profit-grid small{display:block;font-size:12px;color:var(--s-muted)}
+#ultera-summary .s-plan-profit-grid strong{display:block;font-size:25px;letter-spacing:-.6px;margin:8px 0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#ultera-summary .s-plan-profit-grid [data-plan-profit=target]{border-color:#9fbc5e;background:#fafdf4}
+#ultera-summary .s-profit-attainment{display:flex;gap:12px 24px;flex-wrap:wrap;font-size:12px;margin-top:16px;color:var(--s-muted)}
+#ultera-summary .s-profit-attainment b{color:var(--s-ink)}
+#ultera-summary .s-plan-formula{margin-top:14px;color:var(--s-muted);font-size:12px}
+#ultera-summary .s-plan-formula summary{cursor:pointer;display:flex;align-items:center;font-weight:650}
+#ultera-summary .s-plan-formula p{margin-top:10px}
+@media(max-width:1060px){#ultera-summary .s-plan-profit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){#ultera-summary .s-plan-profit-grid{grid-template-columns:1fr}#ultera-summary .s-plan-profit-grid strong{font-size:25px}}
 @media(max-width:760px){#ultera-summary .s-plan-main strong{font-size:40px}#ultera-summary .s-plan-main span{font-size:16px}#ultera-summary .s-plan-main>b{font-size:27px}#ultera-summary .s-plan-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px}#ultera-summary .s-plan-stats b{font-size:19px}}
 #ultera-summary .s-trend-card{min-width:0;border:1px solid var(--s-line);border-radius:12px;padding:17px 15px;background:#fafcf8}
 #ultera-summary .s-trend-card h3{min-height:44px;line-height:1.4;font-size:14px}

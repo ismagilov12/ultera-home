@@ -5,11 +5,11 @@ const response=(body,status=200)=>({ok:status>=200&&status<300,status,json:async
 const user={id:'verified-user',email:'admin@example.invalid',email_confirmed_at:'2026-01-01'};
 const row={id:'a',keycrm_id:123,customer_name:'Private customer',customer_phone:'+380501234567',landing_url:'https://ultera.in.ua/?utm_campaign=test-campaign#faq',notes:'Private note',items:[{qty:1,title:'Shoe',price:4490,secret:'private'}],total:4490,keycrm_status_id:23,created_at:'2026-10-09T10:00Z'};
 async function invoke(fetcher,request={},moreEnv={}){let body,code;const headers={};const res={setHeader(k,v){headers[k]=v},status(s){code=s;return this},json(v){body=v;return this}};await createHandler({fetcher,env:{...env,...moreEnv},now:()=>new Date('2026-10-10T12:00:00Z'),crmSleep:async()=>{}})({method:'GET',url:'/api/summary?from=2026-10-01&to=2026-10-09',headers:{authorization:'Bearer valid-test-token'},...request},res);return {code,body,headers};}
-function mock({auth=200,admin=true,ads=true,orders=[row]}={}){return async(url,options)=>{
+function mock({auth=200,admin=true,ads=true,orders=[row],financialPlan=false}={}){return async(url,options)=>{
   assert.equal(options.method,'GET');
   if(url.includes('/auth/v1/user'))return response(user,auth);
   if(url.includes('/ulhome_admins?'))return response(admin?[{email:user.email}]:[]);
-  if(url.includes('/ulhome_summary_config?'))return response([{assumptions:{fx:40,standard:1000,thermal:1200,boot:1400,insole:null,overhead:31000,extra:0}}]);
+  if(url.includes('/ulhome_summary_config?'))return response([{assumptions:{fx:40,standard:1000,thermal:1200,boot:1400,insole:null,overhead:31000,extra:0,...(financialPlan?{monthlyPlans:{'2026-10':{marginPerPair:2000,adCostPerPair:500,operatingExpense:31000}}}:{})}}]);
   if(url.includes('openapi.keycrm.app/v1/order?')){assert.equal(options.headers.Authorization,'Bearer server-only-crm-test');assert.ok(new URL(url).searchParams.has('filter[created_between]'));return response({data:orders.map(o=>({id:o.keycrm_id,source_id:7,buyer:{full_name:o.customer_name,phone:o.customer_phone},grand_total:o.total,status_id:o.keycrm_status_id,ordered_at:o.created_at,products:o.items.map(i=>({...i,name:i.title,quantity:i.qty,price_sold:i.price,offer:{product_id:50}})),marketing:{utm_campaign:'test-campaign'},notes:o.notes})),current_page:1,last_page:1,total:orders.length});}
   if(url.includes('openapi.keycrm.app/v1/order/source?'))return response({data:[{id:7,name:'new ULT',currency_code:'UAH'}],last_page:1});
   if(url.includes('openapi.keycrm.app/v1/products?'))return response({data:[{id:50,name:'Shoe',category_id:22}],last_page:1});
@@ -17,6 +17,14 @@ function mock({auth=200,admin=true,ads=true,orders=[row]}={}){return async(url,o
   throw new Error('Unexpected URL');
 };}
 test('missing token is rejected before any upstream request',async()=>{const r=await invoke(()=>assert.fail('No request allowed'),{headers:{}});assert.equal(r.code,401);});
+test('authenticated monthly profit uses private plan parameters and monthly ad range, not report range',async()=>{
+  let adBounds;
+  const f=async(url,init)=>{if(url.includes('/ulhome_meta_daily_spend?'))adBounds=new URL(url).searchParams.getAll('date');return mock({financialPlan:true})(url,init);};
+  const r=await invoke(f,{url:'/api/summary?from=2026-10-09&to=2026-10-09&include_plan=2026-10'});
+  assert.equal(r.code,200);assert.equal(r.body.monthPlan.financials.target.net,419000);assert.deepEqual(adBounds,['gte.2026-10-01','lte.2026-10-10']);
+  assert.equal(r.body.monthPlan.financials.current.net,null);assert.equal(r.body.monthPlan.financials.current.missingAdDays.length,9);
+  assert.equal(r.body.assumptions.monthlyPlans,undefined);
+});
 test('monthly plan expands a narrow report once, includes full October and does not filter by source',async()=>{
   let orderReads=0,interval;
   const f=async(url,init)=>{
