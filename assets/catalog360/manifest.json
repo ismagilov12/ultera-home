@@ -505,5 +505,95 @@
       "#efefef"
     ],
     "sourceOriginalFile": "https://ultera.in.ua/photos/aganta-thermo-sage-01.webp"
+  },
+  {
+    "uid": "977627506822",
+    "name": "Aganta Salvia",
+    "src": "https://ultera.in.ua/?p=aganta-salvia%2C977627506822",
+    "originalFile": "https://ultera.in.ua/assets/catalog360/hq-20261021-salvia/977627506822/000.webp",
+    "sourceOriginalFile": "https://ultera-home.vercel.app/photos/68403915.webp",
+    "status": "prepared",
+    "frames": 8,
+    "cols": 4,
+    "rows": 2,
+    "hq": true,
+    "method": "AI reconstruction from product photographs",
+    "firstFrame": "Detailed AI side view used as catalog hero; original product photographs retained in gallery",
+    "rotationStart": "right side",
+    "atlas": "atlases/977627506822-hq-20261021.webp",
+    "atlasSize": [
+      5016,
+      2508
+    ],
+    "frameUrls": [
+      "/assets/catalog360/hq-20261021-salvia/977627506822/000.webp",
+      "/assets/catalog360/hq-20261021-salvia/977627506822/045.webp",
+      "/assets/catalog360/hq-20261021-salvia/977627506822/090.webp",
+      "/assets/catalog360/hq-20261021-salvia/977627506822/135.webp",
+      "/assets/catalog360/hq-20261021-salvia/977627506822/180.webp",
+      "/assets/catalog360/hq-20261021-salvia/977627506822/225.webp",
+      "/assets/catalog360/hq-20261021-salvia/977627506822/270.webp",
+      "/assets/catalog360/hq-20261021-salvia/977627506822/315.webp"
+    ],
+    "bounds": [
+      {
+        "x": 21,
+        "y": 336,
+        "width": 1209,
+        "height": 643
+      },
+      {
+        "x": 37,
+        "y": 209,
+        "width": 1183,
+        "height": 852
+      },
+      {
+        "x": 331,
+        "y": 192,
+        "width": 600,
+        "height": 923
+      },
+      {
+        "x": 40,
+        "y": 237,
+        "width": 1182,
+        "height": 805
+      },
+      {
+        "x": 21,
+        "y": 325,
+        "width": 1206,
+        "height": 648
+      },
+      {
+        "x": 68,
+        "y": 225,
+        "width": 1141,
+        "height": 859
+      },
+      {
+        "x": 314,
+        "y": 198,
+        "width": 636,
+        "height": 898
+      },
+      {
+        "x": 48,
+        "y": 234,
+        "width": 1157,
+        "height": 822
+      }
+    ],
+    "backgrounds": [
+      "#ebedee",
+      "#edeff1",
+      "#eceef0",
+      "#eceef0",
+      "#edeff1",
+      "#eceef0",
+      "#eceef0",
+      "#eceef0"
+    ]
   }
 ]
