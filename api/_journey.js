@@ -59,11 +59,11 @@ function event(value,ctx,now=new Date()){
   const path=typeof value.page_path==='string'&&/^\/[a-zA-Z0-9/_-]*$/.test(value.page_path)?value.page_path.slice(0,160):'/';
   return {event_id:id,visitor_id:ctx.visitor_id,session_id:ctx.session_id,checkout_id:cleanId(value.checkout_id)||ctx.checkout_id,event_type:value.event_type,event_data:{...data(value.event_data),...(ctx.first_touch?.utm_source==='qa'?{is_test:true}:{})},page_path:path,source:'browser',occurred_at:new Date(at).toISOString()};
 }
-function client(env=process.env,fetcher=globalThis.fetch){
+function client(env=process.env,fetcher=globalThis.fetch,timeoutMs=5000){
   const base=env.SUPABASE_URL?.replace(/\/$/,''),key=env.SUPABASE_SERVICE_ROLE_KEY;
   if(!base||!key)throw new Error('JOURNEY_UNAVAILABLE');
   return async(path,options={})=>{
-    const r=await fetcher(base+'/rest/v1/'+path,{...options,headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json',...options.headers},signal:AbortSignal.timeout(5000)});
+    const r=await fetcher(base+'/rest/v1/'+path,{...options,headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json',...options.headers},signal:AbortSignal.timeout(timeoutMs)});
     if(!r.ok)throw new Error('JOURNEY_SOURCE_UNAVAILABLE');
     return r.status===204||options.headers?.Prefer?.includes('return=minimal')?null:r.json();
   };
@@ -81,7 +81,7 @@ async function allowed(req,env,rest){
 async function saveOrderJourney(order,body,stage,{env=process.env,fetcher=globalThis.fetch}={}){
   const ctx=context(body.tracking);if(!ctx||!cleanId(order?.id))return false;
   try{
-    const rest=client(env,fetcher);
+    const rest=client(env,fetcher,1200);
     await rest('ulhome_order_journeys?on_conflict=order_id',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({order_id:order.id,...ctx})});
     const type=stage==='lead'?'checkout_draft_saved':'order_saved';
     await rest('ulhome_journey_events?on_conflict=event_id',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({event_id:order.id,order_id:order.id,visitor_id:ctx.visitor_id,session_id:ctx.session_id,checkout_id:ctx.checkout_id,event_type:type,event_data:{total:Number(order.total)||0,count:(body.items||[]).reduce((s,i)=>s+(Number(i.qty)||1),0)},source:'server',page_path:'/',occurred_at:new Date().toISOString()})});
