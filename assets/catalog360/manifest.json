@@ -60,14 +60,14 @@
     "uid": "550020260921",
     "name": "Aganta Thermo Black",
     "src": "https://ultera.in.ua/?p=thermo-black%2C550020260921",
-    "originalFile": "https://ultera.in.ua/photos/aganta-thermo-black-01.webp",
+    "originalFile": "https://ultera.in.ua/assets/catalog360/hq-20261021/550020260921/000.webp",
     "status": "prepared",
     "frames": 8,
     "cols": 4,
     "rows": 2,
     "hq": true,
     "method": "AI reconstruction from product photographs",
-    "firstFrame": "AI reconstructed detailed side view; original hero retained in product gallery",
+    "firstFrame": "Detailed AI side view used as catalog hero; original product photographs retained in gallery",
     "rotationStart": "right side",
     "atlas": "atlases/550020260921-hq-20261021.webp",
     "atlasSize": [
@@ -143,35 +143,36 @@
       "#eeeeee",
       "#ebebeb",
       "#f0f0f0"
-    ]
+    ],
+    "sourceOriginalFile": "https://ultera.in.ua/photos/aganta-thermo-black-01.webp"
   },
   {
     "uid": "550020260922",
-    "name": "Aganta Thermo Blue",
-    "src": "https://ultera.in.ua/?p=thermo-blue%2C550020260922",
-    "originalFile": "https://ultera.in.ua/photos/aganta-thermo-blue-01.webp",
+    "name": "Aganta Thermo Aqva",
+    "src": "https://ultera.in.ua/?p=thermo-aqva%2C550020260922",
+    "originalFile": "https://ultera.in.ua/assets/catalog360/hq-20261021-v2/550020260922/000.webp",
     "status": "prepared",
     "frames": 8,
     "cols": 4,
     "rows": 2,
     "hq": true,
     "method": "AI reconstruction from product photographs",
-    "firstFrame": "AI reconstructed detailed side view; original hero retained in product gallery",
+    "firstFrame": "Detailed AI side view used as catalog hero; original product photographs retained in gallery",
     "rotationStart": "right side",
-    "atlas": "atlases/550020260922-hq-20261021.webp",
+    "atlas": "atlases/550020260922-hq-20261021-v2.webp",
     "atlasSize": [
       5016,
       2508
     ],
     "frameUrls": [
-      "/assets/catalog360/hq-20261021/550020260922/000.webp",
-      "/assets/catalog360/hq-20261021/550020260922/045.webp",
-      "/assets/catalog360/hq-20261021/550020260922/090.webp",
-      "/assets/catalog360/hq-20261021/550020260922/135.webp",
-      "/assets/catalog360/hq-20261021/550020260922/180.webp",
-      "/assets/catalog360/hq-20261021/550020260922/225.webp",
-      "/assets/catalog360/hq-20261021/550020260922/270.webp",
-      "/assets/catalog360/hq-20261021/550020260922/315.webp"
+      "/assets/catalog360/hq-20261021-v2/550020260922/000.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260922/045.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260922/090.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260922/135.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260922/180.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260922/225.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260922/270.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260922/315.webp"
     ],
     "bounds": [
       {
@@ -224,43 +225,44 @@
       }
     ],
     "backgrounds": [
+      "#f2f2f2",
+      "#f1f3f2",
+      "#eff2f1",
+      "#f1f1f1",
+      "#eef1f0",
       "#f0f0f0",
-      "#f1f1f1",
-      "#f1f1f1",
-      "#f1f1f1",
-      "#edf0ef",
-      "#edf0ef",
-      "#eaeaea",
-      "#eeeeee"
-    ]
+      "#f0f0f0",
+      "#f1f1f1"
+    ],
+    "sourceOriginalFile": "https://ultera.in.ua/photos/aganta-thermo-blue-01.webp"
   },
   {
     "uid": "550020260923",
     "name": "Aganta Thermo Pistachio White",
     "src": "https://ultera.in.ua/?p=thermo-pistachio-white%2C550020260923",
-    "originalFile": "https://ultera.in.ua/photos/aganta-thermo-pistachio-white-01.webp",
+    "originalFile": "https://ultera.in.ua/assets/catalog360/hq-20261021-v2/550020260923/000.webp",
     "status": "prepared",
     "frames": 8,
     "cols": 4,
     "rows": 2,
     "hq": true,
     "method": "AI reconstruction from product photographs",
-    "firstFrame": "AI reconstructed detailed side view; original hero retained in product gallery",
+    "firstFrame": "Detailed AI side view used as catalog hero; original product photographs retained in gallery",
     "rotationStart": "right side",
-    "atlas": "atlases/550020260923-hq-20261021.webp",
+    "atlas": "atlases/550020260923-hq-20261021-v2.webp",
     "atlasSize": [
       5016,
       2508
     ],
     "frameUrls": [
-      "/assets/catalog360/hq-20261021/550020260923/000.webp",
-      "/assets/catalog360/hq-20261021/550020260923/045.webp",
-      "/assets/catalog360/hq-20261021/550020260923/090.webp",
-      "/assets/catalog360/hq-20261021/550020260923/135.webp",
-      "/assets/catalog360/hq-20261021/550020260923/180.webp",
-      "/assets/catalog360/hq-20261021/550020260923/225.webp",
-      "/assets/catalog360/hq-20261021/550020260923/270.webp",
-      "/assets/catalog360/hq-20261021/550020260923/315.webp"
+      "/assets/catalog360/hq-20261021-v2/550020260923/000.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260923/045.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260923/090.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260923/135.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260923/180.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260923/225.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260923/270.webp",
+      "/assets/catalog360/hq-20261021-v2/550020260923/315.webp"
     ],
     "bounds": [
       {
@@ -313,28 +315,29 @@
       }
     ],
     "backgrounds": [
-      "#eef1f0",
-      "#f0f0f0",
-      "#eef1f0",
+      "#eff1f3",
+      "#eff2f1",
+      "#eff1f3",
+      "#eff1f3",
       "#eef0f2",
       "#eef1f0",
-      "#edf0ef",
-      "#ebebeb",
-      "#efefed"
-    ]
+      "#efefef",
+      "#efeef1"
+    ],
+    "sourceOriginalFile": "https://ultera.in.ua/photos/aganta-thermo-pistachio-white-01.webp"
   },
   {
     "uid": "550020260924",
     "name": "Aganta Thermo Beige",
     "src": "https://ultera.in.ua/?p=thermo-beige%2C550020260924",
-    "originalFile": "https://ultera.in.ua/photos/aganta-thermo-beige-bg-01.webp",
+    "originalFile": "https://ultera.in.ua/assets/catalog360/hq-20261021/550020260924/000.webp",
     "status": "prepared",
     "frames": 8,
     "cols": 4,
     "rows": 2,
     "hq": true,
     "method": "AI reconstruction from product photographs",
-    "firstFrame": "AI reconstructed detailed side view; original hero retained in product gallery",
+    "firstFrame": "Detailed AI side view used as catalog hero; original product photographs retained in gallery",
     "rotationStart": "right side",
     "atlas": "atlases/550020260924-hq-20261021.webp",
     "atlasSize": [
@@ -410,20 +413,21 @@
       "#ebedee",
       "#e8ebea",
       "#eceef0"
-    ]
+    ],
+    "sourceOriginalFile": "https://ultera.in.ua/photos/aganta-thermo-beige-bg-01.webp"
   },
   {
     "uid": "550020260925",
     "name": "Aganta Thermo Sage",
     "src": "https://ultera.in.ua/?p=thermo-sage%2C550020260925",
-    "originalFile": "https://ultera.in.ua/photos/aganta-thermo-sage-01.webp",
+    "originalFile": "https://ultera.in.ua/assets/catalog360/hq-20261021/550020260925/000.webp",
     "status": "prepared",
     "frames": 8,
     "cols": 4,
     "rows": 2,
     "hq": true,
     "method": "AI reconstruction from product photographs",
-    "firstFrame": "AI reconstructed detailed side view; original hero retained in product gallery",
+    "firstFrame": "Detailed AI side view used as catalog hero; original product photographs retained in gallery",
     "rotationStart": "right side",
     "atlas": "atlases/550020260925-hq-20261021.webp",
     "atlasSize": [
@@ -499,6 +503,7 @@
       "#efefef",
       "#efefef",
       "#efefef"
-    ]
+    ],
+    "sourceOriginalFile": "https://ultera.in.ua/photos/aganta-thermo-sage-01.webp"
   }
 ]
