@@ -79,3 +79,8 @@ test('storefront hooks both order stages and precise fields without changing pri
   assert.ok(!html.includes('ULTERA analytics tracker (v108'));assert.ok(html.includes("fetch('/api/wayforpay'"));
   for(const file of ['../index.html','../admin.html']){const text=fs.readFileSync(require.resolve(file),'utf8');for(const s of text.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi))if(!/\bsrc\s*=|application\/(?:ld\+json|json)/i.test(s[1]))assert.doesNotThrow(()=>new vm.Script(s[2]),file);}
 });
+test('consent notice stays below product modal and checkout drawer so it cannot cover buy buttons',()=>{
+  const script=fs.readFileSync(require.resolve('../assets/customer-tracking.js'),'utf8');
+  assert.match(script,/#ulhJourneyConsent\{[^}]*z-index:90;/);
+  const html=fs.readFileSync(require.resolve('../index.html'),'utf8');assert.match(html,/\.cart-drawer\{[^}]*z-index:100;/);assert.match(html,/\.modal-overlay\{[^}]*z-index:100;/);
+});
