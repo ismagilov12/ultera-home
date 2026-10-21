@@ -2835,7 +2835,7 @@ async function loadAnalytics(){
       summary = await rest('rpc/ulhome_analytics_summary_v2', { method:'POST', body: JSON.stringify({ since_iso: sinceIso }) });
     } catch(e){ console.error('summary fetch err', e); partialErrors.push('summary: ' + _explain(e)); }
     try {
-      sourcesDaily = await rest('rpc/ulhome_analytics_sources_daily', { method:'POST', body: JSON.stringify({ since_iso: sinceIso, top_n: 8 }) });
+      sourcesDaily = await rest('rpc/ulhome_analytics_sources_daily_v2', { method:'POST', body: JSON.stringify({ since_iso: sinceIso, top_n: 8 }) });
     } catch(e){ console.error('sources fetch err', e); partialErrors.push('sources: ' + _explain(e)); }
 
     // Dedupe: same phone + total + minute counts as one order
@@ -2859,7 +2859,7 @@ async function loadAnalytics(){
       try { toast(msg, 'err'); } catch(_){}
     }
     const analytics = summary || { daily:[], top_pages:[], referrers:[], devices:[], evt_counts:[], kpi:{unique_sessions:0, page_views:0} };
-    ANA.data = { orders: rawOrders, ordersReal, analytics, evtAgg: [], pageViews: [], dupesFiltered };
+    ANA.data = { orders: rawOrders, ordersReal, analytics, analyticsReady:!!summary, evtAgg: [], pageViews: [], dupesFiltered };
     ANA.data.sourcesDaily = (sourcesDaily && sourcesDaily.by_day) || [];
     renderKPI();
     renderOrdersChart();
@@ -2890,13 +2890,14 @@ function renderKPI(){
   const totalRevenue = o.reduce((s,x)=>s+Number(x.total||0),0);
   const aov = o.length ? totalRevenue / o.length : 0;
   const sessions = Number(kpi.unique_sessions) || 0;
-  const cr = sessions ? (o.length/sessions*100).toFixed(2) + '%' : '—';
+  const completeTrackingPeriod=ANA.period==='custom'&&ANA.customEnd&&String(ANA.customEnd).slice(0,10)<'2026-10-21';
+  const cr = completeTrackingPeriod&&sessions ? (o.length/sessions*100).toFixed(2) + '%' : '—';
   document.getElementById('kpi-orders').textContent = fmtInt(o.length);
   document.getElementById('kpi-revenue').textContent = fmtMoney(totalRevenue);
   document.getElementById('kpi-aov').textContent = fmtMoney(aov);
-  document.getElementById('kpi-sess').textContent = fmtInt(sessions);
+  document.getElementById('kpi-sess').textContent = ANA.data.analyticsReady?fmtInt(sessions):'—';
   document.getElementById('kpi-cr').textContent = cr;
-  document.getElementById('kpi-sales').textContent = fmtInt(Number(kpi.approved_orders) || 0);
+  document.getElementById('kpi-sales').textContent = ANA.data.analyticsReady?fmtInt(Number(kpi.approved_orders) || 0):'—';
   // [KeyCRM v1] Апрув % з ulhome_analytics_summary.kpi (RPC)
   try {
     var ar = (kpi && (kpi.approval_rate != null) ? Number(kpi.approval_rate) : null);
@@ -2967,6 +2968,7 @@ function renderOrdersChart(){
 }
 
 function renderFunnel(){
+  if(!ANA.data.analyticsReady){document.getElementById('funnel-rows').textContent='Події тимчасово недоступні. Це не нуль відвідувань.';return;}
   // Event counts come from ulhome_analytics_summary RPC (evt_counts[{event_type,cnt}])
   // to avoid the PostgREST 1000-row cap that used to break the funnel.
   const counts = {};
@@ -3154,10 +3156,11 @@ function renderSourcesDaily(){
   var esc = (typeof escapeHtml === 'function') ? escapeHtml : function(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]; }); };
   wrap.innerHTML = rows.map(function(d, i){
     var dateLbl = d.day;
-    var totalCR = d.day_sessions>0 ? ((d.day_orders||0)*100/d.day_sessions).toFixed(2)+'%' : '—';
+    var consentCoveragePartial = String(d.day)>='2026-10-21';
+    var totalCR = !consentCoveragePartial&&d.day_sessions>0 ? ((d.day_orders||0)*100/d.day_sessions).toFixed(2)+'%' : '—';
     var revFmt  = fmtMoney(d.day_revenue||0);
     var srcRows = (d.sources||[]).map(function(s){
-      var crFmt = (s.cr!=null ? Number(s.cr).toFixed(2)+'%' : (s.sessions>0 ? (s.orders*100/s.sessions).toFixed(2)+'%' : '—'));
+      var crFmt = consentCoveragePartial?'—':(s.cr!=null ? Number(s.cr).toFixed(2)+'%' : (s.sessions>0 ? (s.orders*100/s.sessions).toFixed(2)+'%' : '—'));
       var apFmt = (s.approval_rate != null ? Number(s.approval_rate).toFixed(2)+'%' : (s.approved||s.rejected ? '—' : ''));
       var apTitle = 'approved=' + (s.approved||0) + ' · rejected=' + (s.rejected||0) + ' · pending=' + (s.pending||0);
       return '<tr>' +
@@ -3213,7 +3216,7 @@ function renderDailyTableRows(){
   tbody.innerHTML = rows.map(r=>{
     const date = r.k.slice(8,10) + '.' + r.k.slice(5,7) + '.' + r.k.slice(2,4);
     const cls = (r.cnt>0 ? ' has-orders' : '') + (r.k===todayK ? ' today' : '');
-    const crStr = r.pv ? (r.cr.toFixed(2) + '%') : '—';
+    const crStr = r.k<'2026-10-21'&&r.pv ? (r.cr.toFixed(2) + '%') : '—';
     return `<tr class="${cls.trim()}">
       <td>${date}${r.k===todayK ? ' (сьогодні)' : ''}</td>
       <td class="num">${fmtInt(r.pv)}</td>
@@ -3236,7 +3239,7 @@ function renderDailyTableRows(){
     <td class="num">${fmtInt(totalCnt)}</td>
     <td class="num">${fmtMoney(totalRev)}</td>
     <td class="num">${totalCnt ? fmtMoney(totalAov) : '—'}</td>
-    <td class="num">${totalPv ? totalCr.toFixed(2)+'%' : '—'}</td></tr>`;
+    <td class="num">${totalPv&&!rows.some(r=>r.k>='2026-10-21') ? totalCr.toFixed(2)+'%' : '—'}</td></tr>`;
   if(tfoot){ tfoot.innerHTML = tfootHtml; }
   else {
     const t = document.getElementById('daily-tbl');

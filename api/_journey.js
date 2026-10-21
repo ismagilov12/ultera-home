@@ -57,7 +57,10 @@ function event(value,ctx,now=new Date()){
   const at=Date.parse(value.occurred_at);
   if(!Number.isFinite(at)||at<now.getTime()-86400000||at>now.getTime()+300000)return null;
   const path=typeof value.page_path==='string'&&/^\/[a-zA-Z0-9/_-]*$/.test(value.page_path)?value.page_path.slice(0,160):'/';
-  return {event_id:id,visitor_id:ctx.visitor_id,session_id:ctx.session_id,checkout_id:cleanId(value.checkout_id)||ctx.checkout_id,event_type:value.event_type,event_data:{...data(value.event_data),...(ctx.first_touch?.utm_source==='qa'?{is_test:true}:{})},page_path:path,source:'browser',occurred_at:new Date(at).toISOString()};
+  const payload=data(value.event_data);
+  if(value.event_type==='page_view'){payload.first_touch=touch(ctx.first_touch);payload.last_touch=touch(ctx.last_touch);}
+  if(ctx.first_touch?.utm_source==='qa')payload.is_test=true;
+  return {event_id:id,visitor_id:ctx.visitor_id,session_id:ctx.session_id,checkout_id:cleanId(value.checkout_id)||ctx.checkout_id,event_type:value.event_type,event_data:payload,page_path:path,source:'browser',occurred_at:new Date(at).toISOString()};
 }
 function client(env=process.env,fetcher=globalThis.fetch,timeoutMs=5000){
   const base=env.SUPABASE_URL?.replace(/\/$/,''),key=env.SUPABASE_SERVICE_ROLE_KEY;

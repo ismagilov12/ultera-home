@@ -16,6 +16,10 @@ test('no consent, invalid identities, old times or forged server events are acce
   assert.equal(J.context({...ctx,analytics_consent:false}),null);assert.equal(J.context({...ctx,visitor_id:'bad'}),null);
   assert.equal(J.event({...ev(),event_type:'order_saved'},ctx,now),null);assert.equal(J.event({...ev(),occurred_at:'2020-01-01'},ctx,now),null);
 });
+test('page visits retain sanitized first and last source even when no order is ever placed',()=>{
+  const row=J.event({...ev(),event_type:'page_view'},J.context(ctx),now);
+  assert.equal(row.event_data.first_touch.utm_source,'facebook');assert.equal(row.event_data.last_touch.utm_campaign,'autumn');assert.ok(!JSON.stringify(row).includes('PRIVATE'));
+});
 test('collector rate limits by keyed digest and idempotently writes only private sanitized events',async()=>{
   const writes=[];const result=await invoke(async(url,init)=>{writes.push({url,init});if(url.includes('/rpc/'))return response({allowed:true});return response(null,201);});
   assert.equal(result.code,200);assert.equal(result.body.accepted,1);assert.equal(writes.length,2);
@@ -38,6 +42,22 @@ test('server links exact saved order, draft and checkout; network failure does n
   assert.equal(writes.length,2);assert.equal(writes[0].body.order_id,order);assert.equal(writes[1].body.event_type,'order_saved');assert.equal(writes[1].body.source,'server');assert.equal(writes[1].body.checkout_id,checkout);
   assert.equal(await J.saveOrderJourney({id:order},{tracking:null},'final',{env,fetcher:()=>assert.fail()}),false);
   assert.equal(await J.saveOrderJourney({id:order},{tracking:ctx},'final',{env,fetcher:async()=>{throw Error('offline');}}),false);
+});
+test('real order-handler draft path persists canonical journey session and original model without live requests',async()=>{
+  const originalEnv={...process.env},originalFetch=global.fetch;let saved,link;try{
+    process.env.SUPABASE_URL=env.SUPABASE_URL;process.env.SUPABASE_SERVICE_ROLE_KEY=env.SUPABASE_SERVICE_ROLE_KEY;
+    global.fetch=async(url,init)=>{
+      if(url.includes('/rpc/check_and_increment_rate_limit'))return response({allowed:true});
+      if(url.includes('/rpc/compute_order_total'))return response({ok:true,total:4590,breakdown:[{uid:'809858137952',unit_price:4590,line_total:4590,qty:1,promo_pct:0}]});
+      if(url.endsWith('/ulhome_orders')){saved=JSON.parse(init.body);return response([{...saved,id:order,number:123}]);}
+      if(url.includes('/ulhome_order_journeys'))link=JSON.parse(init.body);
+      else assert.match(url,/ulhome_journey_events/);
+      return response(null,201);
+    };
+    let status;const res={setHeader(){},status(c){status=c;return this;},json(){}};
+    await require('../api/order')({method:'POST',headers:{origin:'https://ultera.in.ua'},body:{stage:'lead',fio:'QA fixture',phone:'+380000000000',session_id:'s-stale-before-idle',tracking:ctx,items:[{uid:'809858137952',title:'Hunk3 original site model',size:'42',qty:1,price:4590,seasonId:'autumn'}]}},res);
+    assert.equal(status,200);assert.equal(saved.session_id,ctx.session_id);assert.equal(saved.items[0].title,'Hunk3 original site model');assert.equal(link.order_id,order);assert.equal(link.visitor_id,visitor);
+  }finally{global.fetch=originalFetch;process.env=originalEnv;}
 });
 test('authorized journey contains original site models but no customer fields or secret values',async()=>{
   const r=await invoke(async(url)=>{
@@ -67,6 +87,10 @@ test('visitor survives reload; checkout survives reload/error and resets only ex
   const a=browser();a.w.ULTERA_JOURNEY.setConsent(true);const first=a.w.ulteraJourneyContext().visitor_id,id=a.w.ULTERA_JOURNEY.checkout();
   const b=browser(a.shared);assert.equal(b.w.ulteraJourneyContext().visitor_id,first);assert.equal(b.w.ULTERA_JOURNEY.checkout(),id);
   b.w.ULTERA_JOURNEY.complete();assert.notEqual(b.w.ULTERA_JOURNEY.checkout(),id);assert.equal(b.w.ulteraJourneyContext().visitor_id,first);
+});
+test('upgrade starts a new analytics session namespace while keeping all new integrations on one ID',()=>{
+  const b=browser();b.sessions.set('ulh_session_id','s-legacy-timestamp-random');b.w.ULHOME_SESSION_ID='s-legacy-timestamp-random';b.w.ULTERA_JOURNEY.setConsent(true);
+  const context=b.w.ulteraJourneyContext();assert.match(context.session_id,/^s-[0-9a-f-]{36}$/);assert.equal(context.session_id,b.w.ULHOME_SESSION_ID);assert.equal(context.session_id,b.sessions.get('ulh_session_id'));
 });
 test('DNT and global privacy control override previously granted analytics consent',async()=>{
   for(const navigator of [{doNotTrack:'1'},{globalPrivacyControl:true}]){

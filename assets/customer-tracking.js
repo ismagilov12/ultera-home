@@ -15,7 +15,7 @@
   function sessionId(){
     const now=Date.now(),last=Number(session('ulh_journey_session_at')||0);
     let id=session('ulh_session_id')||w.ULHOME_SESSION_ID;
-    if(!id||(last&&now-last>IDLE))id='s-'+uuid();
+    if(!id||!last||now-last>IDLE)id='s-'+uuid();
     session('ulh_session_id',id);session('_ut_sid',id);session('ulh_journey_session_at',String(now));w.ULHOME_SESSION_ID=id;return id;
   }
   function touch(){

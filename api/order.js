@@ -361,7 +361,7 @@ async function fireCapiPurchaseCod(req, body, ip, total, eventId) {
   }
 }
 
-const {saveOrderJourney}=require('./_journey');
+const {saveOrderJourney,context:journeyContext}=require('./_journey');
 module.exports = async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -472,7 +472,7 @@ module.exports = async function handler(req, res) {
     status: isLead ? 'lead' : 'new',
     notes: (body.comment || (isLead ? 'abandoned-cart lead' : '')) +
            (promoCodeRaw && promoPct ? `\npromo: ${promoCodeRaw} -${promoPct}% (${promoSource}, non-promo lines only)` : ''),
-    session_id:  (typeof body.session_id  === 'string' ? body.session_id  : '').slice(0, 200)  || null,
+    session_id:  journeyContext(body.tracking)?.session_id || (typeof body.session_id === 'string' ? body.session_id : '').slice(0, 200) || null,
     referrer:    (typeof body.referrer    === 'string' ? body.referrer    : '').slice(0, 2000) || null,
     landing_url: (typeof body.landing_url === 'string' ? body.landing_url : '').slice(0, 2000) || null
   });
