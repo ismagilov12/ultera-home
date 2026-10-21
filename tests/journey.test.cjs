@@ -89,8 +89,13 @@ test('visitor survives reload; checkout survives reload/error and resets only ex
   b.w.ULTERA_JOURNEY.complete();assert.notEqual(b.w.ULTERA_JOURNEY.checkout(),id);assert.equal(b.w.ulteraJourneyContext().visitor_id,first);
 });
 test('upgrade starts a new analytics session namespace while keeping all new integrations on one ID',()=>{
-  const b=browser();b.sessions.set('ulh_session_id','s-legacy-timestamp-random');b.w.ULHOME_SESSION_ID='s-legacy-timestamp-random';b.w.ULTERA_JOURNEY.setConsent(true);
+  const b=browser();b.sessions.set('ulh_session_id','s-legacy-timestamp-random');b.sessions.set('ulh_journey_session_at',String(Date.now()));b.w.ULHOME_SESSION_ID='s-legacy-timestamp-random';b.w.ULTERA_JOURNEY.setConsent(true);
   const context=b.w.ulteraJourneyContext();assert.match(context.session_id,/^s-[0-9a-f-]{36}$/);assert.equal(context.session_id,b.w.ULHOME_SESSION_ID);assert.equal(context.session_id,b.sessions.get('ulh_session_id'));
+});
+test('revocation also resets analytics session continuity, without deleting the functional checkout',()=>{
+  const b=browser();b.w.ULTERA_JOURNEY.setConsent(true);const old=b.w.ulteraJourneyContext(),cart=b.w.ULTERA_JOURNEY.checkout();
+  b.w.ULTERA_JOURNEY.setConsent(false);b.w.ULTERA_JOURNEY.setConsent(true);const next=b.w.ulteraJourneyContext();
+  assert.notEqual(next.visitor_id,old.visitor_id);assert.notEqual(next.session_id,old.session_id);assert.equal(b.w.ULTERA_JOURNEY.checkout(),cart);
 });
 test('DNT and global privacy control override previously granted analytics consent',async()=>{
   for(const navigator of [{doNotTrack:'1'},{globalPrivacyControl:true}]){
