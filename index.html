@@ -20,6 +20,7 @@
 </script>
 
 <meta charset="UTF-8">
+<script src="/assets/customer-tracking.js?v=20261021-1"></script>
 <!-- v129 fix modal photo fallback for Aganta Сафарі/Олива 2026-05-12 (was v128 active variant) -->
 <script>
 /* v87: handle legacy Tilda product URLs — both /tproduct/... and clean custom form.
@@ -3707,12 +3708,13 @@ const CART = {
     const ex = this.items.find(x=>x.uid+'|'+(x.size||'')+'|'+cartSeasonId(x)===key);
     if(ex){ ex.qty = (ex.qty||1) + 1; } else { this.items.push({...item, qty:1}); }
     this.save();
+    window.trackJourney?.('add_to_cart', item);
     try { if (typeof ulteraFbq === 'function') ulteraFbq('AddToCart', {content_ids:[item.uid], content_type:'product', content_name:item.title||'', value: parseFloat(item.price)||0, currency:'UAH'}); } catch(_){}
   },
-  setQty(i, q){ if(!this.items[i]) return; if(q<=0){ this.items.splice(i,1); } else { this.items[i].qty = q; } this.save(); },
-  remove(i){ this.items.splice(i,1); this.save(); },
+  setQty(i, q){ if(!this.items[i]) return; const item={...this.items[i],qty:Math.max(0,q)}; if(q<=0){ this.items.splice(i,1); } else { this.items[i].qty = q; } this.save(); window.trackJourney?.(q<=0?'remove_from_cart':'cart_quantity_changed',item); },
+  remove(i){ const item=this.items[i]; this.items.splice(i,1); this.save(); if(item)window.trackJourney?.('remove_from_cart',item); },
   clear(){ this.items=[]; this.save(); },
-  addPromo(item){ this.items.push({...item, qty: 1}); this.save(); },
+  addPromo(item){ this.items.push({...item, qty: 1}); this.save(); window.trackJourney?.('add_to_cart',{...item,qty:1}); },
   reconcilePromo(){
     // Если нет полной пары Shape (не promoSecond) — снять скидку у промо-пары
     const hasFull = this.items.some(x => x && !x.promoSecond && (x.qty||1) > 0);
@@ -4299,6 +4301,7 @@ function openModal(uid){
     b.addEventListener('click',()=>{
       document.querySelectorAll('#m_sizes .size-btn').forEach(x=>x.classList.remove('selected'));
       b.classList.add('selected');
+      window.trackJourney?.('size_selected',{uid:p.uid,size:b.dataset.sz});
     });
   });
 
@@ -4627,6 +4630,7 @@ function pickSeason(btn, id, label){
     n.textContent = label;
   }
   window.__modalSeason = id;
+  window.trackJourney?.('version_selected',{uid:window.__modalUid,season_id:id});
   // Перерахунок ціни: Осінь = поточна ціна, Зимові термо = +900 ₴
   const uid = window.__modalUid || currentColor;
   const p = findProduct(uid);
@@ -4757,6 +4761,7 @@ function openCart(){
   d.classList.add('open');
   d.setAttribute('aria-hidden','false');
   document.body.style.overflow = 'hidden';
+  window.trackJourney?.('cart_open',{count:CART.count(),total:CART.total()});
 }
 function closeCart(){
   const d = document.getElementById('cartDrawer');
@@ -5018,7 +5023,7 @@ async function npCities(q){
   try{
     const r = await npFetch('searchSettlements', {CityName:q, Limit:8});
     return (r[0]?.Addresses || []).map(a => ({ ref: a.DeliveryCity || a.Ref, title: (a.Present||a.MainDescription) + (a.Area ? ', ' + a.Area + ' обл.' : '') }));
-  }catch(e){ return null; }
+  }catch(e){ window.trackJourney?.('delivery_lookup_error',{field:'city',reason:'network_or_provider'}); return null; }
 }
 async function npWarehouses(cityRef, q){
   try{
@@ -5027,12 +5032,14 @@ async function npWarehouses(cityRef, q){
     const d = await r.json();
     if(!d.success) throw new Error('NP');
     return (d.data || []).map(w => ({ ref: w.Ref, title: w.Description }));
-  }catch(e){ return null; }
+  }catch(e){ window.trackJourney?.('delivery_lookup_error',{field:'branch',reason:'network_or_provider'}); return null; }
 }
 function debounce(fn, ms){ let t; return function(...a){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,a), ms); }; }
 
 function startCheckout(){
   if(CART.items.length === 0) return;
+  try{window.ULTERA_JOURNEY?.checkout();}catch(_){}
+  window.trackJourney?.('checkout_started',{items:CART.items,total:CART.total(),count:CART.count()});
   try { if (typeof ulteraFbq === 'function') ulteraFbq('InitiateCheckout', {content_ids: CART.items.map(function(i){return i.uid}), content_type:'product', value: CART.total(), currency:'UAH', num_items: CART.items.length}); } catch(_){}
   document.getElementById('cdListWrap').style.display = 'none';
   document.getElementById('cdWizard').style.display = '';
@@ -5055,6 +5062,7 @@ function showStep(n){
   if(form) form.style.display = (n==='form') ? '' : 'none';
   if(done) done.style.display = (n==='done') ? '' : 'none';
   CART.wizard = {...CART.wizard, step:n}; CART.saveWiz();
+  if(n==='form'||n==='done')window.trackJourney?.('checkout_step_view',{step:n});
 }
 function renderSummary(){
   const w = CART.wizard || {};
@@ -5183,7 +5191,7 @@ async function sendLead(){
     const r = await fetch('/api/order', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(Object.assign({}, (payload), { /* ULHOME_ATTR_WRAP */ session_id: (window.ULHOME_SESSION_ID||null), referrer: (document.referrer||null), landing_url: (window.ULHOME_LANDING_URL||location.href) }))
+      body: JSON.stringify(Object.assign({}, (payload), { /* ULHOME_ATTR_WRAP */ session_id: (window.ULHOME_SESSION_ID||null), referrer: (document.referrer||null), landing_url: (window.ULHOME_LANDING_URL||location.href), tracking: window.ulteraJourneyContext?.()||null }))
     });
     const result = await r.json().catch(()=>({}));
     if(r.ok && result.keycrm_id){
@@ -5200,26 +5208,27 @@ async function sendLead(){
 async function wizardSubmit(){
   const errEl = document.getElementById('wErr1');
   errEl.textContent = '';
+  window.trackJourney?.('checkout_submit_attempt',{count:CART.count()});
 
   // 1. ФІО + 2. Телефон
   const fio = document.getElementById('wFio').value.trim();
   const phone = document.getElementById('wPhone').value.trim();
-  if(!isFioValid(fio)){ errEl.textContent = 'Вкажи імʼя (хоча б 2 символи)'; document.getElementById('wFio').focus(); return; }
-  if(!isPhoneValid(phone)){ errEl.textContent = 'Некоректний номер (потрібно 9-13 цифр)'; document.getElementById('wPhone').focus(); return; }
+  if(!isFioValid(fio)){ window.trackJourney?.('checkout_validation_error',{field:'name',reason:fio?'invalid':'required'}); errEl.textContent = 'Вкажи імʼя (хоча б 2 символи)'; document.getElementById('wFio').focus(); return; }
+  if(!isPhoneValid(phone)){ window.trackJourney?.('checkout_validation_error',{field:'phone',reason:phone?'invalid':'required'}); errEl.textContent = 'Некоректний номер (потрібно 9-13 цифр)'; document.getElementById('wPhone').focus(); return; }
   CART.wizard = {...CART.wizard, fio, phone}; CART.saveWiz();
   if(!CART.wizard.leadKeycrmId){ sendLead(); }
 
   // 3. Місто + відділення
   const city = document.getElementById('wCity').value.trim();
   const wh   = document.getElementById('wWh').value.trim();
-  if(!city || !CART.wizard.cityRef){ errEl.textContent = 'Обери місто зі списку'; document.getElementById('wCity').focus(); return; }
-  if(!wh   || !CART.wizard.whRef){   errEl.textContent = 'Обери відділення зі списку'; document.getElementById('wWh').focus(); return; }
+  if(!city || !CART.wizard.cityRef){ window.trackJourney?.('checkout_validation_error',{field:'city',reason:'not_selected'}); errEl.textContent = 'Обери місто зі списку'; document.getElementById('wCity').focus(); return; }
+  if(!wh   || !CART.wizard.whRef){ window.trackJourney?.('checkout_validation_error',{field:'branch',reason:'not_selected'}); errEl.textContent = 'Обери відділення зі списку'; document.getElementById('wWh').focus(); return; }
   CART.wizard = {...CART.wizard, city, wh}; CART.saveWiz();
 
   // 4. Оплата
   const pmInput = document.querySelector('input[name="pm"]:checked');
   const pm = pmInput ? pmInput.value : null;
-  if(!pm){ errEl.textContent = 'Обери спосіб оплати'; return; }
+  if(!pm){ window.trackJourney?.('checkout_validation_error',{field:'payment',reason:'required'}); errEl.textContent = 'Обери спосіб оплати'; return; }
   CART.wizard = {...CART.wizard, pm}; CART.saveWiz();
   renderSummary();
   const btn = document.querySelector('.cd-next.submit');
@@ -5244,13 +5253,14 @@ async function wizardSubmit(){
     const r = await fetch('/api/order', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(Object.assign({}, (payload), { /* ULHOME_ATTR_WRAP */ session_id: (window.ULHOME_SESSION_ID||null), referrer: (document.referrer||null), landing_url: (window.ULHOME_LANDING_URL||location.href) }))
+      body: JSON.stringify(Object.assign({}, (payload), { /* ULHOME_ATTR_WRAP */ session_id: (window.ULHOME_SESSION_ID||null), referrer: (document.referrer||null), landing_url: (window.ULHOME_LANDING_URL||location.href), tracking: window.ulteraJourneyContext?.()||null }))
     });
     const result = await r.json().catch(()=>({}));
     if(!r.ok || result.ok === false){
       throw new Error(result.error || result.message || ('HTTP ' + r.status));
     }
     if(result.mock) console.log('Mock order:', result);
+    if(!result.mock)window.trackJourney?.('checkout_submit_acknowledged',{total:result.authoritative_total,payment_method:pm});
     // --- WayForPay payment redirect ---
     var fioParts = String(CART.wizard.fio||'').trim().split(/\s+/);
     var clientFirstName = fioParts[0] || '';
@@ -5289,6 +5299,8 @@ async function wizardSubmit(){
       });
       var wfp = await wfpResp.json().catch(function(){ return {}; });
       if (wfpResp.ok && wfp.ok && wfp.formHtml) {
+        window.trackJourney?.('payment_redirect',{payment_method:pm});
+        try{await Promise.race([window.ULTERA_JOURNEY?.flush(),new Promise(resolve=>setTimeout(resolve,800))]);}catch(_){}
         try {
           localStorage.setItem('ulteraPendingOrder', JSON.stringify({
             num:orderNum, ts:Date.now(),
@@ -5304,15 +5316,19 @@ async function wizardSubmit(){
         return;
       }
       console.warn('WayForPay returned no formHtml:', wfp);
+      window.trackJourney?.('payment_redirect_failed',{reason:'no_payment_form',http_status:wfpResp.status});
     } catch(wfpErr) {
+      window.trackJourney?.('payment_redirect_failed',{reason:'request_failed'});
       console.error('WayForPay request failed:', wfpErr);
     }
     showStep('done');
     document.getElementById('wOrderNum').textContent = orderNum;
     toast('Замовлення прийнято. Менеджер звʼяжеться для оплати.');
     CART.clear(); CART.wizard = {}; CART.saveWiz();
+    try{window.ULTERA_JOURNEY?.complete();}catch(_){}
     updateCartBadge();
   } catch(e){
+    window.trackJourney?.('checkout_submit_failed',{reason:'request_failed'});
     console.error('Order error:', e);
     errEl.textContent = 'Не вдалось надіслати: ' + e.message + '. Зв\'яжись з нами або спробуй ще раз.';
     btn.disabled = false; btn.textContent = 'Оформити замовлення';
@@ -5354,6 +5370,7 @@ async function wizardSubmit(){
         citySug.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
           city.value = b.textContent;
           CART.wizard = {...CART.wizard, cityRef: b.dataset.ref, city: b.textContent, whRef: null, wh: null}; CART.saveWiz();
+          window.trackJourney?.('checkout_field_completed',{field:'city'});
           wh.value = '';
           citySug.classList.remove('open');
           wh.disabled = false; wh.placeholder = 'Назва або № відділення'; wh.focus();
@@ -5379,6 +5396,7 @@ async function wizardSubmit(){
         whSug.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
           wh.value = b.textContent;
           CART.wizard = {...CART.wizard, whRef: b.dataset.ref, wh: b.textContent}; CART.saveWiz();
+          window.trackJourney?.('checkout_field_completed',{field:'branch'});
           whSug.classList.remove('open');
           renderSummary();
         }));
@@ -5917,6 +5935,7 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
     if(!box) return;
     const open = box.classList.toggle('open');
     if(open){
+      window.trackJourney?.('size_guide_open',{uid:window.__modalUid});
       initDrum();
       renderSizes();
       box.scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -6319,131 +6338,7 @@ insertWomanDivider();
 })();
 </script>
 
-<script>
-/* ULTERA analytics tracker (v108, ported from shape-landing) — sends to Supabase analytics_events */
-(function() {
-  'use strict';
-  if (window.__ULTERA_TRACKER_ON) return; window.__ULTERA_TRACKER_ON = true;
-  const SUPABASE_URL = 'https://fsihlzzjewhxpogvjapu.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaWhsenpqZXdoeHBvZ3ZqYXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyOTY2MzUsImV4cCI6MjA5MDg3MjYzNX0._hS7TA8EqIHgz7CH6XxGKuDdOnVBb6u40ntEtZ__MjU';
-  const TABLE='analytics_events';
-  const BATCH_MS=3000, MOUSE_MS=200, SCROLL_MS=500, SECTION_MIN=1000;
-  // Keep analytics and checkout on one session id so feed visits can be tied to orders.
-  const sid=(()=>{let s=window.ULHOME_SESSION_ID||sessionStorage.getItem('ulh_session_id')||sessionStorage.getItem('_ut_sid');if(!s){s='s-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);}sessionStorage.setItem('ulh_session_id',s);sessionStorage.setItem('_ut_sid',s);window.ULHOME_SESSION_ID=s;return s;})();
-  const vw=()=>innerWidth, vh=()=>innerHeight;
-  const deviceType=()=>vw()<768?'mobile':vw()<1024?'tablet':'desktop';
-  let queue=[];
-  function enqueue(eventType, eventData){
-    queue.push({session_id:sid, event_type:eventType, event_data:eventData, page_url:location.href, viewport_w:vw(), viewport_h:vh(), screen_w:screen.width, screen_h:screen.height, device_type:deviceType(), user_agent:navigator.userAgent, referrer:document.referrer||null});
-  }
-  function flush(){
-    if(!queue.length) return;
-    const batch=queue.splice(0,queue.length);
-    const url=SUPABASE_URL+'/rest/v1/'+TABLE;
-    fetch(url,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},body:JSON.stringify(batch),keepalive:true}).catch(()=>{});
-  }
-  setInterval(flush, BATCH_MS);
-  // v132 2026-05-18: expose for openModal-level product_view / color_view trackers.
-  try { window.ulteraTrack = enqueue; window.ulteraTrackFlush = flush; } catch(_){}
-  // page_view
-  enqueue('page_view',{title:document.title, timestamp:new Date().toISOString()});
-  // click
-  function closestSection(el){
-    const s=el.closest('section[id], .khark, .ig-sec, .classics, .tech-sec, .faq-sec, .feat');
-    if(!s) return 'unknown';
-    return s.id || (s.className||'').split(/\s+/).find(c=>c&&c!=='wide')||'unknown';
-  }
-  document.addEventListener('click', function(e){
-    const rect=document.documentElement.getBoundingClientRect();
-    const x_pct=(e.clientX/vw()*100).toFixed(2);
-    const y_abs=e.pageY;
-    const y_pct=(e.pageY/document.documentElement.scrollHeight*100).toFixed(2);
-    const el=e.target;
-    const tag=el.tagName.toLowerCase();
-    const classes=(el.className&&typeof el.className==='string')?el.className.slice(0,120):'';
-    const text=(el.textContent||'').trim().slice(0,60);
-    const id=el.id||'';
-    const href=el.closest('a')?el.closest('a').href:'';
-    const section=closestSection(el);
-    enqueue('click',{x_pct:+x_pct, y_pct:+y_pct, y_abs:y_abs, tag:tag, id:id, classes:classes, text:text, href:href, section:section});
-    // funnel
-    if(el.closest('.cd-cta, .cd-next.submit') || /замовити|оформити|купити|order/i.test(text)) funnelStep('cta_click', section);
-    if(el.closest('.card, .ig-tile')) funnelStep('product_interact');
-  }, true);
-  // scroll
-  let maxScroll=0, scrollTimer=null;
-  addEventListener('scroll', function(){
-    if(scrollTimer) return;
-    scrollTimer=setTimeout(function(){
-      scrollTimer=null;
-      const st=pageYOffset||document.documentElement.scrollTop;
-      const dh=document.documentElement.scrollHeight-vh();
-      const pct=dh>0?Math.round(st/dh*100):0;
-      if(pct>maxScroll){
-        [25,50,75,90,100].forEach(m=>{ if(pct>=m && maxScroll<m) enqueue('scroll',{depth_pct:m, scroll_px:st}); });
-        maxScroll=pct;
-      }
-    }, SCROLL_MS);
-  }, {passive:true});
-  // mouse heatmap
-  let mX=0, mY=0, mM=false;
-  addEventListener('mousemove', function(e){ mX=e.pageX; mY=e.pageY; mM=true; }, {passive:true});
-  setInterval(function(){
-    if(!mM) return; mM=false;
-    const xp=(mX/Math.max(document.documentElement.scrollWidth,1)*100).toFixed(1);
-    const yp=(mY/Math.max(document.documentElement.scrollHeight,1)*100).toFixed(1);
-    enqueue('mouse_move',{x_pct:+xp, y_pct:+yp, x_abs:mX, y_abs:mY});
-  }, MOUSE_MS);
-  // section dwell
-  const sTimers={};
-  function sectionName(el){ return el.id || (el.className||'').split(/\s+/).find(c=>c&&c!=='wide')||'unknown'; }
-  function setupSections(){
-    const sections=document.querySelectorAll('section[id], .khark, .ig-sec, .classics, .tech-sec, .faq-sec');
-    if(!sections.length) return;
-    const obs=new IntersectionObserver(function(entries){
-      entries.forEach(function(en){
-        const id=sectionName(en.target);
-        if(!sTimers[id]) sTimers[id]={start:null,total:0,reported:false};
-        if(en.isIntersecting){
-          sTimers[id].start=Date.now();
-          if(!sTimers[id].reported){ sTimers[id].reported=true; enqueue('section_view',{section:id, first_view:true}); funnelStep('section_'+id); }
-        } else if(sTimers[id].start){
-          const dw=Date.now()-sTimers[id].start;
-          sTimers[id].total+=dw; sTimers[id].start=null;
-          if(dw>=SECTION_MIN) enqueue('section_dwell',{section:id, dwell_ms:dw, total_ms:sTimers[id].total});
-        }
-      });
-    }, {threshold:0.3});
-    sections.forEach(function(s){ obs.observe(s); });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', setupSections); else setupSections();
-  // funnel
-  const fSteps=[];
-  function funnelStep(step, detail){
-    if(fSteps.includes(step)) return;
-    fSteps.push(step);
-    enqueue('funnel_step',{step:step, step_index:fSteps.length, detail:detail||null, timestamp:new Date().toISOString()});
-  }
-  // observe cart modal open (checkout)
-  const cartDrawer=document.getElementById('cartDrawer');
-  if(cartDrawer){
-    new MutationObserver(function(){
-      if(cartDrawer.classList.contains('open') && !fSteps.includes('cart_open')) funnelStep('cart_open');
-    }).observe(cartDrawer, {attributes:true, attributeFilter:['class']});
-  }
-  // page leave
-  function onLeave(){
-    for(const id in sTimers){
-      if(sTimers[id].start){ sTimers[id].total+=Date.now()-sTimers[id].start; sTimers[id].start=null; }
-    }
-    const totalTime = Date.now() - (performance.timing ? performance.timing.navigationStart : Date.now());
-    enqueue('page_leave',{total_time_ms:totalTime, max_scroll_pct:maxScroll, funnel_steps:fSteps, section_times: Object.fromEntries(Object.entries(sTimers).map(([k,v])=>[k,v.total]))});
-    flush();
-  }
-  addEventListener('beforeunload', onLeave);
-  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') onLeave(); });
-})();
-</script>
+<!-- Journey v1 replaces legacy public analytics writes. -->
 
 
 <script>

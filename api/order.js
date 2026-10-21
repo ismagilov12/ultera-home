@@ -361,6 +361,7 @@ async function fireCapiPurchaseCod(req, body, ip, total, eventId) {
   }
 }
 
+const {saveOrderJourney}=require('./_journey');
 module.exports = async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -476,6 +477,8 @@ module.exports = async function handler(req, res) {
     landing_url: (typeof body.landing_url === 'string' ? body.landing_url : '').slice(0, 2000) || null
   });
 
+  if(orderRow)await saveOrderJourney(orderRow,body,isLead?'lead':'final');
+
   if (isLead) {
     return res.status(200).json({
       ok: true,
@@ -589,8 +592,8 @@ module.exports = async function handler(req, res) {
       return res.status(r.status).json({ ok: false, error: data.message || 'KeyCRM error', details: data });
     }
     if (orderRow && orderRow.id && data && data.id) {
-      patchOrderKeycrmLink(orderRow.id, data.id, externalId)
-        .catch(e => console.warn('[order] keycrm-link bg fail', e.message));
+      await patchOrderKeycrmLink(orderRow.id, data.id, externalId)
+        .catch(() => console.warn('[order] keycrm-link failed'));
     }
     return res.status(200).json({
       ok: true,
