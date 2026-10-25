@@ -44,8 +44,9 @@ function touch(value){
 }
 function context(value){
   value=value&&typeof value==='object'?value:{};
-  // Anonymous journey identity is optional. Checkout must also work without consent.
-  if(value.analytics_consent!==true)return null;
+  // Tracking is optional. Accept automatic clients and already-open v1 pages.
+  // The enabled flag records collection mode, not a visitor consent decision.
+  if(value.analytics_enabled!==true&&value.analytics_consent!==true)return null;
   const visitor=cleanId(value.visitor_id),checkout=cleanId(value.checkout_id);
   const session=typeof value.session_id==='string'&&SESSION.test(value.session_id)?value.session_id:null;
   if(!visitor||!session)return null;
