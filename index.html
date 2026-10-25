@@ -2710,6 +2710,7 @@ window.ulteraFbq = function(name, params){
         <div class="sh-caption"><b>Barefoot · Anatomic</b>Природна форма стопи</div>
       </div>
     </div>
+    <div class="modal-rotation-actions" id="m_rotation_actions" role="group" aria-label="Огляд моделі на 360 градусів"></div>
     <div class="modal-strip" id="m_gallery"></div>
     <div class="modal-body">
       <div class="modal-brand" id="m_fam"></div>
@@ -7916,11 +7917,27 @@ insertWomanDivider();
 }
 .modal-img:hover > #m_img[src*="/catalog360/hq-20261021"]{transform:none}
 </style>
+<style id="ulModalRotationActions">
+/* Rotation controls occupy their own row below the photograph. */
+.modal-rotation-actions{
+  display:none;grid-column:1;grid-row:2;min-width:0;
+  align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;
+  padding:10px 12px;background:var(--bg-alt);border-top:1px solid var(--line);
+}
+.modal-rotation-actions:has(>button:not([hidden])){display:flex}
+.modal-rotation-actions>button{min-height:44px;max-width:100%}
+@media (min-width:761px){
+  .modal{height:min(92vh,860px);grid-template-rows:minmax(0,1fr) auto auto}
+  .modal-img{grid-row:1;min-height:0;height:100%}
+  .modal-strip{grid-row:3;min-width:0}
+  .modal-body{grid-row:1/4;min-height:0;max-height:100%}
+}
+</style>
 <link rel="stylesheet" href="/assets/insole-upsell.css?v=20261009">
 <script src="/assets/insole-upsell.js?v=20261009" defer></script>
-<script src="/assets/hunk3-360.js?v=20261025-ui1" defer></script>
-<script src="/assets/aganta-oreo-360.js?v=20261025-ui1" defer></script>
-<script src="/assets/catalog360/site-integration.js?v=20261025-ui1" defer></script>
+<script src="/assets/hunk3-360.js?v=20261025-controls1" defer></script>
+<script src="/assets/aganta-oreo-360.js?v=20261025-controls1" defer></script>
+<script src="/assets/catalog360/site-integration.js?v=20261025-controls1" defer></script>
 </body>
 </html>
 
