@@ -595,5 +595,85 @@
       "#eceef0",
       "#eceef0"
     ]
+  },
+  {
+    "uid": "260203663062",
+    "name": "Aganta Aqva",
+    "src": "https://ultera.in.ua/?p=aganta-aqua%2C260203663062",
+    "originalFile": "https://ultera-home.vercel.app/photos/23471110.webp",
+    "sourceOriginalFile": "https://ultera-home.vercel.app/photos/23471110.webp",
+    "status": "prepared",
+    "frames": 8,
+    "cols": 4,
+    "rows": 2,
+    "hq": true,
+    "method": "AI reconstruction from original product photographs",
+    "firstFrame": "Original product photograph retained in gallery; new AI views only in rotation",
+    "rotationStart": "right side",
+    "atlas": "atlases/260203663062-v2-20261025.png",
+    "atlasSize": [
+      1774,
+      887
+    ],
+    "bounds": [
+      {
+        "x": 17,
+        "y": 146,
+        "width": 426,
+        "height": 232
+      },
+      {
+        "x": 49,
+        "y": 119,
+        "width": 387,
+        "height": 292
+      },
+      {
+        "x": 104,
+        "y": 95,
+        "width": 219,
+        "height": 324
+      },
+      {
+        "x": 19,
+        "y": 117,
+        "width": 389,
+        "height": 297
+      },
+      {
+        "x": 17,
+        "y": 113,
+        "width": 420,
+        "height": 233
+      },
+      {
+        "x": 49,
+        "y": 78,
+        "width": 352,
+        "height": 292
+      },
+      {
+        "x": 120,
+        "y": 80,
+        "width": 196,
+        "height": 294
+      },
+      {
+        "x": 33,
+        "y": 78,
+        "width": 375,
+        "height": 295
+      }
+    ],
+    "backgrounds": [
+      "#ebebe8",
+      "#ebebe8",
+      "#ebebe8",
+      "#ebebe9",
+      "#ebebe8",
+      "#ebebe8",
+      "#ebebe8",
+      "#ebebe9"
+    ]
   }
 ]
