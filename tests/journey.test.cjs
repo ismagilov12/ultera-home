@@ -2,7 +2,7 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');const {randomUUID}=require('node:crypto');
 const J=require('../api/_journey');const {createHandler}=require('../api/journey');
 const visitor=randomUUID(),checkout=randomUUID(),order=randomUUID(),now=new Date('2026-10-21T12:00:00Z');
-const ctx={analytics_consent:true,visitor_id:visitor,checkout_id:checkout,session_id:'s-test-123456',first_touch:{utm_source:'facebook',phone:'PRIVATE-PHONE'},last_touch:{utm_campaign:'autumn'}};
+const ctx={analytics_enabled:true,visitor_id:visitor,checkout_id:checkout,session_id:'s-test-123456',first_touch:{utm_source:'facebook',phone:'PRIVATE-PHONE'},last_touch:{utm_campaign:'autumn'}};
 const env={SUPABASE_URL:'https://example.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'server-only-fixture',ULTERA_FINANCE_ENABLED:'1'};
 const response=(value,status=200)=>new Response(status===204||status===201?null:JSON.stringify(value),{status});
 const ev=()=>({event_id:randomUUID(),event_type:'checkout_validation_error',event_data:{field:'phone',reason:'invalid',phone:'PRIVATE-PHONE',name:'PRIVATE-NAME',value:'PRIVATE-VALUE',title:'PRIVATE-TITLE'},page_path:'/',occurred_at:now.toISOString()});
@@ -12,9 +12,13 @@ test('journey sanitization excludes free text, contacts, URLs and raw errors',()
   const value=JSON.stringify(row);for(const marker of ['PRIVATE','phone=','title','name','value'])assert.ok(!value.includes(marker));
   assert.deepEqual(row.event_data.items,[{uid:'809858137952',size:'42',qty:1,season_id:'winter'}]);assert.equal(row.page_path,'/');assert.equal(row.source,'browser');
 });
-test('no consent, invalid identities, old times or forged server events are accepted',()=>{
-  assert.equal(J.context({...ctx,analytics_consent:false}),null);assert.equal(J.context({...ctx,visitor_id:'bad'}),null);
+test('disabled tracking, invalid identities, old times or forged server events are rejected',()=>{
+  assert.equal(J.context({...ctx,analytics_enabled:false}),null);assert.equal(J.context({...ctx,analytics_enabled:'true'}),null);assert.equal(J.context({...ctx,visitor_id:'bad'}),null);
   assert.equal(J.event({...ev(),event_type:'order_saved'},ctx,now),null);assert.equal(J.event({...ev(),occurred_at:'2020-01-01'},ctx,now),null);
+});
+test('already-open consented v1 pages retain valid tracking after the automatic-start deployment',()=>{
+  const legacy={...ctx,analytics_enabled:undefined,analytics_consent:true};assert.equal(J.context(legacy).visitor_id,visitor);
+  assert.equal(J.context({...legacy,analytics_consent:false}),null);
 });
 test('page visits retain sanitized first and last source even when no order is ever placed',()=>{
   const row=J.event({...ev(),event_type:'page_view'},J.context(ctx),now);
@@ -71,17 +75,18 @@ test('authorized journey contains original site models but no customer fields or
   assert.equal(r.code,200);assert.equal(r.body.orders[0].items[0].title,'Hunk3 All Black');assert.ok(!JSON.stringify(r.body).includes('PRIVATE'));assert.match(r.headers['Cache-Control'],/no-store/);
 });
 function browser(shared={},options={}){
-  const values=shared.local||new Map(),sessions=shared.session||new Map(),requests=[],events={};
+  const values=shared.local||new Map(),sessions=shared.session||new Map(),requests=[],events={},nodes=[];
   const storage=m=>({getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,String(v)),removeItem:k=>m.delete(k)});
-  const doc={visibilityState:'visible',readyState:'loading',referrer:'https://www.facebook.com/anything?private=hidden',addEventListener:(k,fn)=>events[k]=fn,documentElement:{scrollHeight:1000}};
+  const doc={visibilityState:'visible',readyState:'loading',referrer:'https://www.facebook.com/anything?private=hidden',addEventListener:(k,fn)=>events[k]=fn,documentElement:{scrollHeight:1000},body:{appendChild:node=>nodes.push(node)},querySelector:()=>null,createElement:tag=>({tagName:tag.toUpperCase(),style:{}})};
   const win={crypto:{randomUUID},location:new URL('https://ultera.in.ua/?utm_source=facebook&utm_campaign=autumn&phone=PRIVATE-PHONE'),localStorage:storage(values),sessionStorage:storage(sessions),navigator:options.navigator||{},setTimeout,clearTimeout,setInterval(){},innerWidth:390,addEventListener:(k,fn)=>events[k]=fn,fetch:async(url,init)=>{requests.push(JSON.parse(init.body));return {ok:true,status:200};}};
   const context=vm.createContext({window:win,document:doc,URL,URLSearchParams,AbortController,Date,Set,Map,Promise,Number,String,JSON});vm.runInContext(fs.readFileSync(require.resolve('../assets/customer-tracking.js'),'utf8'),context);
-  return {w:win,events,values,sessions,requests,shared:{local:values,session:sessions}};
+  return {w:win,events,values,sessions,requests,nodes,shared:{local:values,session:sessions}};
 }
-test('browser does not track before consent; opt-out clears identity and queued events',async()=>{
-  const b=browser();b.w.trackJourney('add_to_cart',{uid:'809858137952'});await b.w.ULTERA_JOURNEY.flush();assert.equal(b.requests.length,0);assert.equal(b.values.has('ulh_journey_visitor'),false);
-  b.w.ULTERA_JOURNEY.setConsent(true);await new Promise(resolve=>setImmediate(resolve));assert.equal(b.requests.length,1);assert.ok(!JSON.stringify(b.requests).includes('PRIVATE'));
+test('new browser records its cart without a confirmation and preserves explicit opt-out on reload',async()=>{
+  const b=browser();b.w.trackJourney('add_to_cart',{uid:'809858137952'});await b.w.ULTERA_JOURNEY.flush();assert.equal(b.requests.length,1);
+  assert.equal(b.requests[0].context.analytics_enabled,true);assert.equal(b.requests[0].context.analytics_consent,undefined);assert.equal(b.values.has('ulh_journey_consent'),false);assert.ok(!JSON.stringify(b.requests).includes('PRIVATE'));
   b.w.ULTERA_JOURNEY.setConsent(false);assert.equal(b.values.has('ulh_journey_visitor'),false);assert.equal(b.w.ulteraJourneyContext(),null);
+  const next=browser(b.shared);next.w.trackJourney('add_to_cart',{uid:'809858137952'});await next.w.ULTERA_JOURNEY.flush();assert.equal(next.requests.length,0);assert.equal(next.w.ulteraJourneyContext(),null);
 });
 test('visitor survives reload; checkout survives reload/error and resets only explicitly',async()=>{
   const a=browser();a.w.ULTERA_JOURNEY.setConsent(true);const first=a.w.ulteraJourneyContext().visitor_id,id=a.w.ULTERA_JOURNEY.checkout();
@@ -108,8 +113,10 @@ test('storefront hooks both order stages and precise fields without changing pri
   assert.ok(!html.includes('ULTERA analytics tracker (v108'));assert.ok(html.includes("fetch('/api/wayforpay'"));
   for(const file of ['../index.html','../admin.html']){const text=fs.readFileSync(require.resolve(file),'utf8');for(const s of text.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi))if(!/\bsrc\s*=|application\/(?:ld\+json|json)/i.test(s[1]))assert.doesNotThrow(()=>new vm.Script(s[2]),file);}
 });
-test('consent notice stays below product modal and checkout drawer so it cannot cover buy buttons',()=>{
-  const script=fs.readFileSync(require.resolve('../assets/customer-tracking.js'),'utf8');
-  assert.match(script,/#ulhJourneyConsent\{[^}]*z-index:90;/);
-  const html=fs.readFileSync(require.resolve('../index.html'),'utf8');assert.match(html,/\.cart-drawer\{[^}]*z-index:100;/);assert.match(html,/\.modal-overlay\{[^}]*z-index:100;/);
+test('page load tracks automatically and provides a direct footer opt-out without a modal',async()=>{
+  const b=browser();b.events.DOMContentLoaded();await b.w.ULTERA_JOURNEY.flush();
+  assert.equal(b.requests.length,1);assert.equal(b.requests[0].events[0].event_type,'page_view');
+  assert.equal(b.nodes.length,1);assert.equal(b.nodes[0].tagName,'BUTTON');assert.equal(b.nodes[0].textContent,'Вимкнути аналітику');
+  b.nodes[0].onclick();assert.equal(b.w.ulteraJourneyContext(),null);assert.equal(b.nodes[0].textContent,'Увімкнути аналітику');
 });
+
