@@ -9,14 +9,20 @@
     "cols": 4,
     "rows": 2,
     "method": "AI reconstruction from product photographs",
-    "firstFrame": "original website photo",
+    "firstFrame": "original photo preserved in gallery; rotation uses high-resolution atlas",
     "rotationStart": "right side",
-    "qa": "visual-direction-family-color-review",
-    "atlas": "atlases/809858137952.webp",
+    "qa": "eight-angle-material-and-controls-review",
+    "atlas": "atlases/809858137952-v2-20261027.webp",
     "atlasSize": [
-      1774,
-      887
-    ]
+      5016,
+      2508
+    ],
+    "frameSize": [
+      1254,
+      1254
+    ],
+    "version": "20261027-hq",
+    "hq": true
   },
   {
     "name": "Aganta Базовий",
