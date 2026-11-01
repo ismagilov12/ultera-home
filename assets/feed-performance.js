@@ -62,7 +62,7 @@
     if (!el('page-feed') || el('page-feed').dataset.statsVersion === String(VERSION)) return;
     el('page-feed').dataset.statsVersion = String(VERSION);
     const fs = {days:7,view:'table',metric:'funnel',sort:'entry_sessions',dir:'desc',q:'',family:'',only:false,
-      rows:[],orphans:[],payload:null,loadedKey:'',sequence:0};
+      rows:[],orphans:[],payload:null,loadedKey:'',pendingKey:null,sequence:0};
     const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g,c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const nf = value => Number(value || 0).toLocaleString('uk-UA',{maximumFractionDigits:2});
     const money = value => Math.round(Number(value || 0)).toLocaleString('uk-UA')+' ₴';
@@ -191,10 +191,16 @@
       el('fstat-status').textContent='Поточний трекер сайту · оновлено '+when(p.generated_at)+' · події та сесії, не люди';
     }
     async function load(force) {
-      if (!force && fs.loadedKey === String(fs.days)) return;
+      if (!force && (fs.loadedKey === String(fs.days) || fs.pendingKey === String(fs.days))) return;
       const request=++fs.sequence,bounds=periodBounds(fs.days),days=fs.days;
+      fs.pendingKey=String(days);fs.payload=null;fs.rows=[];fs.orphans=[];fs.loadedKey='';
+      el('fstat-meta').textContent=when(bounds.from)+' — '+when(bounds.to)+' · Київ';
       el('fstat-status').textContent='Читаю події та збережені замовлення…';
+      el('fstat-site-summary').textContent='Завантажую підсумок замовлень…';
+      el('fstat-coverage').textContent='';el('fstat-cards').innerHTML='';
+      el('fstat-outside-count').textContent='';el('fstat-orphans').querySelector('tbody').innerHTML='';
       for (const id of ['entries','carts','converted','cr','cart-cr','orders','approved']) el('fstat-kpi-'+id).textContent='—';
+      el('fstat-table').querySelector('thead').innerHTML='';
       el('fstat-table').querySelector('tbody').innerHTML='<tr><td colspan="16" class="ana-empty">Завантажую…</td></tr>';
       el('fstat-table').querySelector('tfoot').innerHTML='';
       try {
@@ -216,6 +222,8 @@
         el('fstat-status').textContent='Не вдалося завантажити статистику: '+error.message;
         el('fstat-table').querySelector('tbody').innerHTML='<tr><td colspan="16" class="ana-empty">'+esc(error.message)+'</td></tr>';
         el('fstat-site-summary').textContent='Дані не завантажено.';el('fstat-coverage').textContent='';el('fstat-cards').innerHTML='';
+      } finally {
+        if(request === fs.sequence)fs.pendingKey=null;
       }
     }
     el('fstat-period').addEventListener('click',event => {

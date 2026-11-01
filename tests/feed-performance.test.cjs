@@ -48,7 +48,7 @@ test('all supported periods use valid ordered bounds', () => {
 });
 test('the admin loads the v2 asset before its main inline script', () => {
   const html=fs.readFileSync(path.join(__dirname,'../admin.html'),'utf8');
-  assert.ok(html.indexOf('/assets/feed-performance.js?v=20261101-v2')<html.indexOf('const SB_URL'));
+  assert.ok(html.indexOf('/assets/feed-performance.js?v=20261101-v3')<html.indexOf('const SB_URL'));
   assert.ok(html.includes('window.ULTERA_FEED_STATS.init({rest})'));
   assert.ok(!html.includes("rest('rpc/ulhome_feed_link_stats',"));
   assert.ok(!html.includes("sum.link_orders/sum.clicks"));
@@ -63,4 +63,10 @@ test('sales, funnel, current status freshness and consent limitations are explic
   assert.ok(js.includes('orders_without_entry'));
   assert.ok(js.includes('stale_crm_orders'));
   assert.ok(!js.includes('analytics_events'));
+});
+test('loading a new period clears the old payload and deduplicates visibility requests', () => {
+  const js=fs.readFileSync(path.join(__dirname,'../assets/feed-performance.js'),'utf8');
+  assert.ok(js.includes('fs.pendingKey === String(fs.days)'));
+  assert.ok(js.includes('fs.pendingKey=String(days);fs.payload=null;fs.rows=[];fs.orphans=[];fs.loadedKey=\'\''));
+  assert.ok(js.includes('if(request === fs.sequence)fs.pendingKey=null'));
 });
