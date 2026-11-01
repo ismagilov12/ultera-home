@@ -495,62 +495,60 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
         </div>
       </div>
 
-      <div class="kpi-grid">
-        <div class="kpi-card" title="Кількість товарів у поточному feed.xml"><div class="l">Позицій у фіді</div><div class="v" id="fstat-kpi-items">—</div></div>
-        <div class="kpi-card" title="Унікальні сесії, які відкрили товарне посилання з параметром ?p="><div class="l">Переходи</div><div class="v" id="fstat-kpi-clicks">—</div><div class="delta" id="fstat-kpi-hits"></div></div>
-        <div class="kpi-card" title="Замовлення з товарних посилань; технічні ліди та відхилені замовлення не враховуються"><div class="l">Замовлень з лінків</div><div class="v" id="fstat-kpi-orders">—</div></div>
-        <div class="kpi-card" title="Сума замовлень з товарних посилань"><div class="l">Виручка з лінків</div><div class="v" id="fstat-kpi-revenue">—</div></div>
-        <div class="kpi-card" title="Замовлення з лінків / унікальні переходи"><div class="l">CR переходів</div><div class="v" id="fstat-kpi-cr">—</div></div>
-        <div class="kpi-card" title="Позиції фіда без переходів за вибраний період"><div class="l">Без переходів</div><div class="v" id="fstat-kpi-dead">—</div></div>
-        <div class="kpi-card" title="Середня кількість унікальних переходів на позицію"><div class="l">Сер. переходів / SKU</div><div class="v" id="fstat-kpi-avg">—</div></div>
+      <p class="meta" style="margin:0 0 14px">Поведінка на сайті та оформлені замовлення. Це не кліки з рекламного кабінету Meta.</p>
+      <div id="fstat-status" class="meta" role="status" aria-live="polite">Завантажую статистику…</div>
+      <p class="meta" style="margin:12px 0 0">Воронка нижче — для моделей поточного фіда з урахуванням фільтрів. Історичні моделі поза фідом показано окремо внизу.</p>
+      <div class="kpi-grid" id="fstat-kpis">
+        <div class="kpi-card"><div class="l">Сесії входу</div><div class="v" id="fstat-kpi-entries">—</div></div>
+        <div class="kpi-card"><div class="l">Із кошиком</div><div class="v" id="fstat-kpi-carts">—</div></div>
+        <div class="kpi-card"><div class="l">Із замовленням</div><div class="v" id="fstat-kpi-converted">—</div></div>
+        <div class="kpi-card" title="Сесії з повною послідовністю / сесії входу"><div class="l">CR вхід → замовлення</div><div class="v" id="fstat-kpi-cr">—</div></div>
+        <div class="kpi-card" title="Сесії з повною послідовністю / сесії з кошиком"><div class="l">CR кошик → замовлення</div><div class="v" id="fstat-kpi-cart-cr">—</div></div>
+        <div class="kpi-card"><div class="l">Замовлень у воронці</div><div class="v" id="fstat-kpi-orders">—</div></div>
+        <div class="kpi-card"><div class="l">Апрувів у воронці</div><div class="v" id="fstat-kpi-approved">—</div></div>
       </div>
-
+      <div class="ana-block" style="margin-bottom:14px">
+        <div id="fstat-site-summary" style="font-size:14px;line-height:1.8">—</div>
+        <div id="fstat-coverage" class="meta" style="margin-top:8px;line-height:1.7">—</div>
+        <details style="margin-top:10px;font-size:12px;color:#626a60">
+          <summary>Як рахуємо показники</summary>
+          <p>Воронка: перша відкрита модель у сесії → додавання будь-якого товару в кошик → збережене остаточне замовлення у цій самій сесії, у такому порядку. Одне замовлення має лише одну модель входу. CR рахуємо за унікальними сесіями, не за кількістю замовлень.</p>
+          <p>У «Товарах у замовленнях» — оригінальний SKU із сайту. Оформлення не означає оплату або викуп; відмови показано окремо. Апрув — збережена група статусу CRM «approved», не «Новий» і не відмова. Назва «Немає в наявності» не доводить нестачу складу.</p>
+          <p>Чернетки та QA-сесії виключені. Відмова від аналітики, DNT/GPC та розриви звʼязку можуть зменшувати покриття. Події не відновлюємо зі збереженої товарної URL. Дати — Europe/Kyiv, включно з поточною частиною дня.</p>
+        </details>
+      </div>
       <div class="ana-block">
         <div class="fstat-toolbar">
           <input type="search" id="fstat-search" placeholder="Пошук: назва або SKU…" style="min-width:220px">
-          <select id="fstat-family"><option value="">Усі сімʼї</option></select>
-          <label><input type="checkbox" id="fstat-only"> тільки з переходами</label>
+          <select id="fstat-family" aria-label="Сімʼя товарів"><option value="">Усі сімʼї</option></select>
+          <label id="fstat-only-label"><input type="checkbox" id="fstat-only"> лише зі входами</label>
           <div class="period-tabs" id="fstat-view">
             <button type="button" data-view="table" class="active">Таблиця</button>
             <button type="button" data-view="cards">Картки</button>
           </div>
           <a class="fstat-act" href="/feed.xml" target="_blank" rel="noopener" style="margin-left:auto">feed.xml ↗</a>
         </div>
-
+        <div class="period-tabs" id="fstat-metric" style="margin:0 0 16px">
+          <button type="button" data-metric="funnel" class="active">Воронка за моделлю входу</button>
+          <button type="button" data-metric="sales">Товари у замовленнях</button>
+        </div>
+        <p class="meta" id="fstat-table-description" style="margin:0 0 12px"></p>
         <div class="daily-wrap" id="fstat-table-wrap">
           <table class="daily-tbl" id="fstat-table">
-            <thead><tr>
-              <th style="width:56px"></th>
-              <th data-sort="title">Товар <span class="sort-ar"></span></th>
-              <th class="num" data-sort="price">Ціна <span class="sort-ar"></span></th>
-              <th class="num" data-sort="clicks">Переходи <span class="sort-ar"></span></th>
-              <th class="num" data-sort="hits">Хіти <span class="sort-ar"></span></th>
-              <th class="num" data-sort="views">Перегляди <span class="sort-ar"></span></th>
-              <th class="num" data-sort="atc">В кошик <span class="sort-ar"></span></th>
-              <th class="num" data-sort="link_orders">Замовл. <span class="sort-ar"></span></th>
-              <th class="num" data-sort="cr">CR <span class="sort-ar"></span></th>
-              <th class="num" data-sort="link_revenue">Виручка <span class="sort-ar"></span></th>
-              <th class="num" data-sort="item_qty">Продано шт <span class="sort-ar"></span></th>
-              <th class="num" data-sort="item_revenue">Виручка SKU <span class="sort-ar"></span></th>
-              <th data-sort="top_source">Джерело <span class="sort-ar"></span></th>
-              <th data-sort="last_click">Останній <span class="sort-ar"></span></th>
-              <th style="width:80px"></th>
-            </tr></thead>
-            <tbody><tr><td colspan="15" class="ana-empty">Завантажую…</td></tr></tbody>
-            <tfoot></tfoot>
+            <thead></thead><tbody><tr><td class="ana-empty">Завантажую…</td></tr></tbody><tfoot></tfoot>
           </table>
         </div>
         <div class="fstat-cards" id="fstat-cards" style="display:none"></div>
       </div>
-
       <div class="ana-block" style="margin-top:14px">
-        <h3>Переходи поза фідом <span style="font-weight:400;color:#0e0e0e70;font-size:12px">— товарні посилання, яких зараз немає у feed.xml</span></h3>
-        <div class="daily-wrap">
-          <table class="daily-tbl" id="fstat-orphans">
-            <thead><tr><th>SKU</th><th class="num">Переходи</th><th class="num">Замовл.</th><th class="num">Виручка</th><th>Джерело</th><th>Останній</th></tr></thead>
-            <tbody><tr><td colspan="6" class="ana-empty">Завантажую…</td></tr></tbody>
-          </table>
-        </div>
+        <details id="fstat-outside">
+          <summary>Моделі поза поточним фідом <span id="fstat-outside-count"></span></summary>
+          <p class="meta">Не приховуємо історичні моделі, яких уже немає у feed.xml.</p>
+          <div class="daily-wrap"><table class="daily-tbl" id="fstat-orphans">
+            <thead><tr><th>Модель / SKU</th><th class="num">Сесії входу</th><th class="num">Із замовленням</th><th class="num">Позицій у замовленнях</th><th class="num">Апрувнуто, шт.</th></tr></thead>
+            <tbody></tbody>
+          </table></div>
+        </details>
       </div>
 
       <div class="feed-settings-panel">
@@ -998,6 +996,7 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 <div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="/assets/feed-performance.js?v=20261101-v2"></script>
 <script>
 /* ==================== MINI REST CLIENT (no SDK) ==================== */
 const SB_URL = 'https://fsihlzzjewhxpogvjapu.supabase.co';
@@ -2271,221 +2270,8 @@ function copyFeedUrl(btn){
 }
 document.querySelector('[data-page="feed"]').addEventListener('click', loadFeed);
 
-/* ==================== FEED PERFORMANCE ==================== */
-(function(){
-  const GNS='http://base.google.com/ns/1.0';
-  const FS={days:7,view:'table',sort:'clicks',dir:'desc',q:'',family:'',only:false,items:[],rows:[],orphans:[],loading:false,loadedKey:''};
-
-  function el(id){ return document.getElementById(id); }
-  function fesc(v){ return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-  function nf(v){ return (Number(v)||0).toLocaleString('uk-UA'); }
-  function money(v){ return Math.round(Number(v)||0).toLocaleString('uk-UA')+' ₴'; }
-  function priceNum(v){ const m=String(v||'').match(/[\d.]+/); return m?Number(m[0]):0; }
-  function ago(iso){
-    if(!iso) return '—';
-    const d=new Date(iso), sec=(Date.now()-d.getTime())/1000;
-    if(sec<3600) return Math.max(1,Math.round(sec/60))+' хв тому';
-    if(sec<86400) return Math.round(sec/3600)+' год тому';
-    if(sec<604800) return Math.round(sec/86400)+' дн тому';
-    return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit'});
-  }
-  function gtext(node,tag){
-    let list=node&&node.getElementsByTagNameNS?node.getElementsByTagNameNS(GNS,tag):null;
-    if(!list||!list.length) list=node.getElementsByTagName('g:'+tag);
-    if(!list||!list.length) list=node.getElementsByTagName(tag);
-    return list&&list.length?(list[0].textContent||'').trim():'';
-  }
-  function parseFeed(xml){
-    const doc=new DOMParser().parseFromString(xml,'application/xml');
-    const nodes=doc.getElementsByTagName('item');
-    const items=[];
-    for(let i=0;i<nodes.length;i++){
-      const n=nodes[i], link=gtext(n,'link');
-      let uid='';
-      try{
-        const token=new URL(link,location.origin).searchParams.get('p')||'';
-        uid=String(token.indexOf(',')>=0?token.split(',').pop():token).toLowerCase();
-      }catch(_e){}
-      const priceRaw=gtext(n,'price'), price=priceNum(priceRaw), sale=priceNum(gtext(n,'sale_price'));
-      items.push({
-        uid:uid||gtext(n,'id').toLowerCase(),
-        sku:gtext(n,'id'),
-        title:gtext(n,'title'),
-        link:link,
-        image:gtext(n,'image_link'),
-        family:gtext(n,'custom_label_1'),
-        color:gtext(n,'color'),
-        price:sale&&sale<price?sale:price,
-        priceOld:sale&&sale<price?price:0
-      });
-    }
-    return items;
-  }
-  function emptyStats(){ return {clicks:0,hits:0,views:0,atc:0,link_orders:0,link_revenue:0,item_orders:0,item_qty:0,item_revenue:0,top_source:'',last_click:null}; }
-  function mergeStats(stats){
-    const map={};
-    (stats.rows||[]).forEach(r=>{ map[String(r.uid||'').toLowerCase()]=r; });
-    const feedUids={};
-    FS.rows=FS.items.map(item=>{
-      feedUids[item.uid]=true;
-      const raw=map[item.uid]||emptyStats();
-      const st={...emptyStats(),...raw};
-      Object.keys(st).forEach(k=>{ if(['top_source','last_click','uid'].indexOf(k)<0) st[k]=Number(st[k])||0; });
-      return {...item,...st,cr:st.clicks?st.link_orders/st.clicks*100:0};
-    });
-    FS.orphans=(stats.rows||[]).filter(r=>{
-      const uid=String(r.uid||'').toLowerCase();
-      return !feedUids[uid]&&(Number(r.clicks)||Number(r.link_orders));
-    }).map(r=>({...r,uid:String(r.uid||'').toLowerCase()})).sort((a,b)=>(Number(b.clicks)||0)-(Number(a.clicks)||0));
-  }
-  function buildFamilies(){
-    const select=el('fstat-family'); if(!select) return;
-    const current=FS.family;
-    const families=[...new Set(FS.items.map(x=>x.family).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'uk'));
-    select.innerHTML='<option value="">Усі сімʼї</option>'+families.map(f=>'<option value="'+fesc(f)+'">'+fesc(f)+'</option>').join('');
-    select.value=current;
-  }
-  function visibleRows(){
-    const q=FS.q.trim().toLowerCase();
-    return FS.rows.filter(r=>{
-      if(FS.only&&!r.clicks) return false;
-      if(FS.family&&r.family!==FS.family) return false;
-      if(q&&String(r.title+' '+r.uid+' '+r.sku+' '+r.color).toLowerCase().indexOf(q)<0) return false;
-      return true;
-    }).sort((a,b)=>{
-      let va=a[FS.sort],vb=b[FS.sort];
-      if(FS.sort==='title'||FS.sort==='top_source'){
-        va=String(va||'');vb=String(vb||'');
-        return FS.dir==='asc'?va.localeCompare(vb,'uk'):vb.localeCompare(va,'uk');
-      }
-      if(FS.sort==='last_click'){
-        va=va?new Date(va).getTime():0;vb=vb?new Date(vb).getTime():0;
-      }
-      va=Number(va)||0;vb=Number(vb)||0;
-      return FS.dir==='asc'?va-vb:vb-va;
-    });
-  }
-  function totals(rows){
-    return rows.reduce((t,r)=>{
-      t.clicks+=r.clicks;t.hits+=r.hits;t.views+=r.views;t.atc+=r.atc;
-      t.link_orders+=r.link_orders;t.link_revenue+=r.link_revenue;
-      t.item_qty+=r.item_qty;t.item_revenue+=r.item_revenue;
-      if(!r.clicks)t.dead++;
-      return t;
-    },{clicks:0,hits:0,views:0,atc:0,link_orders:0,link_revenue:0,item_qty:0,item_revenue:0,dead:0});
-  }
-  function renderLoading(){
-    const body=document.querySelector('#fstat-table tbody');
-    if(body) body.innerHTML='<tr><td colspan="15" class="ana-empty">Завантажую…</td></tr>';
-  }
-  function renderStats(){
-    const rows=visibleRows(),sum=totals(rows),maxClicks=rows.reduce((m,r)=>Math.max(m,r.clicks),0);
-    el('fstat-meta').textContent=nf(FS.items.length)+' позицій · '+(FS.days===1?'сьогодні':FS.days+' днів');
-    el('fstat-kpi-items').textContent=nf(FS.items.length);
-    el('fstat-kpi-clicks').textContent=nf(sum.clicks);
-    el('fstat-kpi-hits').textContent=nf(sum.hits)+' хітів';
-    el('fstat-kpi-orders').textContent=nf(sum.link_orders);
-    el('fstat-kpi-revenue').textContent=money(sum.link_revenue);
-    el('fstat-kpi-cr').textContent=sum.clicks?(sum.link_orders/sum.clicks*100).toFixed(2)+'%':'—';
-    el('fstat-kpi-dead').textContent=nf(sum.dead);
-    el('fstat-kpi-avg').textContent=rows.length?(sum.clicks/rows.length).toFixed(1):'—';
-
-    const body=document.querySelector('#fstat-table tbody'),foot=document.querySelector('#fstat-table tfoot');
-    if(!rows.length){
-      body.innerHTML='<tr><td colspan="15" class="ana-empty">Нічого не знайдено</td></tr>';
-      foot.innerHTML='';
-    }else{
-      body.innerHTML=rows.map(r=>{
-        const pct=maxClicks?Math.round(r.clicks/maxClicks*100):0;
-        return '<tr'+(r.clicks?' class="has-orders"':'')+'>'+
-          '<td>'+(r.image?'<img class="fstat-thumb" loading="lazy" src="'+fesc(r.image)+'" alt="">':'<span class="fstat-thumb"></span>')+'</td>'+
-          '<td><div class="fstat-name">'+fesc(r.title)+(r.color?'<span class="fstat-chip">'+fesc(r.color)+'</span>':'')+'</div><div class="fstat-sub">'+fesc(r.sku||r.uid)+'</div>'+(r.clicks?'<div class="fstat-bar"><i style="width:'+pct+'%"></i></div>':'')+'</td>'+
-          '<td class="num">'+(r.priceOld?'<s style="color:#0e0e0e50">'+nf(r.priceOld)+'</s> ':'')+nf(r.price)+' ₴</td>'+
-          '<td class="num"><b>'+nf(r.clicks)+'</b></td><td class="num">'+nf(r.hits)+'</td><td class="num">'+nf(r.views)+'</td><td class="num">'+nf(r.atc)+'</td>'+
-          '<td class="num">'+nf(r.link_orders)+'</td><td class="num">'+(r.clicks?r.cr.toFixed(1)+'%':'—')+'</td><td class="num">'+(r.link_revenue?money(r.link_revenue):'—')+'</td>'+
-          '<td class="num">'+nf(r.item_qty)+'</td><td class="num">'+(r.item_revenue?money(r.item_revenue):'—')+'</td>'+
-          '<td>'+(r.top_source?'<span class="fstat-chip source">'+fesc(r.top_source)+'</span>':'—')+'</td><td style="white-space:nowrap;color:#0e0e0e80">'+ago(r.last_click)+'</td>'+
-          '<td style="white-space:nowrap"><button type="button" class="fstat-act" data-fstat-copy="'+fesc(r.link)+'" title="Скопіювати лінк">⧉</button> <a class="fstat-act" href="'+fesc(r.link)+'" target="_blank" rel="noopener" title="Відкрити">↗</a></td></tr>';
-      }).join('');
-      foot.innerHTML='<tr><td colspan="3">Разом · '+nf(rows.length)+' позицій</td><td class="num">'+nf(sum.clicks)+'</td><td class="num">'+nf(sum.hits)+'</td><td class="num">'+nf(sum.views)+'</td><td class="num">'+nf(sum.atc)+'</td><td class="num">'+nf(sum.link_orders)+'</td><td class="num">'+(sum.clicks?(sum.link_orders/sum.clicks*100).toFixed(1)+'%':'—')+'</td><td class="num">'+money(sum.link_revenue)+'</td><td class="num">'+nf(sum.item_qty)+'</td><td class="num">'+money(sum.item_revenue)+'</td><td colspan="3"></td></tr>';
-    }
-
-    const cards=el('fstat-cards');
-    cards.innerHTML=rows.map(r=>'<div class="fstat-card'+(r.clicks&&maxClicks&&r.clicks>=maxClicks*.5?' hot':'')+'">'+
-      '<a class="ph" href="'+fesc(r.link)+'" target="_blank" rel="noopener">'+(r.image?'<img loading="lazy" src="'+fesc(r.image)+'" alt="">':'')+'</a><div class="bd">'+
-      '<div class="t">'+fesc(r.title)+(r.color?'<span class="fstat-chip">'+fesc(r.color)+'</span>':'')+'</div><div class="p">'+(r.priceOld?'<s>'+nf(r.priceOld)+'</s>':'')+nf(r.price)+' ₴</div>'+
-      '<div class="st"><div><b>'+nf(r.clicks)+'</b><span>переходи</span></div><div><b>'+nf(r.link_orders)+'</b><span>замовл.</span></div><div><b>'+(r.clicks?r.cr.toFixed(1)+'%':'—')+'</b><span>CR</span></div></div></div></div>').join('')||'<div class="ana-empty">Нічого не знайдено</div>';
-
-    const orphanBody=document.querySelector('#fstat-orphans tbody');
-    orphanBody.innerHTML=FS.orphans.length?FS.orphans.map(r=>'<tr><td><span class="fstat-sub">'+fesc(r.uid)+'</span></td><td class="num"><b>'+nf(r.clicks)+'</b></td><td class="num">'+nf(r.link_orders)+'</td><td class="num">'+(Number(r.link_revenue)?money(r.link_revenue):'—')+'</td><td>'+(r.top_source?'<span class="fstat-chip source">'+fesc(r.top_source)+'</span>':'—')+'</td><td style="color:#0e0e0e80">'+ago(r.last_click)+'</td></tr>').join(''):'<tr><td colspan="6" class="ana-empty">Немає — усі переходи ведуть на позиції поточного фіда</td></tr>';
-
-    document.querySelectorAll('#fstat-table th[data-sort]').forEach(th=>{
-      th.classList.remove('sort-asc','sort-desc');
-      const ar=th.querySelector('.sort-ar');
-      if(th.dataset.sort===FS.sort){th.classList.add(FS.dir==='asc'?'sort-asc':'sort-desc');if(ar)ar.textContent=FS.dir==='asc'?'▲':'▼';}
-      else if(ar)ar.textContent='';
-    });
-    el('fstat-table-wrap').style.display=FS.view==='table'?'':'none';
-    cards.style.display=FS.view==='cards'?'':'none';
-  }
-  async function loadStats(force){
-    const key=String(FS.days);
-    if(FS.loading||(!force&&FS.loadedKey===key)) return;
-    FS.loading=true;renderLoading();
-    const to=new Date(),from=new Date();
-    if(FS.days===1) from.setHours(0,0,0,0); else from.setTime(Date.now()-FS.days*86400000);
-    try{
-      const result=await Promise.all([
-        fetch('/feed.xml?_='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('feed '+r.status);return r.text();}).then(parseFeed),
-        rest('rpc/ulhome_feed_link_stats',{method:'POST',body:JSON.stringify({p_from:from.toISOString(),p_to:to.toISOString()})})
-      ]);
-      FS.items=result[0]||[];
-      const stats=Array.isArray(result[1])?(result[1][0]||{}):(result[1]||{});
-      mergeStats(stats);
-      buildFamilies();
-      FS.loadedKey=key;
-      renderStats();
-    }catch(e){
-      const body=document.querySelector('#fstat-table tbody');
-      if(body)body.innerHTML='<tr><td colspan="15" class="ana-empty">Не вдалося завантажити статистику: '+fesc(e&&e.message||e)+'</td></tr>';
-      try{toast('Помилка статистики фіда: '+(e&&e.message||e),'err');}catch(_e){}
-    }finally{FS.loading=false;}
-  }
-  function init(){
-    const period=el('fstat-period'),view=el('fstat-view'),table=el('fstat-table');
-    if(!period||!view||!table)return;
-    period.addEventListener('click',e=>{
-      const b=e.target.closest('button[data-days]');if(!b)return;
-      period.querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-      FS.days=Number(b.dataset.days)||7;loadStats(true);
-    });
-    view.addEventListener('click',e=>{
-      const b=e.target.closest('button[data-view]');if(!b)return;
-      view.querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-      FS.view=b.dataset.view;renderStats();
-    });
-    table.querySelector('thead').addEventListener('click',e=>{
-      const th=e.target.closest('th[data-sort]');if(!th)return;
-      const key=th.dataset.sort;
-      if(FS.sort===key)FS.dir=FS.dir==='desc'?'asc':'desc';
-      else{FS.sort=key;FS.dir=(key==='title'||key==='top_source')?'asc':'desc';}
-      renderStats();
-    });
-    el('fstat-search').addEventListener('input',function(){FS.q=this.value;renderStats();});
-    el('fstat-family').addEventListener('change',function(){FS.family=this.value;renderStats();});
-    el('fstat-only').addEventListener('change',function(){FS.only=this.checked;renderStats();});
-    el('fstat-reload').addEventListener('click',()=>loadStats(true));
-    el('page-feed').addEventListener('click',e=>{
-      const b=e.target.closest('[data-fstat-copy]');if(!b)return;
-      const value=b.dataset.fstatCopy,done=()=>{const old=b.textContent;b.textContent='✓';setTimeout(()=>{b.textContent=old;},1200);};
-      if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(value).then(done).catch(()=>{});
-      else window.prompt('Скопіюй посилання:',value);
-    });
-    const nav=document.querySelector('[data-page="feed"]');
-    if(nav)nav.addEventListener('click',()=>loadStats(false));
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-})();
+/* ==================== FEED PERFORMANCE V2 ==================== */
+window.ULTERA_FEED_STATS.init({rest});
 
 /* ==================== SALE STOCK (наявність) ==================== */
 let STOCK_ROWS = [];
@@ -3555,4 +3341,5 @@ function bindPvChips(){
 <script src="/assets/customer-journey-admin.js?v=20261021-1"></script>
 </body>
 </html>
+
 
