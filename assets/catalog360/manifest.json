@@ -681,5 +681,83 @@
       "#ebebe8",
       "#ebebe9"
     ]
+  },
+  {
+    "name": "Aganta Thermo Oreo",
+    "uid": "550020261103",
+    "src": "https://ultera.in.ua/?p=aganta-thermo-oreo%2C550020261103",
+    "originalFile": "https://ultera.in.ua/assets/catalog360/aganta-thermo-oreo/000.webp",
+    "status": "prepared",
+    "frames": 8,
+    "cols": 4,
+    "rows": 2,
+    "method": "AI reconstruction from supplied on-foot product photograph",
+    "firstFrame": "Detailed lateral studio view",
+    "atlas": "aganta-thermo-oreo/turntable.webp",
+    "atlasSize": [
+      3584,
+      1792
+    ],
+    "hq": true,
+    "bounds": [
+      {
+        "x": 26,
+        "y": 172,
+        "width": 845,
+        "height": 527
+      },
+      {
+        "x": -81,
+        "y": 98,
+        "width": 1060,
+        "height": 661
+      },
+      {
+        "x": -172,
+        "y": 49,
+        "width": 1229,
+        "height": 766
+      },
+      {
+        "x": -65,
+        "y": 113,
+        "width": 1030,
+        "height": 642
+      },
+      {
+        "x": 28,
+        "y": 174,
+        "width": 841,
+        "height": 524
+      },
+      {
+        "x": -87,
+        "y": 102,
+        "width": 1070,
+        "height": 667
+      },
+      {
+        "x": -153,
+        "y": 64,
+        "width": 1201,
+        "height": 749
+      },
+      {
+        "x": -131,
+        "y": 64,
+        "width": 1158,
+        "height": 722
+      }
+    ],
+    "backgrounds": [
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff",
+      "#ffffff"
+    ]
   }
 ]

@@ -2090,6 +2090,9 @@ window.ulteraFbq = function(name, params){
 <!-- /TikTok Pixel -->
 
 <!-- /Meta Pixel -->
+<style>
+.feat-card .feat-photo img[src*="/aganta-thermo-oreo/"], .modal-img > #m_img[src*="/aganta-thermo-oreo/"]{object-fit:contain;object-position:center;background:#fff;filter:none;transform:none}
+</style>
 </head>
 <body>
 
@@ -2624,6 +2627,7 @@ window.ulteraFbq = function(name, params){
       <button class="m-nav m-nav-next" id="m_next" aria-label="ÐÐ°ÑÑ‚ÑƒÐ¿Ð½Ðµ Ñ„Ð¾Ñ‚Ð¾" onclick="setModalPhoto((window.__modalPhotoIdx||0)+1)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </button>
+      <a id="m_oreo_spin" href="/360/#550020261103" hidden style="position:absolute;top:12px;right:12px;z-index:48;background:white;color:#151515;padding:10px 15px;border-radius:20px;text-decoration:none">360°</a>
       <img id="m_img" src="" alt="" decoding="async" fetchpriority="high">
       <div class="m-counter-pill" id="m_counter_pill"><b id="m_counter_cur_g">1</b> / <span id="m_counter_tot_g">1</span></div>
       <div class="modal-dots" id="m_dots" aria-hidden="true"></div>
@@ -3415,6 +3419,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
   var pistachioWhiteUid = '550020260923';
   var beigeUid = '550020260924';
   var sageUid = '550020260925';
+  var oreoUid = '550020261103';
   var sizePairs = [['40','26'],['41','27'],['42','28'],['43','28.5'],['44','29'],['45','30']];
   function makeProduct(uid, title, colorName, swatch, photo, desc){
     return {
@@ -3487,8 +3492,24 @@ window.ulteraNormalizeAutumnCopy(DATA);
     '/photos/aganta-thermo-sage-01.webp',
     'Winter Aganta in sage with a white sole, insulation down to âˆ’15 Â°C, water-resistant materials and winter tread.'
   );
-  function mergeIntoThermoFamily(){
-    var localUids = [blackUid, blueUid, pistachioWhiteUid, beigeUid, sageUid];
+  var oreoProduct = makeProduct(
+    oreoUid, 'ULTERA - Aganta Thermo Oreo', 'Oreo',
+    'linear-gradient(135deg,#191919 0 50%,#fafafa 50%)',
+    'https://ultera.in.ua/assets/catalog360/aganta-thermo-oreo/000.webp',
+    'High-cut winter Aganta Thermo Oreo with a black Cordura® upper, white leather wrap, white EVA Bounce midsole and black tread.'
+  );
+  oreoProduct.slug = 'aganta-thermo-oreo';
+  oreoProduct.price = '5600';
+  oreoProduct.price_old = null;
+  oreoProduct.sizes.forEach(function(size){ size.price = oreoProduct.price; delete size.price_old; });
+  function mergeIntoThermoFamily(event){
+    var localUids = [blackUid, blueUid, pistachioWhiteUid, beigeUid, sageUid, oreoUid];
+    var winterProducts = [blackProduct, blueProduct, pistachioWhiteProduct, beigeProduct, sageProduct];
+    var activeOreo = event ? DATA.all.find(function(v){ return v.uid === oreoUid && v.family === 'Aganta Thermo'; }) : oreoProduct;
+    if (activeOreo) {
+      activeOreo.family = 'Thermo';
+      winterProducts.push(activeOreo);
+    }
     blackProduct.family = 'Thermo';
     blueProduct.family = 'Thermo';
     pistachioWhiteProduct.family = 'Thermo';
@@ -3516,11 +3537,11 @@ window.ulteraNormalizeAutumnCopy(DATA);
     var heroUid = family.hero && String(family.hero.uid || '');
     if (family.hero && heroUid && localUids.indexOf(heroUid) === -1 && !seen[heroUid]) existing.unshift(family.hero);
     family.family = 'Thermo';
-    family.variants = existing.concat([blackProduct, blueProduct, pistachioWhiteProduct, beigeProduct, sageProduct]);
+    family.variants = existing.concat(winterProducts);
     if (!family.hero || localUids.indexOf(String(family.hero.uid || '')) !== -1) family.hero = existing[0] || blackProduct;
     if (!Array.isArray(DATA.all)) DATA.all = [];
     DATA.all = DATA.all.filter(function(item){ return item && localUids.indexOf(String(item.uid || '')) === -1; });
-    DATA.all.push(blackProduct, blueProduct, pistachioWhiteProduct, beigeProduct, sageProduct);
+    DATA.all = DATA.all.concat(winterProducts);
   }
   mergeIntoThermoFamily();
   window.addEventListener('ultera:bootstrap:done', mergeIntoThermoFamily);
@@ -3545,6 +3566,9 @@ window.ulteraNormalizeAutumnCopy(DATA);
       ];
       extra[pistachioWhiteUid] = ['/photos/aganta-thermo-pistachio-white-01.webp'];
       extra[beigeUid] = ['/photos/aganta-thermo-beige-bg-01.webp'];
+      extra[oreoUid] = ['000', 'on-foot', '045', '315', '090', '135', '180', '225', '270'].map(function(view){
+        return 'https://ultera.in.ua/assets/catalog360/aganta-thermo-oreo/' + view + '.webp';
+      });
       extra[sageUid] = ['/photos/aganta-thermo-sage-01.webp'];
       extraElement.textContent = JSON.stringify(extra);
     } catch(_e) {}
@@ -4106,6 +4130,7 @@ function openModal(uid){
   const row = findFamily(p.family);
   currentColor = p.uid;
   window.__modalUid = p.uid;
+  document.getElementById('m_oreo_spin').hidden = p.uid !== '550020261103';
   document.getElementById('m_fam').textContent = p.family + (p.mark ? ' Â· ' + p.mark : '');
   document.getElementById('m_title').textContent = p.title.replace('ULTERA - ','').replace('ULTERA ','');
   document.getElementById('m_sku').textContent = 'SKU Â· ' + p.uid.slice(-10).toUpperCase();
@@ -4163,7 +4188,7 @@ function openModal(uid){
   //   parsed once at load and stays stale for new SKUs like Aganta Ð¡Ð°Ñ„Ð°Ñ€Ñ– / ÐžÐ»Ð¸Ð²Ð°).
   //   Fallback ONLY to the selected variant's main photo â€” never mix sibling colors
   //   into the strip (the swatches above already serve that purpose).
-  const _EXTRAS = (typeof window !== 'undefined' && window.EXTRA) ? window.EXTRA : EXTRA_PHOTOS;
+  const _EXTRAS = Array.isArray(window.EXTRA?.[uid]) ? window.EXTRA : EXTRA_PHOTOS;
   const photosArr = (_EXTRAS && _EXTRAS[uid] && _EXTRAS[uid].length)
     ? _EXTRAS[uid]
     : [p.photo];
