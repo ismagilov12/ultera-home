@@ -33,6 +33,14 @@
   if (!root) return;
   var product = null, requested = false, selectedSize = '', pending = false;
 
+  // The wizard belongs to this cart and is cleared on a completed order.
+  function setDeclined(value) {
+    if (Boolean(CART.wizard.insoleOfferDeclined) === value) return;
+    if (value) CART.wizard.insoleOfferDeclined = true;
+    else delete CART.wizard.insoleOfferDeclined;
+    try { CART.saveWiz(); } catch (_) { /* The in-memory choice still works. */ }
+  }
+
   function element(tag, className, text) {
     var node = document.createElement(tag);
     if (className) node.className = className;
@@ -71,8 +79,14 @@
   }
   function render() {
     var sizes = eligibleSizes(CART.items);
-    if (!sizes.length) { root.hidden = true; return; }
-    if (!product) { root.hidden = true; loadProduct(); return; }
+    if (!sizes.length) { root.hidden = true; setDeclined(false); return; }
+    if (!product) {
+      root.hidden = true;
+      // An already purchased accessory still gets its authoritative price.
+      if (!CART.wizard.insoleOfferDeclined || CART.items.some(function (it) { return String(it.uid) === UID; })) loadProduct();
+      return;
+    }
+    if (CART.wizard.insoleOfferDeclined) { root.hidden = true; return; }
     if (sizes.indexOf(selectedSize) < 0) selectedSize = sizes[0];
     var added = alreadyAdded(CART.items, selectedSize);
     var price = Number(product.price).toLocaleString('uk-UA', { maximumFractionDigits: 2 }) + ' ₴';
@@ -86,7 +100,7 @@
     }
     var copy = element('div', 'cd-insole-copy');
     copy.appendChild(element('p', 'cd-insole-eyebrow', 'Доповни свою пару'));
-    copy.appendChild(element('h4', 'cd-insole-title', 'Запасна пара устілок'));
+    copy.appendChild(element('h4', 'cd-insole-title', 'Додати запасну пару устілок?'));
     copy.appendChild(element('p', 'cd-insole-text', 'Оригінальні змінні устілки ULTERA. Зручно мати ще одну пару на заміну.'));
     main.appendChild(copy); root.appendChild(main);
     var sizeRow = element('div', 'cd-insole-size');
@@ -105,7 +119,7 @@
     var add = element('button', 'cd-insole-add', added ? '✓ Устілки EU ' + selectedSize + ' вже в кошику' : 'Додати устілки · ' + price);
     add.type = 'button'; add.disabled = added || pending;
     add.addEventListener('click', function () {
-      if (pending || alreadyAdded(CART.items, selectedSize) || eligibleSizes(CART.items).indexOf(selectedSize) < 0) return;
+      if (pending || CART.wizard.insoleOfferDeclined || alreadyAdded(CART.items, selectedSize) || eligibleSizes(CART.items).indexOf(selectedSize) < 0) return;
       pending = true; add.disabled = true;
       try {
         CART.add(makeItem(product, selectedSize));
@@ -114,7 +128,16 @@
       } finally { pending = false; }
       refreshCart();
     });
-    root.appendChild(add);
+    var actions = element('div', 'cd-insole-actions');
+    var decline = element('button', 'cd-insole-decline', added ? 'Сховати пропозицію' : 'Ні, дякую');
+    decline.type = 'button';
+    decline.addEventListener('click', function () {
+      setDeclined(true);
+      root.hidden = true;
+      var next = document.querySelector('#cdListWrap .cd-cta');
+      if (next) next.focus({preventScroll:true});
+    });
+    actions.appendChild(add); actions.appendChild(decline); root.appendChild(actions);
     var status = element('p', 'cd-insole-status', added ? 'Кількість можна змінити у списку товарів вище.' : '1 пара устілок · додається лише за твоїм вибором');
     status.setAttribute('role', 'status'); root.appendChild(status);
     root.hidden = false;

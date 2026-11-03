@@ -2732,6 +2732,7 @@ window.ulteraFbq = function(name, params){
       </div>
 
       <div class="modal-price" id="m_price"></div>
+      <button type="button" id="yu11PriceGuide" class="yu11-price-guide" onclick="openYu11Guide()" hidden>Підібрати розмір за см</button>
 
       <div class="ms" id="m_season_wrap">
         <div class="ms-label">Версія · <b id="m_season_name">Осінь</b></div>
@@ -2757,7 +2758,7 @@ window.ulteraFbq = function(name, params){
         </div>
       </div>
 
-      <div class="ms">
+      <div class="ms" id="m_size_block">
         <div class="ms-label">Розмір · <span>ЄС / СМ</span></div>
         <div class="mod-sizes" id="m_sizes"></div>
         <button class="size-helper-btn" id="shOpen" onclick="toggleSizeHelper()">
@@ -2806,7 +2807,7 @@ window.ulteraFbq = function(name, params){
               <div class="r-conf" id="shResultConf">✓ 99% match</div>
               <div class="r-note" id="shResultNote"></div>
               <div class="r-cta">
-                <button class="apply" onclick="shApply()">Apply <span id="shResultCta">42</span></button>
+                <button class="apply" onclick="shApply()"><span id="shApplyVerb">Apply</span> <span id="shResultCta">42</span></button>
                 <button class="reset" onclick="shReset()">Перерахувати</button>
               </div>
             </div>
@@ -2854,6 +2855,13 @@ window.ulteraFbq = function(name, params){
         </details>
       </div>
     </div>
+  </div>
+  <div class="yu11-buybar" id="yu11BuyBar" role="group" aria-label="Вибір розміру та покупка" hidden>
+    <div class="yu11-bar-info">
+      <b id="yu11Price"></b>
+      <button type="button" class="yu11-guide" onclick="openYu11Guide()">Підбір за см</button>
+    </div>
+    <button type="button" class="yu11-action" id="yu11Action" onclick="addToCart()">Обрати розмір</button>
   </div>
 </div>
 
@@ -4322,9 +4330,42 @@ function renderHeroSide(i){
 })();
 
 /* ————— MODAL ————— */
+// Pilot: the two published colours of article Ю11. Other SKUs keep their current flow.
+function isYu11Card(uid){ return uid === '809858137952' || uid === '806938391602'; }
+function yu11Selected(){
+  return document.querySelector('#m_sizes .size-btn.selected:not(:disabled)');
+}
+function yu11Scroll(el){
+  if(el) el.scrollIntoView({block:'center',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+}
+function yu11ChooseSize(){
+  const choices = document.getElementById('m_sizes');
+  const first = choices.querySelector('button:not(:disabled)');
+  if(first){ first.focus({preventScroll:true}); yu11Scroll(choices); }
+}
+function openYu11Guide(){
+  const box = document.getElementById('shBox');
+  if(!box.classList.contains('open')) window.toggleSizeHelper();
+  box.setAttribute('tabindex','-1'); box.focus({preventScroll:true}); yu11Scroll(box);
+}
+function syncYu11Purchase(){
+  if(!document.getElementById('modal').classList.contains('yu11-purchase')) return;
+  const buy = document.getElementById('m_buy'), action = document.getElementById('yu11Action');
+  const sel = yu11Selected(), hasSize = !!document.querySelector('#m_sizes button:not(:disabled)');
+  const label = buy.disabled ? buy.textContent : !hasSize ? 'Немає доступних розмірів' : sel ? 'Додати в кошик · ' + sel.dataset.sz : 'Обрати розмір';
+  buy.textContent = label; if(!hasSize) buy.disabled = true;
+  action.disabled = buy.disabled; action.textContent = label;
+  document.getElementById('yu11Price').textContent = document.querySelector('#m_price .cur')?.textContent || '';
+}
 function openModal(uid){
   const p = findProduct(uid);
   if(!p) return;
+  const overlay = document.getElementById('modal'), yu11 = isYu11Card(String(p.uid));
+  const chosenEU = yu11 && overlay.classList.contains('open') && overlay.classList.contains('yu11-purchase') ? yu11Selected()?.dataset.sz : null;
+  overlay.classList.toggle('yu11-purchase',yu11);
+  document.getElementById('yu11BuyBar').hidden = !yu11;
+  document.getElementById('yu11PriceGuide').hidden = !yu11;
+  document.getElementById('shApplyVerb').textContent = yu11 ? 'Обрати' : 'Apply';
   try { if (typeof ulteraFbq === 'function') ulteraFbq('ViewContent', {content_ids:[p.uid], content_type:'product', content_name:p.title||'', value: parseFloat(p.price)||0, currency:'UAH'}); } catch(_){}
   // v132 2026-05-18: product_view / color_view tracker for admin analytics
   try {
@@ -4384,13 +4425,17 @@ function openModal(uid){
   } catch(_){}
   const sizes = p.size_list || [];
   document.getElementById('m_sizes').innerHTML = sizes.map((s,i)=>`
-    <button class="size-btn ${i===2?'selected':''} ${parseInt(s.qty)<1?'out':''}" ${parseInt(s.qty)<1?'disabled':''} data-sz="${s.eu}">
+    <button class="size-btn ${(yu11 ? String(s.eu)===chosenEU && !(parseInt(s.qty)<1) : i===2)?'selected':''} ${parseInt(s.qty)<1?'out':''}" ${parseInt(s.qty)<1?'disabled':''} data-sz="${s.eu}" ${yu11?'aria-pressed="'+(String(s.eu)===chosenEU && !(parseInt(s.qty)<1))+'"':''}>
       ${s.eu}<small>${s.cm}см</small>
     </button>`).join('');
   document.querySelectorAll('#m_sizes .size-btn:not(.out)').forEach(b=>{
     b.addEventListener('click',()=>{
       document.querySelectorAll('#m_sizes .size-btn').forEach(x=>x.classList.remove('selected'));
       b.classList.add('selected');
+      if(yu11){
+        document.querySelectorAll('#m_sizes .size-btn').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+        syncYu11Purchase();
+      }
       window.trackJourney?.('size_selected',{uid:p.uid,size:b.dataset.sz});
     });
   });
@@ -4675,6 +4720,7 @@ function openModal(uid){
     }
   } catch(_){}
   (function(){var __m=document.getElementById('modal');__m.classList.add('open');try{__m.scrollTop=0;var __i=__m.querySelector('.modal');if(__i)__i.scrollTop=0;}catch(_){}})();
+  syncYu11Purchase();
   document.body.style.overflow = 'hidden';
 }
 function closeModal(){
@@ -4747,6 +4793,7 @@ function pickSeason(btn, id, label){
     if(pct > 0) priceHtml += '<span class="save">−' + pct + '%</span>';
   }
   document.getElementById('m_price').innerHTML = priceHtml;
+  syncYu11Purchase();
 }
 
 function syncModalThumbnails(idx){
@@ -4865,7 +4912,7 @@ function swapMainImage(btn, src, uid){ document.getElementById('m_img').src = sr
 
 function addToCart(){
   const sel = document.querySelector('#m_sizes .size-btn.selected');
-  if(!sel){ toast('Оберіть розмір'); return; }
+  if(!sel || sel.disabled){ if(document.getElementById('modal').classList.contains('yu11-purchase')) yu11ChooseSize(); else toast('Оберіть розмір'); return; }
   const uid = currentColor;
   const p = findProduct(uid);
   if(!p){ toast('Помилка товару'); return; }
@@ -4929,7 +4976,8 @@ function renderCart(){
   const wrap  = document.getElementById('cdListWrap');
   const wiz   = document.getElementById('cdWizard');
   if(CART.items.length === 0){
-    empty.style.display = ''; wrap.style.display = 'none'; wiz.style.display = 'none'; return;
+    empty.style.display = ''; wrap.style.display = 'none'; wiz.style.display = 'none';
+    window.ULTERA_INSOLES?.render(); return;
   }
   empty.style.display = 'none'; wrap.style.display = '';
   const list = document.getElementById('cdList');
@@ -6055,6 +6103,12 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
 
   window.shApply = function(){
     const sz = document.getElementById('shResultSize').textContent;
+    if(document.getElementById('modal').classList.contains('yu11-purchase')){
+      const button = Array.from(document.querySelectorAll('#m_sizes button:not(:disabled)')).find(b=>b.dataset.sz===sz);
+      toggleSizeHelper();
+      if(!button){ yu11ChooseSize(); toast('Цього розміру немає. Оберіть доступний.'); return; }
+      button.click(); button.focus({preventScroll:true}); yu11Scroll(button); toast('Розмір ' + sz + ' обрано'); return;
+    }
     document.querySelectorAll('#m_sizes .size-btn').forEach(b=>{
       if(b.dataset.sz === sz && !b.classList.contains('out')){
         document.querySelectorAll('#m_sizes .size-btn').forEach(x=>x.classList.remove('selected'));
@@ -6085,7 +6139,7 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
       initDrum();
       renderSizes();
       box.scrollIntoView({behavior:'smooth',block:'nearest'});
-      if(btn) btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg> Hide helper';
+      if(btn) btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg> ' + (document.getElementById('modal').classList.contains('yu11-purchase') ? 'Згорнути підбір' : 'Hide helper');
     } else {
       if(btn) btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Розмірна сітка';
     }
@@ -8037,8 +8091,24 @@ insertWomanDivider();
   .modal-body{grid-row:1/3;min-height:0;max-height:100%}
 }
 </style>
-<link rel="stylesheet" href="/assets/insole-upsell.css?v=20261009">
-<script src="/assets/insole-upsell.js?v=20261009" defer></script>
+<style>
+.yu11-buybar,.yu11-buybar[hidden],.yu11-price-guide[hidden]{display:none}
+.yu11-price-guide,.yu11-guide{font:inherit;color:#314c24;text-decoration:underline;text-underline-offset:3px;border:0;background:none;cursor:pointer}
+.yu11-price-guide{min-height:44px;padding:5px 0;font-size:14px}
+.yu11-purchase :is(.yu11-action,.yu11-guide,.yu11-price-guide,.size-btn):focus-visible{outline:2px solid #42652e;outline-offset:2px}
+@media(max-width:760px){
+  .yu11-purchase .yu11-price-guide{display:none}
+  .modal-overlay.yu11-purchase .modal-body{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+  .modal-overlay.open.yu11-purchase .yu11-buybar:not([hidden]){position:absolute;z-index:55;bottom:0;left:0;right:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;padding:8px max(16px,env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:#f7f6ef;border-top:1px solid #d6d9c9;box-shadow:0 -3px 14px #13200812}
+  .yu11-bar-info{display:grid;align-items:center;min-width:76px}
+  .yu11-bar-info b{font:700 20px/1.1 var(--font-sans);color:var(--ink);white-space:nowrap}
+  .yu11-guide{text-align:left;font-size:12px;line-height:1.25;min-height:32px;padding:4px 3px 3px 0}
+  .yu11-action{min-width:0;min-height:48px;padding:9px 12px;border:0;border-radius:11px;background:#19291f;color:#fff;font:700 15px/1.2 var(--font-sans);cursor:pointer}
+  .yu11-action:disabled{background:#d9e1d9;color:#45594a;cursor:default}
+}
+</style>
+<link rel="stylesheet" href="/assets/insole-upsell.css?v=20261103-choice">
+<script src="/assets/insole-upsell.js?v=20261103-choice" defer></script>
 <script src="/assets/catalog360/product-gallery.js?v=20261102-1" defer></script>
 </body>
 </html>

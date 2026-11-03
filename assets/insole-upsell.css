@@ -8,9 +8,13 @@
 .cd-insole-text{font-size:12px;line-height:1.5;margin:0;color:#526258}
 .cd-insole-size{display:flex;align-items:center;gap:10px;margin-top:13px;font-size:12px;flex-wrap:wrap}
 .cd-insole-size select{flex:1;min-width:100px;max-width:100%;padding:9px;border:1px solid #c9d7ce;border-radius:8px;background:#fff;color:#18281f;font:inherit;font-size:14px}
-.cd-insole-add{display:block;width:100%;min-height:44px;margin-top:12px;padding:11px 12px;border:0;border-radius:10px;background:#18281f;color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.cd-insole-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px}
+.cd-insole-add,.cd-insole-decline{min-width:0;min-height:44px;padding:10px 12px;border:1px solid transparent;border-radius:10px;font:inherit;font-size:13px;font-weight:600;line-height:1.25;cursor:pointer}
+.cd-insole-add{background:#18281f;color:#fff}
+.cd-insole-decline{background:#fff;border-color:#b6c7bb;color:#304638}
+.cd-insole-decline:hover{background:#e7efe9}
 .cd-insole-add:hover{background:#2d4837}
 .cd-insole-add:disabled{background:#dce9df;color:#355d43;cursor:default}
-.cd-insole-add:focus-visible,.cd-insole-size select:focus-visible{outline:2px solid #355d43;outline-offset:3px}
+.cd-insole-add:focus-visible,.cd-insole-decline:focus-visible,.cd-insole-size select:focus-visible{outline:2px solid #355d43;outline-offset:3px}
 .cd-insole-status{font-size:11px;line-height:1.4;color:#526258;margin:8px 0 0}
 @media(max-width:380px){.cd-insole{padding:12px}.cd-insole-photo{width:60px;height:78px}.cd-insole-title{font-size:15px}}
