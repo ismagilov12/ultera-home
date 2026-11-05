@@ -2104,6 +2104,15 @@ window.ulteraFbq = function(name, params){
 .feat-card .feat-photo img[src*="/aganta-thermo-oreo/"], .modal-img > #m_img[src*="/aganta-thermo-oreo/"]{object-fit:contain;object-position:center;background:#fff;filter:none;transform:none}
 </style>
 <style id="yu11-portrait-video">#m_file_video[src$="/assets/product-videos/yu11-allblack-5165.mp4"]{object-fit:contain!important}</style>
+
+<style id="hunk-thermo-barefoot-women-media">
+.feat-card[data-fam="Hunk Thermo BRFT W"] .feat-photo img,
+.card[data-fam="Hunk Thermo BRFT W"] img,
+#m_img_wrap[data-fam="Hunk Thermo BRFT W"] #m_img,
+video[src*="/assets/hunk-thermo-barefoot-women/"] {
+  object-fit: contain !important;
+}
+</style>
 </head>
 <body>
 
@@ -2363,6 +2372,7 @@ window.ulteraFbq = function(name, params){
     <div class="coll-toolbar">
       <div class="count"><b id="countNum">29</b> <span id="countLbl">моделей</span> · <span>11 сімей</span></div>
       <div class="coll-chips" id="chips">
+        <button class="coll-chip" data-fam="Hunk Thermo BRFT W">Hunk Thermo Barefoot W</button>
         <button class="coll-chip active" data-fam="all">Усі</button>
         <button class="coll-chip" data-fam="Thermo">Thermo ❄</button>
         <button class="coll-chip" data-fam="Hunk Thermo">Hunk Thermo ❄</button>
@@ -3854,7 +3864,7 @@ function findFamily(fam){
 }
 
 function isNativeThermoFamily(family){
-  return ['Thermo','Hunk Thermo','Aganta Thermo','Thermo Ked','Travel Thermo','WAVE2 Thermo'].includes(family);
+  return ['Hunk Thermo BRFT W','Thermo','Hunk Thermo','Aganta Thermo','Thermo Ked','Travel Thermo','WAVE2 Thermo'].includes(family);
 }
 
 const WINTER_SURCHARGE_UAH = 900;
@@ -3875,6 +3885,7 @@ function renderFeatured(){
 
   // Family meta — tagline, sub, spec rows per family
   const META = {
+    "Hunk Thermo BRFT W": {"serial": "HUNK-TH-BF-W", "title": "Hunk Thermo Barefoot", "badge": "BAREFOOT", "tag": "ЖІНОЧІ · ТЕРМО", "sub": "Жіночі Hunk Thermo Barefoot у чорному кольорі. Утеплена барефут-модель із вологостійкою Cordura. Розміри 36–40.", "specs": [["ПІДОШВА", "Barefoot"], ["ВЕРХ", "Вологостійка Cordura"], ["ВЕРСІЯ", "Термо"], ["РОЗМІРИ", "36–40"]], "handler": null},
     '02':       { serial:'02-01', badge:'ВИРОБНИЦТВО 10-14 ДНІВ', tag:'ШКІРЯНІ КЕДИ',
                    sub:'Підвищений комір, натуральна шкіра та біла cupsole-підошва.',
                    specs:[['ПІДОШВА','Cupsole'],['ВЕРХ','Натуральна шкіра'],['СЕЗОН','Осінь / весна'],['ГАРАНТІЯ','1 рік']],
@@ -4543,6 +4554,7 @@ function openModal(uid){
     '<b>Анатомічна устілка</b> — знімна, з амортизацією під п’ятою',
     '<b>Шнурівка</b>'
   ];
+  const MATERIALS_HUNK_THERMO_BRFT_W = ["<b>Cordura</b> — вологостійкий верх", "<b>Термо-версія</b> — утеплення входить у вартість", "<b>Barefoot</b> — барефут-модель", "<b>Шнурівка</b>"];
   const MATERIALS_DEFAULT = [
     '<b>Nappa</b> — натуральна шкіра (Італія)',
     '<b>Cordura 1000D</b> — вологостійка, осіння версія',
@@ -4580,6 +4592,7 @@ function openModal(uid){
   // заповнити характеристики з META для поточної сім'ї
   try {
     const familyMeta = {
+      'Hunk Thermo BRFT W': {top:"\u0412\u043e\u043b\u043e\u0433\u043e\u0441\u0442\u0456\u0439\u043a\u0430 Cordura", sole:'Barefoot'},
       '02':       {top:'Натуральна шкіра', sole:'Легка cupsole'},
       'Hunk3':     {top:'Nappa + вологостійка Cordura', sole:'Bounce EVA'},
       'Hunk3 Suede':{top:'Замша + вологостійка Cordura', sole:'Bounce EVA'},
@@ -4604,7 +4617,7 @@ function openModal(uid){
   } catch(e){}
   const mtEl = document.getElementById('m_materials');
   if(mtEl){
-    const list = (p.family === 'Travel Thermo') ? MATERIALS_TRAVEL : (p.family === 'WAVE2 Thermo') ? MATERIALS_WAVE2 : (p.family === '02') ? MATERIALS_02 : (p.family === 'SHAPE') ? MATERIALS_SHAPE : (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? MATERIALS_THERMO : MATERIALS_DEFAULT;
+    const list = (p.family === 'Hunk Thermo BRFT W') ? MATERIALS_HUNK_THERMO_BRFT_W : (p.family === 'Travel Thermo') ? MATERIALS_TRAVEL : (p.family === 'WAVE2 Thermo') ? MATERIALS_WAVE2 : (p.family === '02') ? MATERIALS_02 : (p.family === 'SHAPE') ? MATERIALS_SHAPE : (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? MATERIALS_THERMO : MATERIALS_DEFAULT;
     mtEl.innerHTML = '<span class="mm-title">Матеріали</span><ul>' + list.map(x=>'<li>'+x+'</li>').join('') + '</ul>';
   }
   // Опис — прибираємо дублювання з матеріалами, але залишаємо осінній опис Cordura.
@@ -4627,7 +4640,7 @@ function openModal(uid){
   document.getElementById('shBox').classList.remove('open');
 
   // Моделі без сезонного вибору (всесезонні / одна версія)
-  const NO_SEASON = ['02','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo','Thermo Ked','Travel Thermo','WAVE2 Thermo'];
+  const NO_SEASON = ['Hunk Thermo BRFT W','02','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo','Thermo Ked','Travel Thermo','WAVE2 Thermo'];
   const sw = document.getElementById('m_season_wrap');
   if (sw) sw.style.display = NO_SEASON.includes(p.family) ? 'none' : '';
   // Seasonal choice must not leak between products. Default is Autumn at the current price.
@@ -4919,11 +4932,11 @@ function addToCart(){
   if(!p){ toast('Помилка товару'); return; }
   if(isSoldOut(p)){ toast('Немає в наявності'); return; }
   // Season: Autumn at the current price | Winter thermo (+900 UAH).
-  const NO_SEASON = ['02','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo','Thermo Ked','Travel Thermo','WAVE2 Thermo'];
+  const NO_SEASON = ['Hunk Thermo BRFT W','02','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo','Thermo Ked','Travel Thermo','WAVE2 Thermo'];
   const isThermo = isNativeThermoFamily(p.family);
   const canSeason = !NO_SEASON.includes(p.family);
   const seasonId   = isThermo ? 'winter' : (canSeason ? (window.__modalSeason || 'autumn') : null);
-  const isNewThermo = ['Travel Thermo','WAVE2 Thermo','Thermo Ked'].includes(p.family);
+  const isNewThermo = ['Hunk Thermo BRFT W','Travel Thermo','WAVE2 Thermo','Thermo Ked'].includes(p.family);
   const seasonLabel = isNewThermo ? 'Зима · термо' : isThermo ? 'Зима · до −15°C' : (seasonId === 'winter' ? 'Зимові термо · до −7°C' : (seasonId === 'autumn' ? 'Осінь' : ''));
   const seasonExtra = winterExtra(p.family, seasonId);
   const basePrice  = parseFloat(p.price) || 0;

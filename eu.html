@@ -2094,6 +2094,15 @@ window.ulteraFbq = function(name, params){
 .feat-card .feat-photo img[src*="/aganta-thermo-oreo/"], .modal-img > #m_img[src*="/aganta-thermo-oreo/"]{object-fit:contain;object-position:center;background:#fff;filter:none;transform:none}
 </style>
 <style id="yu11-portrait-video">#m_file_video[src$="/assets/product-videos/yu11-allblack-5165.mp4"]{object-fit:contain!important}</style>
+
+<style id="hunk-thermo-barefoot-women-media">
+.feat-card[data-fam="Hunk Thermo BRFT W"] .feat-photo img,
+.card[data-fam="Hunk Thermo BRFT W"] img,
+#m_img_wrap[data-fam="Hunk Thermo BRFT W"] #m_img,
+video[src*="/assets/hunk-thermo-barefoot-women/"] {
+  object-fit: contain !important;
+}
+</style>
 </head>
 <body>
 
@@ -2353,6 +2362,7 @@ window.ulteraFbq = function(name, params){
     <div class="coll-toolbar">
       <div class="count"><b id="countNum">29</b> <span id="countLbl">Ð¼Ð¾Ð´ÐµÐ»ÐµÐ¹</span> Â· <span>11 ÑÑ–Ð¼ÐµÐ¹</span></div>
       <div class="coll-chips" id="chips">
+        <button class="coll-chip" data-fam="Hunk Thermo BRFT W">Hunk Thermo Barefoot W</button>
         <button class="coll-chip active" data-fam="all">Ð£ÑÑ–</button>
         <button class="coll-chip" data-fam="Hunk Thermo">Hunk Thermo â„</button>
         <button class="coll-chip" data-fam="Hunk3">Hunk3</button>
@@ -3665,6 +3675,7 @@ function renderFeatured(){
 
   // Family meta â€” tagline, sub, spec rows per family
   const META = {
+    "Hunk Thermo BRFT W": {"serial": "HUNK-TH-BF-W", "title": "Hunk Thermo Barefoot", "badge": "BAREFOOT", "tag": "WOMEN · THERMO", "sub": "Insulated women’s barefoot shoes with water-resistant Cordura. Black, sizes 36–40.", "specs": [["SOLE", "Barefoot"], ["UPPER", "Water-resistant Cordura"], ["VERSION", "Thermo"], ["SIZES", "36–40"]], "handler": null},
     'Hunk3':     { serial:'HUNK3-01', badge:'Ð’Ð˜Ð ÐžÐ‘ÐÐ˜Ð¦Ð¢Ð’Ðž 4-10 Ð”ÐÐ†Ð’', tag:'Ð¤Ð›ÐÐ“ÐœÐÐ \u00b7 BOUNCE TECH',
                    sub:'Ð¢Ñ€ÐµÑ‚Ñ Ð³ÐµÐ½ÐµÑ€Ð°Ñ†Ñ–Ñ Ñ„Ð»Ð°Ð³Ð¼Ð°Ð½Ð° Ð· Ð¿Ñ–Ð´Ð¾ÑˆÐ²Ð¾ÑŽ Bounce. +32% Ð¿Ð¾Ð²ÐµÑ€Ð½ÐµÐ½Ð½Ñ ÐµÐ½ÐµÑ€Ð³Ñ–Ñ—.',
                    specs:[['ÐŸÐ†Ð”ÐžÐ¨Ð’Ð','Bounce EVA'],['Ð’Ð•Ð Ð¥','Ð¨ÐºÑ–Ñ€Ð° Nappa + Ð²Ð¾Ð»Ð¾Ð³Ð¾ÑÑ‚Ñ–Ð¹ÐºÐ° Cordura'],['Ð¡Ð•Ð—ÐžÐ','ÐžÑÑ–Ð½ÑŒ'],['Ð“ÐÐ ÐÐÐ¢Ð†Ð¯','1 Ñ€Ñ–Ðº']],
@@ -4263,6 +4274,7 @@ function openModal(uid){
   }
 
   // ÐœÐ°Ñ‚ÐµÑ€Ñ–Ð°Ð»Ð¸ (Ð¾Ð´Ð½Ð°ÐºÐ¾Ð²Ñ– Ð´Ð»Ñ Ð²ÑÑ–Ñ… Ð¼Ð¾Ð´ÐµÐ»ÐµÐ¹, Ð¾ÐºÑ€Ñ–Ð¼ SHAPE)
+  const MATERIALS_HUNK_THERMO_BRFT_W = ["<b>Cordura</b> — water-resistant upper", "<b>Thermo version</b> — insulation included in the price", "<b>Barefoot</b> design", "<b>Lace-up closure</b>"];
   const MATERIALS_DEFAULT = [
     '<b>Nappa</b> â€” Ð½Ð°Ñ‚ÑƒÑ€Ð°Ð»ÑŒÐ½Ð° ÑˆÐºÑ–Ñ€Ð° (Ð†Ñ‚Ð°Ð»Ñ–Ñ)',
     '<b>Cordura 1000D</b> â€” Ð²Ð¾Ð»Ð¾Ð³Ð¾ÑÑ‚Ñ–Ð¹ÐºÐ°, Ð¾ÑÑ–Ð½Ð½Ñ Ð²ÐµÑ€ÑÑ–Ñ',
@@ -4288,6 +4300,7 @@ function openModal(uid){
   // Ð·Ð°Ð¿Ð¾Ð²Ð½Ð¸Ñ‚Ð¸ Ñ…Ð°Ñ€Ð°ÐºÑ‚ÐµÑ€Ð¸ÑÑ‚Ð¸ÐºÐ¸ Ð· META Ð´Ð»Ñ Ð¿Ð¾Ñ‚Ð¾Ñ‡Ð½Ð¾Ñ— ÑÑ–Ð¼'Ñ—
   try {
     const familyMeta = {
+      'Hunk Thermo BRFT W': {top:"Water-resistant Cordura", sole:'Barefoot'},
       'Hunk3':     {top:'Nappa + Ð²Ð¾Ð»Ð¾Ð³Ð¾ÑÑ‚Ñ–Ð¹ÐºÐ° Cordura', sole:'Bounce EVA'},
       'Hunk3 Suede':{top:'Ð—Ð°Ð¼ÑˆÐ° + Ð²Ð¾Ð»Ð¾Ð³Ð¾ÑÑ‚Ñ–Ð¹ÐºÐ° Cordura', sole:'Bounce EVA'},
       'Aganta':    {top:'Ð¨ÐºÑ–Ñ€Ð° Nappa + Ð²Ð¾Ð»Ð¾Ð³Ð¾ÑÑ‚Ñ–Ð¹ÐºÐ° Cordura', sole:'EVA'},
@@ -4304,11 +4317,11 @@ function openModal(uid){
     const fm = familyMeta[p.family] || {top:'Nappa + Ð²Ð¾Ð»Ð¾Ð³Ð¾ÑÑ‚Ñ–Ð¹ÐºÐ° Cordura', sole:'EVA'};
     const topEl = document.getElementById('m_spec_top'); if(topEl) topEl.textContent = fm.top;
     const soleEl = document.getElementById('m_spec_sole'); if(soleEl) soleEl.textContent = fm.sole;
-    const etaEl = document.getElementById('m_spec_eta'); if(etaEl) etaEl.textContent = (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? '12â€“14 days' : '4â€”10 days';
+    const etaEl = document.getElementById('m_spec_eta'); if(etaEl) etaEl.textContent = (p.family === 'Hunk Thermo BRFT W' || p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? '12â€“14 days' : '4â€”10 days';
   } catch(e){}
   const mtEl = document.getElementById('m_materials');
   if(mtEl){
-    const list = (p.family === 'SHAPE') ? MATERIALS_SHAPE : (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? MATERIALS_THERMO : MATERIALS_DEFAULT;
+    const list = (p.family === 'Hunk Thermo BRFT W') ? MATERIALS_HUNK_THERMO_BRFT_W : (p.family === 'SHAPE') ? MATERIALS_SHAPE : (p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo') ? MATERIALS_THERMO : MATERIALS_DEFAULT;
     mtEl.innerHTML = '<span class="mm-title">ÐœÐ°Ñ‚ÐµÑ€Ñ–Ð°Ð»Ð¸</span><ul>' + list.map(x=>'<li>'+x+'</li>').join('') + '</ul>';
   }
   // ÐžÐ¿Ð¸Ñ â€” Ð¿Ñ€Ð¸Ð±Ð¸Ñ€Ð°Ñ”Ð¼Ð¾ Ð´ÑƒÐ±Ð»ÑŽÐ²Ð°Ð½Ð½Ñ Ð· Ð¼Ð°Ñ‚ÐµÑ€Ñ–Ð°Ð»Ð°Ð¼Ð¸, Ð°Ð»Ðµ Ð·Ð°Ð»Ð¸ÑˆÐ°Ñ”Ð¼Ð¾ Ð¾ÑÑ–Ð½Ð½Ñ–Ð¹ Ð¾Ð¿Ð¸Ñ Cordura.
@@ -4331,7 +4344,7 @@ function openModal(uid){
   document.getElementById('shBox').classList.remove('open');
 
   // ÐœÐ¾Ð´ÐµÐ»Ñ– Ð±ÐµÐ· ÑÐµÐ·Ð¾Ð½Ð½Ð¾Ð³Ð¾ Ð²Ð¸Ð±Ð¾Ñ€Ñƒ (Ð²ÑÐµÑÐµÐ·Ð¾Ð½Ð½Ñ– / Ð¾Ð´Ð½Ð° Ð²ÐµÑ€ÑÑ–Ñ)
-  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo'];
+  const NO_SEASON = ['Hunk Thermo BRFT W','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo'];
   const sw = document.getElementById('m_season_wrap');
   if (sw) sw.style.display = NO_SEASON.includes(p.family) ? 'none' : '';
   window.__modalSeason = 'autumn';
@@ -4566,11 +4579,11 @@ function addToCart(){
   if(!p){ toast('ÐŸÐ¾Ð¼Ð¸Ð»ÐºÐ° Ñ‚Ð¾Ð²Ð°Ñ€Ñƒ'); return; }
   if(isSoldOut(p)){ toast('ÐÐµÐ¼Ð°Ñ” Ð² Ð½Ð°ÑÐ²Ð½Ð¾ÑÑ‚Ñ–'); return; }
   // Season: autumn Cordura at the current price.
-  const NO_SEASON = ['SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo'];
-  const isThermo = p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo';
+  const NO_SEASON = ['Hunk Thermo BRFT W','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo'];
+  const isThermo = p.family === 'Hunk Thermo BRFT W' || p.family === 'Thermo' || p.family === 'Hunk Thermo' || p.family === 'Aganta Thermo';
   const canSeason = !NO_SEASON.includes(p.family);
   const seasonId   = isThermo ? 'winter' : (canSeason ? (window.__modalSeason || 'autumn') : null);
-  const seasonLabel = isThermo ? 'Winter Â· down to âˆ’15Â°C' : (seasonId === 'autumn' ? 'ÐžÑÑ–Ð½ÑŒ' : '');
+  const seasonLabel = p.family === 'Hunk Thermo BRFT W' ? 'Winter · thermo' : isThermo ? 'Winter Â· down to âˆ’15Â°C' : (seasonId === 'autumn' ? 'ÐžÑÑ–Ð½ÑŒ' : '');
   const seasonExtra = 0;
   const basePrice  = parseFloat(p.price) || 0;
   const finalPrice = (basePrice + seasonExtra).toFixed(2);
