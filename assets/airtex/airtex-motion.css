@@ -3,7 +3,7 @@
 .airtex-stack{position:relative;min-width:0;aspect-ratio:.92;--spread:clamp(32px,5vw,70px);isolation:isolate}
 .airtex-stack::after{content:"";position:absolute;left:12%;right:12%;height:8%;bottom:1%;border-radius:50%;background:#0006;filter:blur(16px);z-index:0}
 .airtex-motion-layer{position:absolute;top:47%;left:0;width:100%;aspect-ratio:2;z-index:var(--depth);transform:translateY(calc(-50% + var(--offset)*var(--spread)));animation:airtexLayerCycle 12s cubic-bezier(.45,0,.25,1) infinite;will-change:transform}
-.airtex-motion-material{display:block;width:100%;height:100%;background-image:url('/assets/airtex/airtex-material-sprites.png');background-size:100% 300%;background-repeat:no-repeat;filter:drop-shadow(0 9px 10px #0003)}
+.airtex-motion-material{display:block;width:100%;height:100%;background-image:url('/assets/airtex/airtex-material-sprites-mobile.png');background-size:100% 300%;background-repeat:no-repeat;filter:drop-shadow(0 9px 10px #0003)}
 .airtex-motion-material--lining{background-position:center top;transform:translateY(-7.1%)}
 .airtex-motion-material--fabric{background-position:center center;transform:translateY(-1.4%)}
 .airtex-motion-material--foil{background-position:center bottom;transform:translateY(2.7%)}
@@ -23,15 +23,16 @@
 .airtex-visual>img[hidden],.airtex-product-visual>img[hidden]{display:none!important}
 .airtex-gallery-motion[hidden]{display:none!important}
 .airtex-gallery-motion{position:absolute;inset:0;z-index:46;background:#151714;pointer-events:none}
-.airtex-gallery-motion .airtex-motion{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;box-sizing:border-box;padding:24px 10px 20px;border-radius:0}
+.airtex-gallery-motion .airtex-motion{height:100%;display:flex;flex-direction:column;box-sizing:border-box;padding:24px 10px 20px;border-radius:0}
 #m_img_wrap[data-airtex-gallery="true"] #m_media_actions,#m_img_wrap[data-airtex-gallery="true"] #mVideoBtn,#m_img_wrap[data-airtex-gallery="true"] #ultera360Button,#m_img_wrap[data-airtex-gallery="true"] .m-counter-pill,#m_img_wrap[data-airtex-gallery="true"] .modal-dots{display:none!important}
 #m_img_wrap[data-airtex-gallery="true"] .m-nav{z-index:47;opacity:.9}
-.airtex-gallery-motion .airtex-motion-stacks{min-height:0;height:100%;padding:0!important}
-.airtex-gallery-motion .airtex-stack{height:100%;width:100%;aspect-ratio:auto;--spread:clamp(38px,8vh,70px)}
-.airtex-gallery-motion .airtex-motion-layer{width:90%;left:5%}
+.airtex-gallery-motion .airtex-motion-title,.airtex-gallery-motion .airtex-motion-captions{flex-shrink:0}
+.airtex-gallery-motion .airtex-motion-stacks{min-height:0;flex:1 1 auto;height:auto;padding:0!important}
+.airtex-gallery-motion .airtex-stack{height:100%;width:100%;aspect-ratio:auto;--spread:var(--airtex-gallery-spread,38px)}
+.airtex-gallery-motion .airtex-motion--single .airtex-stack{--spread:var(--airtex-gallery-spread,38px)}
+.airtex-gallery-motion .airtex-motion-layer,.airtex-gallery-motion .airtex-shell{top:50%;width:var(--airtex-material-width,80%);left:var(--airtex-material-inset,10%)}
 .airtex-shell{position:absolute;top:47%;left:0;width:100%;aspect-ratio:2;z-index:6;opacity:0;transform:translateY(calc(-50% - 36px));animation:airtexCorduraCycle 12s ease-in-out infinite;pointer-events:none}
 .airtex-cordura{filter:brightness(.75) contrast(1.15) drop-shadow(0 10px 10px #0005)}
-.airtex-gallery-motion .airtex-shell{width:90%;left:5%}
 .airtex-water-impact{position:absolute;width:1px;height:1px;--run-x:calc(var(--run-direction)*clamp(45px,5vw,80px));pointer-events:none}
 .airtex-water-drop,.airtex-water-bead,.airtex-water-splash{position:absolute;display:block;border:1px solid #d7f5ffcc;background:radial-gradient(ellipse at 30% 25%,#fff 0 8%,#d9f7ffb3 22%,#84c6da5c 58%,#ffffff80 90%);box-shadow:1px 3px 3px #0005,inset -1px -1px 2px #a5e6ff85;opacity:0}
 .airtex-water-drop{width:7px;height:12px;left:-4px;top:-8px;border-radius:60% 60% 55% 55%;animation:airtexWaterDrop 12s linear infinite;animation-delay:var(--water-delay)}
@@ -61,5 +62,4 @@
 @keyframes airtexWaterRipple{0%,65%,76%,100%{opacity:0;transform:scale(.1)}66%{opacity:.8;transform:scale(.15)}74%{opacity:0;transform:scale(1.2)}}
 @keyframes airtexWaterRunoff{0%,66%,88%,100%{opacity:0;transform:translate(0,0)}68%{opacity:1;transform:translate(0,0)}74%{opacity:1;transform:translate(calc(var(--run-x)*.15),7px)}81%{opacity:.95;transform:translate(var(--run-x),45px)}85%{opacity:0;transform:translate(var(--run-x),110px) scale(.7,1.7)}}
 @media(max-width:760px){.airtex-motion{padding-bottom:18px}.airtex-motion-controls button{min-height:40px;padding:8px 15px;font-size:10px}.airtex-motion--single .airtex-motion-stacks{padding:0 8%}.airtex-motion--single .airtex-stack{--spread:44px}.airtex-motion-title{font-size:15px}}
-@supports(width:1cqh){.airtex-gallery-motion .airtex-motion-stacks{container-type:size}.airtex-gallery-motion .airtex-stack{--spread:min(48px,14cqh)}.airtex-gallery-motion .airtex-motion-layer,.airtex-gallery-motion .airtex-shell{top:50%;width:min(90%,110cqh);left:50%;margin-left:calc(min(90%,110cqh)*-.5)}}
 @media(prefers-reduced-motion:reduce){.airtex-motion:not([data-motion-opt-in="true"]) .airtex-motion-layer{animation:none!important;will-change:auto;transform:translateY(calc(-50% + var(--offset)*var(--spread)))}.airtex-motion:not([data-motion-opt-in="true"]) .airtex-shell,.airtex-motion:not([data-motion-opt-in="true"]) .airtex-motion-captions>p,.airtex-motion:not([data-motion-opt-in="true"]) .airtex-water-impact>span{animation:none!important}}

@@ -1,6 +1,6 @@
 (function(){
  'use strict';
- var spriteURL='/assets/airtex/airtex-material-sprites.png';
+ var spriteURL='/assets/airtex/airtex-material-sprites-mobile.png';
  var spriteReady=null;
  var reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
  function loadSprite(){
@@ -30,7 +30,10 @@
  function makePlayer(plus,single,interactive){
   var root=document.createElement('div');root.className='airtex-motion'+(single?' airtex-motion--single':'');
   root.setAttribute('role','group');root.setAttribute('aria-label','Анімація шарів утеплення AirTex та захисту від вологи Cordura');
-  root.dataset.motionView=reduced.matches?'expanded':'auto';root.dataset.motionPaused=String(reduced.matches);root.dataset.motionVisible='false';
+  var galleryPlayback=single&&interactive===false;
+  root.dataset.motionView=reduced.matches&&!galleryPlayback?'expanded':'auto';root.dataset.motionPaused=String(reduced.matches&&!galleryPlayback);root.dataset.motionVisible=String(galleryPlayback&&!document.hidden);
+  // Opening this gallery frame is the user's playback action, including on iOS.
+  if(galleryPlayback)root.dataset.motionOptIn='true';
   if(single){var title=document.createElement('p');title.className='airtex-motion-title';title.innerHTML=(plus?'AirTex+':'AirTex')+'<span>до '+(plus?'−18':'−7')+' °C</span>';root.appendChild(title);}
   var stacks=document.createElement('div');stacks.className='airtex-motion-stacks';stacks.appendChild(stack(single?plus:false));if(!single)stacks.appendChild(stack(true));root.appendChild(stacks);
   var captions=document.createElement('div');captions.className='airtex-motion-captions';
@@ -44,12 +47,38 @@
   play.addEventListener('click',function(){root.dataset.motionOptIn='true';if(root.dataset.motionView!=='auto'){root.dataset.motionView='auto';root.dataset.motionPaused='false';}else root.dataset.motionPaused=String(root.dataset.motionPaused!=='true');sync();});
   assemble.addEventListener('click',function(){root.dataset.motionOptIn='true';root.dataset.motionView=root.dataset.motionView==='assembled'?'expanded':'assembled';root.dataset.motionPaused='true';sync();});
   controls.appendChild(play);controls.appendChild(assemble);if(interactive!==false)root.appendChild(controls);sync();
-  if(typeof IntersectionObserver==='function'){
-   var observer=new IntersectionObserver(function(entries){entries.forEach(function(entry){root.dataset.motionVisible=String(entry.isIntersecting&&!document.hidden);});},{threshold:.05});observer.observe(root);
-   var onVisibility=function(){if(document.hidden)root.dataset.motionVisible='false';else{var rect=root.getBoundingClientRect();root.dataset.motionVisible=String(rect.bottom>0&&rect.top<window.innerHeight);}};
-   document.addEventListener('visibilitychange',onVisibility);
-   root._airtexCleanup=function(){observer.disconnect();document.removeEventListener('visibilitychange',onVisibility);};
-  }else root.dataset.motionVisible='true';
+  var cleanups=[],observer=null;
+  var onVisibility=function(){
+   var rect=root.getBoundingClientRect();
+   root.dataset.motionVisible=String(!document.hidden&&(galleryPlayback||(rect.bottom>0&&rect.top<window.innerHeight)));
+  };
+  document.addEventListener('visibilitychange',onVisibility);window.addEventListener('pageshow',onVisibility);
+  cleanups.push(function(){document.removeEventListener('visibilitychange',onVisibility);window.removeEventListener('pageshow',onVisibility);});
+  var visibilityFrame=requestAnimationFrame(function(){
+   onVisibility();
+   if(!galleryPlayback&&typeof IntersectionObserver==='function'){
+    observer=new IntersectionObserver(function(entries){entries.forEach(function(entry){root.dataset.motionVisible=String(entry.isIntersecting&&!document.hidden);});},{threshold:.05});observer.observe(root);
+   }
+  });
+  cleanups.push(function(){cancelAnimationFrame(visibilityFrame);if(observer)observer.disconnect();});
+  if(galleryPlayback){
+   function fitGallery(){
+    if(!root.parentElement)return;
+    var box=root.parentElement.getBoundingClientRect();if(!(box.width>0&&box.height>0))return;
+    root.style.height=Math.round(box.height)+'px';
+    var title=root.querySelector('.airtex-motion-title'),titleHeight=title?title.getBoundingClientRect().height:0;
+    var available=Math.max(100,box.height-44-titleHeight-captions.getBoundingClientRect().height);
+    stacks.style.height=Math.floor(available)+'px';
+    var width=stacks.getBoundingClientRect().width,materialWidth=Math.min(width*.9,available*1.1);
+    root.style.setProperty('--airtex-material-width',materialWidth.toFixed(2)+'px');
+    root.style.setProperty('--airtex-material-inset',((width-materialWidth)/2).toFixed(2)+'px');
+    root.style.setProperty('--airtex-gallery-spread',Math.min(48,available*.14).toFixed(2)+'px');
+   }
+   var fitObserver=null,fitFrame=requestAnimationFrame(function(){fitGallery();if(typeof ResizeObserver==='function'&&root.parentElement){fitObserver=new ResizeObserver(fitGallery);fitObserver.observe(root.parentElement);fitObserver.observe(captions);}});
+   window.addEventListener('resize',fitGallery);
+   cleanups.push(function(){cancelAnimationFrame(fitFrame);if(fitObserver)fitObserver.disconnect();window.removeEventListener('resize',fitGallery);});
+  }
+  root._airtexCleanup=function(){cleanups.forEach(function(cleanup){cleanup();});};
   return root;
  }
  function discard(player){if(player&&typeof player._airtexCleanup==='function')player._airtexCleanup();if(player)player.remove();}
@@ -100,7 +129,7 @@
  if(wrap&&modal){
   overlay=document.createElement('div');overlay.className='airtex-gallery-motion';overlay.hidden=true;wrap.appendChild(overlay);
   document.addEventListener('click',function(event){if(event.target.closest?.('#mVideoBtn,#ultera360Button')){epoch++;hideGallery();}},true);
-  new MutationObserver(function(){if(!modal.classList.contains('open'))selectPhoto('');}).observe(modal,{attributes:true,attributeFilter:['class']});
+  new MutationObserver(function(){if(!modal.classList.contains('open'))selectPhoto('');else loadSprite().catch(function(){});}).observe(modal,{attributes:true,attributeFilter:['class']});
   var main=wrap.querySelector('#m_img');if(main)selectPhoto(main.getAttribute('src'));
  }
  window.ulteraAirtexMotion={selectPhoto:selectPhoto};
