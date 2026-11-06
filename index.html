@@ -2117,6 +2117,8 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
 <script src="/assets/instagram-reviews.js?v=20261106-1" defer></script>
 <link rel="stylesheet" href="/assets/airtex/airtex.css?v=20261106-gallery-2">
 <script src="/assets/airtex/airtex.js?v=20261106-gallery-3" defer></script>
+<link rel="stylesheet" href="/assets/airtex/airtex-motion.css?v=20261106-1">
+<script src="/assets/airtex/airtex-motion.js?v=20261106-1" defer></script>
 </head>
 <body>
 
@@ -4850,6 +4852,7 @@ function openModal(uid){
   syncYu11Purchase();
   document.body.style.overflow = 'hidden';
   window.ulteraAirtex?.syncProduct(p, window.__modalSeason);
+  window.ulteraAirtexMotion?.selectPhoto(document.getElementById('m_img').getAttribute('src'));
 }
 function closeModal(){
   window.ulteraCard360?.stop();
@@ -4980,6 +4983,7 @@ function setModalPhoto(i){
   img.setAttribute('decoding','async');
   img.src = photos[idx];
   img.alt = window.ulteraAirtex?.imageAlt(photos[idx]) || document.getElementById('m_title').textContent;
+  window.ulteraAirtexMotion?.selectPhoto(photos[idx]);
   // update strip + dots active state
   syncModalThumbnails(idx);
   document.querySelectorAll('#m_dots button').forEach((d,ii)=>d.classList.toggle('active', ii===idx));
@@ -8193,6 +8197,7 @@ insertWomanDivider();
 <script src="/assets/catalog360/product-gallery.js?v=20261102-1" defer></script>
 </body>
 </html>
+
 
 
 

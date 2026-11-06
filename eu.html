@@ -2105,6 +2105,8 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
 </style>
 <link rel="stylesheet" href="/assets/airtex/airtex.css?v=20261106-gallery-2">
 <script src="/assets/airtex/airtex.js?v=20261106-gallery-3" defer></script>
+<link rel="stylesheet" href="/assets/airtex/airtex-motion.css?v=20261106-1">
+<script src="/assets/airtex/airtex-motion.js?v=20261106-1" defer></script>
 </head>
 <body>
 
@@ -4437,6 +4439,7 @@ function openModal(uid){
   } catch(_){}
   (function(){var __m=document.getElementById('modal');__m.classList.add('open');try{__m.scrollTop=0;var __i=__m.querySelector('.modal');if(__i)__i.scrollTop=0;}catch(_){}})();
   document.body.style.overflow = 'hidden';
+  window.ulteraAirtexMotion?.selectPhoto(document.getElementById('m_img').getAttribute('src'));
 }
 function closeModal(){
   try{ hun3IntroSkip(); }catch(_){}
@@ -4534,6 +4537,7 @@ function setModalPhoto(i){
   img.setAttribute('decoding','async');
   img.src = photos[idx];
   img.alt = window.ulteraAirtex?.imageAlt(photos[idx]) || document.getElementById('m_title').textContent;
+  window.ulteraAirtexMotion?.selectPhoto(photos[idx]);
   // update strip + dots active state
   document.querySelectorAll('.modal-strip button').forEach((b,ii)=>b.classList.toggle('active', ii===idx));
   document.querySelectorAll('#m_dots button').forEach((d,ii)=>d.classList.toggle('active', ii===idx));
@@ -7232,4 +7236,5 @@ insertWomanDivider();
 </style>
 </body>
 </html>
+
 

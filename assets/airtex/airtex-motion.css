@@ -1,0 +1,37 @@
+.airtex-motion{position:relative;min-width:0;color:#f4f3ee;background:radial-gradient(ellipse at 50% 70%,#27301855,transparent 65%),#151714;padding:0 0 16px;overflow:hidden}
+.airtex-motion-stacks{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:8px 0 0}
+.airtex-stack{position:relative;min-width:0;aspect-ratio:.92;--spread:clamp(32px,5vw,70px);isolation:isolate}
+.airtex-stack::after{content:"";position:absolute;left:12%;right:12%;height:8%;bottom:1%;border-radius:50%;background:#0006;filter:blur(16px);z-index:0}
+.airtex-motion-layer{position:absolute;top:47%;left:0;width:100%;aspect-ratio:2;z-index:var(--depth);transform:translateY(calc(-50% + var(--offset)*var(--spread)));animation:airtexLayerCycle 8s cubic-bezier(.45,0,.25,1) infinite;will-change:transform}
+.airtex-motion-material{display:block;width:100%;height:100%;background-image:url('/assets/airtex/airtex-material-sprites.png');background-size:100% 300%;background-repeat:no-repeat;filter:drop-shadow(0 9px 10px #0003)}
+.airtex-motion-material--lining{background-position:center top;transform:translateY(-7.1%)}
+.airtex-motion-material--fabric{background-position:center center;transform:translateY(-1.4%)}
+.airtex-motion-material--foil{background-position:center bottom;transform:translateY(2.7%)}
+.airtex-motion[data-motion-visible="false"] .airtex-motion-layer,.airtex-motion[data-motion-paused="true"] .airtex-motion-layer{animation-play-state:paused}
+.airtex-motion[data-motion-view="assembled"] .airtex-motion-layer{animation:none;transform:translateY(calc(-50% + var(--offset)*7px))}
+.airtex-motion[data-motion-view="expanded"] .airtex-motion-layer{animation:none;transform:translateY(calc(-50% + var(--offset)*var(--spread)))}
+.airtex-motion-controls{display:flex;justify-content:center;gap:8px;padding:4px 12px 0;flex-wrap:wrap}
+.airtex-motion-controls button{min-height:40px;padding:8px 17px;border:1px solid #ffffff36;border-radius:999px;color:#f4f3ee;background:#ffffff08;font-size:11px;line-height:1.3}
+.airtex-motion-controls button:hover{background:#ffffff13;border-color:#c8fa28}
+.airtex-motion-controls button:focus-visible{outline:2px solid #c8fa28;outline-offset:3px}
+.airtex-motion-controls button:first-child{color:#d4fb6c}
+.airtex-motion--single{padding:15px 10px 12px;border-radius:10px}
+.airtex-motion--single .airtex-motion-stacks{display:block;padding:0 10%}
+.airtex-motion--single .airtex-stack{aspect-ratio:.9;--spread:clamp(40px,5vw,70px)}
+.airtex-motion-title{font:600 17px/1.4 var(--font-sans);letter-spacing:-.025em;text-align:center;color:#f4f3ee;padding:0 8px}
+.airtex-motion-title span{color:#c8fa28;margin-left:8px}
+.airtex-visual>img[hidden],.airtex-product-visual>img[hidden]{display:none!important}
+.airtex-gallery-action[hidden],.airtex-gallery-motion[hidden]{display:none!important}
+.airtex-gallery-action--fallback{position:absolute!important;inset:58px auto auto 12px!important;z-index:50!important;pointer-events:auto}
+.airtex-gallery-motion{position:absolute;inset:0;z-index:46;background:#151714}
+.airtex-gallery-motion .airtex-motion{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;box-sizing:border-box;padding:64px 10px 14px;border-radius:0}
+.airtex-gallery-motion .airtex-motion-stacks{min-height:0;height:100%;padding:0!important}
+.airtex-gallery-motion .airtex-stack{height:100%;width:100%;aspect-ratio:auto;--spread:clamp(38px,8vh,70px)}
+.airtex-gallery-motion .airtex-motion-layer{width:90%;left:5%}
+@keyframes airtexLayerCycle{
+ 0%,14%,100%{transform:translateY(calc(-50% + var(--offset)*7px))}
+ 39%,69%{transform:translateY(calc(-50% + var(--offset)*var(--spread)))}
+ 89%{transform:translateY(calc(-50% + var(--offset)*7px))}
+}
+@media(max-width:760px){.airtex-motion{padding-bottom:18px}.airtex-motion-controls button{min-height:40px;padding:8px 15px;font-size:10px}.airtex-motion--single .airtex-motion-stacks{padding:0 8%}.airtex-motion--single .airtex-stack{--spread:44px}.airtex-motion-title{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.airtex-motion:not([data-motion-opt-in="true"]) .airtex-motion-layer{animation:none!important;will-change:auto;transform:translateY(calc(-50% + var(--offset)*var(--spread)))}}
