@@ -27,20 +27,23 @@
   root.appendChild(shell);
   return root;
  }
- function makePlayer(plus,single){
+ function makePlayer(plus,single,interactive){
   var root=document.createElement('div');root.className='airtex-motion'+(single?' airtex-motion--single':'');
   root.setAttribute('role','group');root.setAttribute('aria-label','Анімація шарів утеплення AirTex та захисту від вологи Cordura');
   root.dataset.motionView=reduced.matches?'expanded':'auto';root.dataset.motionPaused=String(reduced.matches);root.dataset.motionVisible='false';
   if(single){var title=document.createElement('p');title.className='airtex-motion-title';title.innerHTML=(plus?'AirTex+':'AirTex')+'<span>до '+(plus?'−18':'−7')+' °C</span>';root.appendChild(title);}
   var stacks=document.createElement('div');stacks.className='airtex-motion-stacks';stacks.appendChild(stack(single?plus:false));if(!single)stacks.appendChild(stack(true));root.appendChild(stacks);
-  var waterCaption=document.createElement('p');waterCaption.className='airtex-water-caption';waterCaption.setAttribute('aria-hidden','true');waterCaption.innerHTML='<strong>Cordura</strong><span>Зовнішній шар · Захист від вологи</span>';root.appendChild(waterCaption);
+  var captions=document.createElement('div');captions.className='airtex-motion-captions';
+  var thermalCaption=document.createElement('p');thermalCaption.className='airtex-thermal-caption';
+  thermalCaption.innerHTML='<strong>'+(single?(plus?'AirTex+ · додатковий шар утеплення':'AirTex · термопідкладка'):'AirTex / AirTex+ · тепло у кожному шарі')+'</strong><span>Тканина високої щільності утримує тепло. Фольгований шар зменшує тепловтрати, а мікроперфорація забезпечує повітрообмін.</span>';captions.appendChild(thermalCaption);
+  var waterCaption=document.createElement('p');waterCaption.className='airtex-water-caption';waterCaption.innerHTML='<strong>Вологостійка Cordura</strong><span>Зовнішній шар захищає від вологи. Бризки збираються в краплі та стікають із поверхні тканини.</span>';captions.appendChild(waterCaption);root.appendChild(captions);
   var controls=document.createElement('div');controls.className='airtex-motion-controls';
   var play=document.createElement('button');play.type='button';play.setAttribute('data-airtex-play','');
   var assemble=document.createElement('button');assemble.type='button';assemble.setAttribute('data-airtex-assemble','');
   function sync(){play.textContent=root.dataset.motionView==='auto'&&root.dataset.motionPaused!=='true'?'Пауза':'Відтворити';assemble.textContent=root.dataset.motionView==='assembled'?'Розкласти шари':'Зібрати шари';}
   play.addEventListener('click',function(){root.dataset.motionOptIn='true';if(root.dataset.motionView!=='auto'){root.dataset.motionView='auto';root.dataset.motionPaused='false';}else root.dataset.motionPaused=String(root.dataset.motionPaused!=='true');sync();});
   assemble.addEventListener('click',function(){root.dataset.motionOptIn='true';root.dataset.motionView=root.dataset.motionView==='assembled'?'expanded':'assembled';root.dataset.motionPaused='true';sync();});
-  controls.appendChild(play);controls.appendChild(assemble);root.appendChild(controls);sync();
+  controls.appendChild(play);controls.appendChild(assemble);if(interactive!==false)root.appendChild(controls);sync();
   if(typeof IntersectionObserver==='function'){
    var observer=new IntersectionObserver(function(entries){entries.forEach(function(entry){root.dataset.motionVisible=String(entry.isIntersecting&&!document.hidden);});},{threshold:.05});observer.observe(root);
    var onVisibility=function(){if(document.hidden)root.dataset.motionVisible='false';else{var rect=root.getBoundingClientRect();root.dataset.motionVisible=String(rect.bottom>0&&rect.top<window.innerHeight);}};
@@ -74,40 +77,28 @@
  var details=document.getElementById('m_airtex');
  if(details){details.addEventListener('toggle',function(){if(details.open)mount(details.querySelector('.airtex-product-visual'),true);});if(details.open)mount(details.querySelector('.airtex-product-visual'),true);}
  var wrap=document.getElementById('m_img_wrap'),modal=document.getElementById('modal');
- var selected='',epoch=0,action=null,overlay=null;
+ var selected='',epoch=0,overlay=null;
  function hideGallery(){
   if(overlay){discard(overlay.querySelector('.airtex-motion'));overlay.hidden=true;}
-  if(action){action.disabled=false;action.removeAttribute('aria-busy');action.querySelector('.lbl').textContent='Шари';action.setAttribute('aria-expanded','false');action.setAttribute('aria-label','Показати анімацію шарів AirTex');}
+  if(wrap)wrap.removeAttribute('data-airtex-gallery');
  }
  function selectPhoto(src){
   selected=String(src||'');epoch++;hideGallery();
-  if(!action)return;
-  action.hidden=!/\/assets\/airtex\/airtex(?:-plus)?-gallery\.jpg(?:[?#]|$)/i.test(selected);
-  if(!action.hidden)showGallery();
+  if(!overlay)return;
+  if(/\/assets\/airtex\/airtex(?:-plus)?-gallery\.jpg(?:[?#]|$)/i.test(selected)){wrap.dataset.airtexGallery='true';showGallery();}
  }
  function showGallery(){
-  if(!action||!overlay)return;
+  if(!overlay)return;
   var ticket=++epoch,src=selected;
-  action.disabled=true;action.setAttribute('aria-busy','true');action.querySelector('.lbl').textContent='Шари…';action.setAttribute('aria-label','Завантаження анімації шарів');
   loadSprite().then(function(){
    if(ticket!==epoch||selected!==src||!modal.classList.contains('open'))return;
    window.ulteraCard360?.stop();
    discard(overlay.querySelector('.airtex-motion'));
-   overlay.appendChild(makePlayer(src.indexOf('airtex-plus-gallery')!==-1,true));overlay.hidden=false;
-   action.disabled=false;action.removeAttribute('aria-busy');action.querySelector('.lbl').textContent='Схема';action.setAttribute('aria-expanded','true');action.setAttribute('aria-label','Повернутися до схеми AirTex');
-  }).catch(function(){if(ticket!==epoch)return;hideGallery();window.toast?.('Не вдалося завантажити анімацію. Схема доступна.');});
+   overlay.appendChild(makePlayer(src.indexOf('airtex-plus-gallery')!==-1,true,false));overlay.hidden=false;
+  }).catch(function(){if(ticket!==epoch)return;hideGallery();});
  }
  if(wrap&&modal){
-  var actions=document.getElementById('m_media_actions');
-  action=document.createElement('button');action.type='button';action.className='video-btn airtex-gallery-action'+(actions?'':' airtex-gallery-action--fallback');action.hidden=true;
-  action.innerHTML='<span class="play" aria-hidden="true">▶</span><span class="lbl">Шари</span>';action.setAttribute('aria-expanded','false');action.setAttribute('aria-label','Показати анімацію шарів AirTex');
-  (actions||wrap).appendChild(action);
   overlay=document.createElement('div');overlay.className='airtex-gallery-motion';overlay.hidden=true;wrap.appendChild(overlay);
-  action.addEventListener('click',function(event){
-   event.preventDefault();event.stopPropagation();
-   if(!overlay.hidden){hideGallery();return;}
-   showGallery();
-  });
   document.addEventListener('click',function(event){if(event.target.closest?.('#mVideoBtn,#ultera360Button')){epoch++;hideGallery();}},true);
   new MutationObserver(function(){if(!modal.classList.contains('open'))selectPhoto('');}).observe(modal,{attributes:true,attributeFilter:['class']});
   var main=wrap.querySelector('#m_img');if(main)selectPhoto(main.getAttribute('src'));

@@ -21,10 +21,11 @@
 .airtex-motion-title{font:600 17px/1.4 var(--font-sans);letter-spacing:-.025em;text-align:center;color:#f4f3ee;padding:0 8px}
 .airtex-motion-title span{color:#c8fa28;margin-left:8px}
 .airtex-visual>img[hidden],.airtex-product-visual>img[hidden]{display:none!important}
-.airtex-gallery-action[hidden],.airtex-gallery-motion[hidden]{display:none!important}
-.airtex-gallery-action--fallback{position:absolute!important;inset:58px auto auto 12px!important;z-index:50!important;pointer-events:auto}
-.airtex-gallery-motion{position:absolute;inset:0;z-index:46;background:#151714}
-.airtex-gallery-motion .airtex-motion{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;box-sizing:border-box;padding:64px 10px 14px;border-radius:0}
+.airtex-gallery-motion[hidden]{display:none!important}
+.airtex-gallery-motion{position:absolute;inset:0;z-index:46;background:#151714;pointer-events:none}
+.airtex-gallery-motion .airtex-motion{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;box-sizing:border-box;padding:24px 10px 20px;border-radius:0}
+#m_img_wrap[data-airtex-gallery="true"] #m_media_actions,#m_img_wrap[data-airtex-gallery="true"] #mVideoBtn,#m_img_wrap[data-airtex-gallery="true"] #ultera360Button,#m_img_wrap[data-airtex-gallery="true"] .m-counter-pill,#m_img_wrap[data-airtex-gallery="true"] .modal-dots{display:none!important}
+#m_img_wrap[data-airtex-gallery="true"] .m-nav{z-index:47;opacity:.9}
 .airtex-gallery-motion .airtex-motion-stacks{min-height:0;height:100%;padding:0!important}
 .airtex-gallery-motion .airtex-stack{height:100%;width:100%;aspect-ratio:auto;--spread:clamp(38px,8vh,70px)}
 .airtex-gallery-motion .airtex-motion-layer{width:90%;left:5%}
@@ -37,12 +38,15 @@
 .airtex-water-bead{width:12px;height:8px;left:-6px;top:-4px;border-radius:50%;animation:airtexWaterRunoff 12s cubic-bezier(.32,0,.65,1) infinite;animation-delay:var(--water-delay)}
 .airtex-water-splash{width:3px;height:8px;left:-2px;top:-6px;border-radius:50%;transform-origin:center 15px;animation:airtexWaterSplash 12s ease-out infinite;animation-delay:var(--water-delay)}
 .airtex-water-ripple{position:absolute;left:-15px;top:-5px;width:30px;height:10px;border:1px solid #dcf6ff9c;border-radius:50%;opacity:0;animation:airtexWaterRipple 12s ease-out infinite;animation-delay:var(--water-delay)}
-.airtex-water-caption{position:absolute;bottom:60px;left:12px;right:12px;z-index:7;margin:0;text-align:center;pointer-events:none;opacity:0;animation:airtexCorduraCaption 12s ease-in-out infinite;text-shadow:0 2px 8px #000}
-.airtex-water-caption strong{display:block;font-size:14px;color:#d4fb6c;line-height:1.4}
-.airtex-water-caption span{display:block;font-size:10px;color:#e4e7df;line-height:1.6}
-.airtex-motion[data-motion-visible="false"] .airtex-shell,.airtex-motion[data-motion-visible="false"] .airtex-water-caption,.airtex-motion[data-motion-visible="false"] .airtex-water-impact>span,.airtex-motion[data-motion-paused="true"] .airtex-shell,.airtex-motion[data-motion-paused="true"] .airtex-water-caption,.airtex-motion[data-motion-paused="true"] .airtex-water-impact>span{animation-play-state:paused}
-.airtex-motion[data-motion-view="expanded"] .airtex-shell,.airtex-motion[data-motion-view="expanded"] .airtex-water-caption{animation:none;opacity:0}
-.airtex-motion[data-motion-view="assembled"] .airtex-shell,.airtex-motion[data-motion-view="assembled"] .airtex-water-caption{animation:none;opacity:1}
+.airtex-motion-captions{display:grid;align-items:center;width:100%;max-width:510px;min-height:82px;margin:0 auto;padding:10px 18px 8px;text-align:center;position:relative;z-index:7;text-shadow:0 2px 8px #000;pointer-events:none}
+.airtex-motion-captions>p{grid-area:1/1;margin:0}
+.airtex-motion-captions strong{display:block;font-size:13px;color:#d4fb6c;line-height:1.4;margin-bottom:4px}
+.airtex-motion-captions span{display:block;font-size:12px;color:#e4e7df;line-height:1.5}
+.airtex-thermal-caption{animation:airtexThermalCaption 12s ease-in-out infinite}
+.airtex-water-caption{opacity:0;visibility:hidden;animation:airtexCorduraCaption 12s ease-in-out infinite}
+.airtex-motion[data-motion-visible="false"] .airtex-shell,.airtex-motion[data-motion-visible="false"] .airtex-motion-captions>p,.airtex-motion[data-motion-visible="false"] .airtex-water-impact>span,.airtex-motion[data-motion-paused="true"] .airtex-shell,.airtex-motion[data-motion-paused="true"] .airtex-motion-captions>p,.airtex-motion[data-motion-paused="true"] .airtex-water-impact>span{animation-play-state:paused}
+.airtex-motion[data-motion-view="expanded"] .airtex-shell,.airtex-motion[data-motion-view="expanded"] .airtex-water-caption,.airtex-motion[data-motion-view="assembled"] .airtex-thermal-caption{animation:none;opacity:0;visibility:hidden}
+.airtex-motion[data-motion-view="assembled"] .airtex-shell,.airtex-motion[data-motion-view="assembled"] .airtex-water-caption,.airtex-motion[data-motion-view="expanded"] .airtex-thermal-caption{animation:none;opacity:1;visibility:visible}
 .airtex-motion[data-motion-view="assembled"] .airtex-water-impact>span{animation:none;opacity:0}
 .airtex-motion[data-motion-view="assembled"] .airtex-water-impact>.airtex-water-bead{opacity:1}
 @keyframes airtexLayerCycle{
@@ -50,10 +54,12 @@
  23%,38%{transform:translateY(calc(-50% + var(--offset)*var(--spread)))}
 }
 @keyframes airtexCorduraCycle{0%,54%,100%{opacity:0;transform:translateY(calc(-50% - 110px))}61%,88%{opacity:1;transform:translateY(calc(-50% - 36px))}95%{opacity:0;transform:translateY(calc(-50% - 110px))}}
-@keyframes airtexCorduraCaption{0%,58%,97%,100%{opacity:0}63%,89%{opacity:1}}
+@keyframes airtexThermalCaption{0%,51%,100%{opacity:1;visibility:visible}57%,95%{opacity:0;visibility:hidden}}
+@keyframes airtexCorduraCaption{0%,58%,97%,100%{opacity:0;visibility:hidden}63%,89%{opacity:1;visibility:visible}}
 @keyframes airtexWaterDrop{0%,60%,67%,100%{opacity:0;transform:translateY(-95px) scale(.7)}61%{opacity:.95;transform:translateY(-95px) scale(.7)}65%{opacity:1;transform:translateY(0) scale(1)}66%{opacity:0;transform:translateY(3px) scale(1.6,.4)}}
 @keyframes airtexWaterSplash{0%,64%,73%,100%{opacity:0;transform:rotate(var(--splash-angle)) translateY(0) scale(.1)}65%{opacity:.9;transform:rotate(var(--splash-angle)) translateY(-4px) scale(.7)}69%{opacity:.65;transform:rotate(var(--splash-angle)) translateY(-25px) scale(1)}72%{opacity:0;transform:rotate(var(--splash-angle)) translateY(-31px) scale(.5)}}
 @keyframes airtexWaterRipple{0%,65%,76%,100%{opacity:0;transform:scale(.1)}66%{opacity:.8;transform:scale(.15)}74%{opacity:0;transform:scale(1.2)}}
 @keyframes airtexWaterRunoff{0%,66%,88%,100%{opacity:0;transform:translate(0,0)}68%{opacity:1;transform:translate(0,0)}74%{opacity:1;transform:translate(calc(var(--run-x)*.15),7px)}81%{opacity:.95;transform:translate(var(--run-x),45px)}85%{opacity:0;transform:translate(var(--run-x),110px) scale(.7,1.7)}}
 @media(max-width:760px){.airtex-motion{padding-bottom:18px}.airtex-motion-controls button{min-height:40px;padding:8px 15px;font-size:10px}.airtex-motion--single .airtex-motion-stacks{padding:0 8%}.airtex-motion--single .airtex-stack{--spread:44px}.airtex-motion-title{font-size:15px}}
-@media(prefers-reduced-motion:reduce){.airtex-motion:not([data-motion-opt-in="true"]) .airtex-motion-layer{animation:none!important;will-change:auto;transform:translateY(calc(-50% + var(--offset)*var(--spread)))}.airtex-motion:not([data-motion-opt-in="true"]) .airtex-shell,.airtex-motion:not([data-motion-opt-in="true"]) .airtex-water-caption,.airtex-motion:not([data-motion-opt-in="true"]) .airtex-water-impact>span{animation:none!important}}
+@supports(width:1cqh){.airtex-gallery-motion .airtex-motion-stacks{container-type:size}.airtex-gallery-motion .airtex-stack{--spread:min(48px,14cqh)}.airtex-gallery-motion .airtex-motion-layer,.airtex-gallery-motion .airtex-shell{top:50%;width:min(90%,110cqh);left:50%;margin-left:calc(min(90%,110cqh)*-.5)}}
+@media(prefers-reduced-motion:reduce){.airtex-motion:not([data-motion-opt-in="true"]) .airtex-motion-layer{animation:none!important;will-change:auto;transform:translateY(calc(-50% + var(--offset)*var(--spread)))}.airtex-motion:not([data-motion-opt-in="true"]) .airtex-shell,.airtex-motion:not([data-motion-opt-in="true"]) .airtex-motion-captions>p,.airtex-motion:not([data-motion-opt-in="true"]) .airtex-water-impact>span{animation:none!important}}
