@@ -67,7 +67,7 @@
  var selected='',epoch=0,action=null,overlay=null;
  function hideGallery(){
   if(overlay){discard(overlay.querySelector('.airtex-motion'));overlay.hidden=true;}
-  if(action){action.querySelector('.lbl').textContent='Шари';action.setAttribute('aria-expanded','false');action.setAttribute('aria-label','Показати анімацію шарів AirTex');}
+  if(action){action.disabled=false;action.removeAttribute('aria-busy');action.querySelector('.lbl').textContent='Шари';action.setAttribute('aria-expanded','false');action.setAttribute('aria-label','Показати анімацію шарів AirTex');}
  }
  function selectPhoto(src){
   selected=String(src||'');epoch++;hideGallery();
@@ -84,13 +84,14 @@
    event.preventDefault();event.stopPropagation();
    if(!overlay.hidden){hideGallery();return;}
    var ticket=++epoch,src=selected;
+   action.disabled=true;action.setAttribute('aria-busy','true');action.querySelector('.lbl').textContent='Шари…';action.setAttribute('aria-label','Завантаження анімації шарів');
    loadSprite().then(function(){
     if(ticket!==epoch||selected!==src||!modal.classList.contains('open'))return;
     window.ulteraCard360?.stop();
     discard(overlay.querySelector('.airtex-motion'));
     overlay.appendChild(makePlayer(src.indexOf('airtex-plus-gallery')!==-1,true));overlay.hidden=false;
-    action.querySelector('.lbl').textContent='Схема';action.setAttribute('aria-expanded','true');action.setAttribute('aria-label','Повернутися до схеми AirTex');
-   }).catch(function(){window.toast?.('Не вдалося завантажити анімацію. Схема доступна.');});
+    action.disabled=false;action.removeAttribute('aria-busy');action.querySelector('.lbl').textContent='Схема';action.setAttribute('aria-expanded','true');action.setAttribute('aria-label','Повернутися до схеми AirTex');
+   }).catch(function(){hideGallery();window.toast?.('Не вдалося завантажити анімацію. Схема доступна.');});
   });
   document.addEventListener('click',function(event){if(event.target.closest?.('#mVideoBtn,#ultera360Button')){epoch++;hideGallery();}},true);
   new MutationObserver(function(){if(!modal.classList.contains('open'))selectPhoto('');}).observe(modal,{attributes:true,attributeFilter:['class']});
