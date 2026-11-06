@@ -46,6 +46,11 @@
    'Фольгований шар допомагає відбивати тепло всередину та зменшувати тепловтрати. Мікроперфорація у фольгованому шарі — для повітрообміну.';
   return '<div class="airtex-description"><h3>Утеплювач '+info.name+'</h3><p>'+intro+'</p><p>'+foil+'</p></div>';
  }
+ function composeDescription(product,html){
+  var info=profile(product),body=String(html||'');
+  if(info&&info.high)body=body.replace(/(?:−|–|-)\s*15\s*°\s*[CС]/g,'−18 °C');
+  return body+descriptionHTML(product);
+ }
  function syncProduct(product,season){
   var details=document.getElementById('m_airtex');
   if(!details)return;
@@ -68,7 +73,7 @@
    'AirTex+ — термопідкладка з тканини високої щільності та додатковим шаром утеплення для високих моделей. Для температур до −18 °C.':
    'AirTex — термопідкладка з тканини високої щільності для низьких зимових моделей. Для температур до −7 °C.';
  }
- window.ulteraAirtex={syncProduct:syncProduct,gallery:gallery,imageAlt:imageAlt,descriptionHTML:descriptionHTML};
+ window.ulteraAirtex={syncProduct:syncProduct,gallery:gallery,imageAlt:imageAlt,descriptionHTML:descriptionHTML,composeDescription:composeDescription};
  if(window.__modalUid&&typeof window.findProduct==='function'){
   syncProduct(window.findProduct(window.__modalUid),window.__modalSeason);
  }

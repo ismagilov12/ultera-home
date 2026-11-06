@@ -2104,7 +2104,7 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
 }
 </style>
 <link rel="stylesheet" href="/assets/airtex/airtex.css?v=20261106-gallery-2">
-<script src="/assets/airtex/airtex.js?v=20261106-gallery-2" defer></script>
+<script src="/assets/airtex/airtex.js?v=20261106-gallery-3" defer></script>
 </head>
 <body>
 
@@ -4341,7 +4341,7 @@ function openModal(uid){
     if(low.includes('Ð´Ð¸Ñ…Ð°ÑŽÑ‡Ð° ÑÑ–Ñ‚ÐºÐ°') || low.includes('Ð¿Ñ–Ð½ÐºÐ°')) return false;
     return true;
   }).join('<br>').replace(/(<br>\s*){2,}/g, '<br><br>').trim();
-  document.getElementById('m_desc').innerHTML = desc + (window.ulteraAirtex?.descriptionHTML(p) || '');
+  document.getElementById('m_desc').innerHTML = window.ulteraAirtex?.composeDescription(p, desc) || desc;
 
   // close size helper on product change
   document.getElementById('shBox').classList.remove('open');
@@ -6161,7 +6161,7 @@ insertWomanDivider();
     if (matH){ parts.push('<div class="struct-block"><b>ÐœÐ°Ñ‚ÐµÑ€Ñ–Ð°Ð»Ð¸</b>' + matH + '</div>'); }
     if (!parts.length) return;
     var el = document.getElementById('m_desc');
-    if (el) el.innerHTML = parts.join('');
+    if (el) el.innerHTML = window.ulteraAirtex?.composeDescription(v, parts.join('')) || parts.join('');
   }
 
   function doAll(){ tryPatchSMP(); observeImg(); observeThumbs(); patchVideoBtn(); patchClose(); patchTapZones(); updateVideoBtnVisibility(); applyStructuredFields(); }
