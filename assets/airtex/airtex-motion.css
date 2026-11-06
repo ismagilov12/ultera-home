@@ -2,7 +2,7 @@
 .airtex-motion-stacks{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:8px 0 0}
 .airtex-stack{position:relative;min-width:0;aspect-ratio:.92;--spread:clamp(32px,5vw,70px);isolation:isolate}
 .airtex-stack::after{content:"";position:absolute;left:12%;right:12%;height:8%;bottom:1%;border-radius:50%;background:#0006;filter:blur(16px);z-index:0}
-.airtex-motion-layer{position:absolute;top:47%;left:0;width:100%;aspect-ratio:2;z-index:var(--depth);transform:translateY(calc(-50% + var(--offset)*var(--spread)));animation:airtexLayerCycle 8s cubic-bezier(.45,0,.25,1) infinite;will-change:transform}
+.airtex-motion-layer{position:absolute;top:47%;left:0;width:100%;aspect-ratio:2;z-index:var(--depth);transform:translateY(calc(-50% + var(--offset)*var(--spread)));animation:airtexLayerCycle 12s cubic-bezier(.45,0,.25,1) infinite;will-change:transform}
 .airtex-motion-material{display:block;width:100%;height:100%;background-image:url('/assets/airtex/airtex-material-sprites.png');background-size:100% 300%;background-repeat:no-repeat;filter:drop-shadow(0 9px 10px #0003)}
 .airtex-motion-material--lining{background-position:center top;transform:translateY(-7.1%)}
 .airtex-motion-material--fabric{background-position:center center;transform:translateY(-1.4%)}
@@ -28,10 +28,32 @@
 .airtex-gallery-motion .airtex-motion-stacks{min-height:0;height:100%;padding:0!important}
 .airtex-gallery-motion .airtex-stack{height:100%;width:100%;aspect-ratio:auto;--spread:clamp(38px,8vh,70px)}
 .airtex-gallery-motion .airtex-motion-layer{width:90%;left:5%}
+.airtex-shell{position:absolute;top:47%;left:0;width:100%;aspect-ratio:2;z-index:6;opacity:0;transform:translateY(calc(-50% - 36px));animation:airtexCorduraCycle 12s ease-in-out infinite;pointer-events:none}
+.airtex-cordura{filter:brightness(.75) contrast(1.15) drop-shadow(0 10px 10px #0005)}
+.airtex-gallery-motion .airtex-shell{width:90%;left:5%}
+.airtex-water-impact{position:absolute;width:1px;height:1px;--run-x:calc(var(--run-direction)*clamp(45px,5vw,80px));pointer-events:none}
+.airtex-water-drop,.airtex-water-bead,.airtex-water-splash{position:absolute;display:block;border:1px solid #d7f5ffcc;background:radial-gradient(ellipse at 30% 25%,#fff 0 8%,#d9f7ffb3 22%,#84c6da5c 58%,#ffffff80 90%);box-shadow:1px 3px 3px #0005,inset -1px -1px 2px #a5e6ff85;opacity:0}
+.airtex-water-drop{width:7px;height:12px;left:-4px;top:-8px;border-radius:60% 60% 55% 55%;animation:airtexWaterDrop 12s linear infinite;animation-delay:var(--water-delay)}
+.airtex-water-bead{width:12px;height:8px;left:-6px;top:-4px;border-radius:50%;animation:airtexWaterRunoff 12s cubic-bezier(.32,0,.65,1) infinite;animation-delay:var(--water-delay)}
+.airtex-water-splash{width:3px;height:8px;left:-2px;top:-6px;border-radius:50%;transform-origin:center 15px;animation:airtexWaterSplash 12s ease-out infinite;animation-delay:var(--water-delay)}
+.airtex-water-ripple{position:absolute;left:-15px;top:-5px;width:30px;height:10px;border:1px solid #dcf6ff9c;border-radius:50%;opacity:0;animation:airtexWaterRipple 12s ease-out infinite;animation-delay:var(--water-delay)}
+.airtex-water-caption{position:absolute;bottom:60px;left:12px;right:12px;z-index:7;margin:0;text-align:center;pointer-events:none;opacity:0;animation:airtexCorduraCaption 12s ease-in-out infinite;text-shadow:0 2px 8px #000}
+.airtex-water-caption strong{display:block;font-size:14px;color:#d4fb6c;line-height:1.4}
+.airtex-water-caption span{display:block;font-size:10px;color:#e4e7df;line-height:1.6}
+.airtex-motion[data-motion-visible="false"] .airtex-shell,.airtex-motion[data-motion-visible="false"] .airtex-water-caption,.airtex-motion[data-motion-visible="false"] .airtex-water-impact>span,.airtex-motion[data-motion-paused="true"] .airtex-shell,.airtex-motion[data-motion-paused="true"] .airtex-water-caption,.airtex-motion[data-motion-paused="true"] .airtex-water-impact>span{animation-play-state:paused}
+.airtex-motion[data-motion-view="expanded"] .airtex-shell,.airtex-motion[data-motion-view="expanded"] .airtex-water-caption{animation:none;opacity:0}
+.airtex-motion[data-motion-view="assembled"] .airtex-shell,.airtex-motion[data-motion-view="assembled"] .airtex-water-caption{animation:none;opacity:1}
+.airtex-motion[data-motion-view="assembled"] .airtex-water-impact>span{animation:none;opacity:0}
+.airtex-motion[data-motion-view="assembled"] .airtex-water-impact>.airtex-water-bead{opacity:1}
 @keyframes airtexLayerCycle{
- 0%,14%,100%{transform:translateY(calc(-50% + var(--offset)*7px))}
- 39%,69%{transform:translateY(calc(-50% + var(--offset)*var(--spread)))}
- 89%{transform:translateY(calc(-50% + var(--offset)*7px))}
+ 0%,8%,49%,100%{transform:translateY(calc(-50% + var(--offset)*7px))}
+ 23%,38%{transform:translateY(calc(-50% + var(--offset)*var(--spread)))}
 }
+@keyframes airtexCorduraCycle{0%,54%,100%{opacity:0;transform:translateY(calc(-50% - 110px))}61%,88%{opacity:1;transform:translateY(calc(-50% - 36px))}95%{opacity:0;transform:translateY(calc(-50% - 110px))}}
+@keyframes airtexCorduraCaption{0%,58%,97%,100%{opacity:0}63%,89%{opacity:1}}
+@keyframes airtexWaterDrop{0%,60%,67%,100%{opacity:0;transform:translateY(-95px) scale(.7)}61%{opacity:.95;transform:translateY(-95px) scale(.7)}65%{opacity:1;transform:translateY(0) scale(1)}66%{opacity:0;transform:translateY(3px) scale(1.6,.4)}}
+@keyframes airtexWaterSplash{0%,64%,73%,100%{opacity:0;transform:rotate(var(--splash-angle)) translateY(0) scale(.1)}65%{opacity:.9;transform:rotate(var(--splash-angle)) translateY(-4px) scale(.7)}69%{opacity:.65;transform:rotate(var(--splash-angle)) translateY(-25px) scale(1)}72%{opacity:0;transform:rotate(var(--splash-angle)) translateY(-31px) scale(.5)}}
+@keyframes airtexWaterRipple{0%,65%,76%,100%{opacity:0;transform:scale(.1)}66%{opacity:.8;transform:scale(.15)}74%{opacity:0;transform:scale(1.2)}}
+@keyframes airtexWaterRunoff{0%,66%,88%,100%{opacity:0;transform:translate(0,0)}68%{opacity:1;transform:translate(0,0)}74%{opacity:1;transform:translate(calc(var(--run-x)*.15),7px)}81%{opacity:.95;transform:translate(var(--run-x),45px)}85%{opacity:0;transform:translate(var(--run-x),110px) scale(.7,1.7)}}
 @media(max-width:760px){.airtex-motion{padding-bottom:18px}.airtex-motion-controls button{min-height:40px;padding:8px 15px;font-size:10px}.airtex-motion--single .airtex-motion-stacks{padding:0 8%}.airtex-motion--single .airtex-stack{--spread:44px}.airtex-motion-title{font-size:15px}}
-@media(prefers-reduced-motion:reduce){.airtex-motion:not([data-motion-opt-in="true"]) .airtex-motion-layer{animation:none!important;will-change:auto;transform:translateY(calc(-50% + var(--offset)*var(--spread)))}}
+@media(prefers-reduced-motion:reduce){.airtex-motion:not([data-motion-opt-in="true"]) .airtex-motion-layer{animation:none!important;will-change:auto;transform:translateY(calc(-50% + var(--offset)*var(--spread)))}.airtex-motion:not([data-motion-opt-in="true"]) .airtex-shell,.airtex-motion:not([data-motion-opt-in="true"]) .airtex-water-caption,.airtex-motion:not([data-motion-opt-in="true"]) .airtex-water-impact>span{animation:none!important}}
