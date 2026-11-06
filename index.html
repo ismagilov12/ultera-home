@@ -2115,8 +2115,8 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
 </style>
 <link rel="stylesheet" href="/assets/instagram-reviews.css?v=20261106-1">
 <script src="/assets/instagram-reviews.js?v=20261106-1" defer></script>
-<link rel="stylesheet" href="/assets/airtex/airtex.css?v=20261106-1">
-<script src="/assets/airtex/airtex.js?v=20261106-1" defer></script>
+<link rel="stylesheet" href="/assets/airtex/airtex.css?v=20261106-gallery-2">
+<script src="/assets/airtex/airtex.js?v=20261106-gallery-2" defer></script>
 </head>
 <body>
 
@@ -2456,7 +2456,7 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
   </div>
   <div class="airtex-content">
    <figure class="airtex-visual">
-    <img src="/assets/airtex/airtex-layers.jpg" alt="Схематична пошарова візуалізація AirTex: щільна тканина й мікроперфорований фольгований шар. AirTex+ має додатковий шар щільного утеплювача." width="1536" height="1024" loading="lazy" decoding="async">
+    <img src="/assets/airtex/airtex-layers-v2.jpg" alt="Схематична пошарова візуалізація AirTex: щільна тканина й мікроперфорований фольгований шар. У AirTex+ третій шар фольгований, а під ним — додатковий тканинний утеплювач." width="1536" height="1024" loading="lazy" decoding="async">
     <figcaption class="airtex-versions">
      <div class="airtex-version"><strong>AirTex</strong><span class="airtex-temp">до −7 °C</span><p>Для низьких зимових моделей.</p></div>
      <div class="airtex-version"><strong>AirTex<sup>+</sup></strong><span class="airtex-temp">до −18 °C</span><p>Для високих моделей.<br>Додатковий шар утеплення.</p></div>
@@ -2465,7 +2465,7 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
    <div class="airtex-details">
     <h3 class="airtex-detail-head">Продумане утеплення.<br>У кожному шарі.</h3>
     <div class="airtex-layer"><button type="button" data-airtex-toggle aria-expanded="true" aria-controls="airtexFabric"><span>01</span><b>Тканина високої щільності</b><i aria-hidden="true">−</i></button><p id="airtexFabric">Основа термопідкладки AirTex — щільний тканинний утеплювач. У версії AirTex+ додатковий шар утеплення допомагає зберігати тепло в холоднішу погоду.</p></div>
-    <div class="airtex-layer"><button type="button" data-airtex-toggle aria-expanded="false" aria-controls="airtexFoil"><span>02</span><b>Фольгований шар</b><i aria-hidden="true">+</i></button><p id="airtexFoil" hidden>Відбиває теплове випромінювання всередину та допомагає зменшувати тепловтрати. Так тепло довше залишається біля стопи.</p></div>
+    <div class="airtex-layer"><button type="button" data-airtex-toggle aria-expanded="false" aria-controls="airtexFoil"><span>02</span><b>Фольгований шар</b><i aria-hidden="true">+</i></button><p id="airtexFoil" hidden>Відбиває теплове випромінювання всередину та допомагає зменшувати тепловтрати. Так тепло довше залишається біля стопи. У AirTex+ фольгований шар розташований третім згори на схемі.</p></div>
     <div class="airtex-layer"><button type="button" data-airtex-toggle aria-expanded="false" aria-controls="airtexAir"><span>03</span><b>Мікроперфорація</b><i aria-hidden="true">+</i></button><p id="airtexAir" hidden>Мікропроколи у фольгованому шарі забезпечують повітрообмін усередині підкладки.</p></div>
     <p class="airtex-note">Схематична візуалізація принципу роботи матеріалів.</p>
    </div>
@@ -2873,7 +2873,7 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
 
       <details class="airtex-product" id="m_airtex" hidden>
         <summary><span data-airtex-product-title></span></summary>
-        <div class="airtex-product-visual"><img src="/assets/airtex/airtex-layers.jpg" alt="Схема тканинного утеплення AirTex та AirTex+ з фольгованим мікроперфорованим шаром" width="1536" height="1024" loading="lazy" decoding="async"></div>
+        <div class="airtex-product-visual"><img src="/assets/airtex/airtex-layers-v2.jpg" alt="Схема тканинного утеплення AirTex та AirTex+ з фольгованим мікроперфорованим шаром" width="1536" height="1024" loading="lazy" decoding="async"></div>
         <div class="airtex-product-content"><p data-airtex-product-description></p><ul><li><strong>Фольгований шар</strong> допомагає відбивати тепло всередину та зменшувати тепловтрати.</li><li><strong>Мікроперфорація</strong> у фольгованому шарі — для повітрообміну.</li></ul><small>Схематична візуалізація принципу роботи матеріалів.</small></div>
       </details>
 
@@ -4579,7 +4579,8 @@ function openModal(uid){
     ? _EXTRAS[uid]
     : [p.photo];
   // unique photos
-  const photos = [...new Set(photosArr)];
+  const uniquePhotos = [...new Set(photosArr)];
+  const photos = window.ulteraAirtex?.gallery(p, uniquePhotos) || uniquePhotos;
   window.__modalPhotos = photos;
   window.__modalPhotoIdx = 0;
 
@@ -4746,7 +4747,7 @@ function openModal(uid){
     if(low.includes('дихаюча сітка') || low.includes('пінка')) return false;
     return true;
   }).join('<br>').replace(/(<br>\s*){2,}/g, '<br><br>').trim();
-  document.getElementById('m_desc').innerHTML = desc;
+  document.getElementById('m_desc').innerHTML = desc + (window.ulteraAirtex?.descriptionHTML(p) || '');
 
   // close size helper on product change
   document.getElementById('shBox').classList.remove('open');
@@ -4978,6 +4979,7 @@ function setModalPhoto(i){
   img.setAttribute('fetchpriority','high');
   img.setAttribute('decoding','async');
   img.src = photos[idx];
+  img.alt = window.ulteraAirtex?.imageAlt(photos[idx]) || document.getElementById('m_title').textContent;
   // update strip + dots active state
   syncModalThumbnails(idx);
   document.querySelectorAll('#m_dots button').forEach((d,ii)=>d.classList.toggle('active', ii===idx));
@@ -8191,6 +8193,7 @@ insertWomanDivider();
 <script src="/assets/catalog360/product-gallery.js?v=20261102-1" defer></script>
 </body>
 </html>
+
 
 
 

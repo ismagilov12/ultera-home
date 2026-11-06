@@ -38,6 +38,11 @@
 .airtex-product-content strong{color:var(--ink)}
 .airtex-product-content ul{padding-left:18px;margin-top:9px}
 .airtex-product-content small{display:block;font-size:10px;color:var(--ink-40);margin-top:10px}
+.airtex-description{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+.airtex-description h3{font-size:15px;line-height:1.4;margin-bottom:10px;color:var(--ink)}
+.airtex-description p+p{margin-top:10px}
+#m_img[src*="/assets/airtex/"]{object-fit:contain!important;object-position:center!important;background:#151714;filter:none!important;transform:none!important}
+#m_gallery img[src*="/assets/airtex/"]{object-fit:contain;background:#151714}
 @media(max-width:1000px){.airtex-content{gap:24px;grid-template-columns:minmax(0,1.2fr) minmax(260px,1fr)}.airtex-intro{max-width:330px}}
 @media(max-width:760px){
  .airtex{padding:44px 0 38px;scroll-margin-top:56px}
@@ -55,3 +60,4 @@
  .airtex-layer p{font-size:12px}
  .airtex-note{font-size:9px}
 }
+

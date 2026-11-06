@@ -2103,6 +2103,8 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
   object-fit: contain !important;
 }
 </style>
+<link rel="stylesheet" href="/assets/airtex/airtex.css?v=20261106-gallery-2">
+<script src="/assets/airtex/airtex.js?v=20261106-gallery-2" defer></script>
 </head>
 <body>
 
@@ -4205,7 +4207,8 @@ function openModal(uid){
     ? _EXTRAS[uid]
     : [p.photo];
   // unique photos
-  const photos = [...new Set(photosArr)];
+  const uniquePhotos = [...new Set(photosArr)];
+  const photos = window.ulteraAirtex?.gallery(p, uniquePhotos) || uniquePhotos;
   window.__modalPhotos = photos;
   window.__modalPhotoIdx = 0;
 
@@ -4338,7 +4341,7 @@ function openModal(uid){
     if(low.includes('Ð´Ð¸Ñ…Ð°ÑŽÑ‡Ð° ÑÑ–Ñ‚ÐºÐ°') || low.includes('Ð¿Ñ–Ð½ÐºÐ°')) return false;
     return true;
   }).join('<br>').replace(/(<br>\s*){2,}/g, '<br><br>').trim();
-  document.getElementById('m_desc').innerHTML = desc;
+  document.getElementById('m_desc').innerHTML = desc + (window.ulteraAirtex?.descriptionHTML(p) || '');
 
   // close size helper on product change
   document.getElementById('shBox').classList.remove('open');
@@ -4530,6 +4533,7 @@ function setModalPhoto(i){
   img.setAttribute('fetchpriority','high');
   img.setAttribute('decoding','async');
   img.src = photos[idx];
+  img.alt = window.ulteraAirtex?.imageAlt(photos[idx]) || document.getElementById('m_title').textContent;
   // update strip + dots active state
   document.querySelectorAll('.modal-strip button').forEach((b,ii)=>b.classList.toggle('active', ii===idx));
   document.querySelectorAll('#m_dots button').forEach((d,ii)=>d.classList.toggle('active', ii===idx));
@@ -7228,3 +7232,4 @@ insertWomanDivider();
 </style>
 </body>
 </html>
+
