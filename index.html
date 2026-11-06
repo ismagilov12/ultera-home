@@ -2115,6 +2115,8 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
 </style>
 <link rel="stylesheet" href="/assets/instagram-reviews.css?v=20261106-1">
 <script src="/assets/instagram-reviews.js?v=20261106-1" defer></script>
+<link rel="stylesheet" href="/assets/airtex/airtex.css?v=20261106-1">
+<script src="/assets/airtex/airtex.js?v=20261106-1" defer></script>
 </head>
 <body>
 
@@ -2146,6 +2148,7 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
       <a href="#" data-filter="Hunk3">hunk3</a>
       <a href="#" data-filter="Aganta">aganta</a>
       <a href="https://ultera-shape-landing.vercel.app/" target="_blank" rel="noopener">shape ↗</a>
+      <a href="#airtex">AirTex</a>
       <a href="#reviews">відгуки</a>
       <a href="#story">історія</a>
       <a href="#faq">faq</a>
@@ -2165,6 +2168,7 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
   <a href="#" data-filter="Hunk3" onclick="closeMenu()">Hunk3</a>
   <a href="#" data-filter="Aganta" onclick="closeMenu()">Aganta</a>
   <a href="https://ultera-shape-landing.vercel.app/" target="_blank" rel="noopener">SHAPE ↗</a>
+  <a href="#airtex" onclick="closeMenu()">AirTex</a>
   <a href="#reviews" onclick="closeMenu()">Відгуки</a>
   <a href="#story" onclick="closeMenu()">Історія</a>
   <a href="#faq" onclick="closeMenu()">FAQ</a>
@@ -2441,6 +2445,32 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
     </div>
     <div id="classicsGrid" class="grid reveal-stagger"></div>
   </div>
+</section>
+
+<!-- AIRTEX THERMAL LINING -->
+<section class="airtex" id="airtex" aria-labelledby="airtexTitle">
+ <div class="wide">
+  <div class="airtex-head">
+   <div><p class="airtex-eyebrow">ULTERA / ТЕХНОЛОГІЇ УТЕПЛЕННЯ</p><h2 id="airtexTitle">AirTex<span> / </span>AirTex<sup>+</sup></h2></div>
+   <p class="airtex-intro">Тепло, шар за шаром. Термопідкладка з тканини високої щільності, фольгованим шаром і мікроперфорацією для повітрообміну.</p>
+  </div>
+  <div class="airtex-content">
+   <figure class="airtex-visual">
+    <img src="/assets/airtex/airtex-layers.jpg" alt="Схематична пошарова візуалізація AirTex: щільна тканина й мікроперфорований фольгований шар. AirTex+ має додатковий шар щільного утеплювача." width="1536" height="1024" loading="lazy" decoding="async">
+    <figcaption class="airtex-versions">
+     <div class="airtex-version"><strong>AirTex</strong><span class="airtex-temp">до −7 °C</span><p>Для низьких зимових моделей.</p></div>
+     <div class="airtex-version"><strong>AirTex<sup>+</sup></strong><span class="airtex-temp">до −18 °C</span><p>Для високих моделей.<br>Додатковий шар утеплення.</p></div>
+    </figcaption>
+   </figure>
+   <div class="airtex-details">
+    <h3 class="airtex-detail-head">Продумане утеплення.<br>У кожному шарі.</h3>
+    <div class="airtex-layer"><button type="button" data-airtex-toggle aria-expanded="true" aria-controls="airtexFabric"><span>01</span><b>Тканина високої щільності</b><i aria-hidden="true">−</i></button><p id="airtexFabric">Основа термопідкладки AirTex — щільний тканинний утеплювач. У версії AirTex+ додатковий шар утеплення допомагає зберігати тепло в холоднішу погоду.</p></div>
+    <div class="airtex-layer"><button type="button" data-airtex-toggle aria-expanded="false" aria-controls="airtexFoil"><span>02</span><b>Фольгований шар</b><i aria-hidden="true">+</i></button><p id="airtexFoil" hidden>Відбиває теплове випромінювання всередину та допомагає зменшувати тепловтрати. Так тепло довше залишається біля стопи.</p></div>
+    <div class="airtex-layer"><button type="button" data-airtex-toggle aria-expanded="false" aria-controls="airtexAir"><span>03</span><b>Мікроперфорація</b><i aria-hidden="true">+</i></button><p id="airtexAir" hidden>Мікропроколи у фольгованому шарі забезпечують повітрообмін усередині підкладки.</p></div>
+    <p class="airtex-note">Схематична візуалізація принципу роботи матеріалів.</p>
+   </div>
+  </div>
+ </div>
 </section>
 
 <!-- KHARKIV -->
@@ -2836,10 +2866,16 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
                 <path d="M12 2l-2 2M12 2l2 2M12 22l-2-2M12 22l2-2M4.2 6.5l2.7.2M4.2 6.5l.9 2.5M19.8 17.5l-2.7-.2M19.8 17.5l-.9-2.5M19.8 6.5l-2.7.2M19.8 6.5l-.9 2.5M4.2 17.5l2.7-.2M4.2 17.5l.9-2.5"/>
               </svg>
             </span>
-            <span class="season-txt"><b>Зимові термо · +900 ₴</b><span>Термо-підкладка · до −7°C</span></span>
+            <span class="season-txt"><b>Зимові термо · +900 ₴</b><span>AirTex · до −7 °C</span></span>
           </button>
         </div>
       </div>
+
+      <details class="airtex-product" id="m_airtex" hidden>
+        <summary><span data-airtex-product-title></span></summary>
+        <div class="airtex-product-visual"><img src="/assets/airtex/airtex-layers.jpg" alt="Схема тканинного утеплення AirTex та AirTex+ з фольгованим мікроперфорованим шаром" width="1536" height="1024" loading="lazy" decoding="async"></div>
+        <div class="airtex-product-content"><p data-airtex-product-description></p><ul><li><strong>Фольгований шар</strong> допомагає відбивати тепло всередину та зменшувати тепловтрати.</li><li><strong>Мікроперфорація</strong> у фольгованому шарі — для повітрообміну.</li></ul><small>Схематична візуалізація принципу роботи матеріалів.</small></div>
+      </details>
 
       <div class="ms" id="m_size_block">
         <div class="ms-label">Розмір · <span>ЄС / СМ</span></div>
@@ -3525,8 +3561,8 @@ window.ulteraNormalizeAutumnCopy(DATA);
     mark: 'NEW',
     category: 'ULTERA;Зима',
     title: 'ULTERA - Hunk Thermo',
-    desc: 'Зимова модель Hunk з утепленням до −15 °C, вологостійким верхом та зимовим протектором.',
-    text: 'ULTERA Hunk Thermo — висока зимова модель для снігу, сльоти та морозної погоди.<br><br>Вологостійкий верх із Cordura® та шкіри допомагає зберігати ноги сухими.<br>Тепла підкладка й утеплювач розраховані на температуру до −15 °C.<br>Підошва EVA Bounce із зимовим протектором забезпечує мʼяку амортизацію та впевнене зчеплення.<br><br>Ручна робота в Харкові.<br>Термін виробництва 12–14 днів.<br>Гарантія 1 рік.',
+    desc: 'Зимова модель Hunk з утепленням до −18 °C, вологостійким верхом та зимовим протектором.',
+    text: 'ULTERA Hunk Thermo — висока зимова модель для снігу, сльоти та морозної погоди.<br><br>Вологостійкий верх із Cordura® та шкіри допомагає зберігати ноги сухими.<br>Термопідкладка AirTex+ з тканини високої щільності та додатковим шаром утеплення розрахована на температуру до −18 °C.<br>Підошва EVA Bounce із зимовим протектором забезпечує мʼяку амортизацію та впевнене зчеплення.<br><br>Ручна робота в Харкові.<br>Термін виробництва 12–14 днів.<br>Гарантія 1 рік.',
     photo: '/photos/hunk-thermo-black-01.webp',
     price: '5600.00',
     price_old: '5500',
@@ -3545,7 +3581,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
     swatch: '#0a0a0a',
     color_name: 'Чорний',
     size_list: sizePairs.map(function(pair){ return {eu:pair[0], cm:pair[1], qty:'9999'}; }),
-    characteristics: 'Верх: Cordura® + шкіра; підошва: EVA Bounce із зимовим протектором; сезон: зима; температура: до −15 °C',
+    characteristics: 'Верх: Cordura® + шкіра; підошва: EVA Bounce із зимовим протектором; сезон: зима; температура: до −18 °C',
     materials: 'Cordura®; натуральна шкіра; утеплювач; тепла текстильна підкладка; EVA Bounce'
   };
   var khakiProduct = {
@@ -3554,8 +3590,8 @@ window.ulteraNormalizeAutumnCopy(DATA);
     mark: 'NEW',
     category: 'ULTERA;Зима',
     title: 'ULTERA - Hunk Thermo Khaki',
-    desc: 'Зимова модель Hunk у кольорі хакі з утепленням до −15 °C, вологостійким верхом та зимовим протектором.',
-    text: 'ULTERA Hunk Thermo Khaki — висока зимова модель для снігу, сльоти та морозної погоди.<br><br>Вологостійкий верх із Cordura® та шкіри допомагає зберігати ноги сухими.<br>Тепла підкладка й утеплювач розраховані на температуру до −15 °C.<br>Підошва EVA Bounce із зимовим протектором забезпечує мʼяку амортизацію та впевнене зчеплення.<br><br>Ручна робота в Харкові.<br>Термін виробництва 12–14 днів.<br>Гарантія 1 рік.',
+    desc: 'Зимова модель Hunk у кольорі хакі з утепленням до −18 °C, вологостійким верхом та зимовим протектором.',
+    text: 'ULTERA Hunk Thermo Khaki — висока зимова модель для снігу, сльоти та морозної погоди.<br><br>Вологостійкий верх із Cordura® та шкіри допомагає зберігати ноги сухими.<br>Термопідкладка AirTex+ з тканини високої щільності та додатковим шаром утеплення розрахована на температуру до −18 °C.<br>Підошва EVA Bounce із зимовим протектором забезпечує мʼяку амортизацію та впевнене зчеплення.<br><br>Ручна робота в Харкові.<br>Термін виробництва 12–14 днів.<br>Гарантія 1 рік.',
     photo: '/photos/hunk-thermo-khaki-01.webp',
     price: '5600.00',
     price_old: '5500',
@@ -3574,7 +3610,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
     swatch: '#77765b',
     color_name: 'Хакі',
     size_list: sizePairs.map(function(pair){ return {eu:pair[0], cm:pair[1], qty:'9999'}; }),
-    characteristics: 'Верх: Cordura® + шкіра; підошва: EVA Bounce із зимовим протектором; сезон: зима; температура: до −15 °C',
+    characteristics: 'Верх: Cordura® + шкіра; підошва: EVA Bounce із зимовим протектором; сезон: зима; температура: до −18 °C',
     materials: 'Cordura®; натуральна шкіра; утеплювач; тепла текстильна підкладка; EVA Bounce'
   };
   var family = (DATA.featured || []).find(function(row){ return row && row.family === 'Hunk Thermo'; })
@@ -3629,7 +3665,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
       category: 'ULTERA;Зима',
       title: title,
       desc: desc,
-      text: title + ' — зимова версія Aganta для снігу, сльоти та морозної погоди.<br><br>Вологостійкий верх із Cordura® та шкіри допомагає зберігати ноги сухими.<br>Тепла підкладка й утеплювач розраховані на температуру до −15 °C.<br>Підошва EVA Bounce із зимовим протектором забезпечує мʼяку амортизацію та впевнене зчеплення.<br><br>Ручна робота в Харкові.<br>Термін виробництва 12–14 днів.<br>Гарантія 1 рік.',
+      text: title + ' — зимова версія Aganta для снігу, сльоти та морозної погоди.<br><br>Вологостійкий верх із Cordura® та шкіри допомагає зберігати ноги сухими.<br>Термопідкладка AirTex+ з тканини високої щільності та додатковим шаром утеплення розрахована на температуру до −18 °C.<br>Підошва EVA Bounce із зимовим протектором забезпечує мʼяку амортизацію та впевнене зчеплення.<br><br>Ручна робота в Харкові.<br>Термін виробництва 12–14 днів.<br>Гарантія 1 рік.',
       photo: photo,
       price: '5600.00',
       price_old: '5500',
@@ -3648,7 +3684,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
       swatch: swatch,
       color_name: colorName,
       size_list: sizePairs.map(function(pair){ return {eu:pair[0], cm:pair[1], qty:'9999'}; }),
-      characteristics: 'Верх: Cordura® + шкіра; підошва: EVA Bounce із зимовим протектором; сезон: зима; температура: до −15 °C',
+      characteristics: 'Верх: Cordura® + шкіра; підошва: EVA Bounce із зимовим протектором; сезон: зима; температура: до −18 °C',
       materials: 'Cordura®; натуральна шкіра; утеплювач; тепла текстильна підкладка; EVA Bounce'
     };
   }
@@ -3658,7 +3694,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
     'Чорний',
     '#0a0a0a',
     'https://ultera.in.ua/assets/catalog360/hq-20261021/550020260921/000.webp',
-    'Зимова модель Aganta в чорному кольорі з утепленням до −15 °C, вологостійким верхом та зимовим протектором.'
+    'Зимова модель Aganta в чорному кольорі з утепленням до −18 °C, вологостійким верхом та зимовим протектором.'
   );
   var blueProduct = makeProduct(
     blueUid,
@@ -3666,7 +3702,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
     'Aqva',
     '#8fc7f2',
     'https://ultera.in.ua/assets/catalog360/hq-20261021-v2/550020260922/000.webp',
-    'Зимова модель Aganta в блакитному кольорі з утепленням до −15 °C, вологостійким верхом та зимовим протектором.'
+    'Зимова модель Aganta в блакитному кольорі з утепленням до −18 °C, вологостійким верхом та зимовим протектором.'
   );
   var pistachioWhiteProduct = makeProduct(
     pistachioWhiteUid,
@@ -3674,7 +3710,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
     'Фісташково-білий',
     'linear-gradient(135deg,#111214 0 34%,#f3f2ee 34% 67%,#d9ddbd 67%)',
     'https://ultera.in.ua/assets/catalog360/hq-20261021-v2/550020260923/000.webp',
-    'Зимова модель Aganta у фісташково-білому кольорі з чорним верхом, утепленням до −15 °C, вологостійкими матеріалами та зимовим протектором.'
+    'Зимова модель Aganta у фісташково-білому кольорі з чорним верхом, утепленням до −18 °C, вологостійкими матеріалами та зимовим протектором.'
   );
   var beigeProduct = makeProduct(
     beigeUid,
@@ -3682,7 +3718,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
     'Бежевий',
     'linear-gradient(135deg,#b9a68f 0 58%,#f4f2ec 58%)',
     'https://ultera.in.ua/assets/catalog360/hq-20261021/550020260924/000.webp',
-    'Зимова модель Aganta у бежево-білому кольорі з утепленням до −15 °C, вологостійкими матеріалами та зимовим протектором.'
+    'Зимова модель Aganta у бежево-білому кольорі з утепленням до −18 °C, вологостійкими матеріалами та зимовим протектором.'
   );
   var sageProduct = makeProduct(
     sageUid,
@@ -3690,7 +3726,7 @@ window.ulteraNormalizeAutumnCopy(DATA);
     'Шавлія',
     'linear-gradient(135deg,#a8afa3 0 62%,#f4f4f1 62%)',
     'https://ultera.in.ua/assets/catalog360/hq-20261021/550020260925/000.webp',
-    'Зимова модель Aganta у відтінку шавлії з білою підошвою, утепленням до −15 °C, вологостійкими матеріалами та зимовим протектором.'
+    'Зимова модель Aganta у відтінку шавлії з білою підошвою, утепленням до −18 °C, вологостійкими матеріалами та зимовим протектором.'
   );
   var oreoProduct = makeProduct(
     oreoUid, 'ULTERA - Aganta Thermo Oreo', 'Oreo',
@@ -3974,15 +4010,15 @@ function renderFeatured(){
                    sub:'Мінімалістичні кросівки нового формату. Шкіра Nappa + ПУ-підошва.',
                    specs:[['ПІДОШВА','EVA'],['ВЕРХ','Шкіра Nappa + вологостійка Cordura'],['СЕЗОН','Осінь'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
-    'Aganta Thermo': { serial:'AG-TH-03', title:'Aganta Thermo', badge:'ВИРОБНИЦТВО 12-14 ДНІВ', tag:'ЗИМА \u00b7 ДО −15°C',
-                   sub:'Зимова версія Aganta з теплою підкладкою, вологостійким верхом та зимовим протектором.',
-                   specs:[['ПІДОШВА','EVA Bounce'],['ВЕРХ','Cordura® + шкіра'],['СЕЗОН','Зима · до −15°C'],['ГАРАНТІЯ','1 рік']],
+    'Aganta Thermo': { serial:'AG-TH-03', title:'Aganta Thermo', badge:'ВИРОБНИЦТВО 12-14 ДНІВ', tag:'ЗИМА \u00b7 ДО −18°C',
+                   sub:'Зимова версія Aganta з термопідкладкою AirTex+, вологостійким верхом та зимовим протектором.',
+                   specs:[['ПІДОШВА','EVA Bounce'],['ВЕРХ','Cordura® + шкіра'],['СЕЗОН','Зима · до −18°C'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
     'Thermo': { serial:'AG-TH-03', title:'Aganta Thermo', badge:'ВИРОБНИЦТВО 4-10 ДНІВ', tag:'ULTERA',
                  sub:'', specs:[['ПІДОШВА','EVA'],['ВЕРХ','Nappa'],['ВИПУЩЕНО','Харків'],['ГАРАНТІЯ','1 рік']], handler:null },
-    'Hunk Thermo': { serial:'HUNK-TH-01', title:'Hunk Thermo', badge:'ВИРОБНИЦТВО 12-14 ДНІВ', tag:'ЗИМА \u00b7 ДО −15°C',
-                   sub:'Висока зимова версія Hunk із теплою підкладкою, вологостійким верхом та зимовим протектором.',
-                   specs:[['ПІДОШВА','EVA Bounce'],['ВЕРХ','Cordura® + шкіра'],['СЕЗОН','Зима · до −15°C'],['ГАРАНТІЯ','1 рік']],
+    'Hunk Thermo': { serial:'HUNK-TH-01', title:'Hunk Thermo', badge:'ВИРОБНИЦТВО 12-14 ДНІВ', tag:'ЗИМА \u00b7 ДО −18°C',
+                   sub:'Висока зимова версія Hunk із термопідкладкою AirTex+, вологостійким верхом та зимовим протектором.',
+                   specs:[['ПІДОШВА','EVA Bounce'],['ВЕРХ','Cordura® + шкіра'],['СЕЗОН','Зима · до −18°C'],['ГАРАНТІЯ','1 рік']],
                    handler:null },
     'Travel Thermo': { serial:'TRAVEL-TH-01', title:'Travel Thermo', badge:'ТЕРМО', tag:'ЗИМА · НОВИНКА',
                    sub:'Висока термо-модель із верхом Cordura® та шкіряними вставками. Чорний колір і рельєфний протектор.',
@@ -4629,7 +4665,7 @@ function openModal(uid){
     '<b>Анатомічна устілка</b> — знімна, з амортизацією під п’ятою',
     '<b>Шнурівка</b>'
   ];
-  const MATERIALS_HUNK_THERMO_BRFT_W = ["<b>Cordura</b> — вологостійкий верх", "<b>Термо-версія</b> — утеплення входить у вартість", "<b>Barefoot</b> — барефут-модель", "<b>Шнурівка</b>"];
+  const MATERIALS_HUNK_THERMO_BRFT_W = ["<b>Cordura</b> — вологостійкий верх", "<b>AirTex+</b> — тканина високої щільності та додатковий шар утеплення, до −18 °C", "<b>Barefoot</b> — барефут-модель", "<b>Шнурівка</b>"];
   const MATERIALS_DEFAULT = [
     '<b>Nappa</b> — натуральна шкіра (Італія)',
     '<b>Cordura 1000D</b> — вологостійка, осіння версія',
@@ -4640,21 +4676,21 @@ function openModal(uid){
   ];
   const MATERIALS_THERMO = [
     '<b>Cordura® + шкіра</b> — вологостійкий верх, тримає сніг і сльоту',
-    '<b>Утеплювач</b> — тепло до −15 °C',
-    '<b>Тепла підкладка</b>',
+    '<b>AirTex+</b> — термопідкладка з тканини високої щільності, до −18 °C',
+    '<b>Додатковий шар утеплення</b>',
     '<b>Підошва EVA Bounce</b> — зимовий протектор',
     '<b>Устілка</b> з боковою підтримкою',
     '<b>Рефлективні шнурки</b>'
   ];
   const MATERIALS_TRAVEL = [
     '<b>Cordura® + шкіра</b> — текстильний верх зі шкіряними вставками',
-    '<b>Термо-версія</b> — входить у вартість моделі',
+    '<b>AirTex+</b> — тканина високої щільності та додатковий шар утеплення, до −18 °C',
     '<b>Високий комір</b> та шнурівка',
     '<b>Підошва</b> з рельєфним протектором'
   ];
   const MATERIALS_WAVE2 = [
     '<b>Текстиль + шкіра</b> — хвилясті вставки та фактурний носок',
-    '<b>Термо-версія</b> — входить у вартість моделі',
+    '<b>AirTex+</b> — тканина високої щільності та додатковий шар утеплення, до −18 °C',
     '<b>Блискавка спереду</b> та шнур із фіксатором',
     '<b>Підошва</b> з рельєфним протектором'
   ];
@@ -4698,6 +4734,7 @@ function openModal(uid){
   // Опис — прибираємо дублювання з матеріалами, але залишаємо осінній опис Cordura.
   let desc = (p.text||'').replace(/<div[^>]*>/g,'').replace(/<\/div>/g,'');
   desc = window.ulteraAutumnText(desc);
+  if (['Thermo','Hunk Thermo','Aganta Thermo','Hunk Thermo BRFT W','Travel Thermo','WAVE2 Thermo'].includes(p.family)) desc = desc.replace(/−15/g,'−18');
   // приберемо рядки-списки з матеріалами та технічні дублікати
   desc = desc.split(/<br\s*\/?>|\n/).filter(line => {
     const low = line.toLowerCase();
@@ -4811,6 +4848,7 @@ function openModal(uid){
   (function(){var __m=document.getElementById('modal');__m.classList.add('open');try{__m.scrollTop=0;var __i=__m.querySelector('.modal');if(__i)__i.scrollTop=0;}catch(_){}})();
   syncYu11Purchase();
   document.body.style.overflow = 'hidden';
+  window.ulteraAirtex?.syncProduct(p, window.__modalSeason);
 }
 function closeModal(){
   window.ulteraCard360?.stop();
@@ -4883,6 +4921,7 @@ function pickSeason(btn, id, label){
   }
   document.getElementById('m_price').innerHTML = priceHtml;
   syncYu11Purchase();
+  window.ulteraAirtex?.syncProduct(p, id);
 }
 
 function syncModalThumbnails(idx){
@@ -5012,7 +5051,7 @@ function addToCart(){
   const canSeason = !NO_SEASON.includes(p.family);
   const seasonId   = isThermo ? 'winter' : (canSeason ? (window.__modalSeason || 'autumn') : null);
   const isNewThermo = ['Hunk Thermo BRFT W','Travel Thermo','WAVE2 Thermo','Thermo Ked'].includes(p.family);
-  const seasonLabel = isNewThermo ? 'Зима · термо' : isThermo ? 'Зима · до −15°C' : (seasonId === 'winter' ? 'Зимові термо · до −7°C' : (seasonId === 'autumn' ? 'Осінь' : ''));
+  const seasonLabel = isNewThermo ? 'Зима · термо' : isThermo ? 'Зима · до −18°C' : (seasonId === 'winter' ? 'Зимові термо · до −7°C' : (seasonId === 'autumn' ? 'Осінь' : ''));
   const seasonExtra = winterExtra(p.family, seasonId);
   const basePrice  = parseFloat(p.price) || 0;
   const finalPrice = (basePrice + seasonExtra).toFixed(2);
@@ -8152,6 +8191,7 @@ insertWomanDivider();
 <script src="/assets/catalog360/product-gallery.js?v=20261102-1" defer></script>
 </body>
 </html>
+
 
 
 

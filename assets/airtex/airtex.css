@@ -1,0 +1,57 @@
+.airtex{background:#151714;color:#f4f3ee;padding:76px 0 60px;scroll-margin-top:70px;overflow:hidden}
+.airtex-head{display:flex;justify-content:space-between;gap:36px;align-items:end;margin-bottom:26px}
+.airtex-eyebrow{font:10px/1.5 var(--font-mono);letter-spacing:.12em;color:#c8fa28;margin-bottom:18px}
+.airtex h2{font:700 clamp(52px,7vw,98px)/.95 var(--font-sans);letter-spacing:-.055em}
+.airtex h2 span{color:#b2b8ab;font-weight:400}
+.airtex-intro{max-width:390px;color:#bcc1b5;font-size:15px;line-height:1.7}
+.airtex-content{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);gap:48px;align-items:center}
+.airtex-visual{min-width:0}
+.airtex-visual img{width:100%;height:auto;display:block}
+.airtex-versions{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:0 5%}
+.airtex-version{border-top:1px solid #5e6652;padding:15px 0 0}
+.airtex-version strong{display:block;font-size:24px;font-weight:600;letter-spacing:-.04em}
+.airtex-version strong sup{color:#c8fa28;font-size:20px;margin-left:2px;top:0}
+.airtex-version .airtex-temp{display:block;color:#c8fa28;font:500 34px/1.25 var(--font-sans);letter-spacing:-.04em;margin-top:8px}
+.airtex-version p{font-size:12px;color:#bcc1b5;line-height:1.6;margin-top:7px;max-width:250px}
+.airtex-detail-head{font-size:29px;line-height:1.12;font-weight:600;letter-spacing:-.035em;max-width:330px;margin-bottom:22px}
+.airtex-layer{border-top:1px solid #ffffff26}
+.airtex-layer:last-of-type{border-bottom:1px solid #ffffff26}
+.airtex-layer button{width:100%;display:flex;align-items:center;gap:13px;text-align:left;min-height:70px;padding:15px 0;color:#f4f3ee}
+.airtex-layer button>span:first-child{font:11px var(--font-mono);color:#8f9883;flex:0 0 24px}
+.airtex-layer button b{font-size:16px;font-weight:500;flex:1}
+.airtex-layer button i{font-style:normal;font-size:22px;color:#b9c2ab}
+.airtex-layer button[aria-expanded="true"] b,.airtex-layer button[aria-expanded="true"]>span:first-child{color:#c8fa28}
+.airtex-layer p{padding:0 16px 20px 37px;color:#bcc1b5;font-size:13px;line-height:1.8}
+.airtex-layer p[hidden]{display:none}
+.airtex-note{font:10px/1.8 var(--font-mono);color:#8f9883;margin-top:24px}
+.airtex a:focus-visible,.airtex button:focus-visible{outline:2px solid #c8fa28;outline-offset:3px}
+.airtex-product{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 0 20px;padding:0}
+.airtex-product[hidden]{display:none!important}
+.airtex-product summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;list-style:none;cursor:pointer;font-size:13px;font-weight:600;color:#273e1d}
+.airtex-product summary::-webkit-details-marker{display:none}
+.airtex-product summary::after{content:"+";font-size:23px;font-weight:400}
+.airtex-product[open] summary::after{content:"−"}
+.airtex-product summary:focus-visible{outline:2px solid #537344;outline-offset:2px}
+.airtex-product-visual{background:#151714;border-radius:10px;overflow:hidden}
+.airtex-product-visual img{width:100%;height:auto;display:block}
+.airtex-product-content{padding:12px 0 18px;color:var(--ink-60);font-size:13px;line-height:1.7}
+.airtex-product-content strong{color:var(--ink)}
+.airtex-product-content ul{padding-left:18px;margin-top:9px}
+.airtex-product-content small{display:block;font-size:10px;color:var(--ink-40);margin-top:10px}
+@media(max-width:1000px){.airtex-content{gap:24px;grid-template-columns:minmax(0,1.2fr) minmax(260px,1fr)}.airtex-intro{max-width:330px}}
+@media(max-width:760px){
+ .airtex{padding:44px 0 38px;scroll-margin-top:56px}
+ .airtex-head{display:block;margin-bottom:4px}
+ .airtex h2{font-size:60px}
+ .airtex-intro{margin-top:20px;max-width:460px;font-size:13px;line-height:1.7}
+ .airtex-content{display:flex;flex-direction:column;gap:35px;align-items:stretch}
+ .airtex-visual{margin:0 -12px}
+ .airtex-versions{margin:0 12px;gap:20px}
+ .airtex-version strong{font-size:23px}
+ .airtex-version .airtex-temp{font-size:31px}
+ .airtex-version p{font-size:11px}
+ .airtex-detail-head{font-size:26px;margin-bottom:20px}
+ .airtex-layer button{min-height:64px}
+ .airtex-layer p{font-size:12px}
+ .airtex-note{font-size:9px}
+}
