@@ -7,6 +7,20 @@
 .airtex-motion-material--lining{background-position:center top;transform:translateY(-7.1%)}
 .airtex-motion-material--fabric{background-position:center center;transform:translateY(-1.4%)}
 .airtex-motion-material--foil{background-position:center bottom;transform:translateY(2.7%)}
+.airtex-material-label{position:absolute;top:74%;z-index:8;display:inline-flex;align-items:center;gap:6px;max-width:76%;padding:6px 8px;border:1px solid #c8fa286b;border-radius:6px;background:#141a12f2;box-shadow:0 3px 12px #0005;color:#f4f3ee;font:600 10px/1.25 var(--font-sans,Arial,sans-serif);letter-spacing:0;transform:translateY(-50%);pointer-events:none;opacity:0;visibility:hidden;animation:airtexLayerLabelCycle 12s linear infinite}
+.airtex-material-label small{font:500 8px/1 var(--font-mono,monospace);color:#c8fa28;flex-shrink:0}
+.airtex-material-label::after{content:"";position:absolute;top:50%;width:15px;height:1px;background:#c8fa2899}
+.airtex-material-label--left{left:6%}
+.airtex-material-label--left::after{left:100%}
+.airtex-material-label--right{right:6%}
+.airtex-material-label--right::after{right:100%}
+.airtex-material-label--foil{background:#142027f2;border-color:#c9dce599}
+.airtex-material-label--foil small{color:#d6e8f2}
+.airtex-material-label--foil::after{background:#d6e8f299}
+.airtex-material-label--shell{animation:none;opacity:1;visibility:visible;color:#d4fb6c;border-color:#c8fa2899;top:76%}
+.airtex-motion[data-motion-visible="false"] .airtex-material-label,.airtex-motion[data-motion-paused="true"] .airtex-material-label{animation-play-state:paused}
+.airtex-motion[data-motion-view="expanded"] .airtex-motion-layer .airtex-material-label{animation:none;opacity:1;visibility:visible}
+.airtex-motion[data-motion-view="assembled"] .airtex-motion-layer .airtex-material-label{animation:none;opacity:0;visibility:hidden}
 .airtex-motion[data-motion-visible="false"] .airtex-motion-layer,.airtex-motion[data-motion-paused="true"] .airtex-motion-layer{animation-play-state:paused}
 .airtex-motion[data-motion-view="assembled"] .airtex-motion-layer{animation:none;transform:translateY(calc(-50% + var(--offset)*7px))}
 .airtex-motion[data-motion-view="expanded"] .airtex-motion-layer{animation:none;transform:translateY(calc(-50% + var(--offset)*var(--spread)))}
@@ -54,6 +68,7 @@
  0%,8%,49%,100%{transform:translateY(calc(-50% + var(--offset)*7px))}
  23%,38%{transform:translateY(calc(-50% + var(--offset)*var(--spread)))}
 }
+@keyframes airtexLayerLabelCycle{0%,14%,46%,100%{opacity:0;visibility:hidden}22%,38%{opacity:1;visibility:visible}}
 @keyframes airtexCorduraCycle{0%,54%,100%{opacity:0;transform:translateY(calc(-50% - 110px))}61%,88%{opacity:1;transform:translateY(calc(-50% - 36px))}95%{opacity:0;transform:translateY(calc(-50% - 110px))}}
 @keyframes airtexThermalCaption{0%,51%,100%{opacity:1;visibility:visible}57%,95%{opacity:0;visibility:hidden}}
 @keyframes airtexCorduraCaption{0%,58%,97%,100%{opacity:0;visibility:hidden}63%,89%{opacity:1;visibility:visible}}
@@ -62,4 +77,6 @@
 @keyframes airtexWaterRipple{0%,65%,76%,100%{opacity:0;transform:scale(.1)}66%{opacity:.8;transform:scale(.15)}74%{opacity:0;transform:scale(1.2)}}
 @keyframes airtexWaterRunoff{0%,66%,88%,100%{opacity:0;transform:translate(0,0)}68%{opacity:1;transform:translate(0,0)}74%{opacity:1;transform:translate(calc(var(--run-x)*.15),7px)}81%{opacity:.95;transform:translate(var(--run-x),45px)}85%{opacity:0;transform:translate(var(--run-x),110px) scale(.7,1.7)}}
 @media(max-width:760px){.airtex-motion{padding-bottom:18px}.airtex-motion-controls button{min-height:40px;padding:8px 15px;font-size:10px}.airtex-motion--single .airtex-motion-stacks{padding:0 8%}.airtex-motion--single .airtex-stack{--spread:44px}.airtex-motion-title{font-size:15px}}
+@media(max-width:480px){.airtex-material-label{gap:5px;padding:5px 7px}.airtex-material-label--left{left:3%}.airtex-material-label--right{right:3%}.airtex-material-label::after{width:11px}}
 @media(prefers-reduced-motion:reduce){.airtex-motion:not([data-motion-opt-in="true"]) .airtex-motion-layer{animation:none!important;will-change:auto;transform:translateY(calc(-50% + var(--offset)*var(--spread)))}.airtex-motion:not([data-motion-opt-in="true"]) .airtex-shell,.airtex-motion:not([data-motion-opt-in="true"]) .airtex-motion-captions>p,.airtex-motion:not([data-motion-opt-in="true"]) .airtex-water-impact>span{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.airtex-motion:not([data-motion-opt-in="true"]) .airtex-motion-layer .airtex-material-label{animation:none!important;opacity:1;visibility:visible}}

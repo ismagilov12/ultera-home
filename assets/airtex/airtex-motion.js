@@ -14,10 +14,13 @@
   materials.forEach(function(type,i){
    var layer=document.createElement('span');layer.className='airtex-motion-layer';layer.setAttribute('aria-hidden','true');
    layer.style.setProperty('--offset',String(i-(materials.length-1)/2));layer.style.setProperty('--depth',String(materials.length-i));
-   var material=document.createElement('span');material.className='airtex-motion-material airtex-motion-material--'+type;layer.appendChild(material);root.appendChild(layer);
+   var material=document.createElement('span');material.className='airtex-motion-material airtex-motion-material--'+type;layer.appendChild(material);
+   var label=document.createElement('span');label.className='airtex-material-label airtex-material-label--'+(i%2?'right':'left')+(type==='foil'?' airtex-material-label--foil':'');
+   label.innerHTML='<small>0'+(i+1)+'</small><span>'+(type==='foil'?'Фольгований шар':i===0?'Термопідкладка':i===3?'Додатковий утеплювач':'Щільний утеплювач')+'</span>';layer.appendChild(label);root.appendChild(layer);
   });
   var shell=document.createElement('span');shell.className='airtex-shell';shell.setAttribute('aria-hidden','true');
   var cordura=document.createElement('span');cordura.className='airtex-motion-material airtex-motion-material--fabric airtex-cordura';shell.appendChild(cordura);
+  var shellLabel=document.createElement('span');shellLabel.className='airtex-material-label airtex-material-label--right airtex-material-label--shell';shellLabel.innerHTML='<span>Вологостійка Cordura</span>';shell.appendChild(shellLabel);
   [[34,40,-1],[52,33,1],[68,47,1]].forEach(function(position,i){
    var impact=document.createElement('span');impact.className='airtex-water-impact';impact.style.left=position[0]+'%';impact.style.top=position[1]+'%';impact.style.setProperty('--water-delay',(i*.23)+'s');impact.style.setProperty('--run-direction',position[2]);
    ['drop','ripple','bead'].forEach(function(type){var water=document.createElement('span');water.className='airtex-water-'+type;impact.appendChild(water);});
