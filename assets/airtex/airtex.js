@@ -12,7 +12,7 @@
    });
   });
  });
- var highFamilies=['Thermo','Hunk Thermo','Aganta Thermo','Hunk Thermo BRFT W','Travel Thermo','WAVE2 Thermo'];
+ var highFamilies=['Thermo','Hunk Thermo','Aganta Thermo','Hunk Thermo BRFT W','Travel Thermo','WAVE2 Thermo','Thermo Ked'];
  function profile(product){
   var family=String(product&&product.family||'').trim();
   if(!product||!family||/^(tees|insole|shape)$/i.test(family))return null;
@@ -56,8 +56,7 @@
   if(!details)return;
   var family=String(product&&product.family||'').trim();
   var high=highFamilies.indexOf(family)!==-1;
-  var lowNative=family==='Thermo Ked';
-  var winter=high||lowNative||season==='winter';
+  var winter=high||season==='winter';
   var excluded=/^(tees|insole|shape|02|lite|hunk summer w)$/i.test(family);
   details.hidden=!product||!winter||excluded;
   if(details.dataset.uid!==String(product&&product.uid||'')){details.open=false;}
