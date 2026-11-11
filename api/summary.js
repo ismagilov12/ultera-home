@@ -4,6 +4,9 @@ const {dates,day,settings,planProgress,profitPlan}=require('../assets/summary-co
 const {loadCRM,createReader}=require('./_summary-keycrm.js');
 const {loadSiteRows,enrichVersions,loadWayfp,mergePayments}=require('./_summary-site.js');
 const ACCOUNT='1095942551692734';
+// Quantity targets are per month; financial assumptions remain in the private
+// authenticated configuration, not in the repository or browser assets.
+const PLAN_TARGETS=Object.freeze({'2026-10':300,'2026-11':450});
 function kyivMidnight(date){
   dates(date,date);
   const utc=Date.parse(date+'T00:00:00Z');let value=utc;
@@ -46,7 +49,11 @@ function createHandler({fetcher=globalThis.fetch,env=process.env,now=()=>new Dat
       const url=new URL(req.url,'https://ultera.in.ua'),from=url.searchParams.get('from'),to=url.searchParams.get('to');
       try{dates(from,from);dates(to,to);if(from>to||(Date.parse(to)-Date.parse(from))/86400000>731||to>day(now()))throw new Error();}
       catch{return send(400,{error:'Оберіть коректні дати не пізніше сьогодні'});}
-      const includePlan=url.searchParams.get('include_plan')==='2026-10',planFrom='2026-10-01',planTo=day(now())<'2026-10-31'?day(now()):'2026-10-31';
+      const requestedPlan=url.searchParams.get('include_plan');
+      const planMonth=Object.hasOwn(PLAN_TARGETS,requestedPlan)?requestedPlan:null;
+      const includePlan=planMonth!==null,planFrom=includePlan?planMonth+'-01':null;
+      const planLast=includePlan?new Date(Date.UTC(Number(planMonth.slice(0,4)),Number(planMonth.slice(5,7)),0,12)).toISOString().slice(0,10):null;
+      const planTo=includePlan?(day(now())<planLast?day(now()):planLast):null;
       let readFrom=from,readTo=to;
       if(includePlan&&planTo>=planFrom){
         const a=from<planFrom?from:planFrom,b=to>planTo?to:planTo;
@@ -63,13 +70,13 @@ function createHandler({fetcher=globalThis.fetch,env=process.env,now=()=>new Dat
       let monthPlan=null,monthOrders=orders,monthQuality=quality;
       const monthScope={ordersComplete:true,earliestOrderDate:readFrom,latestOrderDate:readTo};
       if(includePlan){
-        monthPlan=planProgress(orders,'2026-10',300,fetchedAt,assumptions,monthScope);
+        monthPlan=planProgress(orders,planMonth,PLAN_TARGETS[planMonth],fetchedAt,assumptions,monthScope);
         if(!monthPlan.complete){
           try{
             const after=new Date(planTo+'T12:00Z');after.setUTCDate(after.getUTCDate()+1);
             const monthly=await loadCRM({fetcher,token:env.KEYCRM_TOKEN,start:kyivMidnight(planFrom),end:kyivMidnight(after.toISOString().slice(0,10)),siteSourceId,fetchedAt,reader});
             monthOrders=monthly.orders;monthQuality=monthly.quality;monthScope.earliestOrderDate=planFrom;monthScope.latestOrderDate=planTo;
-            monthPlan=planProgress(monthly.orders,'2026-10',300,fetchedAt,assumptions,{ordersComplete:true,earliestOrderDate:planFrom,latestOrderDate:planTo});
+            monthPlan=planProgress(monthly.orders,planMonth,PLAN_TARGETS[planMonth],fetchedAt,assumptions,{ordersComplete:true,earliestOrderDate:planFrom,latestOrderDate:planTo});
           }catch{ /* A failed independent plan read never becomes zero or hides a valid report. */ }
         }
       }
@@ -90,7 +97,7 @@ function createHandler({fetcher=globalThis.fetch,env=process.env,now=()=>new Dat
         }
       }catch(e){adSourceReady=false;}
       if(monthPlan){
-        try{monthPlan.financials=profitPlan(monthOrders,adDays,monthPlan,assumptions,{...monthScope,currencyComplete:monthQuality.unknownCurrencyOrders===0},configRows[0]?.assumptions?.monthlyPlans?.['2026-10']);}
+        try{monthPlan.financials=profitPlan(monthOrders,adDays,monthPlan,assumptions,{...monthScope,currencyComplete:monthQuality.unknownCurrencyOrders===0},configRows[0]?.assumptions?.monthlyPlans?.[planMonth]);}
         catch{monthPlan.financials=null;}
       }
       return send(200,{orders,sources,adDays,assumptions,monthPlan,metadata:{preview:false,ordersComplete:true,earliestOrderDate:readFrom,latestOrderDate:readTo,fetchedAt,lastCRMStatusSync:fetchedAt,scopeLabel:'Усі джерела KeyCRM · поточні статуси',sourceLabel:'KeyCRM; первинні моделі та версії сайту; WayForPay; Meta — імпортовані дні Windsor.ai',adSourceReady,advertisingMode:'stored_days',allCRMOrders:true,siteSourceId,quality,currencyComplete:quality.unknownCurrencyOrders===0,dateBasis:'ordered_at',version:'original-models-plan-v3',siteReady,siteVersionLines:siteInfo.matchedLines,payments:{minimumAmount:200,wfpReady:wfpReady&&siteReady,unmatchedInstallments:paymentInfo.unmatchedInstallments}}});

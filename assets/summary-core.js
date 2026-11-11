@@ -120,6 +120,13 @@
     if(!assumptions)return null;
     const {marginPerPair,adCostPerPair,operatingExpense}=assumptions;
     for(const n of [marginPerPair,adCostPerPair,operatingExpense])if(!valid(n)||Number(n)<0)throw new Error('Некоректні параметри плану прибутку');
+    let expenseBreakdown=null;
+    if(assumptions.expenseBreakdown!==undefined){
+      const raw=assumptions.expenseBreakdown,keys=['rent','payroll','loans','personal'];
+      if(!raw||typeof raw!=='object'||Array.isArray(raw)||Object.keys(raw).length!==keys.length||keys.some(k=>!Object.hasOwn(raw,k)||!valid(raw[k])||Number(raw[k])<0))throw new Error('Некоректний склад витрат');
+      expenseBreakdown=Object.fromEntries(keys.map(k=>[k,Number(raw[k])]));
+      if(money(Object.values(expenseBreakdown).reduce((a,b)=>a+b,0))!==money(operatingExpense))throw new Error('Склад витрат не збігається з плановою сумою');
+    }
     const cfg={...settings(config),overhead:Number(operatingExpense),extra:0};
     const overrides=assumptions.costOverrides||{};
     for(const [title,value] of Object.entries(overrides))if(!title.trim()||title.length>300||!valid(value)||Number(value)<=0)throw new Error('Некоректна собівартість моделі');
@@ -131,7 +138,7 @@
     })}));
     const target={margin:money(plan.target*marginPerPair),advertising:money(plan.target*adCostPerPair),operatingExpense:Number(operatingExpense)};
     target.afterAds=money(target.margin-target.advertising);target.net=money(target.afterAds-target.operatingExpense);
-    const answer={assumptions:{marginPerPair:Number(marginPerPair),adCostPerPair:Number(adCostPerPair),operatingExpense:Number(operatingExpense)},target,current:null,forecast:null,paceScenario:plan.projection===null?null:money(plan.projection*(marginPerPair-adCostPerPair)-operatingExpense)};
+    const answer={assumptions:{marginPerPair:Number(marginPerPair),adCostPerPair:Number(adCostPerPair),operatingExpense:Number(operatingExpense),...(expenseBreakdown?{expenseBreakdown}:{})},target,current:null,forecast:null,paceScenario:plan.projection===null?null:money(plan.projection*(marginPerPair-adCostPerPair)-operatingExpense)};
     if(!plan.complete)return answer;
     if(!plan.through||plan.through<plan.from)return {...answer,current:{net:0,share:target.net>0?0:null,expenses:0,margin:0,advertising:0,missingCostUnits:0,missingAdDays:[],days:0}};
     const meta={...metadata,sourceFiltered:false};
