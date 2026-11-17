@@ -1,6 +1,7 @@
 'use strict';
 // Read-only enrichment. Site snapshots supply original models/versions and invoice links,
-// never CRM approval, revenue or current fulfillment truth.
+// never CRM approval or current fulfillment truth. Website amounts stay separate
+// from CRM financial totals.
 const crypto=require('node:crypto');
 const finite=n=>n!==null&&n!==undefined&&n!==''&&Number.isFinite(Number(n));
 const money=n=>Math.round(n*100)/100;
@@ -20,15 +21,33 @@ function siteKind(item){
 async function loadSiteRows(rest,orders){
   const ids=[...new Set(orders.map(o=>Number(o.keycrm_id)).filter(n=>Number.isSafeInteger(n)&&n>0))],rows=[];
   for(let i=0;i<ids.length;i+=75){
-    const batch=await rest('ulhome_orders',new URLSearchParams({select:'keycrm_id,items,payment_ref,created_at',keycrm_id:'in.('+ids.slice(i,i+75).join(',')+')',order:'created_at.desc',limit:'1000'}));
+    const batch=await rest('ulhome_orders',new URLSearchParams({select:'keycrm_id,items,total,status,payment_ref,created_at',status:'neq.lead',keycrm_id:'in.('+ids.slice(i,i+75).join(',')+')',order:'created_at.desc',limit:'1000'}));
     if(batch.length>=1000)throw new Error('Site links may be incomplete');
     rows.push(...batch);
   }
   return rows;
 }
+function allocateSiteRevenue(items,total){
+  // Stored item prices are weights, not the final charged total: an order promo
+  // may have reduced total. Allocate the saved website total, including insoles,
+  // before selecting footwear. Never borrow revenue from a renamed CRM line.
+  if(!finite(total)||Number(total)<0||!items.length)return items.map(()=>null);
+  const weights=items.map(i=>{
+    const qty=Number(i.qty??i.quantity);
+    return Number.isSafeInteger(qty)&&qty>0&&finite(i.price)&&Number(i.price)>=0?qty*Number(i.price):null;
+  });
+  const raw=weights.reduce((s,n)=>s+(n||0),0),cents=Math.round(Number(total)*100);
+  if(weights.some(n=>n===null||!Number.isFinite(n))||!Number.isFinite(raw)||raw<=0||!Number.isSafeInteger(cents))return items.map(()=>null);
+  const shares=weights.map(w=>cents*w/raw),allocated=shares.map(Math.floor);
+  const remainder=cents-allocated.reduce((s,n)=>s+n,0);
+  const ranked=shares.map((v,index)=>({index,fraction:v-allocated[index]})).sort((a,b)=>b.fraction-a.fraction||a.index-b.index);
+  for(let n=0;n<remainder;n++)allocated[ranked[n].index]++;
+  return allocated.map(n=>n/100);
+}
 function enrichVersions(orders,siteRows){
   const byOrder=new Map(),refs=new Map();let matchedLines=0;
   for(const row of siteRows){
+    if(row.status==='lead')continue;
     const id=String(row.keycrm_id);if(!byOrder.has(id))byOrder.set(id,row);
     const ref=keyPart(row.payment_ref);if(ref){if(!refs.has(ref))refs.set(ref,new Set());refs.get(ref).add(id);}
   }
@@ -36,10 +55,11 @@ function enrichVersions(orders,siteRows){
     const row=byOrder.get(String(order.keycrm_id));if(!row||!Array.isArray(row.items))continue;
     // Explicit allowlist only. Do not copy arbitrary stored JSON, notes, URLs or PII.
     // Model identity/title come from the order snapshot, never the current catalog/CRM.
-    order.site_items=row.items.flatMap(item=>{
+    const revenues=allocateSiteRevenue(row.items,row.total);
+    order.site_items=row.items.flatMap((item,index)=>{
       const qty=Number(item.qty??item.quantity),uid=keyPart(item.uid),title=keyPart(item.title||item.name),kind=siteKind(item);
       if(!Number.isSafeInteger(qty)||qty<=0||!uid||!title||['insole','other'].includes(kind))return [];
-      return [{uid:uid.slice(0,160),title:title.slice(0,300),size:keyPart(item.size).slice(0,80)||'Не вказано',qty,kind_hint:kind,is_footwear:true}];
+      return [{uid:uid.slice(0,160),title:title.slice(0,300),family:keyPart(item.family).slice(0,160),size:keyPart(item.size).slice(0,80)||'Не вказано',qty,kind_hint:kind,is_footwear:true,revenue:revenues[index]}];
     });
     // Original site selection is a separate measure: a manager can replace the CRM SKU
     // or size. Never mislabel the current CRM line using an approximate model match.
@@ -113,5 +133,6 @@ function mergePayments(orders,refs,transactions,wfpReady){
   }
   return {unmatchedInstallments};
 }
-module.exports={loadSiteRows,enrichVersions,loadWayfp,compactTransactions,mergePayments,siteSku,siteKind,INSTALLMENT_SYSTEMS};
+module.exports={loadSiteRows,enrichVersions,loadWayfp,compactTransactions,mergePayments,siteSku,siteKind,allocateSiteRevenue,INSTALLMENT_SYSTEMS};
+
 

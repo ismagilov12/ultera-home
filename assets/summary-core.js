@@ -83,7 +83,11 @@
       });
       const payment=o.payment||{},paymentKnown=payment.known===true&&valid(payment.paidAmount)&&Number(payment.paidAmount)>=0;
       const sv=o.site_version,siteVersion=sv&&['pairs','knownPairs','thermalPairs'].every(k=>valid(sv[k])&&Number(sv[k])>=0)&&sv.thermalPairs<=sv.knownPairs&&sv.knownPairs<=sv.pairs?{pairs:Number(sv.pairs),knownPairs:Number(sv.knownPairs),thermalPairs:Number(sv.thermalPairs)}:null;
-      const siteItems=Array.isArray(o.site_items)?o.site_items.filter(i=>i&&String(i.uid||'').trim()&&String(i.title||'').trim()&&Number.isSafeInteger(i.qty)&&i.qty>0&&i.is_footwear===true).map(i=>({uid:'site-model:'+String(i.uid),title:String(i.title),size:String(i.size||'Не вказано'),qty:i.qty,kind:kind(i)})):[];
+      const siteItems=Array.isArray(o.site_items)?o.site_items.filter(i=>i&&String(i.uid||'').trim()&&String(i.title||'').trim()&&Number.isSafeInteger(i.qty)&&i.qty>0&&i.is_footwear===true&&!['insole','other'].includes(i.kind_hint)).map(i=>{
+        const version=['standard','thermal','boot'].includes(i.kind_hint)?i.kind_hint:'unknown';
+        return {uid:'site-model:'+String(i.uid),title:String(i.title),family:String(i.family||''),size:String(i.size||'Не вказано'),qty:i.qty,kind:version,
+          revenue:valid(i.revenue)&&Number(i.revenue)>=0?money(i.revenue):null,cost:valid(cfg[version])?money(Number(cfg[version])*i.qty):null};
+      }):[];
       out.push({id:key,number:o.keycrm_id||o.number,day:day(o.created_at),created_at:o.created_at,customer:String(o.customer_key||key),status:st,total,
         payment:{known:paymentKnown,paidAmount:paymentKnown?money(payment.paidAmount):null,installment:paymentKnown&&payment.installment===true,wfpPaid:paymentKnown&&payment.wfpPaid===true},
         siteVersion,siteItems,
@@ -164,12 +168,12 @@
     const customers=Object.fromEntries(Object.keys(b).map(k=>[k,new Set()]));
     const products=new Map(),siteProducts=new Map(),daily=new Map(ds.map(d=>[d,{date:d,approved:0,approvedCustomers:0,redeemed:0,revenue:0,redeemedRevenue:0,pairs:0,adSpend:null,adSpendUSD:null,aov:null,cac:null,sitePairs:0,knownVersionPairs:0,thermalPairs:0,thermalShare:null}]));
     const dailyCustomers=new Map(ds.map(d=>[d,new Set()]));
-    const cities=new Map(),campaigns=new Map(),variants=new Map(),sizes=new Map();
+    const cities=new Map(),campaigns=new Map(),variants=new Map(),sizes=new Map(),siteSizes=new Map(),siteVariants=new Map();
     const sources=new Map(),reconciliation={pairs:0,approvedPairs:0,pendingPairs:0,unknownPairs:0,productRevenue:0,productCost:0,missingProductRevenue:0,missingProductCost:0,crmExpensesApproved:0};
     const quality={unknownCategoryUnits:0,unknownSizePairs:0,unknownVersionPairs:0};
     const payments={orders:0,full:0,minimum:0,partial:0,unpaid:0,unknown:0,receivedAmount:0,installments:0,installmentsFull:0,installmentsMinimum:0,wfpPaidOrders:0,wfpReady:metadata.payments?.wfpReady===true};
     const primaryVersions={orders:0,pairs:0,knownPairs:0,thermalPairs:0,unknownPairs:0,share:null};
-    const originalModels={orders:0,pairs:0,withoutSnapshotOrders:0};
+    const originalModels={orders:0,pairs:0,knownVersionPairs:0,withoutSnapshotOrders:0};
     for(const o of os) {
       accumulate(b.all,o);customers.all.add(o.customer);
       const approved=o.status==='approved'||o.status==='redeemed';
@@ -197,9 +201,21 @@
       if(o.siteItems.length)originalModels.orders++;else if(o.lines.some(i=>i.footwear))originalModels.withoutSnapshotOrders++;
       for(const i of o.siteItems){
         originalModels.pairs+=i.qty;
-        if(!siteProducts.has(i.uid))siteProducts.set(i.uid,{uid:i.uid,title:i.title,footwear:true,qty:0,redeemedQty:0,daily:new Map(ds.map(date=>[date,{date,qty:0,redeemedQty:0}]))});
+        if(i.kind!=='unknown')originalModels.knownVersionPairs+=i.qty;
+        if(!siteProducts.has(i.uid))siteProducts.set(i.uid,{uid:i.uid,title:i.title,family:i.family,footwear:true,qty:0,redeemedQty:0,revenue:0,cost:0,missingRevenueUnits:0,missingCostUnits:0,sizes:new Map(),variants:new Map(),daily:new Map(ds.map(date=>[date,{date,qty:0,redeemedQty:0}]))});
         const model=siteProducts.get(i.uid),date=model.daily.get(o.day);model.qty+=i.qty;date.qty+=i.qty;
         if(o.status==='redeemed'){model.redeemedQty+=i.qty;date.redeemedQty+=i.qty;}
+        model.revenue+=i.revenue||0;model.cost+=i.cost||0;
+        if(i.revenue===null)model.missingRevenueUnits+=i.qty;if(i.cost===null)model.missingCostUnits+=i.qty;
+        const sizeKey=i.size+'|'+i.kind;
+        if(!model.sizes.has(sizeKey))model.sizes.set(sizeKey,{size:i.size,kind:i.kind,qty:0,redeemed:0,revenue:0,missingRevenueUnits:0});
+        const size=model.sizes.get(sizeKey);size.qty+=i.qty;size.revenue+=i.revenue||0;
+        if(i.revenue===null)size.missingRevenueUnits+=i.qty;if(o.status==='redeemed')size.redeemed+=i.qty;
+        model.variants.set(i.kind,(model.variants.get(i.kind)||0)+i.qty);
+        siteSizes.set(i.size,(siteSizes.get(i.size)||0)+i.qty);
+        if(!siteVariants.has(i.kind))siteVariants.set(i.kind,{kind:i.kind,qty:0,revenue:0,cost:0,missingRevenueUnits:0,missingCostUnits:0});
+        const variant=siteVariants.get(i.kind);variant.qty+=i.qty;variant.revenue+=i.revenue||0;variant.cost+=i.cost||0;
+        if(i.revenue===null)variant.missingRevenueUnits+=i.qty;if(i.cost===null)variant.missingCostUnits+=i.qty;
       }
       payments.orders++;
       const payment=o.payment;
@@ -266,7 +282,12 @@
       roas:coverageOK&&spend>0?b.approved.revenue/spend:null,
       grossMargin:b.approved.missingCostUnits?null:money(b.approved.revenue-b.approved.cost),
       grossMarginRate:b.approved.missingCostUnits||!b.approved.revenue?null:(b.approved.revenue-b.approved.cost)/b.approved.revenue,
-      quality,payments,primaryVersions,originalModels,siteProducts:[...siteProducts.values()].map(p=>({...p,daily:[...p.daily.values()]})).sort((a,b)=>b.qty-a.qty||a.title.localeCompare(b.title,'uk')),thermalPairs,thermalKnownPairs,thermalShare:thermalKnownPairs?thermalPairs/thermalKnownPairs:null,
+      quality,payments,primaryVersions,originalModels,
+      siteProducts:[...siteProducts.values()].map(p=>({...p,revenue:p.missingRevenueUnits?null:money(p.revenue),cost:p.missingCostUnits?null:money(p.cost),margin:p.missingRevenueUnits||p.missingCostUnits?null:money(p.revenue-p.cost),daily:[...p.daily.values()],
+        sizes:[...p.sizes.values()].map(s=>({...s,revenue:s.missingRevenueUnits?null:money(s.revenue)})).sort((a,b)=>a.size.localeCompare(b.size,'uk',{numeric:true})||a.kind.localeCompare(b.kind)),variants:[...p.variants].map(([kind,qty])=>({kind,qty}))})).sort((a,b)=>b.qty-a.qty||a.title.localeCompare(b.title,'uk')),
+      siteSizes:[...siteSizes].map(([size,qty])=>({size,qty})).sort((a,b)=>a.size.localeCompare(b.size,'uk',{numeric:true})),
+      siteVariants:[...siteVariants.values()].map(v=>({...v,revenue:v.missingRevenueUnits?null:money(v.revenue),margin:v.missingRevenueUnits||v.missingCostUnits?null:money(v.revenue-v.cost)})),
+      thermalPairs,thermalKnownPairs,thermalShare:thermalKnownPairs?thermalPairs/thermalKnownPairs:null,
       reconciliation:{...reconciliation,productRevenue:money(reconciliation.productRevenue),productCost:money(reconciliation.productCost),crmExpensesApproved:money(reconciliation.crmExpensesApproved)},
       sources:[...sources.values()].map(s=>({...s,revenue:money(s.revenue),approvedCustomers:s.approvedCustomers.size})).sort((a,b)=>b.pairs-a.pairs),
       daily:[...daily.values()],products:[...products.values()].map(p=>({...p,revenue:money(p.revenue),cost:money(p.cost),margin:p.missingCostUnits?null:money(p.revenue-p.cost),daily:[...p.daily.values()].map(d=>({...d,revenue:money(d.revenue)})),sizes:[...p.sizes.values()].sort((a,b)=>a.size.localeCompare(b.size,'uk',{numeric:true})||a.kind.localeCompare(b.kind)),variants:[...p.variants].map(([kind,qty])=>({kind,qty}))})).sort((a,b)=>b.qty-a.qty||b.revenue-a.revenue),
@@ -276,6 +297,7 @@
   }
   return {DEFAULTS,money,day,dates,previous,settings,status,kind,footwear,unitCost,normalize,planProgress,profitPlan,summarize};
 });
+
 
 
 
