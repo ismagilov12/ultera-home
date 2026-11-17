@@ -1,5 +1,8 @@
 {
   "ignoreCommand": "exit 1",
+  "functions": {
+    "api/meta-spend-sync.js": { "maxDuration": 300 }
+  },
   "headers": [
     {
       "source": "/reset-password.html",
@@ -54,6 +57,10 @@
     }
   ],
   "crons": [
+    {
+      "path": "/api/meta-spend-sync",
+      "schedule": "0 8 * * *"
+    },
     {
       "path": "/api/keycrm-sync?action=sync",
       "schedule": "0 6 * * *"

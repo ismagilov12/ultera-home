@@ -34,7 +34,14 @@
     if(!r.primaryVersions.orders&&r.quality.unknownVersionPairs)parts.push('Немає первинних версій сайту для цього періоду / джерела. Термо не визначається за ціною або схожою назвою.');
     if(r.metadata.siteReady===false)parts.push('Первинні версії замовлень сайту тимчасово недоступні. Невідомі версії не замінюються звичайними.');
     if(r.reconciliation.crmExpensesApproved)parts.push('Окремо в CRM записано витрат на '+uah(r.reconciliation.crmExpensesApproved)+'. Вони не віднімаються повторно: перевірте, чи включені у ваші загальні / додаткові витрати.');
-    if(!r.metadata.preview&&r.metadata.advertisingMode==='stored_days'){const days=(data.adDays||[]).map(d=>d.date).sort();const fetched=(data.adDays||[]).map(d=>d.fetched_at).filter(Boolean).sort().at(-1);parts.push('Meta: збережені імпортовані дні'+(days.length?' до '+days.at(-1):' відсутні')+'. Автоматичне оновлення реклами ще не підключене.'+(fetched?' Дані отримано '+new Date(fetched).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv'})+'.':''));}
+    if(!r.metadata.preview&&['stored_days','automatic_stored_days'].includes(r.metadata.advertisingMode)){
+      const rows=(data.adDays||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)),latest=rows.at(-1);
+      const mode=r.metadata.advertisingMode==='automatic_stored_days'?'Автооновлення щодня; кнопка «Оновити дані» також перевіряє рекламу.':'Автооновлення ще не підключене.';
+      parts.push('Meta: витрати за київськими днями'+(latest?' до '+latest.date:' відсутні')+'. '+mode+(latest?.fetched_at?' Дані джерела станом на '+new Date(latest.fetched_at).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv'})+'.':''));
+      if(latest?.date===today)parts.push('Реклама за сьогодні — проміжна сума на час отримання джерелом, не остаточний денний бюджет.');
+      if(latest?.fetched_at&&latest.date>=y&&Date.now()-Date.parse(latest.fetched_at)>36*3600000)parts.push('Рекламний знімок старший за 36 годин. Перевірте підключення Windsor; кеш не є свіжими даними.');
+      if(data.adSyncError)parts.push(data.adSyncError);
+    }
     if(r.metadata.preview)parts.push('Це локальний знімок на '+new Date(r.metadata.fetchedAt).toLocaleString('uk-UA',{timeZone:'Europe/Kyiv'})+'. Оновлення кнопкою перечитує знімок, а не CRM. Ручні замовлення менеджера поза сайтом сюди не входять.');
     if(r.to===today)parts.push('Сьогодні ще не завершено. Для порівняння темпу оберіть завершені дні.');
     return parts.length?'<div class="s-notice">'+parts.map(esc).join('<br>')+'</div>':'';
@@ -258,7 +265,14 @@
     try{
       const previous=C.previous(range.from,range.to);
       if(window.ULTERA_SUMMARY_PREVIEW){data=window.ULTERA_SUMMARY_PREVIEW;el('s-refresh').textContent='Перечитати знімок';}
-      else {await ensureFreshSession();const response=await fetch('/api/summary?from='+previous.from+'&to='+range.to+'&include_plan=2026-11'+(force?'&refresh=1':''),{headers:authHeaders(),cache:'no-store'});const body=await response.json();if(!response.ok)throw new Error(body.error||'Не вдалося завантажити зведення');data=body;}
+      else {
+        await ensureFreshSession();let adSyncError=null;
+        if(force&&data?.metadata?.adSyncConfigured){
+          try{const syncResponse=await fetch('/api/meta-spend-sync',{method:'POST',headers:authHeaders(),cache:'no-store',signal:AbortSignal.timeout(210000)});const syncBody=await syncResponse.json();if(!syncResponse.ok)adSyncError=syncBody.error||'Рекламу не оновлено; показано останні збережені дані.';}
+          catch{adSyncError='Рекламу не оновлено; показано останні збережені дані.';}
+        }
+        const response=await fetch('/api/summary?from='+previous.from+'&to='+range.to+'&include_plan=2026-11'+(force?'&refresh=1':''),{headers:authHeaders(),cache:'no-store'});const body=await response.json();if(!response.ok)throw new Error(body.error||'Не вдалося завантажити зведення');data={...body,adSyncError};
+      }
       if(version!==requestVersion)return;
       const sources=data.sources||[];
       if(sourceFilter!=='all'&&!sources.some(s=>String(s.id)===sourceFilter))sourceFilter='all';
