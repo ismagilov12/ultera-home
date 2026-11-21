@@ -1,0 +1,18 @@
+@font-face {
+  font-family: "BF Roboto";
+  src: url("/assets/black-friday-type/roboto-ua.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-display: swap;
+}
+@font-face {
+  font-family: "BF Plex Mono";
+  src: url("/assets/black-friday-type/plex-mono-ua.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+#bf-storefront, #pairs { display: block; }
+#catalog, #pairs, #collection { scroll-margin-top: 70px; }
+body.bf-dialog-open { overflow: hidden; }
+@media (max-width: 700px) { #catalog, #pairs, #collection { scroll-margin-top: 53px; } }

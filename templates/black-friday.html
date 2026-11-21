@@ -12,17 +12,14 @@
   <meta property="og:image" content="https://ultera.in.ua/photos/black-friday/hunk3-campaign.webp">
   <meta property="og:image:alt" content="Блакитні кросівки ULTERA, артикул ЮА 11, на рифленому металі">
   <meta property="og:url" content="https://ultera.in.ua/black-friday">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" as="font" href="/assets/black-friday-type/roboto-ua.woff2" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/black-friday.css?v=pair-specs1">
-  <link rel="stylesheet" href="/assets/regular-catalog.css?v=1">
-  <script src="/assets/customer-tracking.js?v=20261025-auto1" defer></script>
-  <script src="/assets/black-friday.js?v=pair-specs1" defer></script>
-  <script src="/assets/regular-catalog.js?v=1" defer></script>
+  <link rel="stylesheet" href="/assets/black-friday-page.css?v=shop1">
+  <script src="/assets/black-friday.js?v=shop1" defer></script>
 </head>
 <body>
-  <a class="skip" href="#pairs">До каталогу</a>
-  <header class="topbar">
+  <link rel="stylesheet" href="/assets/black-friday.css?v=shop1">
+  <a class="skip bf-surface" href="#pairs">До каталогу</a>
+  <header class="topbar bf-surface">
     <div class="frame topbar-in">
       <a class="logo" href="/" aria-label="До основного магазину ULTERA"><img src="/logo.png" alt="ULTERA" width="1370" height="293"></a>
       <nav class="primary-nav" aria-label="Колекції">
@@ -35,6 +32,7 @@
     </div>
   </header>
   <main>
+    <div class="bf-surface">
     <section class="campaign" aria-labelledby="sale-title">
       <picture class="campaign-scene">
         <source media="(max-width: 700px)" srcset="/photos/black-friday/hunk3-campaign-mobile.webp">
@@ -52,7 +50,8 @@
         </button>
       </div>
     </section>
-    <section id="pairs" class="collection frame" aria-labelledby="collection-title">
+    <slot name="pairs-anchor"></slot>
+    <section class="collection frame" aria-labelledby="collection-title">
       <div class="catalog-head">
         <div class="catalog-title"><h2 id="collection-title">Усі пари</h2><span id="result-count" aria-live="polite"></span></div>
         <label class="sort"><span>Сортувати</span><select id="sort">
@@ -69,52 +68,21 @@
       <noscript>Увімкніть JavaScript, щоб побачити наявні розміри й оформити замовлення.</noscript>
       <div class="grid" id="products"></div>
     </section>
-    <section id="catalog" class="regular-catalog" aria-labelledby="regular-title">
-      <div class="frame">
-        <div class="regular-head">
-          <h2 id="regular-title">Каталог ULTERA</h2>
-          <div id="regular-filters" role="group" aria-label="Фільтр основного каталогу" hidden>
-            <button type="button" data-gender="all" aria-pressed="true">Усі моделі</button>
-            <button type="button" data-gender="m" aria-pressed="false">Чоловічі</button>
-            <button type="button" data-gender="f" aria-pressed="false">Жіночі</button>
-          </div>
-        </div>
-        <p id="regular-status" role="status"></p>
-        <div id="regular-error" hidden>
-          <p>Не вдалося завантажити каталог.</p>
-          <button type="button" id="regular-retry">Спробувати ще раз</button>
-          <a href="/#collection">Перейти до магазину</a>
-        </div>
-        <noscript><a href="/#collection">Відкрити каталог у магазині ULTERA</a></noscript>
-        <div class="regular-grid" id="regular-grid"></div>
-        <template id="regular-card">
-          <article class="regular-card">
-            <a class="regular-photo"><img alt="" loading="lazy" decoding="async"></a>
-            <div class="regular-info">
-              <div class="regular-name"><h3></h3><strong class="regular-price"></strong></div>
-              <p class="regular-color"></p>
-              <div class="regular-options">
-                <div class="regular-swatches" role="group" aria-label="Вибір кольору"></div>
-                <a class="regular-open">Обрати розмір</a>
-              </div>
-            </div>
-          </article>
-        </template>
-      </div>
-    </section>
+    </div>
+    <slot name="catalog"></slot>
   </main>
-  <footer class="end">
+  <footer class="end bf-surface">
     <div class="frame end-in">
       <a class="logo" href="/" aria-label="ULTERA — основний магазин"><img src="/logo.png" alt="ULTERA" width="1370" height="293"></a>
       <div><span>Є питання щодо пари?</span><a href="tel:+380735688574">+380 73 568 85 74</a></div>
       <a class="end-store" href="/">До основної колекції</a>
     </div>
   </footer>
-  <dialog id="detail" aria-labelledby="detail-title">
+  <dialog id="detail" class="bf-surface" aria-labelledby="detail-title">
     <button type="button" class="close dialog-x" aria-label="Закрити картку">×</button>
     <div id="detail-body"></div>
   </dialog>
-  <dialog id="guide" class="small-dialog" aria-labelledby="guide-title">
+  <dialog id="guide" class="small-dialog bf-surface" aria-labelledby="guide-title">
     <button type="button" class="close dialog-x" aria-label="Закрити">×</button>
     <p class="eyebrow">Розміри ULTERA</p>
     <h2 id="guide-title">Як перевірити розмір</h2>
@@ -125,10 +93,10 @@
     </ol>
     <a class="cta dark" href="tel:+380735688574">Уточнити замір у ULTERA</a>
   </dialog>
-  <dialog id="zoom" aria-labelledby="zoom-title">
+  <dialog id="zoom" class="bf-surface" aria-labelledby="zoom-title">
     <div class="zoom-tools"><span id="zoom-title"></span><button type="button" class="close" aria-label="Закрити збільшення">×</button></div>
     <div id="zoom-scroll" tabindex="0" aria-label="Збільшена фотографія, можна прокручувати"><img id="zoom-image" alt=""></div>
   </dialog>
-  <div class="notice" id="notice" hidden><span id="notice-text" role="status"></span><a data-basket href="/#cart">До кошика</a><button type="button" aria-label="Закрити сповіщення">×</button></div>
+  <div class="notice bf-surface" id="notice" hidden><span id="notice-text" role="status"></span><a data-basket href="/#cart">До кошика</a><button type="button" aria-label="Закрити сповіщення">×</button></div>
 </body>
 </html>

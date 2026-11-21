@@ -1,5 +1,6 @@
 {
   "ignoreCommand": "exit 1",
+  "buildCommand": "node build-black-friday.cjs",
   "functions": {
     "api/meta-spend-sync.js": { "maxDuration": 300 }
   },

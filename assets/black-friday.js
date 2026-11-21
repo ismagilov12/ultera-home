@@ -1,6 +1,15 @@
 (() => {
   'use strict';
-  const byId = id => document.getElementById(id);
+  const host = document.getElementById('bf-storefront');
+  if (!host) return;
+  let root = host.shadowRoot;
+  if (!root) {
+    const template = host.querySelector('template[shadowrootmode]');
+    root = host.attachShadow({mode:'open'});
+    root.append(template.content);
+    template.remove();
+  }
+  const byId = id => root.getElementById(id);
   const grid = byId('products');
   const sizes = byId('sizes');
   const detail = byId('detail');
@@ -91,7 +100,15 @@
     if (/^utm_|^(fbclid|gclid|ttclid|campaign_id|adset_id|ad_id)$/.test(key)) checkout.searchParams.set(key,value);
   }
   checkout.hash = 'cart';
-  document.querySelectorAll('[data-basket]').forEach(link => { link.href = checkout.href; });
+  root.querySelectorAll('[data-basket]').forEach(link => { link.href = checkout.href; });
+  function showBasket() {
+    if (typeof openCart !== 'function') { location.assign(checkout.href); return; }
+    if (detail.open) closeProduct();
+    byId('notice').hidden = true;
+    CART.items = basket();
+    updateCartBadge();
+    openCart();
+  }
 
   function original(item) {
     const note = notes[item.uid];
@@ -117,7 +134,7 @@
     let cart;
     try { cart=basket(); } catch { cart=[]; }
     byId('cart-count').textContent = String(cart.reduce((sum,x)=>sum+(Number(x?.qty)||1),0));
-    document.querySelectorAll('[data-buy]').forEach(button => {
+    root.querySelectorAll('[data-buy]').forEach(button => {
       const item=itemFor(button.dataset.buy);
       if(!item) return;
       const selected=cart.some(line=>line.uid===item.uid && String(line.size)===item.size);
@@ -139,15 +156,21 @@
     try {
       const cart=basket();
       if(cart.some(line=>line.uid===item.uid && String(line.size)===item.size)) {
-        location.assign(checkout.href);
+        showBasket();
         return;
       }
       const line={uid:item.uid,title:[articleLabel(item),item.condition].filter(Boolean).join(' · '),
         photo:new URL(item.photo,location.origin).href,color_name:item.color,
         size:item.size,price:item.price,qty:1,family:'SaleOstatki',saleItem:true};
-      cart.push(line);
-      localStorage.setItem(basketKey,JSON.stringify(cart));
-      window.trackJourney?.('add_to_cart',line);
+      if (typeof CART !== 'undefined') {
+        CART.items = cart;
+        CART.add(line);
+        updateCartBadge();
+      } else {
+        cart.push(line);
+        localStorage.setItem(basketKey,JSON.stringify(cart));
+        window.trackJourney?.('add_to_cart',line);
+      }
       syncBasket();
       if(detail.open) closeProduct();
       notice(articleLabel(item)+' · '+sizeLabel(item)+' у кошику',true);
@@ -348,7 +371,11 @@
   }
   sizes.addEventListener('click',e=>{const b=e.target.closest('[data-size]');if(b) changeFilter('size',b.dataset.size);});
   byId('sort').addEventListener('change',e=>changeFilter('sort',e.target.value));
-  document.addEventListener('click',e=>{
+  root.addEventListener('click',e=>{
+    const link = e.target.closest('a[data-basket]');
+    if (link && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+      e.preventDefault(); showBasket(); return;
+    }
     const b=e.target.closest('button');
     if(!b) return;
     if(b.hasAttribute('data-open')) showProduct(itemFor(b.dataset.open));
@@ -382,8 +409,33 @@
   byId('notice').querySelector('button').addEventListener('click',()=>{byId('notice').hidden=true;});
   byId('retry').addEventListener('click',refresh);
   window.addEventListener('popstate',()=>{if(hasLoaded) syncRoute();});
-  window.addEventListener('pageshow',()=>{syncBasket();refresh();});
-  window.addEventListener('storage',e=>{if(e.key===basketKey) syncBasket();});
+  function reloadBasket() {
+    if (typeof CART !== 'undefined') { CART.items = basket(); updateCartBadge(); }
+    syncBasket();
+  }
+  window.addEventListener('ultera:cart-change',syncBasket);
+  window.addEventListener('pageshow',()=>{reloadBasket();refresh();});
+  window.addEventListener('storage',e=>{if(e.key===basketKey || e.key===null) reloadBasket();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncBasket();refresh();}});
-  syncBasket(); refresh();
+  const dialogObserver = new MutationObserver(() => {
+    document.body.classList.toggle('bf-dialog-open', [detail, guide, zoom].some(dialog => dialog.open));
+  });
+  for (const dialog of [detail, guide, zoom]) dialogObserver.observe(dialog, {attributes:true, attributeFilter:['open']});
+
+  // Rendering the sale inserts rows above a linked collection. Restore the
+  // customer's landing position once, unless they have already started browsing.
+  const initialAnchor = ['#catalog','#collection'].includes(location.hash) && document.querySelector(location.hash);
+  const input = new AbortController();
+  if (initialAnchor) {
+    for (const type of ['pointerdown','wheel','keydown']) {
+      window.addEventListener(type, () => input.abort(), {once:true, passive:true, signal:input.signal});
+    }
+  }
+  syncBasket();
+  refresh().then(() => {
+    if (initialAnchor) requestAnimationFrame(() => {
+      if (!input.signal.aborted && location.hash === '#' + initialAnchor.id) initialAnchor.scrollIntoView({behavior:'instant'});
+      input.abort();
+    });
+  });
 })();

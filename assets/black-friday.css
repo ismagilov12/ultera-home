@@ -1,34 +1,17 @@
-@font-face {
-  font-family: Roboto;
-  src: url("/assets/black-friday-type/roboto-ua.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 100 900;
-  font-stretch: 75% 100%;
-  font-display: swap;
-}
-@font-face {
-  font-family: "IBM Plex Mono";
-  src: url("/assets/black-friday-type/plex-mono-ua.woff2") format("woff2");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-:root {
+.bf-surface {
   --ink: #141719;
   --muted: #515b62;
   --line: #cbd1d1;
   --paper: #f3f5f4;
   --lime: #dfff43;
-  --mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, Roboto, monospace;
-  font-family: Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "BF Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  font: 400 16px/normal "BF Roboto", "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: normal;
   color: var(--ink);
   background: var(--paper);
   -webkit-font-smoothing: antialiased;
 }
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 75px; }
-body { margin: 0; }
-body:has(dialog[open]) { overflow: hidden; }
 h1, h2, h3, h4, p, dl, dd, figure { margin: 0; }
 button, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
@@ -119,7 +102,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .size-tag { white-space: nowrap; }
 .condition { background: var(--lime); border-color: #9db828; }
 .condition.grade { flex-direction: column; align-items: flex-start; gap: 3px; }
-.condition.grade small { font: 500 11px/1.1 Roboto,sans-serif; }
+.condition.grade small { font: 500 11px/1.1 "BF Roboto",sans-serif; }
 .condition.sold { background: var(--ink); color: white; border-color: var(--ink); }
 .macro-caption { position: absolute; bottom: 8px; left: 8px; max-width: min(64%,240px); padding: 5px 8px; color: white; background: #111719e8; font-size: 13px; font-weight: 620; pointer-events: none; }
 .card-info { padding: clamp(12px,1.15vw,21px); padding-top: 15px; border-top: 1px solid #e2e6e4; flex: 1; display: flex; flex-direction: column; }
@@ -152,7 +135,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 dialog { border: 1px solid #8d9695; color: var(--ink); background: #fff; padding: 0; max-height: 94dvh; }
 dialog::backdrop { background: #070b0ddc; }
 .close, .expand { display: grid; place-items: center; background: #fffffff3; color: var(--ink); border: 1px solid #b7c0bd; cursor: pointer; }
-.close { width: 41px; height: 41px; border-radius: 50%; font: 28px/1 Roboto, sans-serif; }
+.close { width: 41px; height: 41px; border-radius: 50%; font: 28px/1 "BF Roboto", sans-serif; }
 .dialog-x { position: absolute; right: 13px; top: 13px; z-index: 4; }
 #detail { width: min(1100px,94vw); overflow: auto; }
 .detail-layout { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); }
@@ -217,7 +200,6 @@ dialog::backdrop { background: #070b0ddc; }
   .campaign-intro { font-size: 15px; }
 }
 @media (max-width: 700px) {
-  html { scroll-padding-top: 58px; }
   .frame { width: calc(100% - 32px); }
   .topbar-in { height: 53px; gap: 16px; }
   .logo img { width: 97px; }
@@ -290,4 +272,8 @@ dialog::backdrop { background: #070b0ddc; }
   .expand { min-height: 34px; bottom: 7px; right: 7px; }
 }
 @media (max-width: 360px) { .frame { width: calc(100% - 24px); } .card-info { padding: 8px; } .card h3 { font-size: 19px; } }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition: none !important; animation: none !important; } }
+@media (max-width: 390px) {
+  .topbar-in, .primary-nav { gap: 10px; }
+  .topbar .cart-link > span:nth-child(2) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }

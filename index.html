@@ -3901,7 +3901,7 @@ function cartPromoPercent(item){ return !isCampaignPair(item) && (item.promoSeco
 const CART = {
   items: JSON.parse(localStorage.getItem('ultera_cart')||'[]'),
   wizard: JSON.parse(localStorage.getItem('ultera_wiz')||'{}'),
-  save(){ localStorage.setItem('ultera_cart', JSON.stringify(this.items)); },
+  save(){ localStorage.setItem('ultera_cart', JSON.stringify(this.items)); window.dispatchEvent(new Event('ultera:cart-change')); },
   saveWiz(){ localStorage.setItem('ultera_wiz', JSON.stringify(this.wizard)); },
   count(){ return this.items.reduce((s,it)=>s+(it.qty||1),0); },
   refreshPrices(){
