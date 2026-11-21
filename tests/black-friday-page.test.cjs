@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const compose = require('../build-black-friday.cjs');
+const compose = require('../lib/black-friday-page.cjs');
 const read = name => fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
 const shop = read('index.html');
 const campaign = read('templates/black-friday.html');
@@ -25,4 +25,20 @@ test('the sale has its own share metadata and uses the shop tracking and fonts o
   assert.ok(page.indexOf('<meta charset=') < 1024);
   assert.doesNotMatch(page, /rel="preload" as="image"[^>]*banners\/home-/);
   assert.doesNotMatch(page, /\/assets\/regular-catalog|id="regular-grid"/);
+});
+test('both campaign URLs serve the shared page and HEAD does not send a body', () => {
+  const handler = require('../api/black-friday-page');
+  const config = require('../vercel.json');
+  for (const source of ['/black-friday','/black-friday.html']) {
+    assert.ok(config.rewrites.some(r => r.source === source && r.destination === '/api/black-friday-page'));
+  }
+  const res = {headers:{}, setHeader(k,v){ this.headers[k]=v; }, status(n){ this.code=n; return this; }, end(v){this.body=v;}};
+  handler({method:'GET'}, res);
+  assert.equal(res.body, page);
+  assert.match(res.headers['Content-Type'], /text\/html/);
+  handler({method:'HEAD'}, res);
+  assert.equal(res.code, 200);
+  assert.equal(res.body, undefined);
+  handler({method:'POST'}, res);
+  assert.equal(res.code, 405);
 });

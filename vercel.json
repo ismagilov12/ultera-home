@@ -1,8 +1,8 @@
 {
   "ignoreCommand": "exit 1",
-  "buildCommand": "node build-black-friday.cjs",
   "functions": {
-    "api/meta-spend-sync.js": { "maxDuration": 300 }
+    "api/meta-spend-sync.js": { "maxDuration": 300 },
+    "api/black-friday-page.js": { "includeFiles": "{index.html,templates/black-friday.html}" }
   },
   "headers": [
     {
@@ -26,7 +26,11 @@
   "rewrites": [
     {
       "source": "/black-friday",
-      "destination": "/black-friday.html"
+      "destination": "/api/black-friday-page"
+    },
+    {
+      "source": "/black-friday.html",
+      "destination": "/api/black-friday-page"
     },
     {
       "source": "/tproduct/:path*",
