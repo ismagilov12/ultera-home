@@ -2,58 +2,98 @@
 <html lang="uk">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#151613">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101315">
   <title>Чорна п’ятниця — останні пари взуття | ULTERA</title>
-  <meta name="description" content="Чорна п’ятниця в ULTERA. Обирайте останні пари взуття за своїм розміром і замовляйте за ціною розпродажу.">
+  <meta name="description" content="Розпродаж останніх пар ULTERA. Перегляньте фото конкретної пари, її розмір EU та ціну й оформте замовлення.">
   <link rel="canonical" href="https://ultera.in.ua/black-friday">
   <meta property="og:title" content="Чорна п’ятниця в ULTERA">
-  <meta property="og:description" content="Розпродаж останніх пар. Оберіть свій розмір.">
-  <meta property="og:image" content="https://ultera.in.ua/photos/black-friday/09-ua1-leo-cordura-40.webp">
+  <meta property="og:description" content="Останні пари з колекцій ULTERA. Знайдіть свій розмір.">
+  <meta property="og:image" content="https://ultera.in.ua/photos/black-friday/hunk3-campaign.webp">
+  <meta property="og:image:alt" content="Блакитні ULTERA Hunk3 на рифленому металі">
   <meta property="og:url" content="https://ultera.in.ua/black-friday">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="preload" as="image" href="/photos/black-friday/09-ua1-leo-cordura-40.webp">
-  <link rel="stylesheet" href="/assets/black-friday.css">
+  <link rel="preload" as="font" href="/assets/black-friday-type/roboto-ua.woff2" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/black-friday.css?v=lookbook2">
   <script src="/assets/customer-tracking.js?v=20261025-auto1" defer></script>
-  <script src="/assets/black-friday.js" defer></script>
+  <script src="/assets/black-friday.js?v=lookbook2" defer></script>
 </head>
 <body>
-  <a href="#pairs" class="skip">Перейти до пар</a>
+  <a class="skip" href="#pairs">До каталогу</a>
   <header class="topbar">
     <div class="frame topbar-in">
-      <a class="logo" href="/" aria-label="ULTERA — на головну"><img src="/logo.png" width="1370" height="293" alt="ULTERA"></a>
-      <nav aria-label="Навігація розпродажу">
-        <a class="store-link" href="/">Магазин ULTERA <span aria-hidden="true">↗</span></a>
-        <a class="cart-link" data-basket href="/#cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 7.5h14l1 13H4l1-13Z"/><path d="M8.5 9V6a3.5 3.5 0 0 1 7 0v3"/></svg> Кошик <b id="cart-count">0</b></a>
+      <a class="logo" href="/" aria-label="До основного магазину ULTERA"><img src="/logo.png" alt="ULTERA" width="1370" height="293"></a>
+      <nav class="primary-nav" aria-label="Розділи розпродажу">
+        <a href="#pairs">Усі пари</a><button type="button" data-guide>Як обрати розмір</button>
+      </nav>
+      <nav class="store-nav" aria-label="Магазин">
+        <a class="store-link" href="/">Основний магазин</a>
+        <a data-basket class="cart-link" href="/#cart"><span class="bag" aria-hidden="true"></span><span>Кошик</span><b id="cart-count">0</b></a>
       </nav>
     </div>
   </header>
   <main>
-    <section class="mast" aria-labelledby="sale-title">
-      <div class="frame mast-in">
-        <div class="mast-copy">
-          <p class="kicker"><i aria-hidden="true"></i> Розпродаж залишків</p>
-          <h1 id="sale-title">Чорна<br>п’ятниця<span aria-hidden="true">.</span></h1>
-          <p class="intro">Кросівки, кеди й черевики з колекцій ULTERA. По одній парі в зазначеному розмірі.</p>
-          <a class="cta" href="#pairs">Обрати розмір <span aria-hidden="true">↓</span></a>
+    <section class="campaign" aria-labelledby="sale-title">
+      <picture class="campaign-scene">
+        <source media="(max-width: 700px)" srcset="/photos/black-friday/hunk3-campaign-mobile.webp">
+        <img src="/photos/black-friday/hunk3-campaign.webp" width="1961" height="802" fetchpriority="high" alt="Блакитні Hunk3 із білою рельєфною підошвою на темному рифленому металі">
+      </picture>
+      <div class="frame campaign-in">
+        <div class="campaign-copy">
+          <p class="eyebrow campaign-kicker"><span class="cutmarks" aria-hidden="true"></span> Розпродаж останніх пар</p>
+          <h1 id="sale-title"><span>Чорна</span> <em>п’ятниця</em></h1>
+          <p class="campaign-intro">Кеди, кросівки й черевики з колекцій ULTERA. По одній парі кожної моделі й кольору.</p>
+          <div class="campaign-actions"><a class="cta lime" href="#pairs">Обрати пару</a><span id="starting-price" hidden></span></div>
         </div>
-        <a class="hero-photo" id="hero-product" href="#pair-bf26-09-ua1-leo-cordura-40" aria-label="Розглянути Hunk Leo, EU 40">
-          <div class="hero-image"><img src="/photos/black-friday/09-ua1-leo-cordura-40.webp" width="1000" height="1250" alt="Hunk Leo з леопардовою Cordura та рожевою підкладкою" fetchpriority="high"></div>
-          <div class="hero-caption"><strong>Hunk Leo</strong><span>Cordura <i></i> EU 40</span><b aria-hidden="true">↗</b></div>
-        </a>
+        <button class="campaign-pair" type="button" id="hero-product" hidden>
+          <span class="hotspot" aria-hidden="true">+</span><span><small>На фото</small><strong id="hero-name">Hunk3</strong></span><span id="hero-spec"></span>
+        </button>
       </div>
     </section>
-    <section class="collection frame" id="pairs" aria-labelledby="collection-title">
-      <div class="collection-head"><h2 id="collection-title">Останні пари</h2><span id="result-count" aria-live="polite"></span></div>
-      <div class="filters"><span id="filter-label">Розмір EU</span><div id="sizes" role="group" aria-labelledby="filter-label"></div></div>
-      <div id="loading" role="status">Завантажуємо пари…</div>
-      <div id="error" hidden><p>Не вдалося оновити наявність.</p><button class="simple" id="retry" type="button">Спробувати ще раз</button></div>
-      <noscript>Увімкніть JavaScript, щоб переглянути наявні пари та оформити замовлення.</noscript>
+    <section id="pairs" class="collection frame" aria-labelledby="collection-title">
+      <div class="catalog-head">
+        <div class="catalog-title"><h2 id="collection-title">Усі пари</h2><span id="result-count" aria-live="polite"></span></div>
+        <label class="sort"><span>Сортувати</span><select id="sort">
+          <option value="edit">За добіркою</option><option value="low">Спочатку дешевші</option><option value="high">Спочатку дорожчі</option>
+        </select></label>
+      </div>
+      <div class="filter-panel">
+        <span class="filter-label" id="filter-label">Розмір EU</span>
+        <div id="sizes" role="group" aria-labelledby="filter-label"></div>
+        <button class="guide-link" data-guide type="button"><span class="ruler" aria-hidden="true"></span>Як перевірити розмір</button>
+      </div>
+      <p id="loading" role="status">Завантажуємо пари…</p>
+      <div id="error" hidden><p>Не вдалося оновити наявність.</p><button type="button" id="retry" class="cta">Оновити каталог</button></div>
+      <noscript>Увімкніть JavaScript, щоб побачити наявні розміри й оформити замовлення.</noscript>
       <div class="grid" id="products"></div>
     </section>
   </main>
-  <footer><div class="frame foot-in"><a class="logo" href="/" aria-label="ULTERA — на головну"><img src="/logo.png" width="1370" height="293" alt="ULTERA"></a><a href="/">До основної колекції <span aria-hidden="true">↗</span></a></div></footer>
-  <dialog id="detail" aria-labelledby="detail-title"><button class="close" aria-label="Закрити" type="button">×</button><div id="detail-body"></div></dialog>
-  <div class="notice" id="notice" hidden><span role="status" id="notice-text"></span><a data-basket href="/#cart">До кошика →</a><button type="button" aria-label="Закрити сповіщення">×</button></div>
+  <footer class="end">
+    <div class="frame end-in">
+      <a class="logo" href="/" aria-label="ULTERA — основний магазин"><img src="/logo.png" alt="ULTERA" width="1370" height="293"></a>
+      <div><span>Є питання щодо пари?</span><a href="tel:+380735688574">+380 73 568 85 74</a></div>
+      <a class="end-store" href="/">До основної колекції</a>
+    </div>
+  </footer>
+  <dialog id="detail" aria-labelledby="detail-title">
+    <button type="button" class="close dialog-x" aria-label="Закрити картку">×</button>
+    <div id="detail-body"></div>
+  </dialog>
+  <dialog id="guide" class="small-dialog" aria-labelledby="guide-title">
+    <button type="button" class="close dialog-x" aria-label="Закрити">×</button>
+    <p class="eyebrow">Розміри ULTERA</p>
+    <h2 id="guide-title">Як перевірити розмір</h2>
+    <ol>
+      <li>Поставте стопу на аркуш і позначте п’яту та кінчик найдовшого пальця.</li>
+      <li>Виміряйте відстань у сантиметрах. Повторіть для другої стопи й орієнтуйтеся на більший замір.</li>
+      <li>Щоб звірити довжину з конкретною парою, назвіть команді ULTERA модель і розмір із картки.</li>
+    </ol>
+    <a class="cta dark" href="tel:+380735688574">Уточнити замір у ULTERA</a>
+  </dialog>
+  <dialog id="zoom" aria-labelledby="zoom-title">
+    <div class="zoom-tools"><span id="zoom-title"></span><button type="button" class="close" aria-label="Закрити збільшення">×</button></div>
+    <div id="zoom-scroll" tabindex="0" aria-label="Збільшена фотографія, можна прокручувати"><img id="zoom-image" alt=""></div>
+  </dialog>
+  <div class="notice" id="notice" hidden><span id="notice-text" role="status"></span><a data-basket href="/#cart">До кошика</a><button type="button" aria-label="Закрити сповіщення">×</button></div>
 </body>
 </html>
