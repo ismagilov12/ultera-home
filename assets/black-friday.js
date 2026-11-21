@@ -8,6 +8,9 @@
   const zoom = byId('zoom');
   const formatter = new Intl.NumberFormat('uk-UA');
   const money = value => formatter.format(value) + ' ₴';
+  const articleLabel = item => item.article ? 'Арт. ' + item.article : 'Артикул уточнюється';
+  const centimeters = cm => cm > 0 ? formatter.format(cm) + ' см' : '';
+  const sizeLabel = item => ['EU ' + item.size, centimeters(item.cm)].filter(Boolean).join(' · ');
   const escape = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
   })[ch]);
@@ -73,9 +76,7 @@
     }
   };
   const heroUid = 'bf26-02-ua11-blue-mesh-42';
-  const textures = [heroUid, 'bf26-09-ua1-leo-cordura-40', 'bf26-05-sp10-grey-suede-42'];
   const viewNames = {studio:'На білому', macro:'Деталь', actual:'Фото пари'};
-  const previewing = new Set();
   const basketKey = 'ultera_cart';
   let items = [], activeSize = '', sort = 'edit', activeUid = null, activeView = 'studio';
   let loading = false, hasLoaded = false, noticeTimer, gesture;
@@ -105,7 +106,7 @@
     const [center,aspect] = notes[item.uid]?.studio || [61,2];
     const style = view === 'macro' ? ' style="--fx:-'+x+'%;--fy:-'+y+'%;--zoom:'+scale+'%"'
       : view === 'studio' ? ' style="--center:-'+center+'%;--aspect:'+aspect+'"' : '';
-    const description = decorate ? '' : viewNames[view] + ' · ' + item.title + ', ' + item.color;
+    const description = decorate ? '' : [viewNames[view], notes[item.uid]?.kind, articleLabel(item), item.color].filter(Boolean).join(' · ');
     const caption = withCaption && view === 'macro' && notes[item.uid] ? '<span class="macro-caption">'+escape(notes[item.uid].detail)+'</span>' : '';
     return '<span class="visual '+view+'"'+style+'><img loading="'+(lazy?'lazy':'eager')+'" decoding="async" width="'+(view==='studio'?1000:960)+'" height="'+(view==='studio'?1250:1280)+'" src="'+escape(source)+'" alt="'+escape(description)+'">'+caption+'</span>';
   }
@@ -123,7 +124,7 @@
       button.disabled=!item.available;
       button.classList.toggle('in-cart', selected && item.available);
       button.textContent = !item.available?'Продано':selected?'До кошика':'У кошик';
-      button.setAttribute('aria-label',button.textContent+' · '+item.title+' · EU '+item.size);
+      button.setAttribute('aria-label',[button.textContent, articleLabel(item), item.color, sizeLabel(item)].join(' · '));
     });
   }
   function notice(message, withLink) {
@@ -141,7 +142,7 @@
         location.assign(checkout.href);
         return;
       }
-      const line={uid:item.uid,title:[item.title,item.condition].filter(Boolean).join(' · '),
+      const line={uid:item.uid,title:[articleLabel(item),item.condition].filter(Boolean).join(' · '),
         photo:new URL(item.photo,location.origin).href,color_name:item.color,
         size:item.size,price:item.price,qty:1,family:'SaleOstatki',saleItem:true};
       cart.push(line);
@@ -149,7 +150,7 @@
       window.trackJourney?.('add_to_cart',line);
       syncBasket();
       if(detail.open) closeProduct();
-      notice(item.title+' · EU '+item.size+' у кошику',true);
+      notice(articleLabel(item)+' · '+sizeLabel(item)+' у кошику',true);
     } catch {
       if(detail.open) closeProduct();
       notice('Не вдалося зберегти кошик у браузері.',false);
@@ -159,6 +160,9 @@
     const tone=notes[item.uid]?.tone || '#51595c';
     return '<p class="colour"><i class="swatch" aria-hidden="true" style="--tone:'+tone+'"></i><span>'+escape(item.color)+'</span></p>';
   }
+  function seasonLine(item) {
+    return '<p class="pair-season"><span>Сезон</span> <strong>'+escape(item.season || 'Уточнюється')+'</strong></p>';
+  }
   function conditionBadge(item) {
     if (!item.available) return '<span class="condition sold">Продано</span>';
     if (!item.condition) return '';
@@ -167,22 +171,12 @@
     return '<span class="condition grade">' + escape(label) + explanation + '</span>';
   }
   function tile(item,index) {
-    const id=escape(item.uid), name=escape(item.title), size=escape(item.size), meta=notes[item.uid];
-    const macro=previewing.has(item.uid);
+    const id=escape(item.uid), article=escape(articleLabel(item)), size=escape(sizeLabel(item));
     return '<article class="card" id="pair-'+id+'"><div class="card-media">'+
-      '<button class="product-photo" type="button" data-open="'+id+'" aria-label="Розглянути '+name+', EU '+size+'">'+visual(item,macro?'macro':'studio',index>=6,false,true)+'</button>'+
-      '<div class="media-badges"><span class="size-tag">EU '+size+'</span>'+conditionBadge(item)+'</div>'+
-      (meta?'<button type="button" class="card-switch" data-preview="'+id+'" aria-pressed="'+macro+'">'+(macro?'Уся пара':'Деталь')+'</button>':'')+
-      '</div><div class="card-info"><p class="card-meta"><span class="product-type">'+escape(meta?.kind||'Взуття')+'</span>'+(item.article?'<span>Арт. '+escape(item.article)+'</span>':'')+'</p>'+
-      '<h3><button type="button" class="model-link" data-open="'+id+'">'+name+'</button></h3>'+colour(item)+
+      '<button class="product-photo" type="button" data-open="'+id+'" aria-label="Розглянути '+article+', '+escape(item.color)+', '+size+'">'+visual(item,'studio',index>=6)+'</button>'+
+      '<div class="media-badges"><span class="size-tag">'+size+'</span>'+conditionBadge(item)+'</div>'+
+      '</div><div class="card-info"><h3><button type="button" class="article-link" data-open="'+id+'">'+article+'</button></h3>'+seasonLine(item)+colour(item)+
       '<div class="card-action"><span class="price">'+money(item.price)+'</span>'+buyButton(item)+'</div></div></article>';
-  }
-  function materialShelf() {
-    const featured=textures.map(itemFor).filter(item=>item?.available);
-    if(featured.length<2) return '';
-    return '<section class="materials" aria-labelledby="materials-title"><div class="material-head"><h3 id="materials-title">Деталі зблизька</h3></div><div class="material-grid">'+
-      featured.map(item=>'<button type="button" class="material-cell" data-open="'+escape(item.uid)+'" data-view="macro">'+visual(item,'macro',true,true)+
-        '<span class="material-label"><strong>'+escape(item.color)+'</strong><small>'+escape(item.title)+' · EU '+escape(item.size)+'</small></span></button>').join('')+'</div></section>';
   }
   function render() {
     const selection=items.filter(item=>!activeSize || item.size===activeSize);
@@ -196,17 +190,16 @@
     byId('result-count').textContent=count+' у наявності';
     sizes.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.size===activeSize)));
     byId('sort').value=sort;
-    const editorial=!activeSize && sort==='edit' && selection.length>6;
-    grid.innerHTML=selection.length?selection.map((item,i)=>tile(item,i)+(editorial && i===5?materialShelf():'')).join(''):'<p class="empty">Наразі пар немає.</p>';
+    grid.innerHTML=selection.length?selection.map(tile).join(''):'<p class="empty">Наразі пар немає.</p>';
     syncBasket();
   }
   function syncHero() {
     const hero=itemFor(heroUid);
     byId('hero-product').hidden=!hero;
     if(hero) {
-      byId('hero-name').textContent=hero.title;
-      byId('hero-spec').textContent='EU '+hero.size+' · '+(hero.available?money(hero.price):'Продано');
-      byId('hero-product').setAttribute('aria-label','Розглянути '+hero.title+', '+hero.color+', EU '+hero.size);
+      byId('hero-name').textContent=articleLabel(hero);
+      byId('hero-spec').textContent=sizeLabel(hero)+' · '+(hero.available?money(hero.price):'Продано');
+      byId('hero-product').setAttribute('aria-label','Розглянути '+articleLabel(hero)+', '+hero.color+', '+sizeLabel(hero));
     }
     const prices=items.filter(i=>i.available && i.price>0).map(i=>i.price);
     byId('starting-price').hidden=!prices.length;
@@ -214,7 +207,12 @@
   }
   function fillSizes() {
     const all=[...new Set(items.map(item=>item.size))].sort((a,b)=>Number(a)-Number(b));
-    sizes.innerHTML=['',...all].map(size=>'<button type="button" data-size="'+escape(size)+'" aria-label="'+(size?'Розмір EU '+escape(size):'Усі розміри')+'">'+(escape(size)||'Усі')+'</button>').join('');
+    sizes.innerHTML='<button type="button" data-size="" aria-label="Усі розміри">Усі</button>'+all.map(size=>{
+      const lengths=new Set(items.filter(item=>item.size===size).map(item=>centimeters(item.cm)));
+      const cm=lengths.size===1 ? [...lengths][0] : '';
+      const label=escape('Розмір EU '+size+(cm?' · '+cm:''));
+      return '<button type="button" data-size="'+escape(size)+'" aria-label="'+label+'">'+escape(size)+(cm?'<small>'+escape(cm)+'</small>':'')+'</button>';
+    }).join('');
   }
   function changeFilter(key,value) {
     const url=new URL(location.href);
@@ -236,8 +234,7 @@
     } else if(detail.open) dismiss();
   }
   function facts(item) {
-    const pairs=[['Розмір','EU '+item.size],['Наявність',item.available?'1 пара':'Продано']];
-    if(item.article) pairs.splice(1,0,['Артикул',item.article]);
+    const pairs=[[item.cm ? 'Розмір / устілка' : 'Розмір',sizeLabel(item)],['Наявність',item.available?'1 пара':'Продано']];
     return '<dl class="facts">'+pairs.map(([label,value])=>'<div><dt>'+escape(label)+'</dt><dd>'+escape(value)+'</dd></div>').join('')+'</dl>';
   }
   function showProduct(item,view='studio',navigate=true) {
@@ -258,8 +255,8 @@
       '<div id="stage-picture"></div><button type="button" class="expand" data-zoom>Збільшити фото</button></div>'+
       '<div class="thumb-list" role="group" aria-label="Фотографії пари">'+viewsFor(item).map(v=>'<button type="button" class="thumb" data-select-view="'+v+'">'+
         visual(item,v,false,true)+'<span>'+viewNames[v]+'</span></button>').join('')+'</div></div>'+
-      '<div class="detail-copy"><p class="eyebrow">'+escape(meta?.kind||'Взуття')+' / ULTERA</p><h2 class="details-name" id="detail-title">'+escape(item.title)+'</h2>'+
-      colour(item)+(item.condition?'<p class="detail-flag">'+escape(item.condition)+'</p>':'')+desc+facts(item)+
+      '<div class="detail-copy"><h2 class="details-name" id="detail-title">'+escape(articleLabel(item))+'</h2>'+
+      seasonLine(item)+colour(item)+(item.condition?'<p class="detail-flag">'+escape(item.condition)+'</p>':'')+desc+facts(item)+
       '<div class="detail-links"><button class="guide-link" data-guide type="button"><span class="ruler" aria-hidden="true"></span>Уточнити розмір</button>'+
       '<button class="share" type="button" data-share>Посилання на пару</button></div><p id="share-result" role="status" hidden></p>'+
       '<div class="detail-buy"><strong class="price">'+money(item.price)+'</strong>'+buyButton(item)+'</div></div></div>';
@@ -301,8 +298,8 @@
     const item=itemFor(activeUid);
     if(!item) return;
     const pic=byId('zoom-image'), area=byId('zoom-scroll');
-    byId('zoom-title').textContent=item.title+' · '+viewNames[activeView];
-    pic.alt=item.title+' · '+item.color;
+    byId('zoom-title').textContent=articleLabel(item)+' · '+viewNames[activeView];
+    pic.alt=articleLabel(item)+' · '+item.color;
     const pos=activeView==='macro'?notes[item.uid].focus:[50,65];
     const position=()=>requestAnimationFrame(()=>{
       area.scrollLeft=pic.clientWidth*pos[0]/100-area.clientWidth/2;
@@ -312,15 +309,6 @@
     pic.src=activeView==='studio'?item.photo:original(item);
     zoom.showModal();
     if(pic.complete) position();
-  }
-  function togglePreview(button) {
-    const item=itemFor(button.dataset.preview);
-    if(!item || !original(item)) return;
-    const on=!previewing.has(item.uid);
-    if(on) previewing.add(item.uid); else previewing.delete(item.uid);
-    button.setAttribute('aria-pressed',String(on));
-    button.textContent=on?'Уся пара':'Деталь';
-    button.closest('.card-media').querySelector('.product-photo').innerHTML=visual(item,on?'macro':'studio',false,false,true);
   }
   async function share() {
     const item=itemFor(activeUid);
@@ -363,11 +351,8 @@
   document.addEventListener('click',e=>{
     const b=e.target.closest('button');
     if(!b) return;
-    if(b.hasAttribute('data-open')) {
-      const uid=b.dataset.open;
-      showProduct(itemFor(uid),b.dataset.view || (previewing.has(uid)?'macro':'studio'));
-    } else if(b.hasAttribute('data-buy')) add(itemFor(b.dataset.buy));
-    else if(b.hasAttribute('data-preview')) togglePreview(b);
+    if(b.hasAttribute('data-open')) showProduct(itemFor(b.dataset.open));
+    else if(b.hasAttribute('data-buy')) add(itemFor(b.dataset.buy));
     else if(b.hasAttribute('data-select-view')) setView(b.dataset.selectView);
     else if(b.hasAttribute('data-guide')) guide.showModal();
     else if(b.hasAttribute('data-zoom')) showZoom();

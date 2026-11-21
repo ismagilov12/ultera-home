@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const order = require('../api/order');
 const payment = require('../api/wayforpay');
+const catalogue = require('../api/black-friday');
 
 const pair = {uid:'bf26-07-slip-on-black-suede-42', title:'Сліпони', size:'42', qty:1, price:999, saleItem:true, promo_pct:30};
 const regular = {uid:'regular', title:'Regular', size:'42', qty:1, price:2000};
@@ -37,6 +38,24 @@ async function invoke(handler, input) {
   await handler({method:'POST',headers:{},body:input},result);
   return result;
 }
+
+test('campaign cards use the recorded insole length and season while stock remains keyed by EU size', async t => {
+  setup(t, path => {
+    if (path.endsWith('/ulhome_products')) return reply([
+      {uid:'bf26-leo', title:'Hunk Leo', article:'ЮА 1', category:'ULTERA;Осінь', size_list:[{eu:'40',cm:'26'}]},
+      {uid:'bf26-other', article:null, category:'Розпродаж', size_list:[{eu:'41'}]}
+    ]);
+    if (path.endsWith('/ulhome_sale_stock')) return reply([{uid:'bf26-leo',size:'40',qty:1}]);
+    assert.fail(path);
+  });
+  const res = {setHeader(){}, status(code){ this.code=code; return this; }, json(body){ this.body=body; }};
+  await catalogue({method:'GET'},res);
+  assert.equal(res.code,200);
+  assert.deepEqual(res.body.items.map(({size,cm,season,article,available})=>({size,cm,season,article,available})),[
+    {size:'40',cm:26,season:'Осінь',article:'ЮА 1',available:true},
+    {size:'41',cm:null,season:null,article:null,available:false}
+  ]);
+});
 
 test('a sold pair stops checkout before CRM and legacy deductions', async t => {
   const calls = [];

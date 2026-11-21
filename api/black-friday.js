@@ -16,15 +16,20 @@ module.exports = async function blackFriday(req, res) {
       return response.json();
     }
     const [products, stock] = await Promise.all([
-      read('ulhome_products', 'uid,title,color_name,article,price,photo,mark,size_list', '&family=eq.SaleOstatki&order=sort_order.asc'),
+      read('ulhome_products', 'uid,title,color_name,article,category,price,photo,mark,size_list', '&family=eq.SaleOstatki&order=sort_order.asc'),
       read('ulhome_sale_stock', 'uid,size,qty')
     ]);
     const quantities = new Map(stock.map(row => [row.uid + '/' + row.size, Number(row.qty)]));
     const items = products.map(product => {
-      const size = String(product.size_list[0].eu);
+      const variant = product.size_list[0];
+      const size = String(variant.eu);
+      const cm = Number(String(variant.cm ?? '').replace(',', '.'));
+      const season = (product.category || '').split(';').map(tag => tag.trim())
+        .find(tag => /весн|літо|осін|зим|сезон/i.test(tag));
       return {
         uid: product.uid, title: product.title, color: product.color_name,
-        article: product.article, size, price: Number(product.price), photo: product.photo,
+        article: product.article, size, cm: cm > 0 && Number.isFinite(cm) ? cm : null,
+        season: season || null, price: Number(product.price), photo: product.photo,
         condition: product.mark || null, available: (quantities.get(product.uid + '/' + size) || 0) > 0
       };
     });

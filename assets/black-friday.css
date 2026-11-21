@@ -63,7 +63,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .eyebrow, .filter-label { font: 650 12px/1.25 var(--mono); letter-spacing: .065em; text-transform: uppercase; }
 .campaign-kicker { display: flex; align-items: center; gap: 13px; color: #e4eae6; }
 .cutmarks { height: 12px; width: 24px; transform: skew(-23deg); background: repeating-linear-gradient(90deg,var(--lime) 0 4px,transparent 4px 8px); }
-.campaign h1, .catalog-title h2, .material-head h3, .details-name, .small-dialog h2 { font-stretch: 75%; font-weight: 900; text-transform: uppercase; }
+.campaign h1, .catalog-title h2, .details-name, .small-dialog h2 { font-stretch: 75%; font-weight: 900; text-transform: uppercase; }
 .campaign h1 { font-size: clamp(74px,8.75vw,154px); line-height: .84; letter-spacing: -.055em; padding-left: .035em; margin: clamp(21px,2.2vw,34px) 0 clamp(18px,1.7vw,27px); }
 .campaign h1 span, .campaign h1 em { display: block; width: max-content; transform: skewX(-8deg); transform-origin: 30% 55%; }
 .campaign h1 em { color: var(--lime); font-style: normal; }
@@ -95,6 +95,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .filter-label { color: #343d41; white-space: nowrap; }
 #sizes { flex-wrap: wrap; gap: 6px; }
 #sizes button { min-width: 48px; height: 37px; padding: 0 11px; font-weight: 650; font-variant-numeric: tabular-nums; background: transparent; border: 1px solid #a8b1b4; }
+#sizes button small { display: block; font-size: 11px; line-height: 1.15; font-weight: 500; white-space: nowrap; }
 #sizes [aria-pressed="true"] { color: #fff; background: var(--ink); border-color: var(--ink); }
 #sizes button:hover { box-shadow: inset 0 -3px var(--ink); }
 .guide-link { display: inline-flex; align-items: center; gap: 8px; padding: 8px 0; background: none; border: 0; font-size: 14px; color: #364044; text-decoration: underline; text-underline-offset: 3px; }
@@ -113,23 +114,22 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .visual.studio img { position: absolute; left: 50%; top: 50%; width: min(97cqw,calc(92cqh * var(--aspect,2))); height: auto; transform: translate(-50%,var(--center,-61%)); }
 .visual.macro img { position: absolute; left: 50%; top: 50%; width: var(--zoom,205%); height: auto; max-width: none; transform: translate(var(--fx,-50%),var(--fy,-67%)); }
 .visual.actual img { object-position: 50% 68%; }
-.media-badges { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; align-items: flex-start; justify-content: space-between; pointer-events: none; }
+.media-badges { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 3px; align-items: flex-start; justify-content: space-between; pointer-events: none; }
 .size-tag, .condition { display: inline-flex; align-items: center; min-height: 25px; padding: 4px 7px; font: 650 12px/1 var(--mono); border: 1px solid #b9c0c0; background: #ffffffee; color: var(--ink); }
+.size-tag { white-space: nowrap; }
 .condition { background: var(--lime); border-color: #9db828; }
 .condition.grade { flex-direction: column; align-items: flex-start; gap: 3px; }
 .condition.grade small { font: 500 11px/1.1 Roboto,sans-serif; }
 .condition.sold { background: var(--ink); color: white; border-color: var(--ink); }
-.card-switch { position: absolute; bottom: 8px; right: 8px; display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 4px 8px; color: #273033; background: #fffffff0; border: 1px solid #c7ccca; font-size: 12px; font-weight: 625; }
-.card-switch::before { content: "+"; font: 17px/1 var(--mono); }
-.card-switch[aria-pressed="true"]::before { content: "−"; }
-.card-switch:hover { border-color: var(--ink); }
 .macro-caption { position: absolute; bottom: 8px; left: 8px; max-width: min(64%,240px); padding: 5px 8px; color: white; background: #111719e8; font-size: 13px; font-weight: 620; pointer-events: none; }
 .card-info { padding: clamp(12px,1.15vw,21px); padding-top: 15px; border-top: 1px solid #e2e6e4; flex: 1; display: flex; flex-direction: column; }
-.card-meta { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 8px; color: var(--muted); font: 12px/1.35 var(--mono); margin-bottom: 6px; }
-.card-meta .product-type { text-transform: uppercase; }
+.pair-season { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 7px; font-size: 14px; line-height: 1.3; }
+.pair-season > span { color: var(--muted); }
+.pair-season strong { font-weight: 680; }
+.card-info .pair-season { margin-top: 7px; }
 .card h3 { font-size: clamp(22px,2vw,35px); line-height: 1.05; letter-spacing: -.045em; font-weight: 800; }
-.model-link { padding: 0; border: 0; background: transparent; font: inherit; text-align: left; }
-.model-link:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.article-link { padding: 0; border: 0; background: transparent; font: inherit; text-align: left; }
+.article-link:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .colour { display: flex; align-items: baseline; gap: 7px; color: #434e54; font-size: 15px; line-height: 1.4; }
 .card-info .colour { margin: 6px 0 15px; }
 .swatch { width: 10px; height: 10px; flex: none; border-radius: 50%; border: 1px solid #0003; background: var(--tone,#45494b); }
@@ -142,17 +142,6 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .buy.in-cart::before { content: "✓"; font-size: 12px; }
 .buy:disabled { border: 1px solid #cbd1cf; background: #eef0ef; color: #515a5a; cursor: default; }
 .buy:disabled::before { content: none; }
-.materials { grid-column: 1 / -1; background: #14191b; color: white; padding: clamp(17px,2vw,33px); }
-.material-head { display: flex; align-items: center; gap: 14px; margin-bottom: 15px; }
-.material-head::before { content: ""; width: 4px; align-self: stretch; background: var(--lime); }
-.material-head h3 { font-size: clamp(26px,2.6vw,41px); line-height: 1; letter-spacing: -.035em; }
-.material-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
-.material-cell { border: 0; padding: 0; background: #202628; color: white; text-align: left; min-width: 0; }
-.material-cell .visual { height: auto; aspect-ratio: 2.6; }
-.material-label { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px 12px; }
-.material-label strong { font-size: 16px; line-height: 1.15; }
-.material-label small { color: #ced5d3; font: 12px var(--mono); }
-.material-cell:hover .material-label { background: #313b3c; }
 .end { background: #101315; color: #f7f8f6; padding: 30px 0 12px; }
 .end-in { display: flex; align-items: center; gap: 26px; justify-content: space-between; padding-block: 12px; }
 .end .logo img { width: 143px; }
@@ -178,8 +167,8 @@ dialog::backdrop { background: #070b0ddc; }
 .thumb .visual { height: 43px; }
 .thumb[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 -3px var(--ink); }
 .detail-copy { padding: clamp(24px,3vw,49px); display: flex; flex-direction: column; gap: 14px; }
-.detail-copy > .eyebrow { padding-right: 42px; color: var(--muted); }
-.details-name { font-size: clamp(36px,4.5vw,65px); line-height: .95; letter-spacing: -.048em; padding-right: 6px; }
+.details-name { font-size: clamp(36px,4.5vw,65px); line-height: .95; letter-spacing: -.048em; padding-right: 34px; overflow-wrap: anywhere; }
+.detail-copy .pair-season { font-size: 16px; }
 .detail-copy .colour { font-size: 17px; margin-top: -6px; }
 .detail-desc { font-size: 16px; line-height: 1.45; color: #394449; }
 .detail-flag { background: var(--lime); align-self: flex-start; padding: 5px 9px; font-size: 14px; font-weight: 750; }
@@ -267,27 +256,15 @@ dialog::backdrop { background: #070b0ddc; }
   .card-media { aspect-ratio: 1.02; }
   .media-badges { top: 6px; left: 6px; right: 6px; }
   .size-tag, .condition { min-height: 21px; padding: 3px 4px; font-size: 11px; }
-  .card-switch { right: 5px; bottom: 4px; gap: 3px; min-height: 26px; padding: 2px 5px; font-size: 11px; }
-  .card-switch::before { font-size: 13px; }
-  .card-switch::after { content: ""; position: absolute; inset: -6px -2px; }
-  .macro-caption { left: 5px; bottom: auto; top: 36px; max-width: 88%; padding: 4px 6px; font-size: 12px; }
-  #stage-picture .macro-caption { top: auto; bottom: 8px; max-width: 60%; }
+  .macro-caption { left: 5px; bottom: 8px; max-width: 60%; padding: 4px 6px; font-size: 12px; }
   .card-info { padding: 10px; }
-  .card-meta { font-size: 11px; }
-  .card-meta .product-type { display: none; }
   .card h3 { font-size: 21px; }
+  .card-info .pair-season { font-size: 13px; gap: 2px 4px; }
   .card-info .colour { margin: 5px 0 9px; font-size: 13px; gap: 5px; }
   .swatch { width: 8px; height: 8px; }
   .card-action { flex-wrap: wrap; gap: 7px; padding-top: 8px; }
   .card-action .price { font-size: 20px; }
   .card-action .buy { flex: 1 0 100%; min-height: 38px; }
-  .material-head { margin-bottom: 11px; }
-  .materials { padding: 15px; }
-  .material-grid { grid-template-columns: 1fr; gap: 6px; }
-  .material-cell { display: grid; grid-template-columns: 39% 1fr; align-items: stretch; }
-  .material-cell .visual { aspect-ratio: 2.3; height: 100%; min-height: 58px; }
-  .material-label { justify-content: center; padding: 6px 10px; }
-  .material-label strong { font-size: 15px; }
   .end-in { flex-wrap: wrap; align-items: flex-start; gap: 18px; }
   .end .logo img { width: 100px; }
   #detail { width: 100%; max-width: 100%; margin: auto 0 0; max-height: 96dvh; border: 0; border-top: 1px solid #87918e; }
