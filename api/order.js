@@ -101,6 +101,10 @@ function seasonFlag(it) {
 
 // New native-thermo cards have one KeyCRM offer per colour and EU size.
 // Preserve legacy SKU behaviour for every existing product.
+function isBlackFridayUid(uid) {
+  return typeof uid === 'string' && uid.startsWith('bf26-');
+}
+
 function keycrmCatalogSku(it) {
   const uid = String((it && it.uid) || '');
   if (!['550020261003','590020261003','590020261004'].includes(uid)) return uid;
@@ -165,7 +169,7 @@ async function recomputePrices(items) {
       return {
         uid: String(it.uid || ''),
         qty: parseInt(it.qty || 1, 10),
-        promo_pct: safePct,
+        promo_pct: isBlackFridayUid(it.uid) ? 0 : safePct,
         season_id: seasonFlag(it)
       };
     });
@@ -235,6 +239,7 @@ async function saveOrderToSupabase(order) {
     });
     if (!r.ok) {
       const t = await r.text().catch(() => '');
+      if (t.includes('black_friday_unavailable')) return {stockConflict: true};
       console.warn('[order] supabase insert failed', r.status, t);
       return null;
     }
@@ -244,6 +249,26 @@ async function saveOrderToSupabase(order) {
     console.error('[order] supabase exception', e.message);
     return null;
   }
+}
+
+// A response may be lost after the last pair was claimed. Only the same
+// checkout reference and customer can recover that already accepted order.
+async function recoverCampaignOrder(ref, body) {
+  if (!/^ULT-BF-[0-9a-f]{16}$/.test(ref || '')) return null;
+  const url = new URL(process.env.SUPABASE_URL + '/rest/v1/ulhome_orders');
+  url.search = new URLSearchParams({
+    payment_ref: 'eq.' + ref, status: 'eq.new', limit: '1',
+    select: 'number,customer_phone,payment_method,total,items'
+  });
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  try {
+    const result = await fetch(url.toString(), {headers: {apikey: key, Authorization: 'Bearer ' + key}});
+    if (!result.ok) return null;
+    const [row] = await result.json();
+    const lines = items => JSON.stringify(items.map(it => [it.uid, String(it.size || ''), Number(it.qty || 1), seasonFlag(it)]));
+    if (row && row.customer_phone === body.phone && row.payment_method === body.payment && lines(row.items) === lines(body.items)) return row;
+  } catch {}
+  return null;
 }
 
 async function patchOrderKeycrmLink(supabaseId, keycrmId, externalId) {
@@ -286,7 +311,7 @@ async function decrementSaleStock(items) {
   if (!supabaseUrl || !supabaseKey) return null;
   try {
     const payload = (items || [])
-      .filter(it => it && it.uid && it.size)
+      .filter(it => it && it.uid && it.size && !isBlackFridayUid(it.uid))
       .map(it => ({
         uid: String(it.uid),
         size: String(it.size),
@@ -394,6 +419,7 @@ module.exports = async function handler(req, res) {
 
   const stage = String(body.stage || 'final').toLowerCase();
   const isLead = stage === 'lead';
+  const hasCampaignPair = body.items.some(it => isBlackFridayUid(it?.uid));
 
   if (!isLead) {
     const captcha = await verifyTurnstile(body.captchaToken, ip);
@@ -407,6 +433,9 @@ module.exports = async function handler(req, res) {
   if (priced && priced.ok) {
     authoritativeTotal = Number(priced.total);
   } else {
+    if (hasCampaignPair && !isLead) {
+      return res.status(503).json({ok: false, error: 'Зараз не вдалося перевірити ціну пари. Спробуйте ще раз.'});
+    }
     if (!isLead && body.payment === 'card') {
       return res.status(400).json({ ok: false, error: 'Price verification failed', detail: priced });
     }
@@ -420,7 +449,7 @@ module.exports = async function handler(req, res) {
   let promoPct = 0;
   let promoSource = null;
   let promoRemaining = null;
-  if (promoCodeRaw) {
+  if (promoCodeRaw && body.items.some(it => !isBlackFridayUid(it?.uid))) {
     if (LEGACY_PROMOS[promoCodeRaw]) {
       promoPct = LEGACY_PROMOS[promoCodeRaw];
       promoSource = 'legacy';
@@ -442,7 +471,7 @@ module.exports = async function handler(req, res) {
     for (const line of priced.breakdown) {
       const lp = Number(line.promo_pct || 0);
       const lt = Number(line.line_total || (Number(line.unit_price) * Number(line.qty)));
-      if (lp > 0) promoSubtotal += lt;
+      if (lp > 0 || isBlackFridayUid(line.uid)) promoSubtotal += lt;
       else nonPromoSubtotal += lt;
     }
     const discounted = Math.round(nonPromoSubtotal * (100 - promoPct)) / 100;
@@ -477,6 +506,18 @@ module.exports = async function handler(req, res) {
     landing_url: (typeof body.landing_url === 'string' ? body.landing_url : '').slice(0, 2000) || null
   });
 
+  if (hasCampaignPair && !isLead) {
+    if (orderRow?.stockConflict) {
+      const accepted = await recoverCampaignOrder(publicRef, body);
+      if (accepted) return res.status(200).json({
+        ok: true, stage: 'final', order_num: publicRef, supabase_order: accepted.number, authoritative_total: Number(accepted.total)
+      });
+      return res.status(409).json({ok: false, code: 'pair_unavailable', error: 'Обраної пари вже немає в цьому розмірі.'});
+    }
+    if (!orderRow?.id) {
+      return res.status(503).json({ok: false, error: 'Не вдалося підтвердити наявність пари. Спробуйте ще раз.'});
+    }
+  }
   if(orderRow)await saveOrderJourney(orderRow,body,isLead?'lead':'final');
 
   if (isLead) {
@@ -549,7 +590,7 @@ module.exports = async function handler(req, res) {
       let unitPrice = line ? Number(line.unit_price) : (parseFloat(it.price) || 0);
       const linePromoPct = line ? Number(line.promo_pct || 0) : (it.promoSecond ? 30 : 0);
       // [v10] SALE1 applies only to lines without per-line promo
-      if (promoPct > 0 && linePromoPct <= 0) {
+      if (promoPct > 0 && linePromoPct <= 0 && !isBlackFridayUid(it.uid)) {
         unitPrice = Math.round(unitPrice * (100 - promoPct)) / 100;
       }
       return {
@@ -563,6 +604,10 @@ module.exports = async function handler(req, res) {
   };
 
   const token = process.env.KEYCRM_TOKEN;
+  const acceptedCampaignOrder = () => res.status(200).json({
+    ok: true, stage: 'final', order_num: publicRef, supabase_order: orderRow.number,
+    authoritative_total: authoritativeTotal, keycrm_pending: true
+  });
   if (!token) {
     console.log('[MOCK] order:', JSON.stringify(crmPayload));
     return res.status(200).json({
@@ -589,6 +634,7 @@ module.exports = async function handler(req, res) {
     const data = await r.json().catch(() => ({}));
     if (!r.ok) {
       console.error('KeyCRM error', r.status, data);
+      if (hasCampaignPair) return acceptedCampaignOrder();
       return res.status(r.status).json({ ok: false, error: data.message || 'KeyCRM error', details: data });
     }
     if (orderRow && orderRow.id && data && data.id) {
@@ -606,6 +652,7 @@ module.exports = async function handler(req, res) {
     });
   } catch (e) {
     console.error('KeyCRM exception', e);
+    if (hasCampaignPair) return acceptedCampaignOrder();
     return res.status(500).json({ ok: false, error: e.message });
   }
 };

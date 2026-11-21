@@ -24,6 +24,10 @@
   ],
   "rewrites": [
     {
+      "source": "/black-friday",
+      "destination": "/black-friday.html"
+    },
+    {
       "source": "/tproduct/:path*",
       "destination": "/index.html"
     },

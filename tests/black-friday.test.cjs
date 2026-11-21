@@ -1,0 +1,95 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const order = require('../api/order');
+const payment = require('../api/wayforpay');
+
+const pair = {uid:'bf26-07-slip-on-black-suede-42', title:'Сліпони', size:'42', qty:1, price:999, saleItem:true, promo_pct:30};
+const regular = {uid:'regular', title:'Regular', size:'42', qty:1, price:2000};
+const body = {num:'ULT-BF-abcd1234abcd1234', fio:'Fixture', phone:'fixture', payment:'card', promoCode:'SALE1'};
+const reply = (data, status = 200) => new Response(JSON.stringify(data), {status});
+
+function setup(t, upstream) {
+  for (const [key,value] of Object.entries({
+    SUPABASE_URL:'https://store.example.invalid', SUPABASE_SERVICE_ROLE_KEY:'fixture',
+    KEYCRM_TOKEN:'fixture', WAYFORPAY_MERCHANT:'fixture', WAYFORPAY_SECRET:'fixture', TURNSTILE_SECRET:''
+  })) {
+    const previous = process.env[key];
+    process.env[key] = value;
+    t.after(() => { if (previous === undefined) delete process.env[key]; else process.env[key] = previous; });
+  }
+  t.mock.method(globalThis, 'fetch', async (url, opts = {}) => {
+    const path = new URL(url).pathname;
+    if (path.endsWith('/check_and_increment_rate_limit')) return reply({allowed:true});
+    if (path.endsWith('/compute_order_total')) {
+      const input = JSON.parse(opts.body).p_items;
+      const breakdown = input.map(line => {
+        const unit = line.uid === pair.uid ? pair.price : regular.price;
+        if (line.uid === pair.uid) assert.equal(line.promo_pct,0);
+        return {...line, unit_price:unit, line_total:unit*line.qty};
+      });
+      return reply({ok:true, breakdown, total:breakdown.reduce((n,line)=>n+line.line_total,0)});
+    }
+    return upstream(path,opts);
+  });
+}
+async function invoke(handler, input) {
+  const result = {setHeader(){}, status(code){ this.code = code; return this; }, json(data){ this.body = data; }};
+  await handler({method:'POST',headers:{},body:input},result);
+  return result;
+}
+
+test('a sold pair stops checkout before CRM and legacy deductions', async t => {
+  const calls = [];
+  setup(t, (path,opts) => {
+    calls.push(path);
+    if (path.endsWith('/ulhome_orders') && opts.method === 'POST') return reply({message:'black_friday_unavailable'},400);
+    if (path.endsWith('/ulhome_orders')) return reply([]);
+    assert.fail(path);
+  });
+  const result = await invoke(order,{...body,items:[pair]});
+  assert.equal(result.code,409);
+  assert.equal(result.body.code,'pair_unavailable');
+  assert.deepEqual(calls,['/rest/v1/ulhome_orders','/rest/v1/ulhome_orders']);
+});
+
+test('a repeated campaign checkout recovers the same saved order', async t => {
+  setup(t,(path,opts) => {
+    assert.ok(path.endsWith('/ulhome_orders'));
+    if(opts.method==='POST') return reply({message:'black_friday_unavailable'},400);
+    return reply([{customer_phone:body.phone,payment_method:'card',items:[pair],total:999,number:123}]);
+  });
+  const result=await invoke(order,{...body,items:[pair]});
+  assert.equal(result.code,200);
+  assert.equal(result.body.supabase_order,123);
+});
+
+test('checkout, CRM and payment keep campaign price fixed in a mixed cart', async t => {
+  let savedTotal, crmPrices, legacyUids;
+  setup(t, (path,opts) => {
+    if (path.endsWith('/ulhome_orders')) {
+      if (opts.method==='PATCH') return reply({});
+      savedTotal = JSON.parse(opts.body).total;
+      return reply([{id:'fixture',number:123}]);
+    }
+    if (path.endsWith('/ulhome_sale_stock_decrement')) {
+      legacyUids = JSON.parse(opts.body).p_items.map(x=>x.uid);
+      return reply({changed:[]});
+    }
+    if (path==='/v1/order') {
+      crmPrices=JSON.parse(opts.body).products.map(x=>x.price);
+      return reply({id:123});
+    }
+    if (path.endsWith('/ulhome_products')) return reply([pair,regular]);
+    assert.fail(path);
+  });
+  const input = {...body, items:[pair,regular]};
+  const placed = await invoke(order,input);
+  assert.equal(placed.code,200);
+  assert.equal(savedTotal,2899);
+  assert.deepEqual(crmPrices,[999,1900]);
+  assert.deepEqual(legacyUids,[regular.uid]);
+  const charged=await invoke(payment,{...input,orderReference:body.num});
+  assert.equal(charged.code,200);
+  assert.equal(charged.body.chargedAmount,2899);
+  assert.deepEqual(charged.body.formData.productPrice,['999.00','1900.00']);
+});

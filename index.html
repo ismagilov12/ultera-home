@@ -161,6 +161,9 @@ input,textarea,select{font:inherit;color:inherit}
 .hdr-nav a::before{content:"[ ";color:var(--ink-40)}
 .hdr-nav a::after{content:" ]";color:var(--ink-40)}
 .hdr-nav a:hover,.hdr-nav a.active{color:var(--ink)}
+.hdr .hdr-nav a.bf-nav{background:#d8fa54;color:#171815;border-radius:3px;font-weight:700}
+.hdr .hdr-nav a.bf-nav::before,.hdr .hdr-nav a.bf-nav::after{content:none}
+@media(min-width:987px) and (max-width:1230px){.hdr .hdr-nav{gap:2px}.hdr .hdr-nav a{padding-inline:7px}}
 .hdr-nav a:hover::before,.hdr-nav a.active::before,
 .hdr-nav a:hover::after,.hdr-nav a.active::after{color:var(--ink)}
 .hdr-r{display:flex;align-items:center;gap:14px;flex-shrink:0}
@@ -1322,6 +1325,9 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 .cd-item-qty{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:3px 4px;border:1px solid var(--line);border-radius:999px;background:#fff}
 .cd-item-qty button{width:20px;height:20px;border:0;background:transparent;cursor:pointer;font-size:14px;color:var(--ink);line-height:1;padding:0;border-radius:999px;transition:background .15s}
 .cd-item-qty button:hover{background:var(--bg-alt)}
+.cd-single-pair,#cdSaleBack{display:inline-block;margin-top:8px;font-size:12px}
+#cdSaleBack{text-decoration:underline;margin-bottom:12px}
+#cdSaleBack[hidden]{display:none}
 .cd-item-qty b{font-weight:700;min-width:14px;text-align:center;font-size:12px}
 .cd-item-price{font-family:var(--font-mono);font-weight:800;font-size:13px;white-space:nowrap;letter-spacing:-.01em;text-align:right}
 .cd-item-rm{background:none;border:0;color:var(--ink-40);font-size:14px;cursor:pointer;margin-top:8px;padding:0;transition:color .15s;float:right}
@@ -2146,6 +2152,7 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
   <div class="wide hdr-in">
     <a href="#" class="hdr-logo"><img src="logo.png" alt="ULTERA"></a>
     <nav class="hdr-nav">
+      <a class="bf-nav" href="/black-friday">Чорна п’ятниця</a>
       <a href="#collection" class="active">колекція</a>
       <a href="#" data-filter="Hunk3">hunk3</a>
       <a href="#" data-filter="Aganta">aganta</a>
@@ -2166,6 +2173,7 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
 </header>
 
 <div class="mobile-menu" id="mobileMenu">
+  <a href="/black-friday">Чорна п’ятниця ↗</a>
   <a href="#collection" onclick="closeMenu()">Колекція</a>
   <a href="#" data-filter="Hunk3" onclick="closeMenu()">Hunk3</a>
   <a href="#" data-filter="Aganta" onclick="closeMenu()">Aganta</a>
@@ -2685,6 +2693,7 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
       </div>
       <div class="cd-list-wrap" id="cdListWrap" style="display:none">
         <div class="cd-list" id="cdList"></div>
+        <a id="cdSaleBack" href="/black-friday#pairs" hidden>← До пар Чорної п’ятниці</a>
         <section id="cdInsoleUpsell" class="cd-insole" aria-label="Додати змінні устілки" hidden></section>
         <div id="cdShapePromo" class="cd-promo" hidden></div>
         <div class="cd-foot">
@@ -3894,6 +3903,8 @@ window.ulteraNormalizeAutumnCopy(DATA);
 })();
 const EXTRA_PHOTOS = JSON.parse(document.getElementById('EXTRA').textContent);
 /* ————— CART STATE ————— */
+function isCampaignPair(item){ return String(item?.uid || '').startsWith('bf26-'); }
+function cartPromoPercent(item){ return !isCampaignPair(item) && (item.promoSecond || item.saleItem) ? 30 : 0; }
 const CART = {
   items: JSON.parse(localStorage.getItem('ultera_cart')||'[]'),
   wizard: JSON.parse(localStorage.getItem('ultera_wiz')||'{}'),
@@ -3924,12 +3935,12 @@ const CART = {
     this.refreshPrices();
     const key = item.uid+'|'+(item.size||'')+'|'+cartSeasonId(item);
     const ex = this.items.find(x=>x.uid+'|'+(x.size||'')+'|'+cartSeasonId(x)===key);
-    if(ex){ ex.qty = (ex.qty||1) + 1; } else { this.items.push({...item, qty:1}); }
+    if(ex){ ex.qty = isCampaignPair(item) ? 1 : (ex.qty||1) + 1; } else { this.items.push({...item, qty:1}); }
     this.save();
     window.trackJourney?.('add_to_cart', item);
     try { if (typeof ulteraFbq === 'function') ulteraFbq('AddToCart', {content_ids:[item.uid], content_type:'product', content_name:item.title||'', value: parseFloat(item.price)||0, currency:'UAH'}); } catch(_){}
   },
-  setQty(i, q){ if(!this.items[i]) return; const item={...this.items[i],qty:Math.max(0,q)}; if(q<=0){ this.items.splice(i,1); } else { this.items[i].qty = q; } this.save(); window.trackJourney?.(q<=0?'remove_from_cart':'cart_quantity_changed',item); },
+  setQty(i, q){ if(!this.items[i]) return; if(isCampaignPair(this.items[i])) q=Math.min(q,1); const item={...this.items[i],qty:Math.max(0,q)}; if(q<=0){ this.items.splice(i,1); } else { this.items[i].qty = q; } this.save(); window.trackJourney?.(q<=0?'remove_from_cart':'cart_quantity_changed',item); },
   remove(i){ const item=this.items[i]; this.items.splice(i,1); this.save(); if(item)window.trackJourney?.('remove_from_cart',item); },
   clear(){ this.items=[]; this.save(); },
   addPromo(item){ this.items.push({...item, qty: 1}); this.save(); window.trackJourney?.('add_to_cart',{...item,qty:1}); },
@@ -5081,6 +5092,14 @@ function addToCart(){
 
 /* ————— CART DRAWER + WIZARD ————— */
 document.getElementById('cartBtn').addEventListener('click', openCart);
+function openLinkedCart(){
+  if(location.hash !== '#cart') return;
+  CART.items = JSON.parse(localStorage.getItem('ultera_cart') || '[]');
+  updateCartBadge();
+  openCart();
+}
+document.addEventListener('DOMContentLoaded', openLinkedCart, {once:true});
+window.addEventListener('pageshow', event => { if(event.persisted) openLinkedCart(); });
 
 function openCart(){
   renderCart();
@@ -5109,6 +5128,7 @@ function renderCart(){
   const empty = document.getElementById('cdEmpty');
   const wrap  = document.getElementById('cdListWrap');
   const wiz   = document.getElementById('cdWizard');
+  document.getElementById('cdSaleBack').hidden = !CART.items.some(isCampaignPair);
   if(CART.items.length === 0){
     empty.style.display = ''; wrap.style.display = 'none'; wiz.style.display = 'none';
     window.ULTERA_INSOLES?.render(); return;
@@ -5121,7 +5141,7 @@ function renderCart(){
       '<div class="cd-item-info">' +
         '<div class="cd-item-t">'+it.title+'</div>' +
         '<div class="cd-item-meta">'+(it.color_name||'')+' · розмір '+(it.size||'—')+'</div>' +
-        '<div class="cd-item-qty"><button onclick="cartQty('+i+',-1)">−</button><b>'+(it.qty||1)+'</b><button onclick="cartQty('+i+',1)">+</button></div>' +
+        (isCampaignPair(it) ? '<span class="cd-single-pair">1 пара</span>' : '<div class="cd-item-qty"><button onclick="cartQty('+i+',-1)">−</button><b>'+(it.qty||1)+'</b><button onclick="cartQty('+i+',1)">+</button></div>') +
       '</div>' +
       '<div>' +
         '<div class="cd-item-price">'+itemPriceHtml(it)+'</div>' +
@@ -5514,7 +5534,7 @@ async function sendLead(){
       fio: CART.wizard.fio,
       phone: CART.wizard.phone,
       total: CART.total(),
-      items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, saleItem: !!it.saleItem, promo_pct: (it.promoSecond || it.saleItem) ? 30 : 0, priceFull: it.priceFull||null, season: it.season || null, seasonId: cartSeasonId(it)}))
+      items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, saleItem: !!it.saleItem, promo_pct: cartPromoPercent(it), priceFull: it.priceFull||null, season: it.season || null, seasonId: cartSeasonId(it)}))
     };
     const r = await fetch('/api/order', {
       method: 'POST',
@@ -5561,7 +5581,15 @@ async function wizardSubmit(){
   renderSummary();
   const btn = document.querySelector('.cd-next.submit');
   btn.disabled = true; btn.textContent = 'Надсилаю...';
-  const orderNum = 'ULT-' + Date.now().toString().slice(-8);
+  let orderNum = 'ULT-' + Date.now().toString().slice(-8);
+  if(CART.items.some(isCampaignPair)){
+    const signature = JSON.stringify([CART.items, fio, phone, CART.wizard.cityRef, CART.wizard.whRef, pm, CART.wizard.promo]);
+    if(CART.wizard.campaignOrder?.signature !== signature){
+      CART.wizard.campaignOrder = {signature, ref:'ULT-BF-' + crypto.randomUUID().replace(/-/g,'').slice(0,16)};
+      CART.saveWiz();
+    }
+    orderNum = CART.wizard.campaignOrder.ref;
+  }
   const payload = {
     num: orderNum,
     stage: 'final',
@@ -5575,7 +5603,7 @@ async function wizardSubmit(){
     payment: pm,
     promoCode: (CART.wizard && CART.wizard.promo) || null,
     total: CART.total(),
-    items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, saleItem: !!it.saleItem, promo_pct: (it.promoSecond || it.saleItem) ? 30 : 0, priceFull: it.priceFull||null, season: it.season || null, seasonId: cartSeasonId(it)}))
+    items: CART.items.map(it => ({uid:it.uid, title:it.title, photo:it.photo, color_name:it.color_name, size:it.size, price:it.price, qty:it.qty||1, family:it.family, promoSecond: !!it.promoSecond, saleItem: !!it.saleItem, promo_pct: cartPromoPercent(it), priceFull: it.priceFull||null, season: it.season || null, seasonId: cartSeasonId(it)}))
   };
   try {
     const r = await fetch('/api/order', {
@@ -5585,6 +5613,15 @@ async function wizardSubmit(){
     });
     const result = await r.json().catch(()=>({}));
     if(!r.ok || result.ok === false){
+      if(result.code === 'pair_unavailable'){
+        errEl.textContent = result.error + ' ';
+        const link = document.createElement('a');
+        link.href = '/black-friday#pairs'; link.textContent = 'Переглянути наявні пари';
+        link.style.textDecoration = 'underline';
+        errEl.append(link);
+        btn.disabled = false; btn.textContent = 'Оформити замовлення';
+        return;
+      }
       throw new Error(result.error || result.message || ('HTTP ' + r.status));
     }
     if(result.mock) console.log('Mock order:', result);
@@ -5595,7 +5632,7 @@ async function wizardSubmit(){
     var clientLastName  = fioParts.slice(1).join(' ') || '';
     var wfpItems = CART.items.map(function(it){
       return { uid: String(it.uid||''), qty: Number(it.qty||1),
-               promo_pct: (it.promoSecond || it.saleItem) ? 30 : 0,
+               promo_pct: cartPromoPercent(it),
                season_id: cartSeasonId(it) };   // Preserve winter in saved carts and payment pricing.
     });
     var products = CART.items.map(function(it){

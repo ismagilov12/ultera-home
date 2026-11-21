@@ -184,7 +184,7 @@ module.exports = async function handler(req, res) {
       return {
         uid: String(it.uid || ''),
         qty: Math.max(parseInt(it.qty || 1, 10), 1),
-        promo_pct: safePct,
+        promo_pct: String(it.uid || '').startsWith('bf26-') ? 0 : safePct,
         season_id: seasonId === 'winter' ? 'winter' : (seasonId === 'spring' || seasonId === 'autumn' ? 'autumn' : null)
       };
     });
@@ -231,7 +231,7 @@ module.exports = async function handler(req, res) {
       productCount.push(String(line.qty));
       let unit = Number(line.unit_price);
       const linePromoPct = Number(line.promo_pct || 0);
-      if (promoPct > 0 && linePromoPct <= 0) {
+      if (promoPct > 0 && linePromoPct <= 0 && !String(line.uid).startsWith('bf26-')) {
         unit = Math.round(unit * (100 - promoPct)) / 100;
       }
       productPrice.push(unit.toFixed(2));
