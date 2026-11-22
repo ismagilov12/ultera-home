@@ -14,10 +14,10 @@
   <meta property="og:url" content="https://ultera.in.ua/black-friday">
   <link rel="preload" as="font" href="/assets/black-friday-type/roboto-ua.woff2" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/black-friday-page.css?v=shop1">
-  <script src="/assets/black-friday.js?v=shop1" defer></script>
+  <script src="/assets/black-friday.js?v=stock2" defer></script>
 </head>
 <body>
-  <link rel="stylesheet" href="/assets/black-friday.css?v=shop1">
+  <link rel="stylesheet" href="/assets/black-friday.css?v=stock2">
   <a class="skip bf-surface" href="#pairs">До каталогу</a>
   <header class="topbar bf-surface">
     <div class="frame topbar-in">
@@ -42,7 +42,7 @@
         <div class="campaign-copy">
           <p class="eyebrow campaign-kicker"><span class="cutmarks" aria-hidden="true"></span> Розпродаж останніх пар</p>
           <h1 id="sale-title"><span>Чорна</span> <em>п’ятниця</em></h1>
-          <p class="campaign-intro">Кеди, кросівки й черевики з колекцій ULTERA. По одній парі кожної моделі й кольору.</p>
+          <p class="campaign-intro">Останні пари з колекцій ULTERA та зимові моделі Thermo за спеціальною ціною.</p>
           <div class="campaign-actions"><a class="cta lime" href="#pairs">Обрати пару</a><span id="starting-price" hidden></span></div>
         </div>
         <button class="campaign-pair" type="button" id="hero-product" hidden>
@@ -53,7 +53,7 @@
     <slot name="pairs-anchor"></slot>
     <section class="collection frame" aria-labelledby="collection-title">
       <div class="catalog-head">
-        <div class="catalog-title"><h2 id="collection-title">Усі пари</h2><span id="result-count" aria-live="polite"></span></div>
+        <div class="catalog-title"><h2 id="collection-title">У наявності</h2><span id="result-count" aria-live="polite"></span></div>
         <label class="sort"><span>Сортувати</span><select id="sort">
           <option value="edit">За добіркою</option><option value="low">Спочатку дешевші</option><option value="high">Спочатку дорожчі</option>
         </select></label>
@@ -67,6 +67,10 @@
       <div id="error" hidden><p>Не вдалося оновити наявність.</p><button type="button" id="retry" class="cta">Оновити каталог</button></div>
       <noscript>Увімкніть JavaScript, щоб побачити наявні розміри й оформити замовлення.</noscript>
       <div class="grid" id="products"></div>
+    </section>
+    <section id="sold-section" class="collection frame" aria-labelledby="sold-title" hidden>
+      <div class="catalog-head"><div class="catalog-title"><h2 id="sold-title">Продані пари</h2></div></div>
+      <div class="grid" id="sold-products"></div>
     </section>
     </div>
     <slot name="catalog"></slot>

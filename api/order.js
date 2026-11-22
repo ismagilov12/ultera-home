@@ -101,12 +101,18 @@ function seasonFlag(it) {
 
 // New native-thermo cards have one KeyCRM offer per colour and EU size.
 // Preserve legacy SKU behaviour for every existing product.
-function isBlackFridayUid(uid) {
-  return typeof uid === 'string' && uid.startsWith('bf26-');
+const {offers, isCampaign:isBlackFridayUid, validateOfferSizes} = require('../lib/black-friday-offers.cjs');
+const {createHash} = require('node:crypto');
+
+function campaignOrderId(ref) {
+  if (!/^ULT-BF-[a-f0-9]{16}$/.test(ref || '')) return null;
+  const hash=createHash('sha256').update('ultera-order/'+ref).digest('hex');
+  return [hash.slice(0,8),hash.slice(8,12),'8'+hash.slice(13,16),'8'+hash.slice(17,20),hash.slice(20,32)].join('-');
 }
 
 function keycrmCatalogSku(it) {
   const uid = String((it && it.uid) || '');
+  if (offers.has(uid)) return offers.get(uid).source;
   if (!['550020261003','590020261003','590020261004'].includes(uid)) return uid;
   const size = String((it && it.size) || '').trim().match(/^(4[0-5])(?:\D|$)/);
   return size ? uid + '-' + size[1] : uid;
@@ -240,6 +246,7 @@ async function saveOrderToSupabase(order) {
     if (!r.ok) {
       const t = await r.text().catch(() => '');
       if (t.includes('black_friday_unavailable')) return {stockConflict: true};
+      if (order.id && t.includes('ulhome_orders_pkey') && r.status===409) return {referenceConflict:true};
       console.warn('[order] supabase insert failed', r.status, t);
       return null;
     }
@@ -428,6 +435,12 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (!isLead && hasCampaignPair) {
+    try {
+      const error=await validateOfferSizes(body.items);
+      if (error) return res.status(409).json({ok:false,code:'pair_unavailable',error});
+    } catch { return res.status(503).json({ok:false,error:'Не вдалося перевірити наявність акційного розміру.'}); }
+  }
   const priced = await recomputePrices(body.items);
   let authoritativeTotal = null;
   if (priced && priced.ok) {
@@ -486,7 +499,9 @@ module.exports = async function handler(req, res) {
   const publicRef = (typeof body.num === 'string' ? body.num
                      : (body.num != null ? String(body.num) : '')).trim().slice(0, 64) || null;
 
+  const id = !isLead && hasCampaignPair ? campaignOrderId(publicRef) : null;
   const orderRow = await saveOrderToSupabase({
+    ...(id ? {id} : {}),
     customer_name: body.fio,
     customer_phone: body.phone,
     customer_email: body.email || null,
@@ -507,11 +522,12 @@ module.exports = async function handler(req, res) {
   });
 
   if (hasCampaignPair && !isLead) {
-    if (orderRow?.stockConflict) {
+    if (orderRow?.stockConflict || orderRow?.referenceConflict) {
       const accepted = await recoverCampaignOrder(publicRef, body);
       if (accepted) return res.status(200).json({
         ok: true, stage: 'final', order_num: publicRef, supabase_order: accepted.number, authoritative_total: Number(accepted.total)
       });
+      if (orderRow.referenceConflict) return res.status(409).json({ok:false,error:'Дані замовлення змінилися. Оновіть кошик.'});
       return res.status(409).json({ok: false, code: 'pair_unavailable', error: 'Обраної пари вже немає в цьому розмірі.'});
     }
     if (!orderRow?.id) {

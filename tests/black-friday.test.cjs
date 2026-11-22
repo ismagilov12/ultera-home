@@ -24,7 +24,7 @@ function setup(t, upstream) {
     if (path.endsWith('/compute_order_total')) {
       const input = JSON.parse(opts.body).p_items;
       const breakdown = input.map(line => {
-        const unit = line.uid === pair.uid ? pair.price : regular.price;
+        const unit = line.uid.startsWith('bfoffer-') ? 4890 : line.uid === pair.uid ? pair.price : regular.price;
         if (line.uid === pair.uid) assert.equal(line.promo_pct,0);
         return {...line, unit_price:unit, line_total:unit*line.qty};
       });
@@ -43,9 +43,15 @@ test('campaign cards use the recorded insole length and season while stock remai
   setup(t, path => {
     if (path.endsWith('/ulhome_products')) return reply([
       {uid:'bf26-leo', title:'Hunk Leo', article:'ЮА 1', category:'ULTERA;Осінь', size_list:[{eu:'40',cm:'26'}]},
-      {uid:'bf26-other', article:null, category:'Розпродаж', size_list:[{eu:'41'}]}
+      {uid:'bf26-other', article:null, category:'Розпродаж', size_list:[{eu:'41'}]},
+      {uid:'bf26-thermo', article:'Thermo', category:'ULTERA;Зима', price:4890, price_old:5600,
+       size_list:[{eu:'40',cm:26},{eu:'41',cm:27},{eu:'45',cm:30}]},
+      {uid:'bf26-unlisted', size_list:[{eu:'42'}]}
     ]);
-    if (path.endsWith('/ulhome_sale_stock')) return reply([{uid:'bf26-leo',size:'40',qty:1}]);
+    if (path.endsWith('/ulhome_sale_stock')) return reply([
+      {uid:'bf26-leo',size:'40',qty:1},{uid:'bf26-other',size:'41',qty:0},
+      {uid:'bf26-thermo',size:'40',qty:0},{uid:'bf26-thermo',size:'41',qty:1}
+    ]);
     assert.fail(path);
   });
   const res = {setHeader(){}, status(code){ this.code=code; return this; }, json(body){ this.body=body; }};
@@ -53,8 +59,11 @@ test('campaign cards use the recorded insole length and season while stock remai
   assert.equal(res.code,200);
   assert.deepEqual(res.body.items.map(({size,cm,season,article,available})=>({size,cm,season,article,available})),[
     {size:'40',cm:26,season:'Осінь',article:'ЮА 1',available:true},
-    {size:'41',cm:null,season:null,article:null,available:false}
+    {size:'41',cm:null,season:null,article:null,available:false},
+    {size:'41',cm:27,season:'Зима',article:'Thermo',available:true}
   ]);
+  assert.deepEqual(res.body.items[2].variants,[{size:'40',cm:26,available:false},{size:'41',cm:27,available:true}]);
+  assert.equal(res.body.items[2].oldPrice,5600);
 });
 
 test('a sold pair stops checkout before CRM and legacy deductions', async t => {
@@ -69,6 +78,45 @@ test('a sold pair stops checkout before CRM and legacy deductions', async t => {
   assert.equal(result.code,409);
   assert.equal(result.body.code,'pair_unavailable');
   assert.deepEqual(calls,['/rest/v1/ulhome_orders','/rest/v1/ulhome_orders']);
+});
+
+test('unlimited Thermo colours respect EU eligibility and price every unit once on retries', async t => {
+  const oreo={uid:'bfoffer-aganta-thermo-oreo',size:'44',qty:2,price:4890,saleItem:true};
+  const hunk={uid:'bfoffer-hunk-thermo-black',size:'45',qty:3,price:4890,saleItem:true};
+  const sizes=['40','41','42','43','44','45'].map(eu=>({eu,qty:'9999'}));
+  let saved, crm, orderWrites=0;
+  setup(t,(path,opts)=>{
+    if (path.endsWith('/ulhome_products')) return reply([
+      {uid:'550020261103',published:true,size_list:sizes},{uid:'550020260917',published:true,size_list:sizes}
+    ]);
+    if (path.endsWith('/ulhome_orders')) {
+      if (opts.method==='PATCH') return reply({});
+      if (opts.method==='POST') {
+        const incoming=JSON.parse(opts.body);
+        if(saved) {
+          assert.equal(incoming.id,saved.id);
+          return reply({message:'duplicate key value violates unique constraint "ulhome_orders_pkey"'},409);
+        }
+        saved=incoming; orderWrites++; return reply([{id:incoming.id,number:324}]);
+      }
+      return reply([{...saved, number:324}]);
+    }
+    if(path==='/v1/order'){crm=JSON.parse(opts.body); return reply({id:324});}
+    assert.fail(path);
+  });
+  const ineligible={...body,items:[{...oreo,size:'45'}]};
+  assert.equal((await invoke(order,ineligible)).code,409);
+  assert.equal((await invoke(payment,{...ineligible,orderReference:body.num})).code,409);
+  assert.equal(orderWrites,0);
+  const cart={...body,items:[oreo,hunk]};
+  assert.equal((await invoke(order,cart)).code,200);
+  assert.equal(saved.total,24450);
+  assert.deepEqual(crm.products.map(x=>[x.sku,x.price,x.quantity]),[['550020261103',4890,2],['550020260917',4890,3]]);
+  assert.equal((await invoke(order,cart)).body.supabase_order,324);
+  assert.equal(orderWrites,1);
+  const charge=await invoke(payment,{...cart,orderReference:body.num});
+  assert.equal(charge.body.chargedAmount,24450);
+  assert.deepEqual(charge.body.formData.productPrice,['4890.00','4890.00']);
 });
 
 test('a repeated campaign checkout recovers the same saved order', async t => {

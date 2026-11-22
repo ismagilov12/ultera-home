@@ -29,6 +29,7 @@
 //   - paymentMode === 'cod' → передплата фіксованої суми з env COD_PREPAYMENT_AMOUNT
 
 const crypto = require('crypto');
+const {isCampaign, validateOfferSizes} = require('../lib/black-friday-offers.cjs');
 
 // [v4] Hardcoded promo codes — keep in sync with api/order.js
 const PROMOS = { 'SALE1': 5, 'ULTERA10': 10 };
@@ -184,7 +185,8 @@ module.exports = async function handler(req, res) {
       return {
         uid: String(it.uid || ''),
         qty: Math.max(parseInt(it.qty || 1, 10), 1),
-        promo_pct: String(it.uid || '').startsWith('bf26-') ? 0 : safePct,
+        size: it.size,
+        promo_pct: isCampaign(it.uid) ? 0 : safePct,
         season_id: seasonId === 'winter' ? 'winter' : (seasonId === 'spring' || seasonId === 'autumn' ? 'autumn' : null)
       };
     });
@@ -195,6 +197,10 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'items or products array is required' });
   }
 
+  try {
+    const error=await validateOfferSizes(resolvedItems);
+    if (error) return res.status(409).json({ok:false,error});
+  } catch { return res.status(503).json({ok:false,error:'Не вдалося перевірити акційний розмір.'}); }
   const priceResult = await computeAuthoritativeTotal(resolvedItems);
   if (!priceResult.ok) return res.status(400).json({ error: priceResult.error || 'Price calculation failed', missing: priceResult.missing || null });
   const authoritativeAmount = Number(priceResult.total);
@@ -231,7 +237,7 @@ module.exports = async function handler(req, res) {
       productCount.push(String(line.qty));
       let unit = Number(line.unit_price);
       const linePromoPct = Number(line.promo_pct || 0);
-      if (promoPct > 0 && linePromoPct <= 0 && !String(line.uid).startsWith('bf26-')) {
+      if (promoPct > 0 && linePromoPct <= 0 && !isCampaign(line.uid)) {
         unit = Math.round(unit * (100 - promoPct)) / 100;
       }
       productPrice.push(unit.toFixed(2));

@@ -2856,6 +2856,7 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
       </div>
 
       <div class="modal-price" id="m_price"></div>
+      <a id="m_campaign_offer" href="/black-friday#pairs" hidden></a>
       <button type="button" id="yu11PriceGuide" class="yu11-price-guide" onclick="openYu11Guide()" hidden>Підібрати розмір за см</button>
 
       <div class="ms" id="m_season_wrap">
@@ -3896,7 +3897,12 @@ window.ulteraNormalizeAutumnCopy(DATA);
 })();
 const EXTRA_PHOTOS = JSON.parse(document.getElementById('EXTRA').textContent);
 /* ————— CART STATE ————— */
-function isCampaignPair(item){ return String(item?.uid || '').startsWith('bf26-'); }
+function isSingleCampaignPair(item){ return String(item?.uid || '').startsWith('bf26-'); }
+function isCampaignPair(item){ return isSingleCampaignPair(item) || String(item?.uid || '').startsWith('bfoffer-'); }
+function notifyCampaignStock(){
+  window.dispatchEvent(new Event('ultera:campaign-stock'));
+  try { localStorage.setItem('ultera_bf_stock', String(Date.now())); } catch (_) {}
+}
 function cartPromoPercent(item){ return !isCampaignPair(item) && (item.promoSecond || item.saleItem) ? 30 : 0; }
 const CART = {
   items: JSON.parse(localStorage.getItem('ultera_cart')||'[]'),
@@ -3928,12 +3934,12 @@ const CART = {
     this.refreshPrices();
     const key = item.uid+'|'+(item.size||'')+'|'+cartSeasonId(item);
     const ex = this.items.find(x=>x.uid+'|'+(x.size||'')+'|'+cartSeasonId(x)===key);
-    if(ex){ ex.qty = isCampaignPair(item) ? 1 : (ex.qty||1) + 1; } else { this.items.push({...item, qty:1}); }
+    if(ex){ ex.qty = isSingleCampaignPair(item) ? 1 : (ex.qty||1) + 1; } else { this.items.push({...item, qty:1}); }
     this.save();
     window.trackJourney?.('add_to_cart', item);
     try { if (typeof ulteraFbq === 'function') ulteraFbq('AddToCart', {content_ids:[item.uid], content_type:'product', content_name:item.title||'', value: parseFloat(item.price)||0, currency:'UAH'}); } catch(_){}
   },
-  setQty(i, q){ if(!this.items[i]) return; if(isCampaignPair(this.items[i])) q=Math.min(q,1); const item={...this.items[i],qty:Math.max(0,q)}; if(q<=0){ this.items.splice(i,1); } else { this.items[i].qty = q; } this.save(); window.trackJourney?.(q<=0?'remove_from_cart':'cart_quantity_changed',item); },
+  setQty(i, q){ if(!this.items[i]) return; if(isSingleCampaignPair(this.items[i])) q=Math.min(q,1); const item={...this.items[i],qty:Math.max(0,q)}; if(q<=0){ this.items.splice(i,1); } else { this.items[i].qty = q; } this.save(); window.trackJourney?.(q<=0?'remove_from_cart':'cart_quantity_changed',item); },
   remove(i){ const item=this.items[i]; this.items.splice(i,1); this.save(); if(item)window.trackJourney?.('remove_from_cart',item); },
   clear(){ this.items=[]; this.save(); },
   addPromo(item){ this.items.push({...item, qty: 1}); this.save(); window.trackJourney?.('add_to_cart',{...item,qty:1}); },
@@ -4483,6 +4489,35 @@ function syncYu11Purchase(){
   action.disabled = buy.disabled; action.textContent = label;
   document.getElementById('yu11Price').textContent = document.querySelector('#m_price .cur')?.textContent || '';
 }
+let nativeOffer = null;
+function thermoCampaignUid(uid){
+  return {'550020261103':'bfoffer-aganta-thermo-oreo','550020260917':'bfoffer-hunk-thermo-black'}[uid];
+}
+function nativeVariant(size){
+  return nativeOffer?.variants.find(v=>v.size===size);
+}
+function displayNativeOffer(){
+  if(!nativeOffer || nativeOffer.uid!==thermoCampaignUid(currentColor)) return;
+  const size=document.querySelector('#m_sizes .size-btn.selected')?.dataset.sz;
+  const variant=nativeVariant(size);
+  const link=document.getElementById('m_campaign_offer'), price=document.getElementById('m_price');
+  const full=parseFloat(findProduct(currentColor).price);
+  price.innerHTML=variant?.available
+    ? '<span class="cur">'+priceNum(nativeOffer.price)+' ₴</span> <span class="was">'+priceNum(full)+' ₴</span> <span class="save">Чорна п’ятниця</span>'
+    : '<span class="cur">'+priceNum(full)+' ₴</span>';
+  link.href='/black-friday?pair='+encodeURIComponent(nativeOffer.uid)+(variant?.available?'&size='+encodeURIComponent(size):'');
+  link.textContent=variant && !variant.available ? 'Цього розміру зараз немає в акції' :
+    nativeOffer.available ? 'Чорна п’ятниця · переглянути акційні розміри' : 'Акційних розмірів зараз немає';
+  link.hidden=false;
+}
+async function readNativeOffer(uid){
+  const response=await fetch('/api/black-friday',{cache:'no-store'});
+  if(!response.ok) throw new Error('Не вдалося перевірити наявність');
+  const {items}=await response.json();
+  if(currentColor!==uid) return;
+  nativeOffer=items.find(item=>item.uid===thermoCampaignUid(uid)) || null;
+  displayNativeOffer();
+}
 function openModal(uid){
   const p = findProduct(uid);
   if(!p) return;
@@ -4516,6 +4551,9 @@ function openModal(uid){
   // SHAPE тепер відкриває модалку як інші товари
   const row = findFamily(p.family);
   currentColor = p.uid;
+  nativeOffer=null;
+  document.getElementById('m_campaign_offer').hidden=true;
+  if(thermoCampaignUid(currentColor)) readNativeOffer(currentColor).catch(()=>{});
   window.__modalUid = p.uid;
   window.ulteraCard360?.select(p.uid);
   document.getElementById('m_fam').textContent = p.family + (p.mark ? ' · ' + p.mark : '');
@@ -4561,6 +4599,7 @@ function openModal(uid){
     b.addEventListener('click',()=>{
       document.querySelectorAll('#m_sizes .size-btn').forEach(x=>x.classList.remove('selected'));
       b.classList.add('selected');
+      displayNativeOffer();
       if(yu11){
         document.querySelectorAll('#m_sizes .size-btn').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
         syncYu11Purchase();
@@ -5055,6 +5094,24 @@ function addToCart(){
   const p = findProduct(uid);
   if(!p){ toast('Помилка товару'); return; }
   if(isSoldOut(p)){ toast('Немає в наявності'); return; }
+  if(thermoCampaignUid(uid)) return addThermoAtAvailablePrice(p,sel.dataset.sz);
+  addRegularToCart(p,sel.dataset.sz);
+}
+async function addThermoAtAvailablePrice(p,size){
+  const wasOnSale=nativeVariant(size)?.available;
+  try { await readNativeOffer(p.uid); }
+  catch { toast('Не вдалося перевірити ціну. Спробуйте ще раз.'); return; }
+  if(currentColor!==p.uid || document.querySelector('#m_sizes .size-btn.selected')?.dataset.sz!==size) return;
+  if(nativeVariant(size)?.available){
+    CART.add({uid:nativeOffer.uid,title:nativeOffer.title,photo:nativeOffer.photo,color_name:nativeOffer.color,
+      size,price:nativeOffer.price,family:'SaleOstatki',saleItem:true});
+    updateCartBadge(); closeModal(); openCart();
+    return;
+  }
+  if(wasOnSale){ toast('Акційну пару цього розміру щойно замовили.'); return; }
+  addRegularToCart(p,size);
+}
+function addRegularToCart(p,size){
   // Season: Autumn at the current price | Winter thermo (+900 UAH).
   const NO_SEASON = ['Hunk Thermo BRFT W','02','SHAPE','Lite','Hunk Summer W','Thermo','Hunk Thermo','Aganta Thermo','Thermo Ked','Travel Thermo','WAVE2 Thermo'];
   const isThermo = isNativeThermoFamily(p.family);
@@ -5070,7 +5127,7 @@ function addToCart(){
     title: p.title.replace('ULTERA - ','').replace('ULTERA ',''),
     photo: p.photo,
     color_name: p.color_name || '',
-    size: sel.dataset.sz,
+    size,
     price: finalPrice,
     family: p.family,
     season: seasonLabel || null,
@@ -5078,7 +5135,7 @@ function addToCart(){
   };
   CART.add(item);
   updateCartBadge();
-  toast('Додано · розмір ' + sel.dataset.sz);
+  toast('Додано · розмір ' + size);
   closeModal();
   setTimeout(openCart, 300);
 }
@@ -5134,7 +5191,7 @@ function renderCart(){
       '<div class="cd-item-info">' +
         '<div class="cd-item-t">'+it.title+'</div>' +
         '<div class="cd-item-meta">'+(it.color_name||'')+' · розмір '+(it.size||'—')+'</div>' +
-        (isCampaignPair(it) ? '<span class="cd-single-pair">1 пара</span>' : '<div class="cd-item-qty"><button onclick="cartQty('+i+',-1)">−</button><b>'+(it.qty||1)+'</b><button onclick="cartQty('+i+',1)">+</button></div>') +
+        (isSingleCampaignPair(it) ? '<span class="cd-single-pair">1 пара</span>' : '<div class="cd-item-qty"><button onclick="cartQty('+i+',-1)">−</button><b>'+(it.qty||1)+'</b><button onclick="cartQty('+i+',1)">+</button></div>') +
       '</div>' +
       '<div>' +
         '<div class="cd-item-price">'+itemPriceHtml(it)+'</div>' +
@@ -5607,6 +5664,7 @@ async function wizardSubmit(){
     const result = await r.json().catch(()=>({}));
     if(!r.ok || result.ok === false){
       if(result.code === 'pair_unavailable'){
+        notifyCampaignStock();
         errEl.textContent = result.error + ' ';
         const link = document.createElement('a');
         link.href = '/black-friday#pairs'; link.textContent = 'Переглянути наявні пари';
@@ -5618,13 +5676,14 @@ async function wizardSubmit(){
       throw new Error(result.error || result.message || ('HTTP ' + r.status));
     }
     if(result.mock) console.log('Mock order:', result);
+    if(result.supabase_order && payload.items.some(isCampaignPair)) notifyCampaignStock();
     if(!result.mock)window.trackJourney?.('checkout_submit_acknowledged',{total:result.authoritative_total,payment_method:pm});
     // --- WayForPay payment redirect ---
     var fioParts = String(CART.wizard.fio||'').trim().split(/\s+/);
     var clientFirstName = fioParts[0] || '';
     var clientLastName  = fioParts.slice(1).join(' ') || '';
     var wfpItems = CART.items.map(function(it){
-      return { uid: String(it.uid||''), qty: Number(it.qty||1),
+      return { uid: String(it.uid||''), size: it.size, qty: Number(it.qty||1),
                promo_pct: cartPromoPercent(it),
                season_id: cartSeasonId(it) };   // Preserve winter in saved carts and payment pricing.
     });
@@ -8210,6 +8269,7 @@ insertWomanDivider();
 .yu11-buybar,.yu11-buybar[hidden],.yu11-price-guide[hidden]{display:none}
 .yu11-price-guide,.yu11-guide{font:inherit;color:#314c24;text-decoration:underline;text-underline-offset:3px;border:0;background:none;cursor:pointer}
 .yu11-price-guide{min-height:44px;padding:5px 0;font-size:14px}
+#m_campaign_offer:not([hidden]){display:inline-block;margin:2px 0 12px;color:inherit;text-decoration:underline;text-underline-offset:3px}
 .yu11-purchase :is(.yu11-action,.yu11-guide,.yu11-price-guide,.size-btn):focus-visible{outline:2px solid #42652e;outline-offset:2px}
 @media(max-width:760px){
   .yu11-purchase .yu11-price-guide{display:none}

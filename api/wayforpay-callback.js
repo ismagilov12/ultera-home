@@ -92,7 +92,8 @@ async function markSaleSold(orderRef) {
     if (!r.ok) return;
     const rows = await r.json();
     const items = (rows[0] && Array.isArray(rows[0].items)) ? rows[0].items : [];
-    const saleUids = [...new Set(items.filter(it => it && (it.saleItem === true || it.family === 'SALE')).map(it => String(it.uid)))];
+    const {offers} = require('../lib/black-friday-offers.cjs');
+    const saleUids = [...new Set(items.filter(it => it && !offers.has(it.uid) && (it.saleItem === true || it.family === 'SALE')).map(it => String(it.uid)))];
     if (!saleUids.length) return;
     const sr = await fetch(`${supabaseUrl}/rest/v1/ulhome_settings?key=eq.sale_sold_uids&select=value`, {
       headers: { apikey: supabaseKey, Authorization: 'Bearer ' + supabaseKey }
