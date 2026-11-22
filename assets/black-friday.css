@@ -87,6 +87,18 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 #loading, #error, .empty, noscript { display: block; padding: 20px 0; }
 #error button { margin-top: 12px; }
 .grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: clamp(18px,2.2vw,34px) clamp(10px,1.3vw,24px); }
+.top-offers { padding-block: clamp(12px,1.6vw,26px); }
+#top-products { grid-template-columns: repeat(2,minmax(0,1fr)); }
+#top-products .size-tag { white-space: normal; line-height: 1.2; }
+.offer-preview { min-width: 0; display: flex; flex-direction: column; background: white; border: 1px solid #d7dcdb; }
+.offer-preview img { display: block; width: 100%; aspect-ratio: 1.41; object-fit: contain; }
+.offer-preview strong { align-self: start; padding: 12px; font-size: clamp(21px,2vw,35px); line-height: 1.05; }
+@media (min-width: 1050px) {
+  #top-products .card, #top-products .offer-preview { display: grid; grid-template-columns: 48% minmax(0,1fr); }
+  #top-products .card-media, #top-products .offer-preview img { aspect-ratio: 1.25; }
+  #top-products .card-info { border-top: 0; border-left: 1px solid #dce1df; }
+  #top-products .card-action { flex-wrap: wrap; }
+}
 .card { min-width: 0; display: flex; flex-direction: column; background: white; border: 1px solid #d7dcdb; }
 .card-media, .visual { position: relative; isolation: isolate; overflow: hidden; background: #fff; }
 .card-media { aspect-ratio: 1.41; }

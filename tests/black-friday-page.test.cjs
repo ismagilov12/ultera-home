@@ -8,6 +8,17 @@ const shop = read('index.html');
 const campaign = read('templates/black-friday.html');
 const page = compose(shop, campaign);
 
+test('the sale landing and #pairs start with the two Thermo offers in shop order', () => {
+  const first = page.indexOf('<slot name="pairs-anchor">');
+  const banner = page.indexOf('<section class="campaign"');
+  assert.ok(first >= 0 && first < banner);
+  const previews = [...page.slice(first, banner).matchAll(/data-offer="([^"]+)" href="([^"]+)"/g)];
+  assert.deepEqual(previews.map(([, uid, href]) => [uid, href]), [
+    ['bfoffer-aganta-thermo-oreo','/black-friday?pair=bfoffer-aganta-thermo-oreo'],
+    ['bfoffer-hunk-thermo-black','/black-friday?pair=bfoffer-hunk-thermo-black']
+  ]);
+});
+
 test('clearance precedes the unchanged main collection and the native checkout', () => {
   const collection = shop.slice(shop.indexOf('<!-- NEW COLLECTION -->') + '<!-- NEW COLLECTION -->'.length, shop.indexOf('<!-- SALE OSTATKI'));
   assert.ok(page.includes('<div id="catalog" slot="catalog">' + collection + '</div>'));
