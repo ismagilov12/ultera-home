@@ -105,6 +105,31 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .condition.grade small { font: 500 11px/1.1 "BF Roboto",sans-serif; }
 .condition.sold { background: var(--ink); color: white; border-color: var(--ink); }
 .visual.catalog-photo img { object-fit: contain; object-position: center; }
+.new-photo-jump { color: #f7f9f4; text-decoration: underline; text-underline-offset: 4px; font-size: 14px; }
+.new-photos { border-top: 1px solid var(--line); }
+.new-photo-note { margin: 0 0 22px; max-width: 62ch; color: var(--muted); line-height: 1.45; }
+.photo-filter { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 18px; font-size: 14px; font-weight: 650; }
+.photo-filter select { padding: 8px 10px; color: var(--ink); background: white; border: 1px solid var(--line); }
+.new-photo-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: clamp(12px,1.6vw,24px); }
+.new-photo-card { min-width: 0; background: white; border: 1px solid #d7dcdb; }
+.new-photo-link { display: block; cursor: zoom-in; overflow: hidden; background: white; }
+.new-photo-link img { display: block; width: 100%; height: auto; aspect-ratio: 4/3; object-fit: contain; }
+.new-photo-info { border-top: 1px solid #edf0ee; padding: clamp(10px,1.3vw,18px); }
+.new-photo-info h3 { font-size: clamp(16px,1.6vw,23px); line-height: 1.12; }
+.new-photo-info p { margin: 6px 0 10px; color: var(--muted); line-height: 1.3; }
+.new-photo-info ul { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.new-photo-info li { font: 500 12px/1.3 var(--mono); background: #f0f2ef; padding: 4px 6px; }
+.more-photos summary { display: block; width: fit-content; margin: 22px auto; padding: 12px 23px; border: 1px solid var(--ink); background: white; cursor: pointer; font-weight: 650; }
+.more-photos summary::-webkit-details-marker { display: none; }
+.more-photos[open] .new-photo-grid { margin-top: 14px; }
+.more-photos:not([open]) summary span:last-child, .more-photos[open] summary span:first-child { display: none; }
+#zoom[data-pair-photo] #zoom-scroll { display: grid; place-items: center; background: #eef0ee; }
+#zoom[data-pair-photo] #zoom-image { width: 100%; height: 100%; max-height: min(74dvh,780px); object-fit: contain; }
+@media (max-width: 800px) {
+  .new-photo-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .new-photo-info p { font-size: 14px; }
+  .new-photo-info li { font-size: 11px; }
+}
 #sold-section { border-top: 1px solid #c7cfcc; }
 #sold-products .product-photo img { filter: saturate(.5); }
 .offer-sizes { min-width: 0; border: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 7px; margin: 22px 0; }

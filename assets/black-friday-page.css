@@ -12,7 +12,7 @@
   font-weight: 500;
   font-display: swap;
 }
-#bf-storefront, #pairs, #last-pairs { display: block; }
-#catalog, #pairs, #last-pairs, #collection { scroll-margin-top: 70px; }
+#bf-storefront, #pairs, #last-pairs, #new-pairs { display: block; }
+#catalog, #pairs, #last-pairs, #new-pairs, #collection { scroll-margin-top: 70px; }
 body.bf-dialog-open { overflow: hidden; }
-@media (max-width: 700px) { #catalog, #pairs, #last-pairs, #collection { scroll-margin-top: 53px; } }
+@media (max-width: 700px) { #catalog, #pairs, #last-pairs, #new-pairs, #collection { scroll-margin-top: 53px; } }

@@ -422,7 +422,32 @@
   }
   sizes.addEventListener('click',e=>{const b=e.target.closest('[data-size]');if(b) changeFilter('size',b.dataset.size);});
   byId('sort').addEventListener('change',e=>changeFilter('sort',e.target.value));
+  const photoFilter=byId('new-photo-size');
+  if(photoFilter) {
+    photoFilter.parentElement.hidden=false;
+    photoFilter.addEventListener('change',()=>{
+      const size=photoFilter.value, more=root.querySelector('.more-photos');
+      for(const card of root.querySelectorAll('[data-photo-sizes]')) {
+        card.hidden=Boolean(size) && !card.dataset.photoSizes.split(' ').includes(size);
+      }
+      more.open=Boolean(size);
+      more.querySelector('summary').hidden=Boolean(size);
+    });
+  }
   root.addEventListener('click',async e=>{
+    const photoLink=e.target.closest('a[data-pair-photo]');
+    if (photoLink && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button===0) {
+      e.preventDefault();
+      const picture=byId('zoom-image');
+      byId('zoom-title').textContent=photoLink.getAttribute('aria-label');
+      picture.alt=photoLink.querySelector('img').alt;
+      picture.onload=null;
+      picture.src=photoLink.href;
+      zoom.setAttribute('data-pair-photo','');
+      zoom.showModal();
+      byId('zoom-scroll').scrollTo(0,0);
+      return;
+    }
     const link = e.target.closest('a[data-basket]');
     if (link && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
       e.preventDefault(); showBasket(); return;
@@ -470,6 +495,7 @@
     dialog.querySelector('.close').addEventListener('click',()=>dialog.close());
     dialog.addEventListener('click',e=>{if(e.target===dialog) dialog.close();});
   }
+  zoom.addEventListener('close',()=>zoom.removeAttribute('data-pair-photo'));
   byId('notice').querySelector('button').addEventListener('click',()=>{byId('notice').hidden=true;});
   byId('retry').addEventListener('click',refresh);
   window.addEventListener('popstate',()=>{if(hasLoaded) syncRoute();});
@@ -494,7 +520,7 @@
 
   // Rendering the sale inserts rows above a linked collection. Restore the
   // customer's landing position once, unless they have already started browsing.
-  const initialAnchor = ['#pairs','#last-pairs','#catalog','#collection'].includes(location.hash) && document.querySelector(location.hash);
+  const initialAnchor = ['#pairs','#last-pairs','#new-pairs','#catalog','#collection'].includes(location.hash) && document.querySelector(location.hash);
   const input = new AbortController();
   if (initialAnchor) {
     for (const type of ['pointerdown','wheel','keydown']) {

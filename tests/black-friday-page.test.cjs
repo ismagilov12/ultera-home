@@ -36,6 +36,27 @@ test('the sale has its own share metadata and uses the shop tracking and fonts o
   assert.doesNotMatch(page, /rel="preload" as="image"[^>]*banners\/home-/);
   assert.doesNotMatch(page, /\/assets\/regular-catalog|id="regular-grid"/);
 });
+test('new warehouse photos have separate studio and pair views with sizes, independent of orderable stock', () => {
+  const photos = require('../lib/black-friday-new-photos.json');
+  const start = page.indexOf('<slot name="new-pairs-anchor">');
+  const end = page.indexOf('<section id="sold-section"');
+  assert.ok(page.indexOf('id="products"') < start && start < end);
+  const gallery = page.slice(start, end);
+  assert.equal(photos.length, 46);
+  assert.equal(new Set(photos.map(photo=>photo.id)).size, photos.length);
+  assert.equal((gallery.match(/<a class="new-photo-link"/g) || []).length, photos.length);
+  assert.match(gallery, /EU 40 · 26 см/);
+  assert.doesNotMatch(gallery, /data-buy|class="buy"|\bundefined\b/);
+  for (const photo of photos) {
+    assert.ok(photo.sizes.length);
+    for (const subdir of ['', 'pairs/']) {
+      const file = '/photos/black-friday/nov23/' + subdir + photo.id + '.webp';
+      assert.ok(gallery.includes(file));
+      const bytes = fs.readFileSync(path.join(__dirname, '..', file.slice(1)));
+      assert.equal(bytes.toString('ascii',8,12),'WEBP');
+    }
+  }
+});
 test('both campaign URLs serve the shared page and HEAD does not send a body', () => {
   const handler = require('../api/black-friday-page');
   const config = require('../vercel.json');
