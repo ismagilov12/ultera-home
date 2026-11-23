@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const order = require('../api/order');
 const payment = require('../api/wayforpay');
 const catalogue = require('../api/black-friday');
+const arrivals = require('../lib/black-friday-nov23.cjs');
 
 const pair = {uid:'bf26-07-slip-on-black-suede-42', title:'Сліпони', size:'42', qty:1, price:999, saleItem:true, promo_pct:30};
 const regular = {uid:'regular', title:'Regular', size:'42', qty:1, price:2000};
@@ -26,8 +27,8 @@ function setup(t, upstream) {
       const breakdown = input.map(line => {
         const campaignPrices = {'bfoffer-aganta-thermo-oreo':4890, 'bfoffer-hunk-thermo-black':4890,
           'bfoffer-aganta-aqva':3890, 'bfoffer-aganta-salvia':3890};
-        const unit = campaignPrices[line.uid] ?? (line.uid === pair.uid ? pair.price : regular.price);
-        if (line.uid === pair.uid) assert.equal(line.promo_pct,0);
+        const unit = campaignPrices[line.uid] ?? (arrivals.has(line.uid) ? 1990 : line.uid === pair.uid ? pair.price : regular.price);
+        if (line.uid.startsWith('bf26-')) assert.equal(line.promo_pct,0);
         return {...line, unit_price:unit, line_total:unit*line.qty};
       });
       return reply({ok:true, breakdown, total:breakdown.reduce((n,line)=>n+line.line_total,0)});
@@ -61,11 +62,56 @@ test('campaign cards use the recorded insole length and season while stock remai
   assert.equal(res.code,200);
   assert.deepEqual(res.body.items.map(({size,cm,season,article,available})=>({size,cm,season,article,available})),[
     {size:'40',cm:26,season:'Осінь',article:'ЮА 1',available:true},
-    {size:'41',cm:null,season:null,article:null,available:false},
     {size:'41',cm:27,season:'Зима',article:'Thermo',available:true}
   ]);
-  assert.deepEqual(res.body.items[2].variants,[{size:'40',cm:26,available:false},{size:'41',cm:27,available:true}]);
-  assert.equal(res.body.items[2].oldPrice,5600);
+  assert.deepEqual(res.body.items[1].variants,[{size:'41',cm:27,available:true}]);
+  assert.equal(res.body.items[1].oldPrice,5600);
+});
+
+test('a new card exposes only its free sizes, with the original image and exact available quantities', async t => {
+  const green=arrivals.get('bf26-n23-ua1-brf-pistachio'), red=arrivals.get('bf26-n23-ua10-bordeaux-39');
+  setup(t, path=>{
+    if(path.endsWith('/ulhome_products')) return reply([green,red].map(item=>({
+      uid:item.uid, article:item.article, title:item.title, photo:item.photo, size_list:item.sizes, price:1990
+    })));
+    if(path.endsWith('/ulhome_sale_stock')) return reply([
+      {uid:green.uid,size:'37',qty:0},{uid:green.uid,size:'40',qty:1},{uid:green.uid,size:'44',qty:1},
+      {uid:red.uid,size:'39',qty:2}
+    ]);
+    assert.fail(path);
+  });
+  const res={setHeader(){},status(n){this.code=n;return this;},json(data){this.data=data;}};
+  await catalogue({method:'GET'},res);
+  assert.equal(res.code,200);
+  const [first, second]=res.data.items;
+  assert.equal(first.batch,'nov23');
+  assert.equal(first.price,1990);
+  assert.equal(first.pairPhoto,green.original);
+  assert.deepEqual(first.variants.map(v=>[v.size,v.cm,v.quantity]),[['40',26,1],['44',29,1]]);
+  assert.deepEqual(second.variants.map(v=>[v.size,v.cm,v.quantity]),[['39',25.5,2]]);
+});
+
+test('two burgundy pairs keep their fixed unit price in the order, CRM and card payment', async t => {
+  const red=arrivals.get('bf26-n23-ua10-bordeaux-39');
+  const line={uid:red.uid,title:red.title,size:'39',qty:2,price:1990,saleItem:true,promo_pct:30};
+  let saved, crm;
+  setup(t,(path,opts)=>{
+    if(path.endsWith('/ulhome_orders')){
+      if(opts.method==='PATCH') return reply({});
+      saved=JSON.parse(opts.body);
+      return reply([{id:saved.id,number:125}]);
+    }
+    if(path.endsWith('/ulhome_products')) return reply([red]);
+    if(path==='/v1/order') {crm=JSON.parse(opts.body);return reply({id:125});}
+    assert.fail(path);
+  });
+  const cart={...body,items:[line]};
+  assert.equal((await invoke(order,cart)).code,200);
+  assert.equal(saved.total,3980);
+  assert.deepEqual(crm.products.map(p=>[p.price,p.quantity]),[[1990,2]]);
+  const confirmation=await invoke(payment,{...cart,orderReference:body.num});
+  assert.equal(confirmation.code,200);
+  assert.equal(confirmation.body.chargedAmount,3980);
 });
 
 test('a sold pair stops checkout before CRM and legacy deductions', async t => {

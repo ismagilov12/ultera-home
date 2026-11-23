@@ -3898,6 +3898,11 @@ window.ulteraNormalizeAutumnCopy(DATA);
 const EXTRA_PHOTOS = JSON.parse(document.getElementById('EXTRA').textContent);
 /* ————— CART STATE ————— */
 function isSingleCampaignPair(item){ return String(item?.uid || '').startsWith('bf26-'); }
+function campaignQtyLimit(item){
+  if(!isSingleCampaignPair(item)) return Infinity;
+  const qty=Number(item.saleMaxQty);
+  return Number.isSafeInteger(qty) && qty>0 ? qty : 1;
+}
 function isCampaignPair(item){ return isSingleCampaignPair(item) || String(item?.uid || '').startsWith('bfoffer-'); }
 function notifyCampaignStock(){
   window.dispatchEvent(new Event('ultera:campaign-stock'));
@@ -3934,12 +3939,12 @@ const CART = {
     this.refreshPrices();
     const key = item.uid+'|'+(item.size||'')+'|'+cartSeasonId(item);
     const ex = this.items.find(x=>x.uid+'|'+(x.size||'')+'|'+cartSeasonId(x)===key);
-    if(ex){ ex.qty = isSingleCampaignPair(item) ? 1 : (ex.qty||1) + 1; } else { this.items.push({...item, qty:1}); }
+    if(ex){ ex.qty = Math.min((ex.qty||1) + 1, campaignQtyLimit(item)); } else { this.items.push({...item, qty:1}); }
     this.save();
     window.trackJourney?.('add_to_cart', item);
     try { if (typeof ulteraFbq === 'function') ulteraFbq('AddToCart', {content_ids:[item.uid], content_type:'product', content_name:item.title||'', value: parseFloat(item.price)||0, currency:'UAH'}); } catch(_){}
   },
-  setQty(i, q){ if(!this.items[i]) return; if(isSingleCampaignPair(this.items[i])) q=Math.min(q,1); const item={...this.items[i],qty:Math.max(0,q)}; if(q<=0){ this.items.splice(i,1); } else { this.items[i].qty = q; } this.save(); window.trackJourney?.(q<=0?'remove_from_cart':'cart_quantity_changed',item); },
+  setQty(i, q){ if(!this.items[i]) return; q=Math.min(q,campaignQtyLimit(this.items[i])); const item={...this.items[i],qty:Math.max(0,q)}; if(q<=0){ this.items.splice(i,1); } else { this.items[i].qty = q; } this.save(); window.trackJourney?.(q<=0?'remove_from_cart':'cart_quantity_changed',item); },
   remove(i){ const item=this.items[i]; this.items.splice(i,1); this.save(); if(item)window.trackJourney?.('remove_from_cart',item); },
   clear(){ this.items=[]; this.save(); },
   addPromo(item){ this.items.push({...item, qty: 1}); this.save(); window.trackJourney?.('add_to_cart',{...item,qty:1}); },
@@ -5199,7 +5204,7 @@ function renderCart(){
       '<div class="cd-item-info">' +
         '<div class="cd-item-t">'+it.title+'</div>' +
         '<div class="cd-item-meta">'+(it.color_name||'')+' · розмір '+(it.size||'—')+'</div>' +
-        (isSingleCampaignPair(it) ? '<span class="cd-single-pair">1 пара</span>' : '<div class="cd-item-qty"><button onclick="cartQty('+i+',-1)">−</button><b>'+(it.qty||1)+'</b><button onclick="cartQty('+i+',1)">+</button></div>') +
+        (campaignQtyLimit(it)===1 ? '<span class="cd-single-pair">1 пара</span>' : '<div class="cd-item-qty"><button onclick="cartQty('+i+',-1)">−</button><b>'+(it.qty||1)+'</b><button onclick="cartQty('+i+',1)"'+((it.qty||1)>=campaignQtyLimit(it)?' disabled':'')+'>+</button></div>') +
       '</div>' +
       '<div>' +
         '<div class="cd-item-price">'+itemPriceHtml(it)+'</div>' +

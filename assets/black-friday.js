@@ -11,7 +11,8 @@
   }
   const byId = id => root.getElementById(id);
   const grid = byId('products');
-  const soldGrid = byId('sold-products');
+  const newGrid = byId('new-products');
+  const newSizeSelect = byId('new-photo-size');
   const sizes = byId('sizes');
   const detail = byId('detail');
   const guide = byId('guide');
@@ -23,7 +24,8 @@
   const sizeLabel = item => ['EU ' + item.size, centimeters(item.cm)].filter(Boolean).join(' · ');
   const variants = item => item.variants || [item];
   const multiple = item => item.unlimited || variants(item).length > 1;
-  const displayName = item => multiple(item) ? item.title : articleLabel(item);
+  const newArrival = item => item.batch === 'nov23';
+  const displayName = item => item.unlimited || newArrival(item) ? item.title : articleLabel(item);
   const prices = item => (item.oldPrice ? '<s>'+money(item.oldPrice)+'</s> ' : '') + money(item.price);
   function sizesLabel(item) {
     if (!multiple(item)) return sizeLabel(item);
@@ -141,11 +143,12 @@
   }
 
   function original(item) {
+    if (item.pairPhoto) return item.pairPhoto;
     const note = notes[item.uid];
     if (!note) return null;
     return note.original || item.photo.replace('/black-friday/', '/black-friday/pairs/').replace(/\.webp$/, '.jpg');
   }
-  const viewsFor = item => notes[item.uid]?.gallery ? ['studio', ...Object.keys(notes[item.uid].gallery)] : original(item) ? ['studio','macro','actual'] : ['studio'];
+  const viewsFor = item => item.pairPhoto ? ['studio','actual'] : notes[item.uid]?.gallery ? ['studio', ...Object.keys(notes[item.uid].gallery)] : original(item) ? ['studio','macro','actual'] : ['studio'];
   const photoFor = (item, view) => view === 'studio' ? item.photo : notes[item.uid]?.gallery?.[view] || original(item);
   const itemFor = uid => items.find(item => item.uid === uid);
   function visual(item, view, lazy = true, decorate = false, withCaption = false) {
@@ -156,7 +159,7 @@
       : view === 'studio' ? ' style="--center:-'+center+'%;--aspect:'+aspect+'"' : '';
     const description = decorate ? '' : [viewNames[view], notes[item.uid]?.kind, displayName(item), item.color].filter(Boolean).join(' · ');
     const caption = withCaption && view === 'macro' && notes[item.uid] ? '<span class="macro-caption">'+escape(notes[item.uid].detail)+'</span>' : '';
-    const layout = notes[item.uid]?.gallery ? 'catalog-photo' : view;
+    const layout = notes[item.uid]?.gallery || (newArrival(item) && view==='studio') ? 'catalog-photo' : view;
     return '<span class="visual '+layout+'"'+style+'><img loading="'+(lazy?'lazy':'eager')+'" decoding="async" width="'+(view==='studio'?1000:960)+'" height="'+(view==='studio'?1250:1280)+'" src="'+escape(source)+'" alt="'+escape(description)+'">'+caption+'</span>';
   }
   function buyButton(item, variant) {
@@ -197,7 +200,8 @@
       }
       const line={uid:item.uid,title:[displayName(item),item.condition].filter(Boolean).join(' · '),
         photo:new URL(item.photo,location.origin).href,color_name:item.color,
-        size:variant.size,price:item.price,qty:1,family:'SaleOstatki',saleItem:true};
+        size:variant.size,price:item.price,qty:1,family:'SaleOstatki',saleItem:true,
+        ...(variant.quantity ? {saleMaxQty:variant.quantity} : {})};
       if (typeof CART !== 'undefined') {
         CART.items = cart;
         CART.add(line);
@@ -220,6 +224,7 @@
     return '<p class="colour"><i class="swatch" aria-hidden="true" style="--tone:'+tone+'"></i><span>'+escape(item.color)+'</span></p>';
   }
   function seasonLine(item) {
+    if(newArrival(item) && !item.season) return '';
     return '<p class="pair-season"><span>Сезон</span> <strong>'+escape(item.season || 'Уточнюється')+'</strong></p>';
   }
   function conditionBadge(item) {
@@ -229,16 +234,27 @@
     const explanation = details.length ? ' <small>' + escape(details.join(' · ')) + '</small>' : '';
     return '<span class="condition grade">' + escape(label) + explanation + '</span>';
   }
+  function purchaseAction(item) {
+    return multiple(item) && item.available
+      ? '<button class="buy" type="button" data-open="'+escape(item.uid)+'">Обрати розмір</button>'
+      : buyButton(item,variants(item)[0]);
+  }
   function tile(item,index) {
     const id=escape(item.uid), article=escape(displayName(item)), size=escape(sizesLabel(item));
-    const action=multiple(item) && item.available
-      ? '<button class="buy" type="button" data-open="'+id+'">Обрати розмір</button>'
-      : buyButton(item,variants(item)[0]);
     return '<article class="card" id="pair-'+id+'"><div class="card-media">'+
       '<button class="product-photo" type="button" data-open="'+id+'" aria-label="Розглянути '+article+', '+escape(item.color)+', '+size+'">'+visual(item,'studio',index>=6)+'</button>'+
       '<div class="media-badges"><span class="size-tag">'+size+'</span>'+conditionBadge(item)+'</div>'+
       '</div><div class="card-info"><h3><button type="button" class="article-link" data-open="'+id+'">'+article+'</button></h3>'+seasonLine(item)+colour(item)+
-      '<div class="card-action"><span class="price">'+prices(item)+'</span>'+action+'</div></div></article>';
+      '<div class="card-action"><span class="price">'+prices(item)+'</span>'+purchaseAction(item)+'</div></div></article>';
+  }
+  function arrivalCard(item) {
+    const name=escape(displayName(item)), color=escape(item.color);
+    const labels=variants(item).map(v=>'<li>'+escape(sizeLabel(v))+'</li>').join('');
+    const alt=name+' · '+color;
+    return '<article class="new-photo-card" id="pair-'+escape(item.uid)+'"><a class="new-photo-link" data-pair-photo href="'+escape(item.pairPhoto)+'" aria-label="Фото пари · '+alt+'">'+
+      '<img loading="lazy" decoding="async" width="640" height="480" src="'+escape(item.photo)+'" alt="'+alt+'"></a><div class="new-photo-info">'+
+      '<h3><button type="button" class="article-link" data-open="'+escape(item.uid)+'">'+name+'</button></h3><p>'+color+'</p>'+seasonLine(item)+
+      '<ul aria-label="Розміри та довжина устілки">'+labels+'</ul><div class="card-action"><span class="price">'+prices(item)+'</span>'+purchaseAction(item)+'</div></div></article>';
   }
   function render() {
     const selection=items.filter(item=>variants(item).some(v=>v.available && (!activeSize || v.size===activeSize)));
@@ -246,17 +262,21 @@
       const byPrice=sort==='low'?a.price-b.price:sort==='high'?b.price-a.price:0;
       return byPrice || (notes[a.uid]?.rank??999)-(notes[b.uid]?.rank??999);
     });
-    byId('result-count').textContent=String(selection.length);
+    const previous=selection.filter(item=>!newArrival(item));
+    const arrivals=selection.filter(newArrival);
+    byId('result-count').textContent=String(previous.length);
+    byId('new-result-count').textContent=String(arrivals.length);
     sizes.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.size===activeSize)));
     byId('sort').value=sort;
-    grid.innerHTML=selection.length?selection.map(tile).join(''):'<p class="empty">Наразі пар немає.</p>';
-    const sold=items.filter(item=>!item.available && !item.unlimited);
-    soldGrid.innerHTML=sold.map((item,index)=>tile(item,index+6)).join('');
-    byId('sold-section').hidden=!sold.length;
+    newSizeSelect.value=activeSize;
+    grid.innerHTML=previous.length?previous.map(tile).join(''):'<p class="empty">Наразі пар немає.</p>';
+    newGrid.innerHTML=arrivals.length?arrivals.map(arrivalCard).join(''):'<p class="empty">У цьому розмірі нових пар немає.</p>';
+    byId('new-sale-section').hidden=!items.some(newArrival);
     syncBasket();
   }
   function syncHero() {
     const hero=itemFor(heroUid);
+    byId('new-pairs-link').hidden=!items.some(newArrival);
     byId('hero-product').hidden=!hero;
     if(hero) {
       byId('hero-name').textContent=articleLabel(hero);
@@ -276,6 +296,7 @@
       const label=escape('Розмір EU '+size+(cm?' · '+cm:''));
       return '<button type="button" data-size="'+escape(size)+'" aria-label="'+label+'">'+escape(size)+(cm?'<small>'+escape(cm)+'</small>':'')+'</button>';
     }).join('');
+    newSizeSelect.replaceChildren(new Option('Усі розміри',''), ...all.map(size=>new Option(sizeLabel(free.find(v=>v.size===size)),size)));
   }
   function changeFilter(key,value) {
     const url=new URL(location.href);
@@ -294,10 +315,18 @@
     const item=itemFor(query.get('pair'));
     if(item) {
       if(activeUid!==item.uid || !detail.open || force) showProduct(item,activeUid===item.uid?activeView:'studio',false);
-    } else if(detail.open) dismiss();
+    } else {
+      if(detail.open) dismiss();
+      if(hasLoaded && query.has('pair')) {
+        const url=new URL(location.href);
+        url.searchParams.delete('pair');
+        history.replaceState(null,'',url);
+        notice('Цієї пари вже немає в розпродажі.',false);
+      }
+    }
   }
   function facts(item) {
-    const pairs=multiple(item) ? [] : [[item.cm ? 'Розмір / устілка' : 'Розмір',sizeLabel(item)],['Наявність',item.available?'1 пара':'Продано']];
+    const pairs=multiple(item) ? [] : [[item.cm ? 'Розмір / устілка' : 'Розмір',sizeLabel(item)],['Кількість у наявності',item.quantity ?? Number(item.available)]];
     if (!pairs.length) return '';
     return '<dl class="facts">'+pairs.map(([label,value])=>'<div><dt>'+escape(label)+'</dt><dd>'+escape(value)+'</dd></div>').join('')+'</dl>';
   }
@@ -317,7 +346,9 @@
       }
     }
     const wasOpen=detail.open;
-    if (activeUid!==item.uid) activeVariant=multiple(item) ? activeSize : item.size;
+    if (activeUid!==item.uid || !variants(item).some(v=>v.available && v.size===activeVariant)) {
+      activeVariant=multiple(item) ? activeSize : item.size;
+    }
     activeUid=item.uid;
     activeView=viewsFor(item).includes(view)?view:'studio';
     const meta=notes[item.uid];
@@ -414,7 +445,7 @@
       byId('error').hidden=true;
     } catch {
       items=[]; hasLoaded=false;
-      grid.replaceChildren(); soldGrid.replaceChildren(); byId('sold-section').hidden=true;
+      grid.replaceChildren(); newGrid.replaceChildren(); byId('new-sale-section').hidden=true;
       sizes.replaceChildren(); syncHero();
       byId('result-count').textContent=''; byId('error').hidden=false;
       if(detail.open) dismiss();
@@ -422,18 +453,7 @@
   }
   sizes.addEventListener('click',e=>{const b=e.target.closest('[data-size]');if(b) changeFilter('size',b.dataset.size);});
   byId('sort').addEventListener('change',e=>changeFilter('sort',e.target.value));
-  const photoFilter=byId('new-photo-size');
-  if(photoFilter) {
-    photoFilter.parentElement.hidden=false;
-    photoFilter.addEventListener('change',()=>{
-      const size=photoFilter.value, more=root.querySelector('.more-photos');
-      for(const card of root.querySelectorAll('[data-photo-sizes]')) {
-        card.hidden=Boolean(size) && !card.dataset.photoSizes.split(' ').includes(size);
-      }
-      more.open=Boolean(size);
-      more.querySelector('summary').hidden=Boolean(size);
-    });
-  }
+  newSizeSelect.addEventListener('change',()=>changeFilter('size',newSizeSelect.value));
   root.addEventListener('click',async e=>{
     const photoLink=e.target.closest('a[data-pair-photo]');
     if (photoLink && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button===0) {

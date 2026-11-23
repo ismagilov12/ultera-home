@@ -1,5 +1,6 @@
 // Public campaign catalogue. Prices come from the same product rows as checkout.
 const {offers, offerVariants} = require('../lib/black-friday-offers.cjs');
+const arrivals = require('../lib/black-friday-nov23.cjs');
 module.exports = async function blackFriday(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET') {
@@ -19,25 +20,27 @@ module.exports = async function blackFriday(req, res) {
     const related=[...offers.keys(), ...Array.from(offers.values(),o=>o.source)].join(',');
     const [products, stock] = await Promise.all([
       read('ulhome_products', 'uid,title,color_name,article,category,price,price_old,photo,mark,size_list,published', 'or=(and(uid.like.bf26-*,family.eq.SaleOstatki),uid.in.('+related+'))&order=sort_order.asc'),
-      read('ulhome_sale_stock', 'uid,size,qty', 'uid=like.bf26-*')
+      read('ulhome_sale_stock', 'uid,size,qty', 'uid=like.bf26-*&qty=gt.0')
     ]);
     const byUid = new Map(products.map(product=>[product.uid,product]));
     const quantities = new Map(stock.map(row => [row.uid + '/' + row.size, Number(row.qty)]));
     const items = [];
     for (const product of products) {
       const offer = offers.get(product.uid);
+      const arrival = arrivals.get(product.uid);
       if (!offer && !product.uid.startsWith('bf26-')) continue;
       const variants = [];
       const entries = offer ? offerVariants(offer,byUid.get(offer.source)) : product.size_list || [];
       for (const entry of entries) {
         const size = String(entry.eu);
         const qty = offer ? Number(entry.available) : quantities.get(product.uid + '/' + size);
-        if (!Number.isFinite(qty)) continue;
+        if (!Number.isFinite(qty) || (!offer && qty <= 0)) continue;
         const cm = Number(String(entry.cm ?? '').replace(',', '.'));
-        variants.push({size, cm: cm > 0 && Number.isFinite(cm) ? cm : null, available: qty > 0});
+        variants.push({size, cm: cm > 0 && Number.isFinite(cm) ? cm : null, available: qty > 0,
+          ...(arrival ? {quantity:qty} : {})});
       }
-      if (!variants.length) continue;
-      const display = variants.find(variant => variant.available) || variants[0];
+      const display = variants.find(variant => variant.available);
+      if (!display) continue;
       const season = (product.category || '').split(';').map(tag => tag.trim())
         .find(tag => /весн|літо|осін|зим|сезон/i.test(tag));
       items.push({
@@ -45,7 +48,8 @@ module.exports = async function blackFriday(req, res) {
         article: product.article, ...display, variants, unlimited: Boolean(offer),
         season: season || null, price: Number(product.price), photo: product.photo,
         oldPrice: Number(product.price_old) > Number(product.price) ? Number(product.price_old) : null,
-        condition: product.mark || null
+        condition: product.mark || null,
+        ...(arrival ? {batch:'nov23', pairPhoto:arrival.original} : {})
       });
     }
     return res.status(200).json({items});

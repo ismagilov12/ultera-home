@@ -36,27 +36,22 @@ test('the sale has its own share metadata and uses the shop tracking and fonts o
   assert.doesNotMatch(page, /rel="preload" as="image"[^>]*banners\/home-/);
   assert.doesNotMatch(page, /\/assets\/regular-catalog|id="regular-grid"/);
 });
-test('new warehouse photos have separate studio and pair views with sizes, independent of orderable stock', () => {
-  const photos = require('../lib/black-friday-new-photos.json');
+test('new sale stock renders between the previous offers and normal catalogue, with both photos for every card', () => {
+  const arrivals = [...require('../lib/black-friday-nov23.cjs').values()];
   const start = page.indexOf('<slot name="new-pairs-anchor">');
-  const end = page.indexOf('<section id="sold-section"');
+  const end = page.indexOf('<slot name="catalog">');
   assert.ok(page.indexOf('id="products"') < start && start < end);
-  const gallery = page.slice(start, end);
-  assert.equal(photos.length, 46);
-  assert.equal(new Set(photos.map(photo=>photo.id)).size, photos.length);
-  assert.equal((gallery.match(/<a class="new-photo-link"/g) || []).length, photos.length);
-  assert.match(gallery, /EU 40 · 26 см/);
-  assert.doesNotMatch(gallery, /data-buy|class="buy"|\bundefined\b/);
-  for (const photo of photos) {
-    assert.ok(photo.sizes.length);
-    const base = '/photos/black-friday/nov23/';
-    const cover = base + photo.id + '.webp';
-    const original = base + 'pairs/' + photo.id + '.jpg';
-    assert.ok(gallery.includes('src="' + cover + '"'));
-    assert.ok(gallery.includes('href="' + original + '"'));
-    const read = file => fs.readFileSync(path.join(__dirname, '..', file.slice(1)));
-    assert.equal(read(cover).toString('ascii',8,12),'WEBP');
-    assert.equal(read(original).readUInt16BE(0),0xffd8);
+  assert.match(page.slice(start,end), /<div class="new-photo-grid" id="new-products"><\/div>/);
+  assert.match(page, /href="#new-pairs">Нові пари за 1 990 ₴/);
+  assert.doesNotMatch(page, /id="sold-section"/);
+  assert.equal(arrivals.length,46);
+  assert.equal(arrivals.flatMap(pair=>pair.sizes).length,51);
+  assert.equal(arrivals.reduce((sum,pair)=>sum + pair.sizes.length * pair.quantity,0),52);
+  const readImage = file => fs.readFileSync(path.join(__dirname,'..',file.slice(1)));
+  for (const pair of arrivals) {
+    assert.ok(pair.sizes.every(s=>s.cm>0));
+    assert.equal(readImage(pair.photo).toString('ascii',8,12),'WEBP');
+    assert.equal(readImage(pair.original).readUInt16BE(0),0xffd8);
   }
   const redirects = require('../vercel.json').redirects;
   assert.ok(redirects.some(r => r.source === '/photos/black-friday/nov23/pairs/:photo.webp' && r.destination === '/photos/black-friday/nov23/pairs/:photo.jpg'));
