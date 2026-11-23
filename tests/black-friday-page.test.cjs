@@ -49,13 +49,17 @@ test('new warehouse photos have separate studio and pair views with sizes, indep
   assert.doesNotMatch(gallery, /data-buy|class="buy"|\bundefined\b/);
   for (const photo of photos) {
     assert.ok(photo.sizes.length);
-    for (const subdir of ['', 'pairs/']) {
-      const file = '/photos/black-friday/nov23/' + subdir + photo.id + '.webp';
-      assert.ok(gallery.includes(file));
-      const bytes = fs.readFileSync(path.join(__dirname, '..', file.slice(1)));
-      assert.equal(bytes.toString('ascii',8,12),'WEBP');
-    }
+    const base = '/photos/black-friday/nov23/';
+    const cover = base + photo.id + '.webp';
+    const original = base + 'pairs/' + photo.id + '.jpg';
+    assert.ok(gallery.includes('src="' + cover + '"'));
+    assert.ok(gallery.includes('href="' + original + '"'));
+    const read = file => fs.readFileSync(path.join(__dirname, '..', file.slice(1)));
+    assert.equal(read(cover).toString('ascii',8,12),'WEBP');
+    assert.equal(read(original).readUInt16BE(0),0xffd8);
   }
+  const redirects = require('../vercel.json').redirects;
+  assert.ok(redirects.some(r => r.source === '/photos/black-friday/nov23/pairs/:photo.webp' && r.destination === '/photos/black-friday/nov23/pairs/:photo.jpg'));
 });
 test('both campaign URLs serve the shared page and HEAD does not send a body', () => {
   const handler = require('../api/black-friday-page');

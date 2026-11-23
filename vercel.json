@@ -18,6 +18,11 @@
   ],
   "redirects": [
     {
+      "source": "/photos/black-friday/nov23/pairs/:photo.webp",
+      "destination": "/photos/black-friday/nov23/pairs/:photo.jpg",
+      "permanent": true
+    },
+    {
       "source": "/02.html",
       "destination": "/?p=02-black%2C571034829116",
       "permanent": true
