@@ -268,12 +268,12 @@
     const previous=selection.filter(item=>!newArrival(item));
     const arrivals=selection.filter(newArrival);
     byId('result-count').textContent=String(previous.length);
-    byId('new-result-count').textContent=String(arrivals.length);
+    byId('new-result-count').textContent='Знайдено '+arrivals.length;
     sizes.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.size===activeSize)));
     byId('sort').value=sort;
     newSizeSelect.value=activeSize;
     grid.innerHTML=previous.length?previous.map(tile).join(''):'<p class="empty">Наразі пар немає.</p>';
-    newGrid.innerHTML=arrivals.length?arrivals.map(arrivalCard).join(''):'<p class="empty">У цьому розмірі нових пар немає.</p>';
+    newGrid.innerHTML=arrivals.length?arrivals.map(arrivalCard).join(''):'<p class="empty">Пар цього розміру зараз немає.</p>';
     byId('new-sale-section').hidden=!items.some(newArrival);
     syncBasket();
   }

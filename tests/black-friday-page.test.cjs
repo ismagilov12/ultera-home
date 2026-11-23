@@ -42,7 +42,8 @@ test('new sale stock renders between the previous offers and normal catalogue, w
   const end = page.indexOf('<slot name="catalog">');
   assert.ok(page.indexOf('id="products"') < start && start < end);
   assert.match(page.slice(start,end), /<div class="new-photo-grid" id="new-products"><\/div>/);
-  assert.match(page, /href="#new-pairs">Нові пари за 1 990 ₴/);
+  assert.match(page, /href="#new-pairs">Пари за 1 990 ₴/);
+  assert.doesNotMatch(page, /Нові пари/i);
   assert.doesNotMatch(page, /id="sold-section"/);
   assert.equal(arrivals.length,46);
   assert.equal(arrivals.flatMap(pair=>pair.sizes).length,51);

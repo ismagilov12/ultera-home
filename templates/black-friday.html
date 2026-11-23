@@ -14,10 +14,10 @@
   <meta property="og:url" content="https://ultera.in.ua/black-friday">
   <link rel="preload" as="font" href="/assets/black-friday-type/roboto-ua.woff2" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/black-friday-page.css?v=nov23-photos">
-  <script src="/assets/black-friday.js?v=nov23-card" defer></script>
+  <script src="/assets/black-friday.js?v=nov23-filter" defer></script>
 </head>
 <body>
-  <link rel="stylesheet" href="/assets/black-friday.css?v=nov23-card">
+  <link rel="stylesheet" href="/assets/black-friday.css?v=nov23-filter">
   <a class="skip bf-surface" href="#pairs">До каталогу</a>
   <header class="topbar bf-surface">
     <div class="frame topbar-in">
@@ -43,7 +43,7 @@
           <p class="eyebrow campaign-kicker"><span class="cutmarks" aria-hidden="true"></span> Розпродаж останніх пар</p>
           <h1 id="sale-title"><span>Чорна</span> <em>п’ятниця</em></h1>
           <p class="campaign-intro">Знижки на Aganta, зимові моделі Thermo та останні пари з колекцій ULTERA.</p>
-          <div class="campaign-actions"><a class="cta lime" href="#pairs">Обрати пару</a><span id="starting-price" hidden></span><a class="new-photo-jump" id="new-pairs-link" hidden href="#new-pairs">Нові пари за 1 990 ₴ ↓</a></div>
+          <div class="campaign-actions"><a class="cta lime" href="#pairs">Обрати пару</a><span id="starting-price" hidden></span><a class="new-photo-jump" id="new-pairs-link" hidden href="#new-pairs">Пари за 1 990 ₴ ↓</a></div>
         </div>
         <button class="campaign-pair" type="button" id="hero-product" hidden>
           <span class="hotspot" aria-hidden="true">+</span><span><small>На фото</small><strong id="hero-name"></strong></span><span id="hero-spec"></span>
@@ -70,9 +70,11 @@
       <div class="grid" id="products"></div>
     </section>
     <slot name="new-pairs-anchor"></slot>
-    <section id="new-sale-section" class="collection frame new-photos" aria-labelledby="new-photos-title" hidden>
-      <div class="catalog-head"><div class="catalog-title"><h2 id="new-photos-title">Нові пари</h2><span id="new-result-count" aria-live="polite"></span></div></div>
-      <label class="photo-filter">Розмір <select id="new-photo-size"><option value="">Усі розміри</option></select></label>
+    <section id="new-sale-section" class="collection frame new-photos" aria-label="Пари за 1 990 гривень" hidden>
+      <div class="catalog-head">
+        <label class="photo-filter">Розмір <select id="new-photo-size"><option value="">Усі розміри</option></select></label>
+        <span id="new-result-count" aria-live="polite"></span>
+      </div>
       <div class="new-photo-grid" id="new-products"></div>
     </section>
     </div>

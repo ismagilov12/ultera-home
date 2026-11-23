@@ -107,7 +107,8 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .visual.catalog-photo img { object-fit: contain; object-position: center; }
 .new-photo-jump { color: #f7f9f4; text-decoration: underline; text-underline-offset: 4px; font-size: 14px; }
 .new-photos { border-top: 1px solid var(--line); }
-.photo-filter { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 18px; font-size: 14px; font-weight: 650; }
+.new-photos .catalog-head { margin-bottom: 18px; }
+.photo-filter { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 650; }
 .photo-filter select { padding: 8px 10px; color: var(--ink); background: white; border: 1px solid var(--line); }
 .new-photo-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: clamp(12px,1.6vw,24px); }
 .new-photo-card { display: flex; flex-direction: column; min-width: 0; background: white; border: 1px solid #d7dcdb; }
