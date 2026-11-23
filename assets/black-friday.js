@@ -251,7 +251,10 @@
     const name=escape(displayName(item)), color=escape(item.color);
     const labels=variants(item).map(v=>'<li>'+escape(sizeLabel(v))+'</li>').join('');
     const alt=name+' · '+color;
-    return '<article class="new-photo-card" id="pair-'+escape(item.uid)+'"><a class="new-photo-link" data-pair-photo href="'+escape(item.pairPhoto)+'" aria-label="Фото пари · '+alt+'">'+
+    const url=new URL(location.href);
+    url.searchParams.set('pair',item.uid);
+    url.hash='new-pairs';
+    return '<article class="new-photo-card" id="pair-'+escape(item.uid)+'"><a class="new-photo-link" data-open="'+escape(item.uid)+'" href="'+escape(url.href)+'" aria-haspopup="dialog" aria-label="Відкрити картку · '+alt+'">'+
       '<img loading="lazy" decoding="async" width="640" height="480" src="'+escape(item.photo)+'" alt="'+alt+'"></a><div class="new-photo-info">'+
       '<h3><button type="button" class="article-link" data-open="'+escape(item.uid)+'">'+name+'</button></h3><p>'+color+'</p>'+seasonLine(item)+
       '<ul aria-label="Розміри та довжина устілки">'+labels+'</ul><div class="card-action"><span class="price">'+prices(item)+'</span>'+purchaseAction(item)+'</div></div></article>';
@@ -455,26 +458,14 @@
   byId('sort').addEventListener('change',e=>changeFilter('sort',e.target.value));
   newSizeSelect.addEventListener('change',()=>changeFilter('size',newSizeSelect.value));
   root.addEventListener('click',async e=>{
-    const photoLink=e.target.closest('a[data-pair-photo]');
-    if (photoLink && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button===0) {
-      e.preventDefault();
-      const picture=byId('zoom-image');
-      byId('zoom-title').textContent=photoLink.getAttribute('aria-label');
-      picture.alt=photoLink.querySelector('img').alt;
-      picture.onload=null;
-      picture.src=photoLink.href;
-      zoom.setAttribute('data-pair-photo','');
-      zoom.showModal();
-      byId('zoom-scroll').scrollTo(0,0);
-      return;
-    }
-    const link = e.target.closest('a[data-basket]');
-    if (link && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
-      e.preventDefault(); showBasket(); return;
-    }
-    const b=e.target.closest('button');
+    const b=e.target.closest('button, a[data-open], a[data-basket]');
     if(!b) return;
-    if(b.hasAttribute('data-open')) showProduct(itemFor(b.dataset.open));
+    if(b.matches('a')) {
+      if(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button!==0) return;
+      e.preventDefault();
+    }
+    if(b.hasAttribute('data-basket')) showBasket();
+    else if(b.hasAttribute('data-open')) showProduct(itemFor(b.dataset.open));
     else if(b.hasAttribute('data-buy')) {
       const {buy,eu}=b.dataset;
       b.disabled=true;
@@ -515,7 +506,6 @@
     dialog.querySelector('.close').addEventListener('click',()=>dialog.close());
     dialog.addEventListener('click',e=>{if(e.target===dialog) dialog.close();});
   }
-  zoom.addEventListener('close',()=>zoom.removeAttribute('data-pair-photo'));
   byId('notice').querySelector('button').addEventListener('click',()=>{byId('notice').hidden=true;});
   byId('retry').addEventListener('click',refresh);
   window.addEventListener('popstate',()=>{if(hasLoaded) syncRoute();});

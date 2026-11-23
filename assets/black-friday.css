@@ -90,7 +90,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .card { min-width: 0; display: flex; flex-direction: column; background: white; border: 1px solid #d7dcdb; }
 .card-media, .visual { position: relative; isolation: isolate; overflow: hidden; background: #fff; }
 .card-media { aspect-ratio: 1.41; }
-.product-photo { display: block; border: 0; padding: 0; width: 100%; height: 100%; background: white; cursor: zoom-in; }
+.product-photo { display: block; border: 0; padding: 0; width: 100%; height: 100%; background: white; cursor: pointer; }
 .visual { display: block; width: 100%; height: 100%; }
 .visual img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 65%; }
 .visual.studio { container-type: size; }
@@ -111,15 +111,13 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .photo-filter select { padding: 8px 10px; color: var(--ink); background: white; border: 1px solid var(--line); }
 .new-photo-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: clamp(12px,1.6vw,24px); }
 .new-photo-card { display: flex; flex-direction: column; min-width: 0; background: white; border: 1px solid #d7dcdb; }
-.new-photo-link { display: block; cursor: zoom-in; overflow: hidden; background: white; }
+.new-photo-link { display: block; overflow: hidden; background: white; }
 .new-photo-link img { display: block; width: 100%; height: auto; aspect-ratio: 4/3; object-fit: contain; }
 .new-photo-info { display: flex; flex: 1; flex-direction: column; border-top: 1px solid #edf0ee; padding: clamp(10px,1.3vw,18px); }
 .new-photo-info h3 { font-size: clamp(16px,1.6vw,23px); line-height: 1.12; }
 .new-photo-info p { margin: 6px 0 10px; color: var(--muted); line-height: 1.3; }
 .new-photo-info ul { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 12px; padding: 0; list-style: none; }
 .new-photo-info li { font: 500 12px/1.3 var(--mono); background: #f0f2ef; padding: 4px 6px; }
-#zoom[data-pair-photo] #zoom-scroll { display: grid; place-items: center; background: #eef0ee; }
-#zoom[data-pair-photo] #zoom-image { width: 100%; height: 100%; max-height: min(74dvh,780px); object-fit: contain; }
 @media (max-width: 800px) {
   .new-photo-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .new-photo-info p { font-size: 14px; }
