@@ -11,8 +11,6 @@
   }
   const byId = id => root.getElementById(id);
   const grid = byId('products');
-  const topGrid = byId('top-products');
-  const topOfferIds = Array.from(topGrid.querySelectorAll('[data-offer]'), link => link.dataset.offer);
   const soldGrid = byId('sold-products');
   const sizes = byId('sizes');
   const detail = byId('detail');
@@ -96,14 +94,24 @@
       description:'Чорний високий верх із широким коміром. Під темною підошвою видно коричневий зубчастий протектор.'
     },
     'bfoffer-aganta-thermo-oreo': {
-      kind:'Зимові кросівки', tone:'linear-gradient(135deg,#252525 50%,#f6f6f1 50%)',
+      kind:'Зимові кросівки', tone:'linear-gradient(135deg,#252525 50%,#f6f6f1 50%)', rank:-4,
       gallery:{side:'/assets/catalog360/aganta-thermo-oreo/090.webp', worn:'/assets/catalog360/aganta-thermo-oreo/on-foot-front-3q.webp'},
       description:'Чорний верх із Cordura®, біла шкіряна обводка та біла підошва з чорним протектором.'
     },
     'bfoffer-hunk-thermo-black': {
-      kind:'Зимові кросівки', tone:'#212322',
+      kind:'Зимові кросівки', tone:'#212322', rank:-3,
       gallery:{side:'/photos/hunk-thermo-black-02.webp', rear:'/photos/hunk-thermo-black-03.webp'},
       description:'Чорні зимові кросівки з Cordura® та шкіри, з підошвою EVA Bounce й зимовим протектором.'
+    },
+    'bfoffer-aganta-aqva': {
+      kind:'Кросівки', tone:'#9ec9d6', rank:-2,
+      gallery:{side:'/photos/91772469.webp', worn:'/photos/53834366.webp'},
+      description:'Блакитна обводка проходить від п’яти до носка. Верх і рельєфна підошва чорні.'
+    },
+    'bfoffer-aganta-salvia': {
+      kind:'Кросівки', tone:'#c5c4a5', rank:-1,
+      gallery:{side:'/assets/catalog360/hq-20261021-salvia/977627506822/045.webp', actual:'/photos/65535140.webp'},
+      description:'Світло-шавлієві накладки поєднані з чорним верхом. Підошва кремова з темним протектором.'
     }
   };
   const heroUid = 'bf26-02-ua11-blue-mesh-42';
@@ -233,12 +241,7 @@
       '<div class="card-action"><span class="price">'+prices(item)+'</span>'+action+'</div></div></article>';
   }
   function render() {
-    const available=items.filter(item=>variants(item).some(v=>v.available && (!activeSize || v.size===activeSize)));
-    const top=topOfferIds.map(uid=>available.find(item=>item.uid===uid)).filter(Boolean);
-    topGrid.innerHTML=top.map(tile).join('');
-    topGrid.setAttribute('aria-busy','false');
-    byId('top-offers').hidden=!top.length;
-    const selection=available.filter(item=>!topOfferIds.includes(item.uid));
+    const selection=items.filter(item=>variants(item).some(v=>v.available && (!activeSize || v.size===activeSize)));
     selection.sort((a,b)=>{
       const byPrice=sort==='low'?a.price-b.price:sort==='high'?b.price-a.price:0;
       return byPrice || (notes[a.uid]?.rank??999)-(notes[b.uid]?.rank??999);
@@ -411,7 +414,6 @@
       byId('error').hidden=true;
     } catch {
       items=[]; hasLoaded=false;
-      topGrid.replaceChildren(); topGrid.setAttribute('aria-busy','false'); byId('top-offers').hidden=true;
       grid.replaceChildren(); soldGrid.replaceChildren(); byId('sold-section').hidden=true;
       sizes.replaceChildren(); syncHero();
       byId('result-count').textContent=''; byId('error').hidden=false;
@@ -492,7 +494,7 @@
 
   // Rendering the sale inserts rows above a linked collection. Restore the
   // customer's landing position once, unless they have already started browsing.
-  const initialAnchor = ['#last-pairs','#catalog','#collection'].includes(location.hash) && document.querySelector(location.hash);
+  const initialAnchor = ['#pairs','#last-pairs','#catalog','#collection'].includes(location.hash) && document.querySelector(location.hash);
   const input = new AbortController();
   if (initialAnchor) {
     for (const type of ['pointerdown','wheel','keydown']) {

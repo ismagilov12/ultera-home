@@ -4490,18 +4490,25 @@ function syncYu11Purchase(){
   document.getElementById('yu11Price').textContent = document.querySelector('#m_price .cur')?.textContent || '';
 }
 let nativeOffer = null;
-function thermoCampaignUid(uid){
-  return {'550020261103':'bfoffer-aganta-thermo-oreo','550020260917':'bfoffer-hunk-thermo-black'}[uid];
+const campaignUids = {
+  '550020261103':'bfoffer-aganta-thermo-oreo',
+  '550020260917':'bfoffer-hunk-thermo-black',
+  '260203663062':'bfoffer-aganta-aqva',
+  '977627506822':'bfoffer-aganta-salvia'
+};
+function nativeOfferApplies(product){
+  return campaignUids[product.uid] && !winterExtra(product.family, window.__modalSeason);
 }
 function nativeVariant(size){
   return nativeOffer?.variants.find(v=>v.size===size);
 }
 function displayNativeOffer(){
-  if(!nativeOffer || nativeOffer.uid!==thermoCampaignUid(currentColor)) return;
+  if(!nativeOffer || nativeOffer.uid!==campaignUids[currentColor]) return;
+  const product=findProduct(currentColor), link=document.getElementById('m_campaign_offer');
+  if(!nativeOfferApplies(product)){ link.hidden=true; return; }
   const size=document.querySelector('#m_sizes .size-btn.selected')?.dataset.sz;
   const variant=nativeVariant(size);
-  const link=document.getElementById('m_campaign_offer'), price=document.getElementById('m_price');
-  const full=parseFloat(findProduct(currentColor).price);
+  const price=document.getElementById('m_price'), full=parseFloat(product.price);
   price.innerHTML=variant?.available
     ? '<span class="cur">'+priceNum(nativeOffer.price)+' ₴</span> <span class="was">'+priceNum(full)+' ₴</span> <span class="save">Чорна п’ятниця</span>'
     : '<span class="cur">'+priceNum(full)+' ₴</span>';
@@ -4515,7 +4522,7 @@ async function readNativeOffer(uid){
   if(!response.ok) throw new Error('Не вдалося перевірити наявність');
   const {items}=await response.json();
   if(currentColor!==uid) return;
-  nativeOffer=items.find(item=>item.uid===thermoCampaignUid(uid)) || null;
+  nativeOffer=items.find(item=>item.uid===campaignUids[uid]) || null;
   displayNativeOffer();
 }
 function openModal(uid){
@@ -4553,7 +4560,7 @@ function openModal(uid){
   currentColor = p.uid;
   nativeOffer=null;
   document.getElementById('m_campaign_offer').hidden=true;
-  if(thermoCampaignUid(currentColor)) readNativeOffer(currentColor).catch(()=>{});
+  if(campaignUids[currentColor]) readNativeOffer(currentColor).catch(()=>{});
   window.__modalUid = p.uid;
   window.ulteraCard360?.select(p.uid);
   document.getElementById('m_fam').textContent = p.family + (p.mark ? ' · ' + p.mark : '');
@@ -4967,6 +4974,7 @@ function pickSeason(btn, id, label){
     if(pct > 0) priceHtml += '<span class="save">−' + pct + '%</span>';
   }
   document.getElementById('m_price').innerHTML = priceHtml;
+  displayNativeOffer();
   syncYu11Purchase();
   window.ulteraAirtex?.syncProduct(p, id);
 }
@@ -5094,14 +5102,14 @@ function addToCart(){
   const p = findProduct(uid);
   if(!p){ toast('Помилка товару'); return; }
   if(isSoldOut(p)){ toast('Немає в наявності'); return; }
-  if(thermoCampaignUid(uid)) return addThermoAtAvailablePrice(p,sel.dataset.sz);
+  if(nativeOfferApplies(p)) return addAtCampaignPrice(p,sel.dataset.sz);
   addRegularToCart(p,sel.dataset.sz);
 }
-async function addThermoAtAvailablePrice(p,size){
+async function addAtCampaignPrice(p,size){
   const wasOnSale=nativeVariant(size)?.available;
   try { await readNativeOffer(p.uid); }
   catch { toast('Не вдалося перевірити ціну. Спробуйте ще раз.'); return; }
-  if(currentColor!==p.uid || document.querySelector('#m_sizes .size-btn.selected')?.dataset.sz!==size) return;
+  if(currentColor!==p.uid || !nativeOfferApplies(p) || document.querySelector('#m_sizes .size-btn.selected')?.dataset.sz!==size) return;
   if(nativeVariant(size)?.available){
     CART.add({uid:nativeOffer.uid,title:nativeOffer.title,photo:nativeOffer.photo,color_name:nativeOffer.color,
       size,price:nativeOffer.price,family:'SaleOstatki',saleItem:true});

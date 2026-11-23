@@ -87,18 +87,6 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 #loading, #error, .empty, noscript { display: block; padding: 20px 0; }
 #error button { margin-top: 12px; }
 .grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: clamp(18px,2.2vw,34px) clamp(10px,1.3vw,24px); }
-.top-offers { padding-block: clamp(12px,1.6vw,26px); }
-#top-products { grid-template-columns: repeat(2,minmax(0,1fr)); }
-#top-products .size-tag { white-space: normal; line-height: 1.2; }
-.offer-preview { min-width: 0; display: flex; flex-direction: column; background: white; border: 1px solid #d7dcdb; }
-.offer-preview img { display: block; width: 100%; aspect-ratio: 1.41; object-fit: contain; }
-.offer-preview strong { align-self: start; padding: 12px; font-size: clamp(21px,2vw,35px); line-height: 1.05; }
-@media (min-width: 1050px) {
-  #top-products .card, #top-products .offer-preview { display: grid; grid-template-columns: 48% minmax(0,1fr); }
-  #top-products .card-media, #top-products .offer-preview img { aspect-ratio: 1.25; }
-  #top-products .card-info { border-top: 0; border-left: 1px solid #dce1df; }
-  #top-products .card-action { flex-wrap: wrap; }
-}
 .card { min-width: 0; display: flex; flex-direction: column; background: white; border: 1px solid #d7dcdb; }
 .card-media, .visual { position: relative; isolation: isolate; overflow: hidden; background: #fff; }
 .card-media { aspect-ratio: 1.41; }
@@ -111,7 +99,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .visual.actual img { object-position: 50% 68%; }
 .media-badges { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 3px; align-items: flex-start; justify-content: space-between; pointer-events: none; }
 .size-tag, .condition { display: inline-flex; align-items: center; min-height: 25px; padding: 4px 7px; font: 650 12px/1 var(--mono); border: 1px solid #b9c0c0; background: #ffffffee; color: var(--ink); }
-.size-tag { white-space: nowrap; }
+.size-tag { max-width: 100%; line-height: 1.2; }
 .condition { background: var(--lime); border-color: #9db828; }
 .condition.grade { flex-direction: column; align-items: flex-start; gap: 3px; }
 .condition.grade small { font: 500 11px/1.1 "BF Roboto",sans-serif; }

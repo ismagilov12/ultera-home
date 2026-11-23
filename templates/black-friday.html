@@ -14,10 +14,10 @@
   <meta property="og:url" content="https://ultera.in.ua/black-friday">
   <link rel="preload" as="font" href="/assets/black-friday-type/roboto-ua.woff2" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/black-friday-page.css?v=thermo-first">
-  <script src="/assets/black-friday.js?v=thermo-first" defer></script>
+  <script src="/assets/black-friday.js?v=aganta-colours" defer></script>
 </head>
 <body>
-  <link rel="stylesheet" href="/assets/black-friday.css?v=thermo-first">
+  <link rel="stylesheet" href="/assets/black-friday.css?v=aganta-colours">
   <a class="skip bf-surface" href="#pairs">До каталогу</a>
   <header class="topbar bf-surface">
     <div class="frame topbar-in">
@@ -33,30 +33,24 @@
   </header>
   <main>
     <div class="bf-surface">
-    <slot name="pairs-anchor"></slot>
-    <section id="top-offers" class="top-offers frame" aria-label="Зимові моделі Thermo на Чорну п’ятницю">
-      <div class="grid" id="top-products" aria-busy="true">
-        <a class="offer-preview" data-offer="bfoffer-aganta-thermo-oreo" href="/black-friday?pair=bfoffer-aganta-thermo-oreo"><img src="/assets/catalog360/aganta-thermo-oreo/000.webp" fetchpriority="high" alt=""><strong>Aganta Thermo Oreo</strong></a>
-        <a class="offer-preview" data-offer="bfoffer-hunk-thermo-black" href="/black-friday?pair=bfoffer-hunk-thermo-black"><img src="/photos/hunk-thermo-black-feed.jpg" fetchpriority="high" alt=""><strong>Hunk Thermo Black</strong></a>
-      </div>
-    </section>
     <section class="campaign" aria-labelledby="sale-title">
       <picture class="campaign-scene">
         <source media="(max-width: 700px)" srcset="/photos/black-friday/hunk3-campaign-mobile.webp">
-        <img src="/photos/black-friday/hunk3-campaign.webp" width="1961" height="802" loading="lazy" alt="Блакитні кросівки ЮА 11 із білою рельєфною підошвою на темному рифленому металі">
+        <img src="/photos/black-friday/hunk3-campaign.webp" width="1961" height="802" fetchpriority="high" alt="Блакитні кросівки ЮА 11 із білою рельєфною підошвою на темному рифленому металі">
       </picture>
       <div class="frame campaign-in">
         <div class="campaign-copy">
           <p class="eyebrow campaign-kicker"><span class="cutmarks" aria-hidden="true"></span> Розпродаж останніх пар</p>
           <h1 id="sale-title"><span>Чорна</span> <em>п’ятниця</em></h1>
-          <p class="campaign-intro">Останні пари з колекцій ULTERA та зимові моделі Thermo за спеціальною ціною.</p>
-          <div class="campaign-actions"><a class="cta lime" href="#last-pairs">Обрати пару</a><span id="starting-price" hidden></span></div>
+          <p class="campaign-intro">Знижки на Aganta, зимові моделі Thermo та останні пари з колекцій ULTERA.</p>
+          <div class="campaign-actions"><a class="cta lime" href="#pairs">Обрати пару</a><span id="starting-price" hidden></span></div>
         </div>
         <button class="campaign-pair" type="button" id="hero-product" hidden>
           <span class="hotspot" aria-hidden="true">+</span><span><small>На фото</small><strong id="hero-name"></strong></span><span id="hero-spec"></span>
         </button>
       </div>
     </section>
+    <slot name="pairs-anchor"></slot>
     <slot name="last-pairs-anchor"></slot>
     <section class="collection frame" aria-labelledby="collection-title">
       <div class="catalog-head">

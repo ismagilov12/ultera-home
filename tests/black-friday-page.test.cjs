@@ -8,15 +8,14 @@ const shop = read('index.html');
 const campaign = read('templates/black-friday.html');
 const page = compose(shop, campaign);
 
-test('the sale landing and #pairs start with the two Thermo offers in shop order', () => {
-  const first = page.indexOf('<slot name="pairs-anchor">');
+test('the landing starts with the campaign banner and both sale links lead to the catalogue below', () => {
+  const main = page.indexOf('<main>', page.indexOf('<template shadowrootmode="open">'));
   const banner = page.indexOf('<section class="campaign"');
-  assert.ok(first >= 0 && first < banner);
-  const previews = [...page.slice(first, banner).matchAll(/data-offer="([^"]+)" href="([^"]+)"/g)];
-  assert.deepEqual(previews.map(([, uid, href]) => [uid, href]), [
-    ['bfoffer-aganta-thermo-oreo','/black-friday?pair=bfoffer-aganta-thermo-oreo'],
-    ['bfoffer-hunk-thermo-black','/black-friday?pair=bfoffer-hunk-thermo-black']
-  ]);
+  const catalogue = page.indexOf('<slot name="pairs-anchor">');
+  assert.ok(main >= 0 && page.indexOf('<section', main) === banner && banner < catalogue);
+  assert.ok(catalogue < page.indexOf('<div class="grid" id="products">'));
+  assert.match(page.slice(banner, catalogue), /href="#pairs">Обрати пару/);
+  assert.match(page.slice(catalogue, page.indexOf('id="collection-title"')), /<slot name="last-pairs-anchor">/);
 });
 
 test('clearance precedes the unchanged main collection and the native checkout', () => {

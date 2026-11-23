@@ -24,7 +24,9 @@ function setup(t, upstream) {
     if (path.endsWith('/compute_order_total')) {
       const input = JSON.parse(opts.body).p_items;
       const breakdown = input.map(line => {
-        const unit = line.uid.startsWith('bfoffer-') ? 4890 : line.uid === pair.uid ? pair.price : regular.price;
+        const campaignPrices = {'bfoffer-aganta-thermo-oreo':4890, 'bfoffer-hunk-thermo-black':4890,
+          'bfoffer-aganta-aqva':3890, 'bfoffer-aganta-salvia':3890};
+        const unit = campaignPrices[line.uid] ?? (line.uid === pair.uid ? pair.price : regular.price);
         if (line.uid === pair.uid) assert.equal(line.promo_pct,0);
         return {...line, unit_price:unit, line_total:unit*line.qty};
       });
@@ -80,14 +82,17 @@ test('a sold pair stops checkout before CRM and legacy deductions', async t => {
   assert.deepEqual(calls,['/rest/v1/ulhome_orders','/rest/v1/ulhome_orders']);
 });
 
-test('unlimited Thermo colours respect EU eligibility and price every unit once on retries', async t => {
+test('all four unlimited offers keep their colour, eligible sizes and campaign price on retries', async t => {
   const oreo={uid:'bfoffer-aganta-thermo-oreo',size:'44',qty:2,price:4890,saleItem:true};
   const hunk={uid:'bfoffer-hunk-thermo-black',size:'45',qty:3,price:4890,saleItem:true};
+  const aqva={uid:'bfoffer-aganta-aqva',size:'45',qty:1,price:3890,saleItem:true};
+  const salvia={uid:'bfoffer-aganta-salvia',size:'40',qty:2,price:3890,saleItem:true};
   const sizes=['40','41','42','43','44','45'].map(eu=>({eu,qty:'9999'}));
   let saved, crm, orderWrites=0;
   setup(t,(path,opts)=>{
     if (path.endsWith('/ulhome_products')) return reply([
-      {uid:'550020261103',published:true,size_list:sizes},{uid:'550020260917',published:true,size_list:sizes}
+      {uid:'550020261103',published:true,size_list:sizes},{uid:'550020260917',published:true,size_list:sizes},
+      {uid:'260203663062',published:true,size_list:sizes},{uid:'977627506822',published:true,size_list:sizes}
     ]);
     if (path.endsWith('/ulhome_orders')) {
       if (opts.method==='PATCH') return reply({});
@@ -108,15 +113,17 @@ test('unlimited Thermo colours respect EU eligibility and price every unit once 
   assert.equal((await invoke(order,ineligible)).code,409);
   assert.equal((await invoke(payment,{...ineligible,orderReference:body.num})).code,409);
   assert.equal(orderWrites,0);
-  const cart={...body,items:[oreo,hunk]};
+  const cart={...body,items:[oreo,hunk,aqva,salvia]};
   assert.equal((await invoke(order,cart)).code,200);
-  assert.equal(saved.total,24450);
-  assert.deepEqual(crm.products.map(x=>[x.sku,x.price,x.quantity]),[['550020261103',4890,2],['550020260917',4890,3]]);
+  assert.equal(saved.total,36120);
+  assert.deepEqual(crm.products.map(x=>[x.sku,x.price,x.quantity]),[
+    ['550020261103',4890,2],['550020260917',4890,3],['260203663062',3890,1],['977627506822',3890,2]
+  ]);
   assert.equal((await invoke(order,cart)).body.supabase_order,324);
   assert.equal(orderWrites,1);
   const charge=await invoke(payment,{...cart,orderReference:body.num});
-  assert.equal(charge.body.chargedAmount,24450);
-  assert.deepEqual(charge.body.formData.productPrice,['4890.00','4890.00']);
+  assert.equal(charge.body.chargedAmount,36120);
+  assert.deepEqual(charge.body.formData.productPrice,['4890.00','4890.00','3890.00','3890.00']);
 });
 
 test('a repeated campaign checkout recovers the same saved order', async t => {
