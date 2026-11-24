@@ -1,6 +1,10 @@
 // Public campaign catalogue. Prices come from the same product rows as checkout.
 const {offers, offerVariants} = require('../lib/black-friday-offers.cjs');
-const arrivals = require('../lib/black-friday-nov23.cjs');
+function clearanceGallery(photo) {
+  const match = /^\/photos\/black-friday\/([a-z]{3}\d{2})\/([a-z0-9-]+)\.webp$/.exec(photo || '');
+  if (!match) return null;
+  return {batch:match[1], pairPhoto:`/photos/black-friday/${match[1]}/pairs/${match[2]}.jpg`};
+}
 module.exports = async function blackFriday(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET') {
@@ -27,7 +31,7 @@ module.exports = async function blackFriday(req, res) {
     const items = [];
     for (const product of products) {
       const offer = offers.get(product.uid);
-      const arrival = arrivals.get(product.uid);
+      const gallery = clearanceGallery(product.photo);
       if (!offer && !product.uid.startsWith('bf26-')) continue;
       const variants = [];
       const entries = offer ? offerVariants(offer,byUid.get(offer.source)) : product.size_list || [];
@@ -37,7 +41,7 @@ module.exports = async function blackFriday(req, res) {
         if (!Number.isFinite(qty) || (!offer && qty <= 0)) continue;
         const cm = Number(String(entry.cm ?? '').replace(',', '.'));
         variants.push({size, cm: cm > 0 && Number.isFinite(cm) ? cm : null, available: qty > 0,
-          ...(arrival ? {quantity:qty} : {})});
+          ...(gallery ? {quantity:qty} : {})});
       }
       const display = variants.find(variant => variant.available);
       if (!display) continue;
@@ -49,7 +53,7 @@ module.exports = async function blackFriday(req, res) {
         season: season || null, price: Number(product.price), photo: product.photo,
         oldPrice: Number(product.price_old) > Number(product.price) ? Number(product.price_old) : null,
         condition: product.mark || null,
-        ...(arrival ? {batch:'nov23', pairPhoto:arrival.original} : {})
+        ...gallery
       });
     }
     return res.status(200).json({items});

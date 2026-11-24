@@ -70,25 +70,29 @@ test('campaign cards use the recorded insole length and season while stock remai
 
 test('a new card exposes only its free sizes, with the original image and exact available quantities', async t => {
   const green=arrivals.get('bf26-n23-ua1-brf-pistachio'), red=arrivals.get('bf26-n23-ua10-bordeaux-39');
+  const keds = require('../supabase/seed-black-friday-nov24.cjs').records.find(item => item.article === 'Кед 02');
   setup(t, path=>{
-    if(path.endsWith('/ulhome_products')) return reply([green,red].map(item=>({
+    if(path.endsWith('/ulhome_products')) return reply([green,red,keds].map(item=>({
       uid:item.uid, article:item.article, title:item.title, photo:item.photo, size_list:item.sizes, price:1990
     })));
     if(path.endsWith('/ulhome_sale_stock')) return reply([
       {uid:green.uid,size:'37',qty:0},{uid:green.uid,size:'40',qty:1},{uid:green.uid,size:'44',qty:1},
-      {uid:red.uid,size:'39',qty:2}
+      {uid:red.uid,size:'39',qty:2},{uid:keds.uid,size:'40',qty:0},{uid:keds.uid,size:'41',qty:2}
     ]);
     assert.fail(path);
   });
   const res={setHeader(){},status(n){this.code=n;return this;},json(data){this.data=data;}};
   await catalogue({method:'GET'},res);
   assert.equal(res.code,200);
-  const [first, second]=res.data.items;
+  const [first, second, newest]=res.data.items;
   assert.equal(first.batch,'nov23');
   assert.equal(first.price,1990);
   assert.equal(first.pairPhoto,green.original);
   assert.deepEqual(first.variants.map(v=>[v.size,v.cm,v.quantity]),[['40',26,1],['44',29,1]]);
   assert.deepEqual(second.variants.map(v=>[v.size,v.cm,v.quantity]),[['39',25.5,2]]);
+  assert.equal(newest.batch,'nov24');
+  assert.equal(newest.pairPhoto,'/photos/black-friday/nov24/pairs/ked02-black-leather.jpg');
+  assert.deepEqual(newest.variants.map(v=>[v.size,v.cm,v.quantity]),[['41',27,2]]);
 });
 
 test('two burgundy pairs keep their fixed unit price in the order, CRM and card payment', async t => {

@@ -24,7 +24,7 @@
   const sizeLabel = item => ['EU ' + item.size, centimeters(item.cm)].filter(Boolean).join(' · ');
   const variants = item => item.variants || [item];
   const multiple = item => item.unlimited || variants(item).length > 1;
-  const newArrival = item => item.batch === 'nov23';
+  const newArrival = item => Boolean(item.pairPhoto);
   const displayName = item => item.unlimited || newArrival(item) ? item.title : articleLabel(item);
   const prices = item => (item.oldPrice ? '<s>'+money(item.oldPrice)+'</s> ' : '') + money(item.price);
   function sizesLabel(item) {

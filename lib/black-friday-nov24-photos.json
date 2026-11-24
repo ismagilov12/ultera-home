@@ -1,0 +1,12 @@
+[
+  {"id":"ua1-brf-red-mesh-gum","article":"ЮА 1","line":"БРФ","color":"Червоні · сітка","stock":{"42":1}},
+  {"id":"ua1-brf-black-mesh-white-sole","article":"ЮА 1","line":"БРФ","color":"Чорні · сітка, біла підошва","stock":{"44":1}},
+  {"id":"ua1-brf-black-cordura-black-sole","article":"ЮА 1","line":"БРФ","color":"Чорні · Cordura, чорна підошва","stock":{"40":1}},
+  {"id":"ua14-brf-pistachio-suede","article":"ЮА 14","line":"БРФ","color":"Фісташкові · замша","stock":{"38":1}},
+  {"id":"ua1-brf-brown-cordura-suede","existingUid":"bf26-n23-ua1-brf-brown-suede","article":"ЮА 1","line":"БРФ","color":"Коричневі · замша та Cordura","stock":{"39":1}},
+  {"id":"ua1-brf-graphite-cordura","article":"ЮА 1","line":"БРФ","color":"Графітові · Cordura, чорна підошва","stock":{"42":1}},
+  {"id":"ua1-brf-graphite-mesh-white-sole","article":"ЮА 1","line":"БРФ","color":"Графітові · сітка, біла підошва","stock":{"42":1}},
+  {"id":"ua1-brf-pistachio-mesh-white-sole","existingUid":"bf26-n23-ua1-brf-pistachio-mesh","article":"ЮА 1","line":"БРФ","color":"Фісташкові · сітка, біла підошва","stock":{}},
+  {"id":"ked02-black-leather","article":"Кед 02","color":"Чорні · шкіра, біла підошва","stock":{"40":1,"41":2,"43":1}},
+  {"id":"sp3-black-sole","article":"СП3","color":"Чорні · чорна підошва","stock":{"40":1}}
+]
