@@ -2074,12 +2074,13 @@ footer{background:var(--ink);color:#a5a5a1;padding:70px 0 30px;border-top:1px so
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '1861447568005608');
 fbq('track', 'PageView');
-window.ulteraFbq = function(name, params){
+window.ulteraFbq = function(name, params, metaContentIds){
   try {
     params = params || {};
     var eventId = params.event_id || ('u-' + Date.now() + '-' + Math.random().toString(36).slice(2,8));
     var clean = {};
     for (var k in params) if (k !== 'event_id') clean[k] = params[k];
+    if (metaContentIds) clean.content_ids = metaContentIds;
     if (typeof fbq === 'function') fbq('track', name, clean, {eventID: eventId});
     try{if(typeof ttq!=='undefined'&&ttq&&typeof ttq.track==='function'){var __m={ViewContent:'ViewContent',AddToCart:'AddToCart',InitiateCheckout:'InitiateCheckout',Purchase:'CompletePayment'},__e=__m[name];if(__e){var __ids=params.content_ids||[];if(!Array.isArray(__ids))__ids=[__ids];var __c=__ids.map(function(id){return {content_id:String(id),content_type:params.content_type||'product',content_name:params.content_name||''};});ttq.track(__e,{contents:__c,content_type:params.content_type||'product',value:params.value,currency:params.currency||'UAH'},{event_id:eventId});}}}catch(_t){}
     return eventId;
@@ -3007,7 +3008,7 @@ video[src*="/assets/hunk-thermo-barefoot-women/"] {
 .struct-block ul{margin-left:18px}
 .struct-block li{margin:2px 0;list-style:disc}
 </style>
-<script src="/assets/storefront-catalog-rules.js?v=1"></script>
+<script src="/assets/storefront-catalog-rules.js?v=2"></script>
 <script id="LIVE_BOOTSTRAP">
 // v127 2026-05-11: ASYNC Supabase bootstrap + PRUNE unpublished + DATA fix.
 // Bugfixes vs v126:
@@ -3942,7 +3943,7 @@ const CART = {
     if(ex){ ex.qty = Math.min((ex.qty||1) + 1, campaignQtyLimit(item)); } else { this.items.push({...item, qty:1}); }
     this.save();
     window.trackJourney?.('add_to_cart', item);
-    try { if (typeof ulteraFbq === 'function') ulteraFbq('AddToCart', {content_ids:[item.uid], content_type:'product', content_name:item.title||'', value: parseFloat(item.price)||0, currency:'UAH'}); } catch(_){}
+    try { if (typeof ulteraFbq === 'function') ulteraFbq('AddToCart', {content_ids:[item.uid], content_type:'product', content_name:item.title||'', value: parseFloat(item.price)||0, currency:'UAH'}, [window.ulteraCatalogRules.metaProductId(item, cartSeasonId(item))]); } catch(_){}
   },
   setQty(i, q){ if(!this.items[i]) return; q=Math.min(q,campaignQtyLimit(this.items[i])); const item={...this.items[i],qty:Math.max(0,q)}; if(q<=0){ this.items.splice(i,1); } else { this.items[i].qty = q; } this.save(); window.trackJourney?.(q<=0?'remove_from_cart':'cart_quantity_changed',item); },
   remove(i){ const item=this.items[i]; this.items.splice(i,1); this.save(); if(item)window.trackJourney?.('remove_from_cart',item); },
@@ -3992,7 +3993,7 @@ function isNativeThermoFamily(family){
   return ['Hunk Thermo BRFT W','Thermo','Hunk Thermo','Aganta Thermo','Thermo Ked','Travel Thermo','WAVE2 Thermo'].includes(family);
 }
 
-const WINTER_SURCHARGE_UAH = 900;
+const WINTER_SURCHARGE_UAH = window.ulteraCatalogRules.winterSurcharge;
 function winterExtra(family, seasonId){
   return seasonId === 'winter' && !isNativeThermoFamily(family) ? WINTER_SURCHARGE_UAH : 0;
 }
@@ -4530,7 +4531,7 @@ async function readNativeOffer(uid){
   nativeOffer=items.find(item=>item.uid===campaignUids[uid]) || null;
   displayNativeOffer();
 }
-function openModal(uid){
+function openModal(uid, initialSeason){
   const p = findProduct(uid);
   if(!p) return;
   const overlay = document.getElementById('modal'), yu11 = isYu11Card(String(p.uid));
@@ -4542,7 +4543,11 @@ function openModal(uid){
   document.getElementById('yu11BuyBar').hidden = !yu11;
   document.getElementById('yu11PriceGuide').hidden = !yu11;
   document.getElementById('shApplyVerb').textContent = yu11 ? 'Обрати' : 'Apply';
-  try { if (typeof ulteraFbq === 'function') ulteraFbq('ViewContent', {content_ids:[p.uid], content_type:'product', content_name:p.title||'', value: parseFloat(p.price)||0, currency:'UAH'}); } catch(_){}
+  const winterLanding = initialSeason === 'winter' && window.ulteraCatalogRules.airtexFamilies.includes(p.family);
+  try { if (typeof ulteraFbq === 'function') ulteraFbq('ViewContent', {
+    content_ids:[p.uid], content_type:'product', content_name:p.title||'',
+    value:(parseFloat(p.price)||0) + (winterLanding ? WINTER_SURCHARGE_UAH : 0), currency:'UAH'
+  }, [window.ulteraCatalogRules.metaProductId(p, winterLanding ? 'winter' : 'autumn')]); } catch(_){}
   // v132 2026-05-18: product_view / color_view tracker for admin analytics
   try {
     var __mEl = document.getElementById('modal');
@@ -4821,6 +4826,7 @@ function openModal(uid){
     });
     var _sn = document.getElementById('m_season_name');
     if (_sn) _sn.textContent = 'Осінь';
+    if (winterLanding) sw.querySelector('[data-season="winter"]').click();
   } catch(_){}
 
   // Modal intros (fresh-open only):
@@ -4982,6 +4988,7 @@ function pickSeason(btn, id, label){
   displayNativeOffer();
   syncYu11Purchase();
   window.ulteraAirtex?.syncProduct(p, id);
+  window.ulteraSlug?.updateUrl(p);
 }
 
 function syncModalThumbnails(idx){
@@ -5451,7 +5458,7 @@ function startCheckout(){
   if(CART.items.length === 0) return;
   try{window.ULTERA_JOURNEY?.checkout();}catch(_){}
   window.trackJourney?.('checkout_started',{items:CART.items,total:CART.total(),count:CART.count()});
-  try { if (typeof ulteraFbq === 'function') ulteraFbq('InitiateCheckout', {content_ids: CART.items.map(function(i){return i.uid}), content_type:'product', value: CART.total(), currency:'UAH', num_items: CART.items.length}); } catch(_){}
+  try { if (typeof ulteraFbq === 'function') ulteraFbq('InitiateCheckout', {content_ids: CART.items.map(function(i){return i.uid}), content_type:'product', value: CART.total(), currency:'UAH', num_items: CART.items.length}, CART.items.map(i => window.ulteraCatalogRules.metaProductId(i, cartSeasonId(i)))); } catch(_){}
   document.getElementById('cdListWrap').style.display = 'none';
   document.getElementById('cdWizard').style.display = '';
   const w = CART.wizard || {};
@@ -5734,7 +5741,7 @@ async function wizardSubmit(){
         try {
           localStorage.setItem('ulteraPendingOrder', JSON.stringify({
             num:orderNum, ts:Date.now(),
-            items: CART.items.map(function(i){ return {uid:i.uid, qty:i.qty||1, price: parseFloat(i.price)||0}; }),
+            items: CART.items.map(function(i){ return {uid:i.uid, metaId:window.ulteraCatalogRules.metaProductId(i, cartSeasonId(i)), qty:i.qty||1, price: parseFloat(i.price)||0}; }),
             value: Math.round(CART.total()),
             currency: 'UAH',
             pm: pm
@@ -5857,7 +5864,7 @@ async function wizardSubmit(){
               value: Number(__pend.value || 0),
               currency: __pend.currency || 'UAH',
               event_id: order || __pend.num || undefined
-            });
+            }, (__pend.items||[]).map(i => i.metaId || i.uid));
           }
         } catch(_){}
         try {
@@ -7131,6 +7138,8 @@ insertWomanDivider();
       var token = slug + ',' + String(p.uid || '');
       var url = new URL(window.location.href);
       url.searchParams.set('p', token);
+      if (window.__modalUid === p.uid && window.__modalSeason === 'winter' && window.ulteraCatalogRules.airtexFamilies.includes(p.family)) url.searchParams.set('season','winter');
+      else url.searchParams.delete('season');
       history.replaceState(null, '', url.pathname + url.search + url.hash);
     } catch(_){}
   }
@@ -7139,6 +7148,7 @@ insertWomanDivider();
       var url = new URL(window.location.href);
       if (!url.searchParams.has('p')) return;
       url.searchParams.delete('p');
+      url.searchParams.delete('season');
       var qs = url.searchParams.toString();
       history.replaceState(null, '', url.pathname + (qs ? '?' + qs : '') + url.hash);
     } catch(_){}
@@ -7239,7 +7249,7 @@ insertWomanDivider();
         }
         var uid = window.ulteraSlug.findUid(slug);
         if (uid){
-          try { openModal(uid); } catch(e){ try{console.warn('[deeplink] openModal err', e);}catch(_){} }
+          try { openModal(uid, params.get('season')); } catch(e){ try{console.warn('[deeplink] openModal err', e);}catch(_){} }
           return;
         }
         if (tries<MAX) setTimeout(tryOpen, 100);

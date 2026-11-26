@@ -44,6 +44,7 @@
 //   TURNSTILE_SECRET (optional)
 //   FB_PIXEL_ID, FB_CAPI_TOKEN (optional — CAPI is a no-op if unset)
 
+const {metaProductId} = require('../assets/storefront-catalog-rules');
 const { sendCAPI } = require('./fb-capi');
 
 // Legacy hardcoded promo codes (server-side truth; extend with DB codes).
@@ -361,7 +362,7 @@ async function fireCapiPurchaseCod(req, body, ip, total, eventId) {
     const fn = nameParts[0] || undefined;
     const ln = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined;
 
-    const contentIds = (body.items || []).map(it => String(it.uid || '')).filter(Boolean);
+    const contentIds = (body.items || []).map(it => metaProductId(it, seasonFlag(it))).filter(Boolean);
     const numItems   = (body.items || []).reduce((s, it) => s + (parseInt(it.qty || 1, 10) || 1), 0);
 
     const r = await sendCAPI('Purchase', {

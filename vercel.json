@@ -54,6 +54,10 @@
       "destination": "/order.html"
     },
     {
+      "source": "/airtex-feed.xml",
+      "destination": "/api/feed?variant=airtex"
+    },
+    {
       "source": "/feed.xml",
       "destination": "/api/feed"
     },

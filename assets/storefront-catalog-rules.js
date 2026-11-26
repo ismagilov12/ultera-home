@@ -1,6 +1,8 @@
 // Merchandising shared by the main storefront and its regular catalogue listing.
 (() => {
   const rules = {
+    airtexFamilies: ['Aganta', 'Hunk', 'Hunk3'],
+    winterSurcharge: 900,
     fixedPrices: {'454860479882':4290, '924701650982':4290, '809858137952':4290},
     nubuck: {uid:'454860479882', photo:'/photos/aganta-black-nubuck-cordura.jpg'},
     hunk: {black:'550020260919', pistachio:'550020260920'},
@@ -10,6 +12,11 @@
     },
     familyNames: {Thermo:'Aganta Thermo', 'Hunk Thermo BRFT W':'Hunk Thermo Barefoot'},
     soldOut: ['576612833084','938371874105','901880658842','576555820762','671974984372','246465477824','585095123222','511313321014','375461019313']
+  };
+  rules.metaProductId = (product, season = product.seasonId || product.season_id) => {
+    const uid = String(product.uid || '');
+    return uid && season === 'winter' && rules.airtexFamilies.includes(product.family)
+      ? 'airtex-winter-' + uid : uid;
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = rules;
   else window.ulteraCatalogRules = rules;

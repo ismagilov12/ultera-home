@@ -71,3 +71,5 @@ module.exports = async function storefrontCatalog(req, res) {
     return res.status(503).json({error:'Не вдалося завантажити основний каталог.'});
   }
 };
+
+module.exports.collectFamilies = collectFamilies;

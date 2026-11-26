@@ -24,6 +24,7 @@
 //   (опционально) KEYCRM_TOKEN - для апдейта CRM при Approved
 
 const crypto = require('crypto');
+const {metaProductId} = require('../assets/storefront-catalog-rules');
 const { sendCAPI } = require('./fb-capi');
 const { sendTikTokEvent } = require('./tiktok-events');
 
@@ -67,7 +68,7 @@ async function lookupOrderForCAPI(orderRef) {
         fn, ln
       },
       custom_data: {
-        content_ids: items.map(i => String(i.uid || '')).filter(Boolean),
+        content_ids: items.map(i => metaProductId(i)).filter(Boolean),
         content_type: 'product',
         value: Number(row.total || 0),
         currency: 'UAH',

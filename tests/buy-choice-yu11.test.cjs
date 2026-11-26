@@ -43,7 +43,7 @@ test('yes adds one priced accessory in the chosen size; hiding never removes an 
   assert.equal(v.root.find('cd-insole-decline').textContent,'Сховати пропозицію');
   v.root.find('cd-insole-decline').click();assert.equal(v.cart.items.length,3);
 });
-const pilotFns=between('function isYu11Card(','function openModal(uid)');
+const pilotFns=between('function isYu11Card(','function openModal(');
 const buyFn=between('function addToCart(){','/* ————— CART DRAWER + WIZARD');
 const seasonFn=between('function pickSeason(btn, id, label){','function syncModalThumbnails(idx)');
 function fixture(){

@@ -16,6 +16,8 @@
 //
 // Env vars: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 
+const catalogRules = require('../assets/storefront-catalog-rules');
+const {collectFamilies} = require('./storefront-catalog');
 const SITE = 'https://ultera.in.ua';
 
 // === slug helpers (mirror _build_deploy_deeplinks_v1.py 1:1) ===
@@ -265,10 +267,19 @@ module.exports = async function handler(req, res){
     // Inclusion rule: published footwear that the admin has explicitly enabled
     // (feed_enabled=true). Tees are excluded server-side as a hard guarantee.
     // v3: + sizes — джерело закресленої ціни (див. pickPrices).
+    const airtex = req.query?.variant === 'airtex';
     const products = await sbFetch(
-      sbUrl + '/rest/v1/ulhome_products?select=id,uid,family,title,color_name,color_hex,price,price_old,sizes,mark,description,desc_short,photo,gender,category,sort_order,published,feed_enabled&published=eq.true&feed_enabled=eq.true&family=neq.Tees&order=family.asc,sort_order.asc',
+      sbUrl + '/rest/v1/ulhome_products?select=id,uid,family,title,color_name,color_hex,price,price_old,sizes,size_list,mark,description,desc_short,photo,gender,category,sort_order,published,feed_enabled&published=eq.true&feed_enabled=eq.true&family=neq.Tees&order=family.asc,sort_order.asc',
       headers
     );
+
+    let winterVariants;
+    if (airtex) {
+      const ordering = await sbFetch(sbUrl + '/rest/v1/ulhome_family_order?select=family,hidden,sort_order', headers);
+      winterVariants = new Map(collectFamilies(products, ordering)
+        .filter(group => catalogRules.airtexFamilies.includes(group.family))
+        .flatMap(group => group.variants.filter(v => v.available).map(v => [v.uid, v])));
+    }
 
     const media = await fetchAllMedia(sbUrl, headers);
     const mediaByProduct = {};
@@ -284,7 +295,10 @@ module.exports = async function handler(req, res){
       // Defensive guards (query already filters, but keep belt + suspenders):
       if (p.family === 'Tees'){ skipped++; continue; }
       if (p.feed_enabled === false){ skipped++; continue; }
-      const mainImg = p.photo;
+      const variant = winterVariants?.get(p.uid);
+      const sizes = airtex && Array.isArray(p.size_list) ? p.size_list.filter(s => s?.eu && !(parseInt(s.qty, 10) < 1)).map(s => s.eu) : [];
+      if (airtex && (!variant || !sizes.length)) { skipped++; continue; }
+      const mainImg = airtex ? new URL(variant.photo, SITE).href : p.photo;
       if (!mainImg){ skipped++; continue; }
 
       const extras = (mediaByProduct[p.id] || [])
@@ -293,19 +307,26 @@ module.exports = async function handler(req, res){
 
       const isTees = p.family === 'Tees';
       const brand = isTees ? 'ULTERA TEES' : 'ULTERA';
-      const link = buildLink(p);
+      const link = buildLink(p) + (airtex ? '&season=winter' : '');
+      const retailerId = airtex ? catalogRules.metaProductId(p, 'winter') : p.uid;
+      const title = buildTitle(p) + (airtex ? ' · Зимові AirTex до −7 °C' : '');
+      const description = airtex
+        ? title + '. Низькі зимові кросівки з термопідкладкою AirTex. Українське взуття ручної роботи.'
+        : buildDescription(p);
       const pr = pickPrices(p);
-      const priceNew = pr.priceNew;
-      const priceOld = pr.priceOld;
+      const priceNew = airtex ? variant.price + catalogRules.winterSurcharge : pr.priceNew;
+      const winterOld = toInt(p.sizes?.[0]?.price_old);
+      const priceOld = !airtex ? pr.priceOld : (p.uid !== '809858137952' && winterOld > variant.price
+        ? winterOld + catalogRules.winterSurcharge : null);
 
       const fields = [];
-      fields.push('<g:id>' + xescape(p.uid) + '</g:id>');
-      fields.push('<g:title>' + xescape(buildTitle(p)) + '</g:title>');
-      fields.push('<g:description>' + xescape(buildDescription(p)) + '</g:description>');
+      fields.push('<g:id>' + xescape(retailerId) + '</g:id>');
+      fields.push('<g:title>' + xescape(title) + '</g:title>');
+      fields.push('<g:description>' + xescape(description) + '</g:description>');
       fields.push('<g:link>' + xescape(link) + '</g:link>');
       fields.push('<g:image_link>' + xescape(mainImg) + '</g:image_link>');
       for (const u of extras){
-        fields.push('<g:additional_image_link>' + xescape(u) + '</g:additional_image_link>');
+        fields.push('<g:additional_image_link>' + xescape(airtex ? new URL(u, SITE).href : u) + '</g:additional_image_link>');
       }
       fields.push('<g:availability>in stock</g:availability>');
       fields.push('<g:condition>new</g:condition>');
@@ -320,21 +341,22 @@ module.exports = async function handler(req, res){
       fields.push('<g:google_product_category>' + googleCategory(p) + '</g:google_product_category>');
       fields.push('<g:product_type>' + xescape(productType(p)) + '</g:product_type>');
       fields.push('<g:identifier_exists>no</g:identifier_exists>');
-      fields.push('<g:item_group_id>' + xescape(itemGroupId(p)) + '</g:item_group_id>');
+      fields.push('<g:item_group_id>' + xescape(airtex ? retailerId + 'g' : itemGroupId(p)) + '</g:item_group_id>');
       if (p.color_name) fields.push('<g:color>' + xescape(p.color_name) + '</g:color>');
       if (isTees){
         fields.push('<g:size>L</g:size>');
         fields.push('<g:size_system>EU</g:size_system>');
         fields.push('<g:material>100% бавовна 240 gsm</g:material>');
       } else {
-        fields.push('<g:size>40,41,42,43,44,45</g:size>');
+        fields.push('<g:size>' + (airtex ? xescape(sizes.join(',')) : '40,41,42,43,44,45') + '</g:size>');
         fields.push('<g:size_system>EU</g:size_system>');
       }
       fields.push('<g:gender>' + mapGender(p.gender) + '</g:gender>');
       fields.push('<g:age_group>adult</g:age_group>');
-      if (p.mark) fields.push('<g:custom_label_0>' + xescape(p.mark) + '</g:custom_label_0>');
+      if (airtex) fields.push('<g:custom_label_0>airtex-winter</g:custom_label_0>');
+      else if (p.mark) fields.push('<g:custom_label_0>' + xescape(p.mark) + '</g:custom_label_0>');
       fields.push('<g:custom_label_1>' + xescape(p.family || '') + '</g:custom_label_1>');
-      fields.push('<g:shipping><g:country>UA</g:country><g:service>Нова Пошта</g:service><g:price>0 UAH</g:price></g:shipping>');
+      if (!airtex) fields.push('<g:shipping><g:country>UA</g:country><g:service>Нова Пошта</g:service><g:price>0 UAH</g:price></g:shipping>');
 
       items.push('    <item>\n      ' + fields.join('\n      ') + '\n    </item>');
     }
@@ -343,7 +365,7 @@ module.exports = async function handler(req, res){
 '<?xml version="1.0" encoding="UTF-8"?>\n' +
 '<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">\n' +
 '  <channel>\n' +
-'    <title>ULTERA — Product Feed</title>\n' +
+'    <title>' + (airtex ? 'ULTERA — AirTex до −7 °C' : 'ULTERA — Product Feed') + '</title>\n' +
 '    <link>' + SITE + '/</link>\n' +
 '    <description>ULTERA · взуття та одяг ручної роботи. Зроблено в Україні.</description>\n' +
 '    <lastBuildDate>' + new Date().toUTCString() + '</lastBuildDate>\n' +
