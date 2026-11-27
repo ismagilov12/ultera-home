@@ -37,3 +37,12 @@ test('missing seasons and sold inventory do not enter the public feed', () => {
   assert.equal(makeCard({...listing, variants:[{size:'42',available:false}]}), null);
   assert.equal(makeCard({...listing, photo:'https://outside.example/picture.jpg'}), null);
 });
+
+test('season fallbacks require a documented version in the known factory batches', () => {
+  const clearance = {...listing, uid:'bf26-n25-shoes', article:'ЮА 10', season:null};
+  assert.equal(makeCard({...clearance, color:'Аква · сітка'}).season, 'Весна / літо');
+  assert.equal(makeCard({...clearance, color:'Бордові · Cordura'}).season, 'Осінь');
+  assert.equal(makeCard({...clearance, color:'Чорна термо Cordura'}).season, '');
+  assert.equal(makeCard({...clearance, color:'Аква · біла підошва'}).season, '');
+  assert.equal(makeCard({...clearance, season:'Зима', color:'Cordura'}).season, 'Зима');
+});
