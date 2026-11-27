@@ -2,6 +2,7 @@
 (() => {
   const rules = {
     airtexFamilies: ['Aganta', 'Hunk', 'Hunk3'],
+    airtexPlusFamilies: ['Thermo', 'Hunk Thermo', 'Aganta Thermo', 'Hunk Thermo BRFT W', 'Travel Thermo', 'WAVE2 Thermo', 'Thermo Ked'],
     winterSurcharge: 900,
     fixedPrices: {'454860479882':4290, '924701650982':4290, '809858137952':4290},
     nubuck: {uid:'454860479882', photo:'/photos/aganta-black-nubuck-cordura.jpg'},

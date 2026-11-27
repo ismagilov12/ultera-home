@@ -273,15 +273,14 @@ module.exports = async function handler(req, res){
       headers
     );
 
-    let winterVariants;
-    if (airtex) {
-      const ordering = await sbFetch(sbUrl + '/rest/v1/ulhome_family_order?select=family,hidden,sort_order', headers);
-      winterVariants = new Map(collectFamilies(products, ordering)
-        .filter(group => catalogRules.airtexFamilies.includes(group.family))
-        .flatMap(group => group.variants.filter(v => v.available).map(v => [v.uid, v])));
-    }
-
-    const media = await fetchAllMedia(sbUrl, headers);
+    const [ordering, media] = await Promise.all([
+      sbFetch(sbUrl + '/rest/v1/ulhome_family_order?select=family,hidden,sort_order', headers),
+      fetchAllMedia(sbUrl, headers)
+    ]);
+    const winterFamilies = airtex ? catalogRules.airtexFamilies : catalogRules.airtexPlusFamilies;
+    const winterVariants = new Map(collectFamilies(products, ordering)
+      .filter(group => winterFamilies.includes(group.family))
+      .flatMap(group => group.variants.filter(v => v.available).map(v => [v.uid, v])));
     const mediaByProduct = {};
     for (const m of media){
       if (!m.url) continue;
@@ -295,10 +294,11 @@ module.exports = async function handler(req, res){
       // Defensive guards (query already filters, but keep belt + suspenders):
       if (p.family === 'Tees'){ skipped++; continue; }
       if (p.feed_enabled === false){ skipped++; continue; }
-      const variant = winterVariants?.get(p.uid);
-      const sizes = airtex && Array.isArray(p.size_list) ? p.size_list.filter(s => s?.eu && !(parseInt(s.qty, 10) < 1)).map(s => s.eu) : [];
+      const variant = winterVariants.get(p.uid);
+      const sizes = variant && Array.isArray(p.size_list) ? p.size_list.filter(s => s?.eu && !(parseInt(s.qty, 10) < 1)).map(s => s.eu) : [];
       if (airtex && (!variant || !sizes.length)) { skipped++; continue; }
-      const mainImg = airtex ? new URL(variant.photo, SITE).href : p.photo;
+      const highWinter = !airtex && !!variant;
+      const mainImg = variant ? new URL(variant.photo, SITE).href : p.photo;
       if (!mainImg){ skipped++; continue; }
 
       const extras = (mediaByProduct[p.id] || [])
@@ -310,9 +310,13 @@ module.exports = async function handler(req, res){
       const link = buildLink(p) + (airtex ? '&season=winter' : '');
       const retailerId = airtex ? catalogRules.metaProductId(p, 'winter') : p.uid;
       const title = buildTitle(p) + (airtex ? ' · Зимові AirTex до −7 °C' : '');
-      const description = airtex
+      let description = airtex
         ? title + '. Низькі зимові кросівки з термопідкладкою AirTex. Українське взуття ручної роботи.'
         : buildDescription(p);
+      if (highWinter) {
+        description = 'Високі зимові кросівки з утеплювачем AirTex+ до −18 °C. ' +
+          description.replace(/(?:−|–|-)\s*15\s*°\s*[CС]/gi, '−18 °C');
+      }
       const pr = pickPrices(p);
       const priceNew = airtex ? variant.price + catalogRules.winterSurcharge : pr.priceNew;
       const winterOld = toInt(p.sizes?.[0]?.price_old);
@@ -328,7 +332,7 @@ module.exports = async function handler(req, res){
       for (const u of extras){
         fields.push('<g:additional_image_link>' + xescape(airtex ? new URL(u, SITE).href : u) + '</g:additional_image_link>');
       }
-      fields.push('<g:availability>in stock</g:availability>');
+      fields.push('<g:availability>' + (highWinter && !sizes.length ? 'out of stock' : 'in stock') + '</g:availability>');
       fields.push('<g:condition>new</g:condition>');
       if (priceOld){
         onSale++;
@@ -348,7 +352,7 @@ module.exports = async function handler(req, res){
         fields.push('<g:size_system>EU</g:size_system>');
         fields.push('<g:material>100% бавовна 240 gsm</g:material>');
       } else {
-        fields.push('<g:size>' + (airtex ? xescape(sizes.join(',')) : '40,41,42,43,44,45') + '</g:size>');
+        if (!variant || sizes.length) fields.push('<g:size>' + (variant ? xescape(sizes.join(',')) : '40,41,42,43,44,45') + '</g:size>');
         fields.push('<g:size_system>EU</g:size_system>');
       }
       fields.push('<g:gender>' + mapGender(p.gender) + '</g:gender>');
@@ -356,6 +360,7 @@ module.exports = async function handler(req, res){
       if (airtex) fields.push('<g:custom_label_0>airtex-winter</g:custom_label_0>');
       else if (p.mark) fields.push('<g:custom_label_0>' + xescape(p.mark) + '</g:custom_label_0>');
       fields.push('<g:custom_label_1>' + xescape(p.family || '') + '</g:custom_label_1>');
+      if (highWinter && sizes.length) fields.push('<g:custom_label_2>airtex-plus-high</g:custom_label_2>');
       if (!airtex) fields.push('<g:shipping><g:country>UA</g:country><g:service>Нова Пошта</g:service><g:price>0 UAH</g:price></g:shipping>');
 
       items.push('    <item>\n      ' + fields.join('\n      ') + '\n    </item>');

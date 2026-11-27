@@ -16,7 +16,9 @@ test('winter feed uses the public storefront, available sizes and winter prices 
     assert.equal(url.searchParams.get('published'),'eq.true');
     assert.equal(url.searchParams.get('feed_enabled'),'eq.true');
     return Response.json([product, {...product,uid:'hidden',family:'Hunk3'}, {...product,uid:'retired',family:'Hunk'},
-      {...product,uid:'high',family:'Thermo'}, {...product,uid:'empty',size_list:[{eu:'40',qty:0}]}]);
+      {...product,uid:'high',family:'Thermo',desc_short:'Тепло до −15 °C',size_list:[{eu:'36',qty:3},{eu:'37',qty:0}]},
+      {...product,uid:'high-empty',family:'Thermo Ked',size_list:[{eu:'40',qty:0}]},
+      {...product,uid:'retired-thermo',family:'Aganta Thermo'}, {...product,uid:'empty',size_list:[{eu:'40',qty:0}]}]);
   });
   const before = {};
   for (const name of ['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY']) {
@@ -42,6 +44,13 @@ test('winter feed uses the public storefront, available sizes and winter prices 
   const regular = await xml({});
   assert.ok(regular.includes('<g:id>454860479882</g:id>'));
   assert.ok(!regular.includes('airtex-winter-'));
+  const rows = regular.match(/<item>[\s\S]*?<\/item>/g);
+  const high = rows.filter(row => row.includes('<g:custom_label_2>airtex-plus-high</g:custom_label_2>'));
+  assert.equal(high.length, 1);
+  assert.ok(high[0].includes('<g:id>high</g:id>') && high[0].includes('<g:size>36</g:size>'));
+  assert.ok(high[0].includes('AirTex+ до −18 °C') && !high[0].includes('−15 °C'));
+  assert.ok(rows.find(row => row.includes('<g:id>high-empty</g:id>')).includes('<g:availability>out of stock</g:availability>'));
+  assert.ok(!winter.includes('airtex-plus-high'));
   assert.equal(rules.metaProductId({uid:'454860479882',family:'Aganta',seasonId:'winter'}),'airtex-winter-454860479882');
   assert.equal(rules.metaProductId({uid:'high',family:'Thermo',seasonId:'winter'}),'high');
 });
