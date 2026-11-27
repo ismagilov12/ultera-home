@@ -1,0 +1,7 @@
+{
+  "name": "ultera-home",
+  "private": true,
+  "dependencies": {
+    "sharp": "0.35.5"
+  }
+}

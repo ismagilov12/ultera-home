@@ -1,6 +1,7 @@
 {
   "ignoreCommand": "exit 1",
   "functions": {
+    "api/black-friday-meta.js": { "includeFiles": "{assets/black-friday-meta/*,logo.png}" },
     "api/meta-spend-sync.js": { "maxDuration": 300 },
     "api/black-friday-page.js": { "includeFiles": "{index.html,templates/black-friday.html}" }
   },
@@ -29,6 +30,8 @@
     }
   ],
   "rewrites": [
+    { "source": "/black-friday-feed.xml", "destination": "/api/black-friday-meta" },
+    { "source": "/photos/bf-catalog/:uid/:version.jpg", "destination": "/api/black-friday-meta?uid=:uid&v=:version" },
     {
       "source": "/black-friday",
       "destination": "/api/black-friday-page"
