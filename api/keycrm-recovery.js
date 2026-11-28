@@ -11,6 +11,9 @@ const phone=value=>{let s=String(value||'').replace(/\D/g,'');return s.length===
 const sourceNumber=o=>String(o.source_uuid??o.external_id??'');
 const utcTime=value=>{const s=String(value||'').replace(' ','T');return Date.parse(/(?:Z|[+-]\d{2}:?\d{2})$/i.test(s)?s:s+'Z');};
 const normalized=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+// This CRM account interprets the POST's timezone-less date in Europe/Kyiv.
+// Confirmed by a read-back on the recovery record; GET returns UTC.
+const crmInputTime=value=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(new Date(value));
 const error=(status,message)=>Object.assign(new Error(message),{status});
 const isTest=o=>/utm_source=qa(?:[&#]|$)/i.test(o.landing_url||'')||/(?:^|[\s_-])(?:qa|test|тест)(?=$|[\s_\d-])/iu.test(o.customer_name||'');
 const itemLabel=i=>[i.title,i.color_name,i.size?'р.'+i.size:'',i.season].filter(Boolean).join(' / ');
@@ -36,10 +39,10 @@ function buildPayload(o,aliases,env){
   return {
     source_id:Number(env.KEYCRM_SOURCE_ID)||1,
     external_id:String(o.number),source_uuid:String(o.number),
-    ordered_at:new Date(o.created_at).toISOString().replace(/\.\d{3}Z$/,'Z'),
+    ordered_at:crmInputTime(o.created_at),
     buyer:{full_name:o.customer_name,phone:o.customer_phone,...(o.customer_email?{email:o.customer_email}:{})},
     shipping:{delivery_service_id:Number(env.KEYCRM_DS_NP)||1,shipping_address_city:o.delivery_city||'',shipping_receive_point:[o.delivery_city,o.delivery_branch].filter(Boolean).join(', '),recipient_full_name:o.customer_name,recipient_phone:o.customer_phone},
-    manager_comment:`Відновлено після збою зв'язку з CRM. Сайт #${o.number} · ${o.payment_ref||''}. Повторні спроби: ${aliases.join(', ')}. Модель, розмір, сума та доставка — зі збереженого оформлення. Спосіб оплати: ${o.payment_method==='card'?'картка':'післяплата'}. Стан оплати перевірити окремо; відновлення не підтверджує оплату.${o.notes?'\n'+o.notes:''}`,
+    manager_comment:`Відновлено після збою зв'язку з CRM. Сайт #${o.number} · ${o.payment_ref||''}. Час оформлення на сайті (UTC): ${new Date(o.created_at).toISOString()}. Повторні спроби: ${aliases.join(', ')}. Модель, розмір, сума та доставка — зі збереженого оформлення. Спосіб оплати: ${o.payment_method==='card'?'картка':'післяплата'}. Стан оплати перевірити окремо; відновлення не підтверджує оплату.${o.notes?'\n'+o.notes:''}`,
     marketing,products,
     payments:method?[{payment_method_id:method,amount:Number(o.total),status:'not_paid',description:'Відновлення заявки. Перед обробкою перевірити фактичну оплату.'}]:[]
   };
@@ -117,7 +120,11 @@ function createHandler({fetcher=globalThis.fetch,env=process.env,now=()=>new Dat
       const writeJob=value=>rest('ulhome_sync_state',{key:'eq.'+jobKey},'PATCH',{value,updated_at:now().toISOString()},'return=minimal');
       let created=exact;
       if(!created){
-        const claimed=await rest('ulhome_sync_state',{on_conflict:'key'},'POST',{key:jobKey,value:{state:'started',number:group.row.number,attempts:group.attempts},updated_at:now().toISOString()},'resolution=ignore-duplicates,return=representation');
+        const prior=jobs.find(j=>j.key===jobKey)?.value;
+        const job={value:{state:'started',number:group.row.number,attempts:group.attempts},updated_at:now().toISOString()};
+        const claimed=prior?.state==='reviewed_missing'
+          ?await rest('ulhome_sync_state',{key:'eq.'+jobKey,'value->>state':'eq.reviewed_missing'},'PATCH',job,'return=representation')
+          :await rest('ulhome_sync_state',{on_conflict:'key'},'POST',{key:jobKey,...job},'resolution=ignore-duplicates,return=representation');
         if(!claimed.length)return send(409,{error:'Попередня спроба відновлення вже зареєстрована. Перевірте CRM перед повторним створенням.'});
         try{
           await sleep(3200);
@@ -132,30 +139,36 @@ function createHandler({fetcher=globalThis.fetch,env=process.env,now=()=>new Dat
       const verify=await fetcher(BASE+'/order/'+created.id+'?include=buyer,products,status,shipping',{method:'GET',headers:{Authorization:'Bearer '+env.KEYCRM_TOKEN,Accept:'application/json'},signal:AbortSignal.timeout(20000)});
       if(!verify.ok)throw error(502,'Замовлення створене, але перевірка CRM недоступна. Не повторюйте створення.');
       let confirmed=await verify.json();
-      // Correct only the record created by this recovery, never an unrelated CRM order.
-      // An explicit UTC offset prevents the CRM account timezone from shifting the source date.
       const ownJob=jobs.find(j=>j.key===jobKey)?.value;
-      if(ownJob?.state==='created'&&ownJob.keycrm_id===confirmed.id&&ownJob.number===group.row.number&&sourceNumber(confirmed)===String(group.row.number)&&phone(confirmed.buyer?.phone)===phone(group.row.customer_phone)&&ownJob.checks&&Object.entries(ownJob.checks).every(([k,ok])=>k==='date'||ok)&&utcTime(confirmed.ordered_at)!==utcTime(payload.ordered_at)){
-        await sleep(3200);
-        const repair=await fetcher(BASE+'/order/'+confirmed.id,{method:'PUT',headers:{Authorization:'Bearer '+env.KEYCRM_TOKEN,Accept:'application/json','Content-Type':'application/json'},body:JSON.stringify({ordered_at:payload.ordered_at}),signal:AbortSignal.timeout(20000)});
-        if(!repair.ok)throw error(502,'CRM не підтвердила виправлення часу. Запис уже існує, повторного створення немає.');
-        await sleep(3200);
-        const recheck=await fetcher(BASE+'/order/'+confirmed.id+'?include=buyer,products,status,shipping',{method:'GET',headers:{Authorization:'Bearer '+env.KEYCRM_TOKEN,Accept:'application/json'},signal:AbortSignal.timeout(20000)});
-        if(!recheck.ok)throw error(502,'Потрібно перевірити час створеної заявки в CRM.');
-        confirmed=await recheck.json();
-      }
       const lines=a=>a.map(i=>JSON.stringify([String(i.sku||''),normalized(i.name),Number(i.quantity),round(Number(i.price_sold??i.price))])).sort().join('\n');
       const destination=['shipping_address_city','shipping_receive_point'].every(k=>normalized(confirmed.shipping?.[k])===normalized(payload.shipping[k]));
-      const checks={id:confirmed.id===created.id,number:sourceNumber(confirmed)===String(group.row.number),source:Number(confirmed.source_id)===payload.source_id,buyer:phone(confirmed.buyer?.phone)===phone(group.row.customer_phone),date:utcTime(confirmed.ordered_at)===utcTime(payload.ordered_at),total:Number.isFinite(Number(confirmed.grand_total))&&Math.abs(Number(confirmed.grand_total)-Number(group.row.total))<=0.02,products:Array.isArray(confirmed.products)&&lines(confirmed.products)===lines(payload.products),destination};
-      if(Object.values(checks).some(ok=>!ok)){
-        const dates={expected:payload.ordered_at,actual:confirmed.ordered_at};
+      const expectedTime=Math.floor(utcTime(group.row.created_at)/1000)*1000;
+      const checks={id:confirmed.id===created.id,number:sourceNumber(confirmed)===String(group.row.number),source:Number(confirmed.source_id)===payload.source_id,buyer:phone(confirmed.buyer?.phone)===phone(group.row.customer_phone),date:utcTime(confirmed.ordered_at)===expectedTime,total:Number.isFinite(Number(confirmed.grand_total))&&Math.abs(Number(confirmed.grand_total)-Number(group.row.total))<=0.02,products:Array.isArray(confirmed.products)&&lines(confirmed.products)===lines(payload.products),destination};
+      let dateWarning=null;
+      // Only the two owned legacy records can keep the documented account-timezone
+      // discrepancy. Preserve the exact source timestamp in a verified manager note.
+      const offset=utcTime(crmInputTime(group.row.created_at))-expectedTime;
+      if(!checks.date&&ownJob?.state==='created'&&ownJob.keycrm_id===confirmed.id&&ownJob.number===group.row.number&&ownJob.checks&&Object.entries(checks).every(([k,ok])=>k==='date'||ok)&&expectedTime-utcTime(confirmed.ordered_at)===offset){
+        const marker='Час оформлення на сайті (UTC): '+new Date(group.row.created_at).toISOString();
+        await sleep(3200);
+        const note=(confirmed.manager_comment||'')+'\n'+marker+'. Час у полі CRM зсунувся при відновленні; для аналітики використовувати час сайту.';
+        const update=await fetcher(BASE+'/order/'+confirmed.id,{method:'PUT',headers:{Authorization:'Bearer '+env.KEYCRM_TOKEN,Accept:'application/json','Content-Type':'application/json'},body:JSON.stringify({manager_comment:note}),signal:AbortSignal.timeout(20000)});
+        if(!update.ok)throw error(502,'Не вдалося зберегти уточнення часу. Повторного створення немає.');
+        await sleep(3200);
+        const read=await fetcher(BASE+'/order/'+confirmed.id,{method:'GET',headers:{Authorization:'Bearer '+env.KEYCRM_TOKEN,Accept:'application/json'},signal:AbortSignal.timeout(20000)});
+        const noted=read.ok?await read.json():{};
+        if(noted.id!==confirmed.id||!String(noted.manager_comment||'').includes(marker))throw error(502,'Не підтверджено збереження початкового часу в CRM.');
+        dateWarning={expected_utc:new Date(expectedTime).toISOString(),crm_utc:confirmed.ordered_at};
+      }
+      if(Object.entries(checks).some(([k,ok])=>!ok&&!(k==='date'&&dateWarning))){
+        const dates={expected:new Date(expectedTime).toISOString(),actual:confirmed.ordered_at};
         await writeJob({state:'created',number:group.row.number,attempts:group.attempts,keycrm_id:confirmed.id,checks,...(!checks.date?{dates}:{})});
         throw error(502,'CRM створила запис, але перевірка не збіглася: '+Object.entries(checks).filter(([,ok])=>!ok).map(([key])=>key).join(', ')+(!checks.date?' ('+dates.expected+' → '+dates.actual+')':'')+'. Повтор заблоковано.');
       }
       const linked=await rest('ulhome_orders',{id:'eq.'+group.row.id,keycrm_id:'is.null',select:'id'},'PATCH',{keycrm_id:confirmed.id,keycrm_external_id:String(group.row.number),keycrm_synced_at:now().toISOString()},'return=representation');
       if(linked.length!==1)throw error(409,'CRM-запис створено, але прив’язка сайту змінилася. Потрібна звірка.');
-      await rest('ulhome_sync_state',{on_conflict:'key'},'POST',{key:jobKey,value:{state:'done',number:group.row.number,attempts:group.attempts,keycrm_id:confirmed.id},updated_at:now().toISOString()},'resolution=merge-duplicates,return=minimal');
-      return send(200,{ok:true,number:group.row.number,keycrm_id:confirmed.id,attempts:group.attempts,verified:true});
+      await rest('ulhome_sync_state',{on_conflict:'key'},'POST',{key:jobKey,value:{state:'done',number:group.row.number,attempts:group.attempts,keycrm_id:confirmed.id,...(dateWarning?{date_warning:dateWarning}:{})},updated_at:now().toISOString()},'resolution=merge-duplicates,return=minimal');
+      return send(200,{ok:true,number:group.row.number,keycrm_id:confirmed.id,attempts:group.attempts,verified:true,...(dateWarning?{warning:'У CRM зсув часу; оригінальний час сайту збережено в коментарі.'}:{})});
     }catch(e){return send(e.status||502,{error:e.publicCode?'Не вдалося повністю звірити CRM. Спробуйте пізніше.':(e.status?e.message:'Не вдалося завершити відновлення. Оновіть список перед наступною дією.')});}
   };
 }
