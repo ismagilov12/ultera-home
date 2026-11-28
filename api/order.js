@@ -584,6 +584,7 @@ module.exports = async function handler(req, res) {
   const crmPayload = {
     source_id: parseInt(process.env.KEYCRM_SOURCE_ID || '1', 10),
     external_id: externalId,
+    source_uuid: externalId,
     manager_comment: `ultera-home · ${body.num || (orderRow && orderRow.number) || ''}${body.payment === 'np' ? ' · наложка (мін 500₴)' : ' · картка'}${promoPct > 0 ? ` · промо ${promoCodeRaw} −${promoPct}% (без promo-ліній)` : ''}`,
     buyer: { full_name: body.fio, phone: body.phone },
     shipping: {
@@ -621,21 +622,17 @@ module.exports = async function handler(req, res) {
   };
 
   const token = process.env.KEYCRM_TOKEN;
-  const acceptedCampaignOrder = () => res.status(200).json({
+  // A saved checkout is accepted even if CRM is temporarily unavailable. The
+  // admin recovery flow sends only its saved snapshot, without repeating stock,
+  // promotion or advertising side effects. Never accept an unsaved checkout.
+  const acceptedSavedOrder = () => res.status(200).json({
     ok: true, stage: 'final', order_num: publicRef, supabase_order: orderRow.number,
     authoritative_total: authoritativeTotal, keycrm_pending: true
   });
   if (!token) {
-    console.log('[MOCK] order:', JSON.stringify(crmPayload));
-    return res.status(200).json({
-      ok: true, mock: true,
-      stage: 'final',
-      order_num: body.num,
-      supabase_order: orderRow ? orderRow.number : null,
-      authoritative_total: authoritativeTotal,
-      promo: promoPct > 0 ? { code: promoCodeRaw, discount_pct: promoPct, remaining: promoRemaining, source: promoSource } : null,
-      message: 'Mock order logged.'
-    });
+    console.error('[order] CRM credential missing; saved order awaiting recovery');
+    if (orderRow?.id) return acceptedSavedOrder();
+    return res.status(503).json({ok:false,error:'Не вдалося зберегти замовлення. Спробуйте пізніше.'});
   }
 
   try {
@@ -646,13 +643,14 @@ module.exports = async function handler(req, res) {
         'Accept': 'application/json',
         'Authorization': 'Bearer ' + token
       },
-      body: JSON.stringify(crmPayload)
+      body: JSON.stringify(crmPayload),
+      signal: AbortSignal.timeout(12000)
     });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) {
-      console.error('KeyCRM error', r.status, data);
-      if (hasCampaignPair) return acceptedCampaignOrder();
-      return res.status(r.status).json({ ok: false, error: data.message || 'KeyCRM error', details: data });
+    if (!r.ok || !Number.isSafeInteger(data.id)) {
+      console.error('KeyCRM error', r.status, 'saved_order', orderRow?.number || null);
+      if (orderRow?.id) return acceptedSavedOrder();
+      return res.status(502).json({ ok: false, error: 'Не вдалося передати замовлення. Спробуйте пізніше.' });
     }
     if (orderRow && orderRow.id && data && data.id) {
       await patchOrderKeycrmLink(orderRow.id, data.id, externalId)
@@ -668,8 +666,8 @@ module.exports = async function handler(req, res) {
       promo: promoPct > 0 ? { code: promoCodeRaw, discount_pct: promoPct, remaining: promoRemaining, source: promoSource } : null
     });
   } catch (e) {
-    console.error('KeyCRM exception', e);
-    if (hasCampaignPair) return acceptedCampaignOrder();
-    return res.status(500).json({ ok: false, error: e.message });
+    console.error('KeyCRM exception', e.name, 'saved_order', orderRow?.number || null);
+    if (orderRow?.id) return acceptedSavedOrder();
+    return res.status(502).json({ ok: false, error: 'Не вдалося передати замовлення. Спробуйте пізніше.' });
   }
 };

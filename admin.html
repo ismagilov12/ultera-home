@@ -606,7 +606,17 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-7.75-4.5"/><path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 7.75 4.5"/><polyline points="21 3 21 9 15 9"/><polyline points="3 21 3 15 9 15"/></svg>
           <span id="ord-keycrm-sync-label">Синхронізувати KeyCRM</span>
         </button>
+        <button type="button" class="btn ghost" id="ord-recovery-open">Перевірити непередані в CRM</button>
       </div>
+      <section id="ord-recovery" hidden class="card" style="margin:16px 0;padding:20px">
+        <h2>Відновлення непереданих заявок</h2>
+        <p>Лише збережені оформлення, без лідів і тестів. Перед перенесенням перевіряємо CRM. Повторні спроби показані разом; склад, ціни й доставка беруться з останнього оформлення. Склад, реклама та оплата повторно не запускаються.</p>
+        <label>Від <input type="date" id="ord-recovery-from"></label>
+        <label>До <input type="date" id="ord-recovery-to"></label>
+        <button type="button" class="btn ghost" id="ord-recovery-check">Звірити з CRM</button>
+        <p id="ord-recovery-status" role="status"></p>
+        <div id="ord-recovery-list"></div>
+      </section>
       <div class="ord-table" id="ord-table">
         <div class="ord-row head">
           <div>№</div><div>Клієнт</div><div>Телефон</div><div>Дата</div><div>Сума</div><div>Статус</div>
@@ -1909,6 +1919,43 @@ async function runKeycrmSync(){
 (function(){
   var b = document.getElementById('ord-keycrm-sync');
   if (b) b.addEventListener('click', runKeycrmSync);
+})();
+
+// Recovery uses the verified admin session, never asks for a provider API key.
+(function(){
+  const panel=document.getElementById('ord-recovery'),list=document.getElementById('ord-recovery-list'),status=document.getElementById('ord-recovery-status');
+  const from=document.getElementById('ord-recovery-from'),to=document.getElementById('ord-recovery-to'),check=document.getElementById('ord-recovery-check');
+  let busy=false;
+  const date=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+  async function request(body){
+    await ensureFreshSession();
+    const r=await fetch('/api/keycrm-recovery?'+new URLSearchParams({from:from.value,to:to.value}),{method:body?'POST':'GET',headers:{...authHeaders(),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
+    const data=await r.json();if(!r.ok||!data.ok)throw new Error(data.error||'Не вдалося перевірити CRM');return data;
+  }
+  function setBusy(value){busy=value;check.disabled=value;from.disabled=value;to.disabled=value;list.querySelectorAll('button').forEach(b=>b.disabled=value||b.dataset.blocked==='true');}
+  function render(data){
+    list.replaceChildren();status.textContent=`Звірено: ${data.attempts} спроб, ${data.groups.length} клієнтів. Не всі спроби є окремими замовленнями.`;
+    for(const g of data.groups){
+      const card=document.createElement('article');card.style.cssText='padding:16px 0;border-top:1px solid #ddd';card.dataset.recoveryNumber=g.number;
+      const title=document.createElement('h3');title.textContent=`Сайт #${g.number} · ${g.total.toLocaleString('uk-UA')} ₴ · телефон …${g.phoneEnding}`;card.append(title);
+      const details=document.createElement('p');details.textContent=g.items.join('; ');card.append(details);
+      const attempts=document.createElement('p');attempts.textContent='Спроби: '+g.attempts.join(', ');card.append(attempts);
+      if(g.changedModels){const warning=document.createElement('p');warning.textContent='Клієнт змінював модель. Раніше: '+g.alternatives.join('; ')+'. Потрібно підтвердити останній вибір.';card.append(warning);}
+      const existing=document.createElement('p');existing.textContent=g.validationError||(g.existing.length?'Є замовлення CRM: '+g.existing.map(o=>`#${o.id} (${o.status}), ${o.total} ₴: ${o.items.join('; ')}`).join(' | '):'У перевіреному періоді CRM замовлення цього клієнта не знайдено.');card.append(existing);
+      const button=document.createElement('button');button.type='button';button.className='btn ghost';button.textContent='Відновити #'+g.number+' у CRM';
+      button.dataset.blocked=String(!!g.validationError||g.existing.some(o=>String(o.external_id)!==String(g.number)));button.disabled=button.dataset.blocked==='true';
+      button.addEventListener('click',async()=>{
+        if(busy)return;
+        if(!confirm(`Перенести лише останній склад заявки #${g.number} на ${g.total} ₴?${g.changedModels?' Клієнт змінював модель — переконайтеся, що потрібен саме останній вибір.':''}\nПовторного списання складу, оплати чи рекламного Purchase не буде.`))return;
+        setBusy(true);status.textContent='Повторно звіряю CRM та відновлюю заявку…';
+        try{const result=await request({action:'restore',number:g.number,snapshot:g.snapshot,acknowledge_variants:g.changedModels});status.textContent=`Перевірено: сайт #${result.number} пов’язано з CRM #${result.keycrm_id}. Повторні спроби окремо не переносилися.`;card.remove();await loadOrders();}
+        catch(e){status.textContent=e.message;}
+        finally{setBusy(false);}
+      });card.append(button);list.append(card);
+    }
+  }
+  check.addEventListener('click',async()=>{if(busy)return;setBusy(true);status.textContent='Звіряю збережені оформлення з CRM…';list.replaceChildren();try{render(await request());}catch(e){status.textContent=e.message;}finally{setBusy(false);}});
+  document.getElementById('ord-recovery-open').addEventListener('click',()=>{panel.hidden=!panel.hidden;if(!from.value){to.value=date(new Date());from.value=date(new Date(Date.now()-86400000));}});
 })();
 
 function orderDetailsHtml(o){

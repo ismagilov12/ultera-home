@@ -217,3 +217,34 @@ test('checkout, CRM and payment keep campaign price fixed in a mixed cart', asyn
   assert.equal(charged.body.chargedAmount,2899);
   assert.deepEqual(charged.body.formData.productPrice,['999.00','1900.00']);
 });
+
+for (const failure of ['401','timeout','missing_key','invalid_success']) {
+  test('saved ordinary checkout is accepted as pending after CRM '+failure, async t => {
+    let crmCalls=0;
+    setup(t,(path,opts)=>{
+      if(path.endsWith('/ulhome_orders'))return reply([{id:'fixture',number:888}]);
+      if(path.endsWith('/ulhome_sale_stock_decrement'))return reply({changed:[]});
+      if(path==='/v1/order'){
+        crmCalls++;assert.equal(JSON.parse(opts.body).source_uuid,'888');
+        if(failure==='timeout')throw new Error('Simulated timeout');
+        return reply({},failure==='401'?401:200);
+      }
+      assert.fail(path);
+    });
+    if(failure==='missing_key')delete process.env.KEYCRM_TOKEN;
+    const result=await invoke(order,{...body,items:[regular]});
+    assert.equal(result.code,200);assert.equal(result.body.keycrm_pending,true);
+    assert.equal(result.body.supabase_order,888);assert.equal(result.body.authoritative_total,1900);
+    assert.equal(crmCalls,failure==='missing_key'?0:1);
+  });
+}
+
+test('unsaved ordinary checkout is never falsely accepted after CRM failure',async t=>{
+  setup(t,(path,opts)=>{
+    if(path.endsWith('/ulhome_orders'))return reply({message:'unavailable'},503);
+    if(path.endsWith('/ulhome_sale_stock_decrement'))return reply({changed:[]});
+    if(path==='/v1/order')return reply({},401);
+    assert.fail(path);
+  });
+  const result=await invoke(order,{...body,items:[regular]});assert.equal(result.code,502);assert.equal(result.body.ok,false);
+});

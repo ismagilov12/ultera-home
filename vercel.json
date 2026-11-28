@@ -1,6 +1,7 @@
 {
   "ignoreCommand": "exit 1",
   "functions": {
+    "api/keycrm-recovery.js": { "maxDuration": 120 },
     "api/black-friday-meta.js": { "includeFiles": "{assets/black-friday-meta/*,logo.png}" },
     "api/meta-spend-sync.js": { "maxDuration": 300 },
     "api/black-friday-page.js": { "includeFiles": "{index.html,templates/black-friday.html}" }
