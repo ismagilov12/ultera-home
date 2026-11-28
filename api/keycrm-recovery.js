@@ -132,9 +132,13 @@ function createHandler({fetcher=globalThis.fetch,env=process.env,now=()=>new Dat
       const verify=await fetcher(BASE+'/order/'+created.id+'?include=buyer,products,status,shipping',{method:'GET',headers:{Authorization:'Bearer '+env.KEYCRM_TOKEN,Accept:'application/json'},signal:AbortSignal.timeout(20000)});
       if(!verify.ok)throw error(502,'Замовлення створене, але перевірка CRM недоступна. Не повторюйте створення.');
       const confirmed=await verify.json();
-      const lines=a=>a.map(i=>JSON.stringify([String(i.sku||''),normalized(i.name),Number(i.quantity),round(Number(i.price))])).sort().join('\n');
+      const lines=a=>a.map(i=>JSON.stringify([String(i.sku||''),normalized(i.name),Number(i.quantity),round(Number(i.price_sold??i.price))])).sort().join('\n');
       const destination=['shipping_address_city','shipping_receive_point'].every(k=>normalized(confirmed.shipping?.[k])===normalized(payload.shipping[k]));
-      if(confirmed.id!==created.id||sourceNumber(confirmed)!==String(group.row.number)||Number(confirmed.source_id)!==payload.source_id||phone(confirmed.buyer?.phone)!==phone(group.row.customer_phone)||utcTime(confirmed.ordered_at)!==utcTime(payload.ordered_at)||!Number.isFinite(Number(confirmed.grand_total))||Math.abs(Number(confirmed.grand_total)-Number(group.row.total))>0.02||!Array.isArray(confirmed.products)||lines(confirmed.products)!==lines(payload.products)||!destination)throw error(502,'CRM створила запис, але склад, сума або доставка потребують ручної звірки. Повтор заблоковано.');
+      const checks={id:confirmed.id===created.id,number:sourceNumber(confirmed)===String(group.row.number),source:Number(confirmed.source_id)===payload.source_id,buyer:phone(confirmed.buyer?.phone)===phone(group.row.customer_phone),date:utcTime(confirmed.ordered_at)===utcTime(payload.ordered_at),total:Number.isFinite(Number(confirmed.grand_total))&&Math.abs(Number(confirmed.grand_total)-Number(group.row.total))<=0.02,products:Array.isArray(confirmed.products)&&lines(confirmed.products)===lines(payload.products),destination};
+      if(Object.values(checks).some(ok=>!ok)){
+        await writeJob({state:'created',number:group.row.number,attempts:group.attempts,keycrm_id:confirmed.id,checks});
+        throw error(502,'CRM створила запис, але перевірка не збіглася: '+Object.entries(checks).filter(([,ok])=>!ok).map(([key])=>key).join(', ')+'. Повтор заблоковано.');
+      }
       const linked=await rest('ulhome_orders',{id:'eq.'+group.row.id,keycrm_id:'is.null',select:'id'},'PATCH',{keycrm_id:confirmed.id,keycrm_external_id:String(group.row.number),keycrm_synced_at:now().toISOString()},'return=representation');
       if(linked.length!==1)throw error(409,'CRM-запис створено, але прив’язка сайту змінилася. Потрібна звірка.');
       await rest('ulhome_sync_state',{on_conflict:'key'},'POST',{key:jobKey,value:{state:'done',number:group.row.number,attempts:group.attempts,keycrm_id:confirmed.id},updated_at:now().toISOString()},'resolution=merge-duplicates,return=minimal');
