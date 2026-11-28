@@ -1944,9 +1944,13 @@ async function runKeycrmSync(){
       const existing=document.createElement('p');existing.textContent=g.validationError||(g.existing.length?'Є замовлення CRM: '+g.existing.map(o=>`#${o.id} (${o.status}), ${o.total} ₴: ${o.items.join('; ')}`).join(' | '):'У перевіреному періоді CRM замовлення цього клієнта не знайдено.');card.append(existing);
       const button=document.createElement('button');button.type='button';button.className='btn ghost';button.textContent='Відновити #'+g.number+' у CRM';
       button.dataset.blocked=String(!!g.validationError||g.existing.some(o=>String(o.external_id)!==String(g.number)));button.disabled=button.dataset.blocked==='true';
+      let reviewed=false;
       button.addEventListener('click',async()=>{
         if(busy)return;
-        if(!confirm(`Перенести лише останній склад заявки #${g.number} на ${g.total} ₴?${g.changedModels?' Клієнт змінював модель — переконайтеся, що потрібен саме останній вибір.':''}\nПовторного списання складу, оплати чи рекламного Purchase не буде.`))return;
+        if(!reviewed){
+          const confirmation=document.createElement('p');confirmation.setAttribute('role','status');confirmation.textContent=`Підтвердіть перенесення лише останнього складу #${g.number} на ${g.total} ₴.${g.changedModels?' Клієнт змінював модель — потрібен саме останній вибір.':''} Повторного списання складу, оплати чи рекламного Purchase не буде.`;card.insertBefore(confirmation,button);
+          reviewed=true;button.textContent='Підтвердити перенесення #'+g.number;return;
+        }
         setBusy(true);status.textContent='Повторно звіряю CRM та відновлюю заявку…';
         try{const result=await request({action:'restore',number:g.number,snapshot:g.snapshot,acknowledge_variants:g.changedModels});status.textContent=`Перевірено: сайт #${result.number} пов’язано з CRM #${result.keycrm_id}. Повторні спроби окремо не переносилися.`;card.remove();await loadOrders();}
         catch(e){status.textContent=e.message;}
