@@ -1952,7 +1952,7 @@ async function runKeycrmSync(){
           reviewed=true;button.textContent='Підтвердити перенесення #'+g.number;return;
         }
         setBusy(true);status.textContent='Повторно звіряю CRM та відновлюю заявку…';
-        try{const result=await request({action:'restore',number:g.number,snapshot:g.snapshot,acknowledge_variants:g.changedModels});status.textContent=`Перевірено: сайт #${result.number} пов’язано з CRM #${result.keycrm_id}. Повторні спроби окремо не переносилися.`;card.remove();await loadOrders();}
+        try{const result=await request({action:'restore',number:g.number,snapshot:g.snapshot,acknowledge_variants:g.changedModels});status.textContent=`Перевірено: сайт #${result.number} пов’язано з CRM #${result.keycrm_id}. Повторні спроби окремо не переносилися.${result.warning?' '+result.warning:''}`;card.remove();await loadOrders();}
         catch(e){status.textContent=e.message;}
         finally{setBusy(false);}
       });card.append(button);list.append(card);
