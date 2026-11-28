@@ -36,7 +36,7 @@ function buildPayload(o,aliases,env){
   return {
     source_id:Number(env.KEYCRM_SOURCE_ID)||1,
     external_id:String(o.number),source_uuid:String(o.number),
-    ordered_at:new Date(o.created_at).toISOString().slice(0,19).replace('T',' '),
+    ordered_at:new Date(o.created_at).toISOString().replace(/\.\d{3}Z$/,'Z'),
     buyer:{full_name:o.customer_name,phone:o.customer_phone,...(o.customer_email?{email:o.customer_email}:{})},
     shipping:{delivery_service_id:Number(env.KEYCRM_DS_NP)||1,shipping_address_city:o.delivery_city||'',shipping_receive_point:[o.delivery_city,o.delivery_branch].filter(Boolean).join(', '),recipient_full_name:o.customer_name,recipient_phone:o.customer_phone},
     manager_comment:`Відновлено після збою зв'язку з CRM. Сайт #${o.number} · ${o.payment_ref||''}. Повторні спроби: ${aliases.join(', ')}. Модель, розмір, сума та доставка — зі збереженого оформлення. Спосіб оплати: ${o.payment_method==='card'?'картка':'післяплата'}. Стан оплати перевірити окремо; відновлення не підтверджує оплату.${o.notes?'\n'+o.notes:''}`,
@@ -131,7 +131,19 @@ function createHandler({fetcher=globalThis.fetch,env=process.env,now=()=>new Dat
       await sleep(3200);
       const verify=await fetcher(BASE+'/order/'+created.id+'?include=buyer,products,status,shipping',{method:'GET',headers:{Authorization:'Bearer '+env.KEYCRM_TOKEN,Accept:'application/json'},signal:AbortSignal.timeout(20000)});
       if(!verify.ok)throw error(502,'Замовлення створене, але перевірка CRM недоступна. Не повторюйте створення.');
-      const confirmed=await verify.json();
+      let confirmed=await verify.json();
+      // Correct only the record created by this recovery, never an unrelated CRM order.
+      // An explicit UTC offset prevents the CRM account timezone from shifting the source date.
+      const ownJob=jobs.find(j=>j.key===jobKey)?.value;
+      if(ownJob?.state==='created'&&ownJob.keycrm_id===confirmed.id&&ownJob.number===group.row.number&&sourceNumber(confirmed)===String(group.row.number)&&phone(confirmed.buyer?.phone)===phone(group.row.customer_phone)&&ownJob.checks&&Object.entries(ownJob.checks).every(([k,ok])=>k==='date'||ok)&&utcTime(confirmed.ordered_at)!==utcTime(payload.ordered_at)){
+        await sleep(3200);
+        const repair=await fetcher(BASE+'/order/'+confirmed.id,{method:'PUT',headers:{Authorization:'Bearer '+env.KEYCRM_TOKEN,Accept:'application/json','Content-Type':'application/json'},body:JSON.stringify({ordered_at:payload.ordered_at}),signal:AbortSignal.timeout(20000)});
+        if(!repair.ok)throw error(502,'CRM не підтвердила виправлення часу. Запис уже існує, повторного створення немає.');
+        await sleep(3200);
+        const recheck=await fetcher(BASE+'/order/'+confirmed.id+'?include=buyer,products,status,shipping',{method:'GET',headers:{Authorization:'Bearer '+env.KEYCRM_TOKEN,Accept:'application/json'},signal:AbortSignal.timeout(20000)});
+        if(!recheck.ok)throw error(502,'Потрібно перевірити час створеної заявки в CRM.');
+        confirmed=await recheck.json();
+      }
       const lines=a=>a.map(i=>JSON.stringify([String(i.sku||''),normalized(i.name),Number(i.quantity),round(Number(i.price_sold??i.price))])).sort().join('\n');
       const destination=['shipping_address_city','shipping_receive_point'].every(k=>normalized(confirmed.shipping?.[k])===normalized(payload.shipping[k]));
       const checks={id:confirmed.id===created.id,number:sourceNumber(confirmed)===String(group.row.number),source:Number(confirmed.source_id)===payload.source_id,buyer:phone(confirmed.buyer?.phone)===phone(group.row.customer_phone),date:utcTime(confirmed.ordered_at)===utcTime(payload.ordered_at),total:Number.isFinite(Number(confirmed.grand_total))&&Math.abs(Number(confirmed.grand_total)-Number(group.row.total))<=0.02,products:Array.isArray(confirmed.products)&&lines(confirmed.products)===lines(payload.products),destination};
